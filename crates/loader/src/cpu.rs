@@ -509,22 +509,60 @@ impl<'a> Interpreter<'a> {
             return Ok(None);
         }
 
-        // Memory operand [rm + disp]
-        let base_reg = Register::from_index(rm_idx);
-        let base_val = self.cpu.get(base_reg);
+        // Memory operand [rm + disp] or SIB
+        let (base_val, disp): (u64, i64) = if (rm_idx & 7) == 4 {
+            // SIB byte follows ModR/M
+            let sib = self.fetch_u8()?;
+            let scale_shift = (sib >> 6) & 3;
+            let index_raw = ((sib >> 3) & 7) + if rex_r { 8 } else { 0 }; // SIB.index can use REX.X; here index_raw
+            let base_raw = (sib & 7) + if rex_b { 8 } else { 0 };
 
-        let disp: i64 = match mode {
-            0 => {
-                if (rm_idx & 7) == 5 {
-                    // RIP-relative displacement disp32
-                    self.fetch_i32()? as i64
-                } else {
-                    0
+            let base_v = if mode == 0 && (sib & 7) == 5 {
+                // disp32 with no base register
+                0u64
+            } else {
+                self.cpu.get(Register::from_index(base_raw))
+            };
+
+            let index_v = if (sib >> 3) & 7 == 4 {
+                // index == 4 means no index register (ESP/RSP)
+                0u64
+            } else {
+                self.cpu.get(Register::from_index(index_raw)) << scale_shift
+            };
+
+            let d: i64 = match mode {
+                0 => {
+                    if (sib & 7) == 5 {
+                        self.fetch_i32()? as i64
+                    } else {
+                        0
+                    }
                 }
-            }
-            1 => self.fetch_i8()? as i64,
-            2 => self.fetch_i32()? as i64,
-            _ => unreachable!(),
+                1 => self.fetch_i8()? as i64,
+                2 => self.fetch_i32()? as i64,
+                _ => unreachable!(),
+            };
+
+            (base_v.wrapping_add(index_v), d)
+        } else {
+            let base_reg = Register::from_index(rm_idx);
+            let base_val = self.cpu.get(base_reg);
+
+            let disp: i64 = match mode {
+                0 => {
+                    if (rm_idx & 7) == 5 {
+                        // RIP-relative displacement disp32
+                        self.fetch_i32()? as i64
+                    } else {
+                        0
+                    }
+                }
+                1 => self.fetch_i8()? as i64,
+                2 => self.fetch_i32()? as i64,
+                _ => unreachable!(),
+            };
+            (base_val, disp)
         };
 
         let effective_addr = if mode == 0 && (rm_idx & 7) == 5 {

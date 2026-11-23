@@ -10,3 +10,12 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+libc = "0.2"
+
+[dev-dependencies]
+xenora-metal = { path = "../metal" }
+xenora-shader = { path = "../shader" }
+
+[[bench]]
+name = "dbt_bench"
+harness = false

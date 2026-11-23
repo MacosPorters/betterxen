@@ -256,3 +256,36 @@ fn test_memory_fault_on_unmapped_access() {
         other => panic!("expected UnmappedAddress, got: {other:?}"),
     }
 }
+
+#[test]
+fn test_sib_addressing_mode() {
+    // x86-64 program:
+    // mov rbx, 0x12345678_9abcdef0
+    // mov [rsp + 0x20], rbx   (48 89 5c 24 20 - using SIB byte 0x24)
+    // mov rdx, [rsp + 0x20]   (48 8b 54 24 20 - using SIB byte 0x24)
+    // hlt                     (f4)
+    let mut code = Vec::new();
+    code.extend_from_slice(&[0x48, 0xBB, 0xF0, 0xDE, 0xBC, 0x9A, 0x78, 0x56, 0x34, 0x12]);
+    code.extend_from_slice(&[0x48, 0x89, 0x5C, 0x24, 0x20]); // mov [rsp + 0x20], rbx
+    code.extend_from_slice(&[0x48, 0x8B, 0x54, 0x24, 0x20]); // mov rdx, [rsp + 0x20]
+    code.push(0xF4); // hlt
+
+    let pe_bytes = build_synthetic_pe32_plus(&code);
+    let parsed = ParsedPe::parse(&pe_bytes).expect("parse");
+    let mut loaded = parsed.load_into_memory(&pe_bytes).expect("load");
+
+    let stack_base = 0x4000_0000u64;
+    let stack_size = 0x10000usize;
+    loaded
+        .memory
+        .map_region(stack_base, stack_size, MemoryPermissions::READ_WRITE)
+        .expect("stack mapping should succeed");
+    let stack_top = stack_base + 0x8000;
+
+    let cpu = CpuState::new(loaded.entry_point, stack_top);
+    let mut interp = Interpreter::new(cpu, &mut loaded.memory, 100);
+    let result = interp.run();
+
+    assert_eq!(result.exit_reason, ExitReason::Halt);
+    assert_eq!(result.final_state.get(Register::Rdx), 0x12345678_9abcdef0);
+}
