@@ -1,0 +1,12 @@
+[package]
+name = "xenora-loader"
+description = "PE32+ loader, guest memory management, and x86-64 execution bootstrap for Xenora"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[dependencies]

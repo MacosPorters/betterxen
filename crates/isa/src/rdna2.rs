@@ -125,3 +125,8 @@ pub const V_INTERP_P2_F32: Opcode = Opcode {
     bits: 0xc8010000,
     bytes: 4,
 };
+pub const IMAGE_SAMPLE_LZ: Opcode = Opcode {
+    mask: 0xfdfc0001,
+    bits: 0xf09c0000,
+    bytes: 8,
+};

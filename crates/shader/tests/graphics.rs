@@ -10,6 +10,46 @@ const TRANSFORM_VS: &[u8] = include_bytes!("../../../fixtures/rdna2/x9-transform
 const END: &[u8] = &[0x00, 0x00, 0x81, 0xbf];
 
 #[test]
+fn compiles_image_sample_lz_in_pixel_shader_and_emits_msl_texture_sampling() {
+    // VS: simple passthrough that exports pos0 from v[0:3] and param0 from v[4:7]
+    let vs_bytes = include_bytes!("../../../fixtures/rdna2/x9-varying-vs.bin");
+
+    // PS that samples a texture at (u, v) and exports color to mrt0:
+    // v_interp_p1_f32_e32 v2, v0, attr0.x
+    // v_interp_p2_f32_e32 v2, v1, attr0.x
+    // v_interp_p1_f32_e32 v3, v0, attr0.y
+    // v_interp_p2_f32_e32 v3, v1, attr0.y
+    // image_sample_lz v[4:7], v[2:3], s[0:7], s[8:11] dmask:0xf dim:SQ_RSRC_IMG_2D
+    // exp mrt0, v4, v5, v6, v7 done vm
+    // s_endpgm
+    let mut ps_bytes = Vec::new();
+    // attr0.x interp p1 & p2
+    ps_bytes.extend_from_slice(&[0x00, 0x00, 0x08, 0xc8]); // v_interp_p1_f32_e32 v2, v0, attr0.x
+    ps_bytes.extend_from_slice(&[0x01, 0x00, 0x09, 0xc8]); // v_interp_p2_f32_e32 v2, v1, attr0.x
+    // attr0.y interp p1 & p2
+    ps_bytes.extend_from_slice(&[0x00, 0x01, 0x0c, 0xc8]); // v_interp_p1_f32_e32 v3, v0, attr0.y
+    ps_bytes.extend_from_slice(&[0x01, 0x01, 0x0d, 0xc8]); // v_interp_p2_f32_e32 v3, v1, attr0.y
+    // image_sample_lz v[4:7], v[2:3], s[0:7], s[8:11] dmask:0xf dim:SQ_RSRC_IMG_2D
+    ps_bytes.extend_from_slice(&[0x08, 0x0f, 0x9c, 0xf0, 0x02, 0x04, 0x40, 0x00]);
+    // exp mrt0, v4, v5, v6, v7 done vm
+    ps_bytes.extend_from_slice(&[0x0f, 0x18, 0x00, 0xf8, 0x04, 0x05, 0x06, 0x07]);
+    // s_endpgm
+    ps_bytes.extend_from_slice(&[0x00, 0x00, 0x81, 0xbf]);
+
+    let compiled = compile_graphics(Gfx1030, vs_bytes, &ps_bytes)
+        .expect("compile graphics with texture sampling");
+
+    assert!(compiled.ir.contains("sample_lz.2d.f32 tex0, samp0"));
+    assert!(
+        compiled
+            .msl
+            .contains("texture2d<float, access::sample> tex0 [[texture(0)]]")
+    );
+    assert!(compiled.msl.contains("sampler samp0 [[sampler(0)]]"));
+    assert!(compiled.msl.contains("tex0.sample(samp0, float2("));
+}
+
+#[test]
 fn links_constant_and_varying_graphics_fixtures() {
     let constant = compile_graphics(Gfx1030, CONSTANT_VS, CONSTANT_PS).unwrap();
     assert!(

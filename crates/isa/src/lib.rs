@@ -4,10 +4,10 @@ use std::fmt;
 
 mod rdna2;
 pub use rdna2::{
-    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, S_BRANCH, S_CBRANCH_EXECZ, S_CBRANCH_SCC0,
-    S_CBRANCH_VCCZ, S_CMP_EQ_U32, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
-    V_ADD_NC_U32, V_AND_B32, V_ASHRREV_I32, V_INTERP_P1_F32, V_INTERP_P2_F32, V_LSHLREV_B32,
-    V_LSHRREV_B32, V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32,
+    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
+    S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_CMP_EQ_U32, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT,
+    V_ADD_F32, V_ADD_NC_U32, V_AND_B32, V_ASHRREV_I32, V_INTERP_P1_F32, V_INTERP_P2_F32,
+    V_LSHLREV_B32, V_LSHRREV_B32, V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32,
 };
 
 /// Selects the instruction encoding independently of the container and execution ABI.
@@ -159,6 +159,17 @@ pub enum Instruction {
         attribute: u8,
         component: u8,
     },
+    /// MIMG image_sample_lz 2D RGBA8 texture sample with level of detail zero.
+    ImageSampleLz {
+        /// Four contiguous destination VGPRs [dst..dst+3] receiving RGBA.
+        dst: u8,
+        /// Two contiguous coordinate VGPRs [coord..coord+1] containing (u, v).
+        coord: u8,
+        /// First SGPR of the eight-word resource descriptor s[resource..resource+7].
+        resource: u8,
+        /// First SGPR of the four-word sampler descriptor s[sampler..sampler+3].
+        sampler: u8,
+    },
     /// Terminates the wave and waits for outstanding memory operations.
     EndProgram,
 }
@@ -196,6 +207,7 @@ impl Instruction {
                 phase: InterpolationPhase::Second,
                 ..
             } => "v_interp_p2_f32_e32",
+            Self::ImageSampleLz { .. } => "image_sample_lz",
             Self::EndProgram => "s_endpgm",
         }
     }
@@ -273,6 +285,21 @@ impl fmt::Display for Instruction {
                 write!(
                     formatter,
                     " v{dst}, v{coordinate}, attr{attribute}.{channel}"
+                )
+            }
+            Self::ImageSampleLz {
+                dst,
+                coord,
+                resource,
+                sampler,
+            } => {
+                let last_dst = dst + 3;
+                let last_coord = coord + 1;
+                let last_res = resource + 7;
+                let last_samp = sampler + 3;
+                write!(
+                    formatter,
+                    " v[{dst}:{last_dst}], v[{coord}:{last_coord}], s[{resource}:{last_res}], s[{sampler}:{last_samp}] dmask:0xf dim:SQ_RSRC_IMG_2D"
                 )
             }
             Self::EndProgram => Ok(()),

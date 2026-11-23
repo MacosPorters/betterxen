@@ -33,6 +33,7 @@ VARIANTS = (
     ("EXP", "ENC_EXP"),
     ("V_INTERP_P1_F32", "ENC_VINTRP"),
     ("V_INTERP_P2_F32", "ENC_VINTRP"),
+    ("IMAGE_SAMPLE_LZ", "ENC_MIMG"),
 )
 
 
@@ -40,10 +41,10 @@ def read_field(encoding, name):
     fields = encoding.findall("MicrocodeFormat/BitMap/Field")
     field = next(field for field in fields if field.findtext("FieldName") == name)
     ranges = field.findall("BitLayout/Range")
-    return sorted(
+    return [
         (int(item.findtext("BitOffset")), int(item.findtext("BitCount")))
-        for item in ranges
-    )
+        for item in sorted(ranges, key=lambda x: int(x.attrib.get("Order", 0)))
+    ]
 
 
 def bits_to_word(value, ranges):

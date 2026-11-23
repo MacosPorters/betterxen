@@ -11,6 +11,9 @@ remains unsupported.
 
 ### Added
 
+- Added `xenora-loader` crate providing standalone PE32+ (64-bit Portable Executable) parsing, isolated guest virtual memory with strict page permissions (Read/Write/Execute), bounded software x86-64 instruction interpreter (`CpuState`, `Interpreter`, `RFlags`), and read-only diagnostic triage (`triage_file`, `triage_bytes`).
+- Added CLI inspect command (`xenora inspect <path>`) for read-only PE32+ header and section structure examination.
+- Added comprehensive integration tests verifying synthetic PE32+ image mapping, register arithmetic, stack push/pop, subroutine calls/returns, deterministic unsupported opcode rejection, memory fault on unmapped access, and execution budget enforcement.
 - Added native Metal sampler abstraction (`MetalSampler`) supporting nearest-neighbor minification/magnification filtering, clamp-to-edge addressing, normalized coordinates, validated LOD bounds, and explicit `SamplerDesc` mapping.
 - Added native Metal RGBA8 2D texture allocation, mip upload validation (`MetalRgba8Texture`, `Rgba8MipLevel`, `Rgba8TextureDesc`), and texture/sampler pipeline binding definitions (`BoundSampledTexture`, `BindingSlot`) for future translated shader stages.
 - Added an independent pure-Rust CPU texture sampling reference for deterministic RGBA8 2D textures with nearest-neighbor filtering, normalized UV coordinates, clamp-to-edge addressing, explicit mip selection, and bounds validation.

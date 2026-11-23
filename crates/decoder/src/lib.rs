@@ -6,10 +6,10 @@ pub use xenora_isa::{
     Architecture, ExportTarget, Instruction, InterpolationPhase, ScalarSource, VectorSource,
 };
 use xenora_isa::{
-    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, S_BRANCH, S_CBRANCH_EXECZ, S_CBRANCH_SCC0,
-    S_CBRANCH_VCCZ, S_CMP_EQ_U32, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
-    V_ADD_NC_U32, V_AND_B32, V_ASHRREV_I32, V_INTERP_P1_F32, V_INTERP_P2_F32, V_LSHLREV_B32,
-    V_LSHRREV_B32, V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32,
+    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
+    S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_CMP_EQ_U32, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT,
+    V_ADD_F32, V_ADD_NC_U32, V_AND_B32, V_ASHRREV_I32, V_INTERP_P1_F32, V_INTERP_P2_F32,
+    V_LSHLREV_B32, V_LSHRREV_B32, V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32,
 };
 
 /// A successfully decoded instruction and its location in the input stream.
@@ -204,6 +204,21 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
             }
         };
         return Ok((Instruction::Export { target, sources }, len));
+    }
+    if IMAGE_SAMPLE_LZ.matches(first) {
+        let len = IMAGE_SAMPLE_LZ.byte_len();
+        let second = word(bytes, len)?;
+        let (dst, coord, resource, sampler) =
+            image_sample_operands(first, second, "image_sample_lz")?;
+        return Ok((
+            Instruction::ImageSampleLz {
+                dst,
+                coord,
+                resource,
+                sampler,
+            },
+            len,
+        ));
     }
     for (opcode, phase) in [
         (V_INTERP_P1_F32, InterpolationPhase::First),
@@ -408,6 +423,76 @@ fn vop2_registers(first: u32, mnemonic: &'static str) -> Result<(u8, u8, u8), De
         ));
     }
     Ok(((first >> 17) as u8, first as u8, (first >> 9) as u8))
+}
+
+fn image_sample_operands(
+    first: u32,
+    second: u32,
+    mnemonic: &'static str,
+) -> Result<(u8, u8, u8, u8), DecodeErrorKind> {
+    // In word 0:
+    // Bits 1..2: NSA (must be 0 for contiguous VADDR)
+    // Bits 3..5: DIM (1 = SQ_RSRC_IMG_2D)
+    // Bit 7: DLC (0)
+    // Bits 8..11: DMASK (0xf for RGBA 4-component return)
+    // Bit 12: UNORM (0)
+    // Bit 13: GLC (0)
+    // Bit 14: DA (0)
+    // Bit 15: R128 (0)
+    // Bit 16: TFE (0)
+    // Bit 25: SLC (0)
+    // Bit 0 & Bits 18..24: OP (0x27 / 39)
+    // Bits 26..31: ENCODING (0x3c)
+    // Mask off OP and ENCODING (bits 0, 18..24, 26..31).
+    // The expected variable bits for 2D RGBA8 sampling:
+    // dim = 1 (bits 3..5 = 1 << 3 = 0x8), dmask = 0xf (bits 8..11 = 0xf << 8 = 0xf00).
+    // All other modifier flags (NSA, DLC, UNORM, GLC, DA, R128, TFE, SLC) must be zero.
+    const MODIFIER_MASK: u32 = 0x0203_fffe;
+    const EXPECTED_2D_RGBA: u32 = 0x0000_0f08;
+
+    if first & MODIFIER_MASK != EXPECTED_2D_RGBA {
+        return Err(unsupported(
+            mnemonic,
+            "expected dim:SQ_RSRC_IMG_2D and dmask:0xf with zero modifier flags",
+        ));
+    }
+
+    // In word 1:
+    // Bits 0..7: VADDR (u8)
+    // Bits 8..15: VDATA (u8)
+    // Bits 16..20: SRSRC >> 2 (5 bits)
+    // Bits 21..25: SSAMP >> 2 (5 bits)
+    // Bits 26..29: reserved (must be 0)
+    // Bit 30: A16 (0)
+    // Bit 31: D16 (0)
+    if second & 0xfc00_0000 != 0 {
+        return Err(unsupported(
+            mnemonic,
+            "expected 32-bit float coordinates and data without A16/D16",
+        ));
+    }
+
+    let coord = (second & 0xff) as u8;
+    let dst = ((second >> 8) & 0xff) as u8;
+    let resource = (((second >> 16) & 0x1f) * 4) as u8;
+    let sampler = (((second >> 21) & 0x1f) * 4) as u8;
+
+    // RDNA 2 resource descriptor (T#) requires 8 SGPRs; sampler (S#) requires 4 SGPRs.
+    // SGPR range is 0..=105 for normal allocatable registers.
+    if resource > 98 {
+        return Err(unsupported(
+            mnemonic,
+            "resource descriptor must fit in normal SGPRs s[0:105]",
+        ));
+    }
+    if sampler > 102 {
+        return Err(unsupported(
+            mnemonic,
+            "sampler descriptor must fit in normal SGPRs s[0:105]",
+        ));
+    }
+
+    Ok((dst, coord, resource, sampler))
 }
 
 fn buffer_operands(

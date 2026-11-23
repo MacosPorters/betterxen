@@ -139,6 +139,93 @@ fn rejects_other_opcodes_and_noncanonical_operands() {
 }
 
 #[test]
+fn decodes_image_sample_lz_and_rejects_malformed_variants() {
+    // image_sample_lz v[4:7], v[2:3], s[0:7], s[8:11] dmask:0xf dim:SQ_RSRC_IMG_2D
+    // bytes: [0x08, 0x0f, 0x9c, 0xf0, 0x02, 0x04, 0x40, 0x00]
+    let words = [0xf09c_0f08_u32, 0x0040_0402_u32];
+    let bytes: Vec<u8> = words.iter().flat_map(|w| w.to_le_bytes()).collect();
+
+    let decoded = decode(Architecture::Gfx1030, &bytes).expect("decode image_sample_lz");
+    assert_eq!(decoded.len(), 1);
+    assert_eq!(
+        decoded[0],
+        DecodedInstruction {
+            offset: 0,
+            byte_len: 8,
+            instruction: Instruction::ImageSampleLz {
+                dst: 4,
+                coord: 2,
+                resource: 0,
+                sampler: 8,
+            },
+        }
+    );
+
+    // Negative tests:
+    // 1. Truncated (less than 8 bytes)
+    assert!(matches!(
+        decode(Architecture::Gfx1030, &bytes[..4]).unwrap_err().kind,
+        DecodeErrorKind::Truncated {
+            needed: 8,
+            available: 4
+        }
+    ));
+
+    // 2. Unsupported dim (dim != 1, e.g. dim = 0, bit 3 clear)
+    let bad_dim = [0xf09c_0f00_u32, 0x0040_0402_u32];
+    let bad_dim_bytes: Vec<u8> = bad_dim.iter().flat_map(|w| w.to_le_bytes()).collect();
+    assert!(matches!(
+        decode(Architecture::Gfx1030, &bad_dim_bytes)
+            .unwrap_err()
+            .kind,
+        DecodeErrorKind::UnsupportedForm {
+            mnemonic: "image_sample_lz",
+            ..
+        }
+    ));
+
+    // 3. Unsupported dmask (dmask != 0xf, e.g. dmask = 0x1)
+    let bad_dmask = [0xf09c_0108_u32, 0x0040_0402_u32];
+    let bad_dmask_bytes: Vec<u8> = bad_dmask.iter().flat_map(|w| w.to_le_bytes()).collect();
+    assert!(matches!(
+        decode(Architecture::Gfx1030, &bad_dmask_bytes)
+            .unwrap_err()
+            .kind,
+        DecodeErrorKind::UnsupportedForm {
+            mnemonic: "image_sample_lz",
+            ..
+        }
+    ));
+
+    // 4. Modifiers set (e.g. A16 bit 30 set in second word)
+    let bad_a16 = [0xf09c_0f08_u32, 0x4040_0402_u32];
+    let bad_a16_bytes: Vec<u8> = bad_a16.iter().flat_map(|w| w.to_le_bytes()).collect();
+    assert!(matches!(
+        decode(Architecture::Gfx1030, &bad_a16_bytes)
+            .unwrap_err()
+            .kind,
+        DecodeErrorKind::UnsupportedForm {
+            mnemonic: "image_sample_lz",
+            ..
+        }
+    ));
+
+    // 5. Out of range SGPR for resource (resource > 98)
+    // 25 << 16 * 4 = 100 > 98
+    let bad_res = [0xf09c_0f08_u32, 0x0059_0402_u32];
+    let bad_res_bytes: Vec<u8> = bad_res.iter().flat_map(|w| w.to_le_bytes()).collect();
+    assert!(matches!(
+        decode(Architecture::Gfx1030, &bad_res_bytes)
+            .unwrap_err()
+            .kind,
+        DecodeErrorKind::UnsupportedForm {
+            mnemonic: "image_sample_lz",
+            ..
+        }
+    ));
+}
+
+#[test]
 fn rejects_targets_at_eof_or_inside_a_literal() {
     for (words, target) in [
         ([0xbf82_0002u32, 0x7e04_02ff, 0x1234_5678], 12),
@@ -270,8 +357,10 @@ fn reference_op(instruction: Instruction) -> Op {
         Instruction::VectorMulF32 { dst, src0, src1 } => {
             Op::Vector(VectorAlu::FloatMultiply, dst, src0, src1)
         }
-        Instruction::Export { .. } | Instruction::Interpolate { .. } => {
-            panic!("compute reference matrix received a graphics instruction")
+        Instruction::Export { .. }
+        | Instruction::Interpolate { .. }
+        | Instruction::ImageSampleLz { .. } => {
+            panic!("compute reference matrix received a graphics/image instruction")
         }
 
         Instruction::EndProgram => Op::End,

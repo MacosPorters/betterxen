@@ -40,6 +40,13 @@ enum Op {
     Constant(u32),
     Interpolate(u8),
     Binary(Binary, Value, Value),
+    SampleLodZero {
+        u: Value,
+        v: Value,
+        component: u8,
+        texture_index: u8,
+        sampler_index: u8,
+    },
 }
 
 struct Export {
@@ -106,6 +113,11 @@ pub fn compile_graphics(
         });
     }
 
+    let has_sampling = pixel
+        .values
+        .iter()
+        .any(|(_, op)| matches!(op, Op::SampleLodZero { .. }));
+
     let mut disassembly = String::new();
     for (name, instructions) in [("vertex", vertex_decoded), ("pixel", pixel_decoded)] {
         let _ = writeln!(disassembly, "{name}:");
@@ -135,14 +147,25 @@ pub fn compile_graphics(
     msl.push_str(
         "    return output;\n}\n\nstruct PixelOutput {\n    float4 color [[color(0)]];\n};\n\n",
     );
-    let parameter = if interpolates {
-        "VertexOutput input [[stage_in]]"
+    let mut params = Vec::new();
+    if interpolates {
+        params.push("VertexOutput input [[stage_in]]".to_string());
+    }
+    if has_sampling {
+        params.push("texture2d<float, access::sample> tex0 [[texture(0)]]".to_string());
+        params.push("sampler samp0 [[sampler(0)]]".to_string());
+    }
+    let param_str = params.join(",\n    ");
+    let param_decl = if params.is_empty() {
+        String::new()
+    } else if params.len() == 1 {
+        param_str
     } else {
-        ""
+        format!("\n    {param_str}")
     };
     let _ = write!(
         msl,
-        "fragment PixelOutput {PIXEL_ENTRY_POINT}({parameter}) {{\n    PixelOutput output;\n"
+        "fragment PixelOutput {PIXEL_ENTRY_POINT}({param_decl}) {{\n    PixelOutput output;\n"
     );
     ir.push_str("pixel:\n");
     emit_values(&pixel, &mut ir, &mut msl);
@@ -242,6 +265,36 @@ fn lift(
                 registers[usize::from(dst)] =
                     Some(ir.push(Some(offset), Op::Interpolate(component)));
             }
+            Instruction::ImageSampleLz {
+                dst,
+                coord,
+                resource,
+                sampler,
+            } if stage == Stage::Pixel && dst >= 2 && !exporting => {
+                // In synthetic binding ABI:
+                // resource s[0:7] maps to texture(0)
+                // sampler s[8:11] maps to sampler(0)
+                if (resource, sampler) != (0, 8) {
+                    return Err(error(
+                        "sampling outside synthetic resource binding ABI s[0:7] and s[8:11]",
+                    ));
+                }
+                let u = read(coord)?;
+                let v = read(coord + 1)?;
+                for component in 0..4 {
+                    let val = ir.push(
+                        Some(offset),
+                        Op::SampleLodZero {
+                            u,
+                            v,
+                            component,
+                            texture_index: 0,
+                            sampler_index: 0,
+                        },
+                    );
+                    registers[usize::from(dst + component)] = Some(val);
+                }
+            }
             Instruction::Export {
                 target,
                 sources: [a, b, c, d],
@@ -320,6 +373,23 @@ fn emit_values(stage: &StageIr, ir: &mut String, msl: &mut String) {
                 format!("interpolate.center_perspective.f32 attr0[{component}]"),
                 format!("input.parameter[{component}]"),
             ),
+            Op::SampleLodZero {
+                u,
+                v,
+                component,
+                texture_index,
+                sampler_index,
+            } => {
+                let channel = ["r", "g", "b", "a"][usize::from(component)];
+                (
+                    format!(
+                        "sample_lz.2d.f32 tex{texture_index}, samp{sampler_index}, ({u}, {v})[{channel}]"
+                    ),
+                    format!(
+                        "tex{texture_index}.sample(samp{sampler_index}, float2({u}, {v}), level(0.0f)).{channel}"
+                    ),
+                )
+            }
         };
         if let Some(offset) = offset {
             let _ = write!(ir, "{offset:04x}: ");

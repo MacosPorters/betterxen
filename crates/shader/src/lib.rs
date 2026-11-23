@@ -359,7 +359,9 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
             Instruction::BufferStoreDword {
                 index, resource, ..
             } if (index, resource) != (0, 4) => "unsupported resource or buffer index",
-            Instruction::Export { .. } | Instruction::Interpolate { .. } => {
+            Instruction::Export { .. }
+            | Instruction::Interpolate { .. }
+            | Instruction::ImageSampleLz { .. } => {
                 "graphics instruction is unsupported in a compute fixture"
             }
             Instruction::EndProgram if index + 1 != decoded.len() => {
@@ -551,7 +553,9 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 Some(dst),
                 Op::Binary(Binary::FloatMul, read(src0)?, read(src1)?),
             ),
-            Instruction::Export { .. } | Instruction::Interpolate { .. } => {
+            Instruction::Export { .. }
+            | Instruction::Interpolate { .. }
+            | Instruction::ImageSampleLz { .. } => {
                 return Err(error(
                     "graphics instruction is unsupported in a compute fixture",
                 ));

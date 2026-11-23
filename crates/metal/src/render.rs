@@ -42,6 +42,40 @@ impl NativeCompute {
         [width, height]: [usize; 2],
         clear: [u8; 4],
     ) -> Result<Vec<u8>, MetalError> {
+        self.render_rgba8_sampled(
+            source,
+            entries,
+            vertices,
+            colors,
+            [width, height],
+            clear,
+            None,
+        )
+    }
+
+    /// Draw one triangle with trusted MSL and optional bound sampled texture into a cleared RGBA8Unorm target.
+    ///
+    /// When `sampled` is provided, the texture is bound to fragment texture slot 0 and
+    /// the sampler to fragment sampler slot 0.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for non-finite inputs, invalid source or extent, or
+    /// Metal compilation, setup or completion failure.
+    #[allow(clippy::too_many_arguments)]
+    pub fn render_rgba8_sampled(
+        &self,
+        source: &str,
+        entries: [&str; 2],
+        vertices: &[[f32; 4]; 3],
+        colors: &[[f32; 4]; 3],
+        [width, height]: [usize; 2],
+        clear: [u8; 4],
+        sampled: Option<(
+            &crate::texture_pipeline::MetalRgba8Texture,
+            &crate::sampler::MetalSampler,
+        )>,
+    ) -> Result<Vec<u8>, MetalError> {
         let pixels = width
             .checked_mul(height)
             .filter(|&count| (1..=MAX_PIXELS).contains(&count))
@@ -149,6 +183,10 @@ impl NativeCompute {
             unsafe {
                 encoder.setVertexBuffer_offset_atIndex(Some(&positions), 0, 0);
                 encoder.setVertexBuffer_offset_atIndex(Some(&colors), 0, 1);
+                if let Some((tex, samp)) = sampled {
+                    encoder.setFragmentTexture_atIndex(Some(tex.raw()), 0);
+                    encoder.setFragmentSamplerState_atIndex(Some(samp.raw()), 0);
+                }
                 encoder.drawPrimitives_vertexStart_vertexCount(MTLPrimitiveType::Triangle, 0, 3);
             }
             encoder.endEncoding();
