@@ -81,7 +81,9 @@ fn main() -> ExitCode {
             }
 
             let Some(pe) = pe_path else {
-                eprintln!("usage: xenora probe --pe <path> [--mode <static>] [--report <output-dir>]");
+                eprintln!(
+                    "usage: xenora probe --pe <path> [--mode <static>] [--report <output-dir>]"
+                );
                 return ExitCode::from(2);
             };
 

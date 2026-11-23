@@ -9,6 +9,10 @@ rust-version.workspace = true
 [lints]
 workspace = true
 
+[features]
+# Runs the tests that need a native Metal device (scripts/test-gpu.sh); CI's virtual GPU lacks Apple family 7.
+gpu-tests = []
+
 [dependencies]
 libc = "0.2"
 

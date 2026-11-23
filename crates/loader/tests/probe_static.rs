@@ -79,7 +79,8 @@ fn test_probe_artifact_export_creates_all_files() {
     let _ = std::fs::remove_dir_all(&temp_dir);
 
     let config = ProbeConfig::default();
-    let report = run_probe_and_export(&pe_bytes, &temp_dir, &config).expect("export should succeed");
+    let report =
+        run_probe_and_export(&pe_bytes, &temp_dir, &config).expect("export should succeed");
 
     assert!(temp_dir.join("candidate_static_report.md").exists());
     assert!(temp_dir.join("candidate_static_report.json").exists());

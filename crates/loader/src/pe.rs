@@ -83,6 +83,7 @@ pub struct LoadedImage {
 }
 
 // Windows PE Characteristic Constants
+pub const IMAGE_SCN_CNT_CODE: u32 = 0x00000020;
 pub const IMAGE_SCN_MEM_EXECUTE: u32 = 0x20000000;
 pub const IMAGE_SCN_MEM_READ: u32 = 0x40000000;
 pub const IMAGE_SCN_MEM_WRITE: u32 = 0x80000000;

@@ -182,6 +182,10 @@ fn test_native_arm64_dbt_subroutine_calls_and_stack() {
 }
 
 #[test]
+#[cfg_attr(
+    not(feature = "gpu-tests"),
+    ignore = "needs a native Metal device with Apple family 7; run scripts/test-gpu.sh"
+)]
 fn test_guest_dbt_first_rendered_frame_with_metal() {
     // Synthetic PE32+ guest program:
     // Initializes vertex data pointer and shader address in guest registers,

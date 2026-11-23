@@ -77,7 +77,7 @@ pub struct InstructionRecord {
 pub struct ProbeReport {
     pub file_size: usize,
     pub sha256: String,
-    pub pe: ParsedPe,
+    pub parsed: ParsedPe,
     pub relocations: RelocationCensus,
     pub tls: TlsCensus,
     pub imports: Vec<ImportedSymbol>,
@@ -159,8 +159,11 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
         u16::from_le_bytes(bytes[coff_offset + 2..coff_offset + 4].try_into().unwrap());
     let time_date_stamp =
         u32::from_le_bytes(bytes[coff_offset + 4..coff_offset + 8].try_into().unwrap());
-    let size_of_optional_header =
-        u16::from_le_bytes(bytes[coff_offset + 16..coff_offset + 18].try_into().unwrap()) as usize;
+    let size_of_optional_header = u16::from_le_bytes(
+        bytes[coff_offset + 16..coff_offset + 18]
+            .try_into()
+            .unwrap(),
+    ) as usize;
 
     let opt_offset = coff_offset + 20;
     if bytes.len() < opt_offset + size_of_optional_header {
@@ -187,22 +190,38 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
 
     // Data directories
     let import_dir_rva = if size_of_optional_header >= 128 {
-        u32::from_le_bytes(bytes[opt_offset + 120..opt_offset + 124].try_into().unwrap())
+        u32::from_le_bytes(
+            bytes[opt_offset + 120..opt_offset + 124]
+                .try_into()
+                .unwrap(),
+        )
     } else {
         0
     };
     let reloc_dir_rva = if size_of_optional_header >= 160 {
-        u32::from_le_bytes(bytes[opt_offset + 152..opt_offset + 156].try_into().unwrap())
+        u32::from_le_bytes(
+            bytes[opt_offset + 152..opt_offset + 156]
+                .try_into()
+                .unwrap(),
+        )
     } else {
         0
     };
     let reloc_dir_size = if size_of_optional_header >= 160 {
-        u32::from_le_bytes(bytes[opt_offset + 156..opt_offset + 160].try_into().unwrap())
+        u32::from_le_bytes(
+            bytes[opt_offset + 156..opt_offset + 160]
+                .try_into()
+                .unwrap(),
+        )
     } else {
         0
     };
     let tls_dir_rva = if size_of_optional_header >= 192 {
-        u32::from_le_bytes(bytes[opt_offset + 184..opt_offset + 188].try_into().unwrap())
+        u32::from_le_bytes(
+            bytes[opt_offset + 184..opt_offset + 188]
+                .try_into()
+                .unwrap(),
+        )
     } else {
         0
     };
@@ -263,56 +282,66 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
         base_reloc_rva: reloc_dir_rva,
         base_reloc_size: reloc_dir_size,
     };
-    if reloc_dir_rva != 0 && reloc_dir_size > 0 {
-        if let Some(reloc_off) = rva_to_offset(reloc_dir_rva) {
-            let mut read_bytes = 0usize;
-            let max_read = std::cmp::min(reloc_dir_size as usize, bytes.len().saturating_sub(reloc_off));
-            while read_bytes + 8 <= max_read {
-                let block_start = reloc_off + read_bytes;
-                let block_sz = u32::from_le_bytes(bytes[block_start + 4..block_start + 8].try_into().unwrap()) as usize;
-                if block_sz < 8 || read_bytes + block_sz > max_read {
-                    break;
-                }
-                let num_entries = (block_sz - 8) / 2;
-                for j in 0..num_entries {
-                    let e_off = block_start + 8 + j * 2;
-                    let val = u16::from_le_bytes(bytes[e_off..e_off + 2].try_into().unwrap());
-                    let rtype = (val >> 12) as u8;
-                    *relocations.type_counts.entry(rtype).or_insert(0) += 1;
-                    relocations.total_entries += 1;
-                }
-                read_bytes += block_sz;
+    if reloc_dir_rva != 0
+        && reloc_dir_size > 0
+        && let Some(reloc_off) = rva_to_offset(reloc_dir_rva)
+    {
+        let mut read_bytes = 0usize;
+        let max_read = std::cmp::min(
+            reloc_dir_size as usize,
+            bytes.len().saturating_sub(reloc_off),
+        );
+        while read_bytes + 8 <= max_read {
+            let block_start = reloc_off + read_bytes;
+            let block_sz =
+                u32::from_le_bytes(bytes[block_start + 4..block_start + 8].try_into().unwrap())
+                    as usize;
+            if block_sz < 8 || read_bytes + block_sz > max_read {
+                break;
             }
+            let num_entries = (block_sz - 8) / 2;
+            for j in 0..num_entries {
+                let e_off = block_start + 8 + j * 2;
+                let val = u16::from_le_bytes(bytes[e_off..e_off + 2].try_into().unwrap());
+                let rtype = (val >> 12) as u8;
+                *relocations.type_counts.entry(rtype).or_insert(0) += 1;
+                relocations.total_entries += 1;
+            }
+            read_bytes += block_sz;
         }
     }
 
     // 2. TLS Census
     let mut tls = TlsCensus::default();
-    if tls_dir_rva != 0 {
-        if let Some(tls_off) = rva_to_offset(tls_dir_rva) {
-            if tls_off + 40 <= bytes.len() {
-                tls.raw_data_start_va = u64::from_le_bytes(bytes[tls_off..tls_off + 8].try_into().unwrap());
-                tls.raw_data_end_va = u64::from_le_bytes(bytes[tls_off + 8..tls_off + 16].try_into().unwrap());
-                tls.index_address = u64::from_le_bytes(bytes[tls_off + 16..tls_off + 24].try_into().unwrap());
-                tls.callbacks_address = u64::from_le_bytes(bytes[tls_off + 24..tls_off + 32].try_into().unwrap());
-                tls.zero_fill_size = u32::from_le_bytes(bytes[tls_off + 32..tls_off + 36].try_into().unwrap());
-                tls.characteristics = u32::from_le_bytes(bytes[tls_off + 36..tls_off + 40].try_into().unwrap());
+    if tls_dir_rva != 0
+        && let Some(tls_off) = rva_to_offset(tls_dir_rva)
+        && tls_off + 40 <= bytes.len()
+    {
+        tls.raw_data_start_va = u64::from_le_bytes(bytes[tls_off..tls_off + 8].try_into().unwrap());
+        tls.raw_data_end_va =
+            u64::from_le_bytes(bytes[tls_off + 8..tls_off + 16].try_into().unwrap());
+        tls.index_address =
+            u64::from_le_bytes(bytes[tls_off + 16..tls_off + 24].try_into().unwrap());
+        tls.callbacks_address =
+            u64::from_le_bytes(bytes[tls_off + 24..tls_off + 32].try_into().unwrap());
+        tls.zero_fill_size =
+            u32::from_le_bytes(bytes[tls_off + 32..tls_off + 36].try_into().unwrap());
+        tls.characteristics =
+            u32::from_le_bytes(bytes[tls_off + 36..tls_off + 40].try_into().unwrap());
 
-                if tls.callbacks_address >= image_base {
-                    let cb_rva = (tls.callbacks_address - image_base) as u32;
-                    if let Some(cb_off) = rva_to_offset(cb_rva) {
-                        let mut curr = cb_off;
-                        while curr + 8 <= bytes.len() {
-                            let target = u64::from_le_bytes(bytes[curr..curr + 8].try_into().unwrap());
-                            if target == 0 {
-                                break;
-                            }
-                            tls.callback_targets.push(target);
-                            curr += 8;
-                            if tls.callback_targets.len() >= 64 {
-                                break;
-                            }
-                        }
+        if tls.callbacks_address >= image_base {
+            let cb_rva = (tls.callbacks_address - image_base) as u32;
+            if let Some(cb_off) = rva_to_offset(cb_rva) {
+                let mut curr = cb_off;
+                while curr + 8 <= bytes.len() {
+                    let target = u64::from_le_bytes(bytes[curr..curr + 8].try_into().unwrap());
+                    if target == 0 {
+                        break;
+                    }
+                    tls.callback_targets.push(target);
+                    curr += 8;
+                    if tls.callback_targets.len() >= 64 {
+                        break;
                     }
                 }
             }
@@ -321,66 +350,68 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
 
     // 3. Import Census
     let mut imports = Vec::new();
-    if import_dir_rva != 0 {
-        if let Some(mut desc_off) = rva_to_offset(import_dir_rva) {
-            while desc_off + 20 <= bytes.len() {
-                let oft = u32::from_le_bytes(bytes[desc_off..desc_off + 4].try_into().unwrap());
-                let name_rva = u32::from_le_bytes(bytes[desc_off + 12..desc_off + 16].try_into().unwrap());
-                let ft = u32::from_le_bytes(bytes[desc_off + 16..desc_off + 20].try_into().unwrap());
-                if oft == 0 && name_rva == 0 && ft == 0 {
-                    break;
+    if import_dir_rva != 0
+        && let Some(mut desc_off) = rva_to_offset(import_dir_rva)
+    {
+        while desc_off + 20 <= bytes.len() {
+            let oft = u32::from_le_bytes(bytes[desc_off..desc_off + 4].try_into().unwrap());
+            let name_rva =
+                u32::from_le_bytes(bytes[desc_off + 12..desc_off + 16].try_into().unwrap());
+            let ft = u32::from_le_bytes(bytes[desc_off + 16..desc_off + 20].try_into().unwrap());
+            if oft == 0 && name_rva == 0 && ft == 0 {
+                break;
+            }
+            desc_off += 20;
+
+            let dll_name = if let Some(no) = rva_to_offset(name_rva) {
+                let mut end = no;
+                while end < bytes.len() && bytes[end] != 0 {
+                    end += 1;
                 }
-                desc_off += 20;
+                String::from_utf8_lossy(&bytes[no..end]).into_owned()
+            } else {
+                "UNKNOWN.dll".to_string()
+            };
 
-                let dll_name = if let Some(no) = rva_to_offset(name_rva) {
-                    let mut end = no;
-                    while end < bytes.len() && bytes[end] != 0 {
-                        end += 1;
+            let category = ProbeReport::categorize_dll(&dll_name);
+            let thunk_rva = if oft != 0 { oft } else { ft };
+            let iat_base_rva = ft;
+
+            if let Some(mut thunk_off) = rva_to_offset(thunk_rva) {
+                let mut idx = 0u32;
+                while thunk_off + 8 <= bytes.len() {
+                    let val =
+                        u64::from_le_bytes(bytes[thunk_off..thunk_off + 8].try_into().unwrap());
+                    if val == 0 {
+                        break;
                     }
-                    String::from_utf8_lossy(&bytes[no..end]).into_owned()
-                } else {
-                    "UNKNOWN.dll".to_string()
-                };
+                    thunk_off += 8;
+                    let iat_rva = iat_base_rva + idx * 8;
+                    idx += 1;
 
-                let category = ProbeReport::categorize_dll(&dll_name);
-                let thunk_rva = if oft != 0 { oft } else { ft };
-                let iat_base_rva = ft;
-
-                if let Some(mut thunk_off) = rva_to_offset(thunk_rva) {
-                    let mut idx = 0u32;
-                    while thunk_off + 8 <= bytes.len() {
-                        let val = u64::from_le_bytes(bytes[thunk_off..thunk_off + 8].try_into().unwrap());
-                        if val == 0 {
-                            break;
-                        }
-                        thunk_off += 8;
-                        let iat_rva = iat_base_rva + idx * 8;
-                        idx += 1;
-
-                        let sym_name = if (val & (1 << 63)) != 0 {
-                            format!("Ordinal#{}", val & 0xFFFF)
-                        } else {
-                            let hint_rva = (val & 0x7FFF_FFFF) as u32;
-                            if let Some(ho) = rva_to_offset(hint_rva) {
-                                let str_start = ho + 2;
-                                let mut str_end = str_start;
-                                while str_end < bytes.len() && bytes[str_end] != 0 {
-                                    str_end += 1;
-                                }
-                                String::from_utf8_lossy(&bytes[str_start..str_end]).into_owned()
-                            } else {
-                                "UNKNOWN_SYM".to_string()
+                    let sym_name = if (val & (1 << 63)) != 0 {
+                        format!("Ordinal#{}", val & 0xFFFF)
+                    } else {
+                        let hint_rva = (val & 0x7FFF_FFFF) as u32;
+                        if let Some(ho) = rva_to_offset(hint_rva) {
+                            let str_start = ho + 2;
+                            let mut str_end = str_start;
+                            while str_end < bytes.len() && bytes[str_end] != 0 {
+                                str_end += 1;
                             }
-                        };
+                            String::from_utf8_lossy(&bytes[str_start..str_end]).into_owned()
+                        } else {
+                            "UNKNOWN_SYM".to_string()
+                        }
+                    };
 
-                        imports.push(ImportedSymbol {
-                            dll: dll_name.clone(),
-                            symbol: sym_name,
-                            iat_rva,
-                            category,
-                            is_supported: false, // None of the candidate's 587 external functions are linked
-                        });
-                    }
+                    imports.push(ImportedSymbol {
+                        dll: dll_name.clone(),
+                        symbol: sym_name,
+                        iat_rva,
+                        category,
+                        is_supported: false, // None of the candidate's 587 external functions are linked
+                    });
                 }
             }
         }
@@ -391,7 +422,10 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
     let mut first_unsupported_dbt_insn = None;
 
     if let Some(entry_file_offset) = rva_to_offset(entry_point_rva) {
-        let max_code_bytes = std::cmp::min(config.max_disasm_bytes, bytes.len().saturating_sub(entry_file_offset));
+        let max_code_bytes = std::cmp::min(
+            config.max_disasm_bytes,
+            bytes.len().saturating_sub(entry_file_offset),
+        );
         let code_slice = &bytes[entry_file_offset..entry_file_offset + max_code_bytes];
         let mut pc = 0usize;
 
@@ -525,7 +559,9 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
                         } else {
                             if mode == 1 && pc < code_slice.len() {
                                 pc += 1;
-                            } else if (mode == 2 || (mode == 0 && rm == 5)) && pc + 4 <= code_slice.len() {
+                            } else if (mode == 2 || (mode == 0 && rm == 5))
+                                && pc + 4 <= code_slice.len()
+                            {
                                 pc += 4;
                             }
                             is_interp = true;
@@ -578,11 +614,16 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
                         if (modrm & 0x38) == 0x10 || (modrm & 0x38) == 0x20 {
                             // indirect call/jmp
                             if (modrm & 7) == 5 && pc + 4 <= code_slice.len() {
-                                let disp32 = i32::from_le_bytes(code_slice[pc..pc + 4].try_into().unwrap());
+                                let disp32 =
+                                    i32::from_le_bytes(code_slice[pc..pc + 4].try_into().unwrap());
                                 pc += 4;
-                                let iat_target = (insn_va as i64 + (pc - start_pc) as i64 + disp32 as i64) as u64;
+                                let iat_target =
+                                    (insn_va as i64 + (pc - start_pc) as i64 + disp32 as i64)
+                                        as u64;
                                 mnemonic = format!("call/jmp *[RIP + 0x{iat_target:016x}]");
-                                notes = "indirect IAT symbol call - requires dynamic import linking".to_string();
+                                notes =
+                                    "indirect IAT symbol call - requires dynamic import linking"
+                                        .to_string();
                             }
                         }
                     }
@@ -633,7 +674,7 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
     Ok(ProbeReport {
         file_size: bytes.len(),
         sha256: "e95020b2fa4a721db3df59fdecf75621730ac559d8835252f6c3b658d5a08993".to_string(),
-        pe: parsed_pe,
+        parsed: parsed_pe,
         relocations,
         tls,
         imports,
@@ -642,19 +683,21 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
     })
 }
 
-/// Run probe from disk and generate artifacts in output directory.
-pub fn run_probe_and_export<P: AsRef<Path>, O: AsRef<Path>>(
-    pe_path: P,
+/// Probe PE bytes with `config` and generate artifacts in the output directory.
+pub fn run_probe_and_export<O: AsRef<Path>>(
+    bytes: &[u8],
     output_dir: O,
+    config: &ProbeConfig,
 ) -> Result<ProbeReport, Box<dyn std::error::Error>> {
-    let bytes = fs::read(pe_path)?;
-    let report = probe_pe_bytes(&bytes, &ProbeConfig::default())?;
+    let report = probe_pe_bytes(bytes, config)?;
 
     let out = output_dir.as_ref();
     fs::create_dir_all(out)?;
 
     // 1. imports.csv
-    let mut imports_csv = String::from("module,symbol_or_ordinal,iat_rva,category,exists_in_xenora,implemented_with_tests,would_be_required_for_loader_binding,notes\n");
+    let mut imports_csv = String::from(
+        "module,symbol_or_ordinal,iat_rva,category,exists_in_xenora,implemented_with_tests,would_be_required_for_loader_binding,notes\n",
+    );
     for imp in &report.imports {
         let _ = writeln!(
             imports_csv,
@@ -676,7 +719,13 @@ pub fn run_probe_and_export<P: AsRef<Path>, O: AsRef<Path>>(
         let _ = writeln!(
             cpu_csv,
             "0x{:08x},0x{:016x},\"{}\",\"{}\",{},{},\"{}\"",
-            insn.rva, insn.va, hex_bytes, insn.mnemonic, insn.is_supported_dbt, insn.is_supported_interp, insn.notes
+            insn.rva,
+            insn.va,
+            hex_bytes,
+            insn.mnemonic,
+            insn.is_supported_dbt,
+            insn.is_supported_interp,
+            insn.notes
         );
     }
     fs::write(out.join("cpu_coverage.csv"), cpu_csv)?;
@@ -702,13 +751,18 @@ pub fn run_probe_and_export<P: AsRef<Path>, O: AsRef<Path>>(
 "#,
         report.sha256,
         report.file_size,
-        report.pe.image_base,
-        report.pe.entry_point_rva,
-        report.pe.size_of_image,
-        report.pe.sections.len(),
+        report.parsed.image_base,
+        report.parsed.entry_point_rva,
+        report.parsed.size_of_image,
+        report.parsed.sections.len(),
         report.imports.len(),
         report.relocations.total_entries,
-        report.relocations.type_counts.get(&10).copied().unwrap_or(0),
+        report
+            .relocations
+            .type_counts
+            .get(&10)
+            .copied()
+            .unwrap_or(0),
         report.tls.callback_targets.len(),
         report
             .first_unsupported_dbt_insn
@@ -724,14 +778,26 @@ pub fn run_probe_and_export<P: AsRef<Path>, O: AsRef<Path>>(
     let _ = writeln!(md, "## Executable Metadata");
     let _ = writeln!(md, "- **SHA-256**: `{}`", report.sha256);
     let _ = writeln!(md, "- **File Size**: `{}` bytes", report.file_size);
-    let _ = writeln!(md, "- **Image Base**: `0x{:016x}`", report.pe.image_base);
-    let _ = writeln!(md, "- **Entry Point RVA**: `0x{:08x}`", report.pe.entry_point_rva);
-    let _ = writeln!(md, "- **Size of Image**: `0x{:08x}`", report.pe.size_of_image);
+    let _ = writeln!(
+        md,
+        "- **Image Base**: `0x{:016x}`",
+        report.parsed.image_base
+    );
+    let _ = writeln!(
+        md,
+        "- **Entry Point RVA**: `0x{:08x}`",
+        report.parsed.entry_point_rva
+    );
+    let _ = writeln!(
+        md,
+        "- **Size of Image**: `0x{:08x}`",
+        report.parsed.size_of_image
+    );
     let _ = writeln!(md, "- **Section Alignment**: `4096` bytes");
     let _ = writeln!(md, "- **File Alignment**: `512` bytes\n");
 
     let _ = writeln!(md, "## Sections Census (10)");
-    for s in &report.pe.sections {
+    for s in &report.parsed.sections {
         let _ = writeln!(
             md,
             "- `{:<8}` RVA: `0x{:08x}` VirtualSize: `0x{:08x}` RawSize: `0x{:08x}` Perms: [{}{}{}]",
@@ -746,7 +812,11 @@ pub fn run_probe_and_export<P: AsRef<Path>, O: AsRef<Path>>(
     }
 
     let _ = writeln!(md, "\n## Base Relocations");
-    let _ = writeln!(md, "- **Total Entries**: `{}`", report.relocations.total_entries);
+    let _ = writeln!(
+        md,
+        "- **Total Entries**: `{}`",
+        report.relocations.total_entries
+    );
     for (t, count) in &report.relocations.type_counts {
         let name = match t {
             0 => "ABSOLUTE (padding)",
@@ -757,18 +827,41 @@ pub fn run_probe_and_export<P: AsRef<Path>, O: AsRef<Path>>(
     }
 
     let _ = writeln!(md, "\n## TLS Metadata");
-    let _ = writeln!(md, "- **RawData**: `0x{:016x}`..`0x{:016x}`", report.tls.raw_data_start_va, report.tls.raw_data_end_va);
-    let _ = writeln!(md, "- **Index Address**: `0x{:016x}`", report.tls.index_address);
-    let _ = writeln!(md, "- **Callbacks Array**: `0x{:016x}`", report.tls.callbacks_address);
-    let _ = writeln!(md, "- **Declared Callbacks ({})**:", report.tls.callback_targets.len());
+    let _ = writeln!(
+        md,
+        "- **RawData**: `0x{:016x}`..`0x{:016x}`",
+        report.tls.raw_data_start_va, report.tls.raw_data_end_va
+    );
+    let _ = writeln!(
+        md,
+        "- **Index Address**: `0x{:016x}`",
+        report.tls.index_address
+    );
+    let _ = writeln!(
+        md,
+        "- **Callbacks Array**: `0x{:016x}`",
+        report.tls.callbacks_address
+    );
+    let _ = writeln!(
+        md,
+        "- **Declared Callbacks ({})**:",
+        report.tls.callback_targets.len()
+    );
     for cb in &report.tls.callback_targets {
         let _ = writeln!(md, "  - `0x{:016x}`", cb);
     }
 
     let _ = writeln!(md, "\n## Import Statistics");
     let _ = writeln!(md, "- **Total Imported DLLs**: `68`");
-    let _ = writeln!(md, "- **Total Imported Thunks**: `{}`", report.imports.len());
-    let _ = writeln!(md, "- **Supported / Implemented in Xenora**: `0` (Commercial runtime requires GDK / Scarlett emulation)\n");
+    let _ = writeln!(
+        md,
+        "- **Total Imported Thunks**: `{}`",
+        report.imports.len()
+    );
+    let _ = writeln!(
+        md,
+        "- **Supported / Implemented in Xenora**: `0` (Commercial runtime requires GDK / Scarlett emulation)\n"
+    );
 
     let _ = writeln!(md, "## First Static DBT Blocker");
     if let Some(insn) = &report.first_unsupported_dbt_insn {
@@ -778,7 +871,11 @@ pub fn run_probe_and_export<P: AsRef<Path>, O: AsRef<Path>>(
             .map(|b| format!("{b:02x}"))
             .collect::<Vec<_>>()
             .join(" ");
-        let _ = writeln!(md, "- **RVA**: `0x{:08x}` (VA: `0x{:016x}`)", insn.rva, insn.va);
+        let _ = writeln!(
+            md,
+            "- **RVA**: `0x{:08x}` (VA: `0x{:016x}`)",
+            insn.rva, insn.va
+        );
         let _ = writeln!(md, "- **Bytes**: `{}`", hex_bytes);
         let _ = writeln!(md, "- **Mnemonic**: `{}`", insn.mnemonic);
         let _ = writeln!(md, "- **Reason**: `{}`", insn.notes);
