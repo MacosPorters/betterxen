@@ -267,11 +267,13 @@ read-only unless created writable.
 
 The confinement policy below is enforced in `services/host_files.rs` and
 covered by `crates/loader/tests/runtime_host_files.rs` and unit tests in that
-module. It has not yet had an independent security review.
+module. Guest path confinement for this boundary was reviewed by Cursor
+security-review and implementation-review agents (not a human audit).
 
-- **Path resolution.** The root directory is opened once. Every operation
-  resolves the guest path from that descriptor one component at a time with
-  `openat` and `O_NOFOLLOW`. `.` and `..` components, device names,
+- **Path resolution.** The root directory is opened once with
+  `O_DIRECTORY | O_NOFOLLOW`, so a symlink mount root is rejected. Every
+  operation resolves the guest path from that descriptor one component at a
+  time with `openat` and `O_NOFOLLOW`. `.` and `..` components, device names,
   Windows-invalid characters and drive-relative paths are rejected. Names
   match the host listing ignoring ASCII case. Two host entries that differ
   only by case are refused as ambiguous.
@@ -284,7 +286,12 @@ module. It has not yet had an independent security review.
   checked with `fstat`: it must be the expected type, a file must have one
   link, and the device and inode must match what the listing reported. A host
   change that swaps an entry between the listing and the open fails with
-  `ERROR_ACCESS_DENIED`. Removal also re-verifies the entry first.
+  `ERROR_ACCESS_DENIED`. Removal opens and re-verifies the entry, re-checks
+  the directory listing, and on Linux unlinks via `AT_EMPTY_PATH` on the
+  verified descriptor when available. On other platforms a name-based
+  `unlinkat` remains; a concurrent host rename in that window can still
+  remove a different entry inside the mount (never outside it). A name-based
+  file unlink that did not drop the held inode's link count fails closed.
 - **File identity.** Reads, writes and truncation use the verified
   descriptor, so they reach the same file after a host rename. Sharing checks
   and the open-file check in DeleteFileW compare the live device and inode of
@@ -311,9 +318,13 @@ module. It has not yet had an independent security review.
 Not covered: another host process that moves a directory or file the guest
 already holds open out of the mount. The guest keeps its handle to that
 object, because handles refer to opened files, not paths. Host processes with
-write access to a mounted directory are therefore trusted. Some file systems
-do not keep inode numbers stable (exFAT renumbers a file when its storage is
-first allocated), so identities are compared live rather than cached.
+write access to a mounted directory are therefore trusted if confinement
+matters against concurrent host writers. Name-based removal still has a short
+in-mount TOCTOU against such writers where `AT_EMPTY_PATH` is unavailable.
+Some file systems do not keep inode numbers stable (exFAT renumbers a file
+when its storage is first allocated), so identities are compared live rather
+than cached; if an open handle's identity cannot be read, sharing checks
+fail closed.
 
 CreateFileW, ReadFile, WriteFile, GetFileSizeEx, SetFilePointerEx,
 SetEndOfFile, GetFileAttributesW, FindFirstFileW and FindNextFileW work on

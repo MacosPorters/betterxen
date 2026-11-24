@@ -25,7 +25,11 @@
 //! Not covered: another host process that moves a directory or file the guest
 //! already holds open out of the mount. The guest keeps its handle to that
 //! object. Host processes with write access to a mounted directory are
-//! trusted. This boundary has not yet been independently security reviewed.
+//! trusted. Name-based removal still has a short race against a concurrent
+//! host rename between the final identity check and `unlinkat` (on Linux,
+//! file and directory removal prefer `AT_EMPTY_PATH` on the verified
+//! descriptor). This boundary was agent-reviewed for guest path confinement;
+//! it is not a substitute for a human security audit.
 
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -72,10 +76,12 @@ impl HostMount {
         let path = CString::new(root.as_os_str().as_encoded_bytes())
             .map_err(|_| io::Error::from(io::ErrorKind::InvalidInput))?;
         // SAFETY: `path` is NUL-terminated; the result is checked.
+        // `O_NOFOLLOW` rejects a symlink at the final path component so a
+        // mount root cannot silently expand to another tree.
         let fd = unsafe {
             libc::open(
                 path.as_ptr(),
-                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC,
+                libc::O_RDONLY | libc::O_DIRECTORY | libc::O_CLOEXEC | libc::O_NOFOLLOW,
             )
         };
         if fd < 0 {
@@ -83,7 +89,10 @@ impl HostMount {
         }
         // SAFETY: `fd` is a newly opened descriptor owned by nothing else.
         let root = unsafe { OwnedFd::from_raw_fd(fd) };
-        status(root.as_fd())?;
+        let st = status(root.as_fd())?;
+        if st.st_mode & libc::S_IFMT != libc::S_IFDIR {
+            return Err(io::Error::from_raw_os_error(libc::ENOTDIR));
+        }
         Ok(Self {
             drive: drive as u8,
             root: Arc::new(root),
@@ -463,21 +472,62 @@ pub(super) fn create_directory(directory: &OwnedFd, name: &str) -> io::Result<()
 }
 
 /// Remove the entry `name` after checking it is still the object `expected`.
-/// A host process could still swap the name between the check and the
-/// unlink; that removes a directory entry inside the root, never data outside.
+///
+/// On Linux, removal uses `unlinkat` with `AT_EMPTY_PATH` on the verified
+/// descriptor so the unlink targets that inode, not whatever name currently
+/// points at. Elsewhere, the directory entry is re-checked immediately before
+/// a name-based `unlinkat`; a concurrent host rename in that remaining window
+/// can still remove a different in-tree entry (never one outside the root).
+/// After a name-based file unlink, the held descriptor must show `nlink == 0`
+/// or the call fails, so a lost race is not reported as success.
 pub(super) fn remove(directory: &OwnedFd, name: &str, expected: &Entry) -> io::Result<()> {
     let opened = match expected.kind {
         Kind::Directory => open_directory(directory, name, Some(expected.id))?,
         Kind::File => open_at(directory, name, libc::O_RDONLY, 0)?,
     };
     verify(&opened, expected.kind, Some(expected.id))?;
-    let name = c_name(name)?;
+
+    #[cfg(target_os = "linux")]
+    {
+        if unlink_verified_fd(&opened, expected.kind).is_ok() {
+            return Ok(());
+        }
+    }
+
+    // Confirm the directory entry still names this object before unlinking.
+    match find(directory, name)? {
+        Some(entry) if entry.id == expected.id && entry.kind == expected.kind => {}
+        _ => return Err(refused()),
+    }
+    let cname = c_name(name)?;
     let flags = match expected.kind {
         Kind::Directory => libc::AT_REMOVEDIR,
         Kind::File => 0,
     };
-    // SAFETY: `name` is NUL-terminated and `directory` is open.
-    if unsafe { libc::unlinkat(directory.as_raw_fd(), name.as_ptr(), flags) } != 0 {
+    // SAFETY: `cname` is NUL-terminated and `directory` is open.
+    if unsafe { libc::unlinkat(directory.as_raw_fd(), cname.as_ptr(), flags) } != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    if expected.kind == Kind::File {
+        let st = status(opened.as_fd())?;
+        if st.st_nlink != 0 {
+            // Name-based unlink hit a different dentry; the intended file is
+            // still linked.
+            return Err(refused());
+        }
+    }
+    Ok(())
+}
+
+/// Unlink the inode referred to by `fd` (Linux `AT_EMPTY_PATH`).
+#[cfg(target_os = "linux")]
+fn unlink_verified_fd(fd: &OwnedFd, kind: Kind) -> io::Result<()> {
+    let flags = match kind {
+        Kind::Directory => libc::AT_REMOVEDIR | libc::AT_EMPTY_PATH,
+        Kind::File => libc::AT_EMPTY_PATH,
+    };
+    // SAFETY: empty path with AT_EMPTY_PATH operates on `fd` itself.
+    if unsafe { libc::unlinkat(fd.as_raw_fd(), c"".as_ptr(), flags) } != 0 {
         return Err(io::Error::last_os_error());
     }
     Ok(())
@@ -568,6 +618,27 @@ mod tests {
                 Some(libc::EACCES)
             );
         }
+        std::fs::remove_dir_all(&path).unwrap();
+    }
+
+    #[test]
+    fn symlink_mount_roots_are_rejected() {
+        let path = tree("symlink-root");
+        std::fs::create_dir(path.join("real")).unwrap();
+        std::os::unix::fs::symlink(path.join("real"), path.join("link")).unwrap();
+        match HostMount::new('d', &path.join("link"), false) {
+            Ok(_) => panic!("symlink mount root should be rejected"),
+            // Darwin may report ENOTDIR instead of ELOOP for
+            // O_DIRECTORY|O_NOFOLLOW on a symlink.
+            Err(error) => assert!(
+                matches!(
+                    error.raw_os_error(),
+                    Some(libc::ELOOP | libc::ENOTDIR)
+                ),
+                "{error}"
+            ),
+        }
+        assert!(HostMount::new('d', &path.join("real"), false).is_ok());
         std::fs::remove_dir_all(&path).unwrap();
     }
 }

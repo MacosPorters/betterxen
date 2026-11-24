@@ -331,3 +331,8 @@ pub const fn lshl_add_carry_u32(a: u32, b: u32, shift: u32) -> (u32, bool) {
     let sum = ((a as u64) << shift) + b as u64;
     (sum as u32, sum >> 32 != 0)
 }
+
+/// A bitwise copy of the source (RDNA 2 guide section 12.3).
+pub(crate) const fn mov_b32(src: u32) -> u32 {
+    src
+}

@@ -15,6 +15,38 @@ unsupported = [
   "src_vcc", "src_exec", "src_m0", "src_ttmp", "src_float_inline", "src_special",
 ]
 
+# Guide sections 5.3 and 12.3. VCC and EXEC halves can be explicit
+# destinations; the move has no implicit mask or SCC effects.
+[operand_rules.sop1_move]
+family = "SOP1"
+dst = { field = "SDST", class = "sgpr_or_vcc_exec" }
+src = [{ field = "SSRC0", class = "scalar_source" }]
+max_literals = 1
+unsupported = [
+  "dst_ttmp", "dst_m0", "dst_null",
+  "src_vcc", "src_exec", "src_m0", "src_ttmp", "src_float_inline", "src_special",
+]
+
+[[form]]
+name = "S_MOV_B32"
+family = "SOP1"
+opcode = 3
+variant = "MovB32"
+operation = "mov"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop1_move"
+spec = [
+  { document = "guide", section = "12.3", page = 0 },
+  { document = "guide", section = "5.3", page = 33 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
 [[form]]
 name = "S_NOT_B32"
 family = "SOP1"

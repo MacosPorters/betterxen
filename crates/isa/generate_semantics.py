@@ -184,6 +184,7 @@ PRIMITIVES = {
     ("lshl", "bitwise"): ("nonzero", "lshl_nonzero_b32", False),
     ("lshr", "unsigned"): ("nonzero", "lshr_nonzero_b32", False),
     ("ashr", "signed"): ("nonzero", "ashr_nonzero_i32", False),
+    ("mov", "bitwise"): ("unchanged", "mov_b32", False),
     ("not", "bitwise"): ("nonzero", "not_nonzero_b32", False),
     ("brev", "bitwise"): ("unchanged", "brev_b32", False),
     ("bcnt0", "bitwise"): ("nonzero", "bcnt0_nonzero_b32", False),
@@ -301,6 +302,18 @@ OPERAND_RULES = {
         },
         # One source, so two literals cannot occur; the rest are rejected.
         "unsupported": {combo for combo in UNSUPPORTED_COMBOS if combo != "two_literals"},
+        "kind": "unary",
+    },
+    "sop1_move": {
+        "rust": "Sop1Move",
+        "enum": "ScalarUnaryOp",
+        "shape": {
+            "family": "SOP1",
+            "dst": {"field": "SDST", "class": "sgpr_or_vcc_exec"},
+            "src": [{"field": "SSRC0", "class": "scalar_source"}],
+            "max_literals": 1,
+        },
+        "unsupported": UNSUPPORTED_COMBOS - {"two_literals", "dst_vcc", "dst_exec"},
         "kind": "unary",
     },
     "sopk_sgpr": {
@@ -839,7 +852,9 @@ def validate(registry, snapshot):
         elif form["operands"] in OPERAND_RULES and OPERAND_RULES[form["operands"]]["kind"] != (
             (_rule_kind(form) if _rule_kind(form) in ("vector_compare", "immediate_compare") else "compare")
             if form["operation"] == "compare"
-            else "unary" if form["operation"] in UNARY
+            else "unary" if form["operation"] in UNARY or (
+                form["operation"] == "mov" and form["family"] == "SOP1"
+            )
             else "vector" if _rule_kind(form) == "vector" and form["operation"] not in UNARY
             else "immediate" if _rule_kind(form) == "immediate"
             else "alu"

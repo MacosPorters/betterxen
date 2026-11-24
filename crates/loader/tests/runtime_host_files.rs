@@ -41,6 +41,7 @@ const IMPORTS: &[(&str, &str)] = &[
 const GENERIC_READ: u64 = 0x8000_0000;
 const GENERIC_WRITE: u64 = 0x4000_0000;
 const CREATE_NEW: u64 = 1;
+const CREATE_ALWAYS: u64 = 2;
 const OPEN_EXISTING: u64 = 3;
 const OPEN_ALWAYS: u64 = 4;
 const INVALID: u64 = u64::MAX;
@@ -331,6 +332,24 @@ fn writable_mounts_create_change_and_remove_only_inside_the_root() {
     assert_eq!(guest.error(), 183); // existing file opened
     assert_eq!(read(&mut guest, reopened, 8).unwrap(), b"he");
     assert_eq!(guest.call("CloseHandle", &[reopened]), 1);
+
+    // CREATE_ALWAYS truncates an existing host file and reports ALREADY_EXISTS.
+    let truncated = open(
+        &mut guest,
+        "F:\\Saves\\SLOT.DAT",
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        CREATE_ALWAYS,
+    );
+    assert_ne!(truncated, INVALID);
+    assert_eq!(guest.error(), 183); // ERROR_ALREADY_EXISTS
+    assert_eq!(
+        std::fs::metadata(saves.join("Slot.dat")).unwrap().len(),
+        0
+    );
+    assert!(write(&mut guest, truncated, b"new"));
+    assert_eq!(std::fs::read(saves.join("Slot.dat")).unwrap(), b"new");
+    assert_eq!(guest.call("CloseHandle", &[truncated]), 1);
 
     assert_eq!(path_call(&mut guest, "RemoveDirectoryW", "F:\\Saves"), 0);
     assert_eq!(guest.error(), 145); // ERROR_DIR_NOT_EMPTY

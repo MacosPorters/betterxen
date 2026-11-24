@@ -382,9 +382,10 @@ fn reference_op(instruction: Instruction) -> Op {
             src0,
             src1,
         } => Op::Add(dst, src0, src1),
-        Instruction::ScalarMoveB32 { dst, src } => Op::ScalarMove(dst, reference_scalar(src)),
-        Instruction::ScalarUnary { op, dst, src } => Op::ScalarUnary(
-            match op {
+        Instruction::ScalarUnary { op, dst, src } => {
+            let src = reference_scalar(src);
+            let unary = match op {
+                ScalarUnaryOp::MovB32 => return Op::ScalarMove(dst, src),
                 ScalarUnaryOp::NotB32 => ScalarUnary::Not,
                 ScalarUnaryOp::BrevB32 => ScalarUnary::ReverseBits,
                 ScalarUnaryOp::Bcnt0I32B32 => ScalarUnary::CountZeros,
@@ -396,10 +397,9 @@ fn reference_op(instruction: Instruction) -> Op {
                 ScalarUnaryOp::SextI32I8 => ScalarUnary::SignExtendByte,
                 ScalarUnaryOp::SextI32I16 => ScalarUnary::SignExtendShort,
                 ScalarUnaryOp::AbsI32 => ScalarUnary::Absolute,
-            },
-            dst,
-            reference_scalar(src),
-        ),
+            };
+            Op::ScalarUnary(unary, dst, src)
+        }
         Instruction::ScalarCompare { op, src0, src1 } => {
             let (src0, src1) = (reference_scalar(src0), reference_scalar(src1));
             // The reference keeps CompareEqual for EQ and uses its VOPC relation
@@ -991,14 +991,16 @@ fn decodes_inline_negative_and_register_sources() {
     let decoded = decode(Architecture::Gfx1030, &bytes).unwrap();
     assert_eq!(
         decoded[0].instruction,
-        Instruction::ScalarMoveB32 {
+        Instruction::ScalarUnary {
+            op: ScalarUnaryOp::MovB32,
             dst: 10,
             src: ScalarSource::Immediate(5)
         }
     );
     assert_eq!(
         decoded[1].instruction,
-        Instruction::ScalarMoveB32 {
+        Instruction::ScalarUnary {
+            op: ScalarUnaryOp::MovB32,
             dst: 11,
             src: ScalarSource::Immediate(0xffff_fffd)
         }
@@ -1032,7 +1034,8 @@ fn accepts_scalar_destination_105_and_vgpr_zero_add_sources() {
     let valid = 0xbee9_0380u32.to_le_bytes();
     assert_eq!(
         decode(Architecture::Gfx1030, &valid).unwrap()[0].instruction,
-        Instruction::ScalarMoveB32 {
+        Instruction::ScalarUnary {
+            op: ScalarUnaryOp::MovB32,
             dst: 105,
             src: ScalarSource::Immediate(0)
         }
