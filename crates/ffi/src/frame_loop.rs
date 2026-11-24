@@ -10,7 +10,7 @@
 //! the guest leaves its loop and halts.
 
 use std::cell::RefCell;
-use std::sync::{Arc, Condvar, Mutex, MutexGuard};
+use std::sync::{Arc, Condvar, Mutex, MutexGuard, OnceLock};
 use std::thread::JoinHandle;
 
 use xenora_loader::startup::{StartupLayout, run_synthetic_startup};
@@ -171,8 +171,8 @@ impl FrameLoop {
             include_bytes!("../../../fixtures/rdna2/x9-constant-ps.bin"),
         )
         .map_err(|e| format!("shader translation: {e}"))?;
-        let gpu = NativeCompute::new().map_err(|e| format!("Metal device: {e}"))?;
-        // The session's GPU resources live on the guest thread, where the import runs.
+        let gpu = shared_gpu()?;
+        // The import runs on the guest thread, so the session's shader lives there too.
         GPU.with(|slot| *slot.borrow_mut() = Some((gpu, shader.msl)));
 
         let shared = Arc::clone(self);
@@ -268,7 +268,26 @@ impl FrameLoop {
 }
 
 thread_local! {
-    static GPU: RefCell<Option<(NativeCompute, String)>> = const { RefCell::new(None) };
+    static GPU: RefCell<Option<(&'static NativeCompute, String)>> = const { RefCell::new(None) };
+}
+
+/// One Metal device and command queue shared by every frame-loop session (#290).
+///
+/// The first command buffer submitted on a queue makes the GPU driver allocate a
+/// working set for it (about 45 MiB on an Apple M5 with Metal validation), and the
+/// driver frees that memory asynchronously, 10–50 ms after the queue is released.
+/// A queue per session therefore allocated and freed it once per session, and the
+/// process footprint depended on how far that release had progressed. One queue
+/// for the process allocates the working set once and keeps it: bounded caching,
+/// not per-session churn. `NativeCompute` is `Send + Sync`, and rendering takes
+/// `&self`, so concurrent sessions can share it. A device that cannot be opened
+/// is reported to every session that asks.
+fn shared_gpu() -> Result<&'static NativeCompute, String> {
+    static SHARED: OnceLock<Result<NativeCompute, String>> = OnceLock::new();
+    SHARED
+        .get_or_init(|| NativeCompute::new().map_err(|e| format!("Metal device: {e}")))
+        .as_ref()
+        .map_err(Clone::clone)
 }
 
 /// Frame `index` is a red strip in column `index % 4` on the clear colour.

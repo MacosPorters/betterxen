@@ -222,6 +222,12 @@ VECTOR_PRIMITIVES = {
     ("mul24", "unsigned"): "Mul24Unsigned",
     ("mul_hi24", "signed"): "MulHi24Signed",
     ("mul_hi24", "unsigned"): "MulHi24Unsigned",
+    ("and", "bitwise"): "And",
+    ("or", "bitwise"): "Or",
+    ("xor", "bitwise"): "Xor",
+    ("lshl", "bitwise"): "ShiftLeft",
+    ("lshr", "bitwise"): "ShiftRight",
+    ("ashr", "signed"): "ArithmeticShiftRight",
 }
 
 # Operand rules the decoder implements, each exactly once. A registry rule must
@@ -365,6 +371,26 @@ OPERAND_RULES = {
         "unsupported": {
             "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline",
             "src_special",
+        },
+        "kind": "vector",
+    },
+    "vop2_vgpr2": {
+        "rust": "Vop2Vgpr2",
+        "enum": "VectorAluOp",
+        "shape": {
+            "family": "VOP2",
+            "dst": {"field": "VDST", "class": "vgpr", "min": 0, "max": 255},
+            "src": [
+                {"field": "SRC0", "class": "vgpr"},
+                {"field": "VSRC1", "class": "vgpr"},
+            ],
+            "max_literals": 0,
+        },
+        # The subset the hand-written decoder accepted before the registry (#215
+        # M27): SRC0 must select a VGPR (256-511); the decoder rejects the rest.
+        "unsupported": {
+            "src_sgpr", "src_vcc", "src_exec", "src_m0", "src_ttmp", "src_null", "src_inline",
+            "src_float_inline", "src_special", "src_literal",
         },
         "kind": "vector",
     },
@@ -568,7 +594,8 @@ def _check_xml(form, rule, snapshot, errors):
     fields = [(rule["dst"]["field"], False)] if "dst" in rule else []
     fields += [(src["field"], True) for src in rule["src"]]
     shift = form["operation"] in CONTROL_S1 and len(rule["src"]) > 1
-    count_field = rule["src"][1]["field"] if shift else None
+    # The shift count is S1, or S0 for a form that reads its sources reversed.
+    count_field = rule["src"][0 if SOURCE_ORDER_KEY in form else 1]["field"] if shift else None
     for field, is_source in fields:
         if field not in operands:
             errors.append(f"{label}: XML has no operand {field}")
@@ -978,8 +1005,15 @@ def render(registry, snapshot):
         "/// Registry schema of the generated tables.",
         f"pub const GENERATED_SCHEMA: u32 = {registry['schema']};",
     ]
+    # Rules that share a generated enum (VOP2 `vop2_vgpr` and `vop2_vgpr2`) render
+    # it once, with the forms of all of them in registry order.
+    rendered = set()
     for rule_name in rule_names:
-        selected = [form for form in forms if form["operands"] == rule_name]
+        enum = OPERAND_RULES[rule_name]["enum"]
+        if enum in rendered:
+            continue
+        rendered.add(enum)
+        selected = [form for form in forms if OPERAND_RULES[form["operands"]]["enum"] == enum]
         out += _render_enum(rule_name, selected, snapshot, positions)
     variants = registry.get("encoding_variant", [])
     variant_positions = {
@@ -1129,6 +1163,9 @@ def _render_variants(rule_name, variants, registry, snapshot, positions):
 def _render_enum(rule_name, forms, snapshot, positions):
     enum = OPERAND_RULES[rule_name]["enum"]
     kind = OPERAND_RULES[rule_name]["kind"]
+    rules = sorted({form["operands"] for form in forms})
+    if any(OPERAND_RULES[name]["kind"] != kind for name in rules):
+        raise ValueError(f"{enum}: operand rules {rules} of one enum differ in kind")
     table = re.sub(r"(?<!^)(?=[A-Z])", "_", enum).upper() + "_BY_OPCODE"
     family = forms[0]["family"]
     encoding = snapshot["encodings"][_family_encoding(family)]
@@ -1145,7 +1182,8 @@ def _render_enum(rule_name, forms, snapshot, positions):
         raise ValueError(f"{family}: identifiers do not split into fixed bits and OP")
     out = [
         "",
-        f"/// {family} operations declared in the semantic registry (operand rule `{rule_name}`).",
+        f"/// {family} operations declared in the semantic registry (operand rule"
+        f"{'s' if len(rules) > 1 else ''} {', '.join(f'`{name}`' for name in rules)}).",
         "#[derive(Clone, Copy, Debug, Eq, PartialEq)]",
         f"pub enum {enum} {{",
     ]
@@ -1275,6 +1313,18 @@ def _render_enum(rule_name, forms, snapshot, positions):
         ]
         out += [
             f"            Self::{form['variant']} => {'true' if SOURCE_ORDER_KEY in form else 'false'},"
+            for form in forms
+        ]
+        out += [
+            "        }",
+            "    }",
+            "",
+            "    /// The operand rule the decoder applies to the 32-bit encoding.",
+            "    pub const fn operand_rule(self) -> OperandRule {",
+            "        match self {",
+        ]
+        out += [
+            f"            Self::{form['variant']} => OperandRule::{OPERAND_RULES[form['operands']]['rust']},"
             for form in forms
         ]
         out += ["        }", "    }", "}"]

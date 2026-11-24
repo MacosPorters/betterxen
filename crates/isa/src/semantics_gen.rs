@@ -1198,7 +1198,7 @@ impl ScalarCompareOp {
     }
 }
 
-/// VOP2 operations declared in the semantic registry (operand rule `vop2_vgpr`).
+/// VOP2 operations declared in the semantic registry (operand rules `vop2_vgpr`, `vop2_vgpr2`).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum VectorAluOp {
     /// `v_mul_i32_i24` (VOP2 opcode 9): signed mul24, SCC = unchanged.
@@ -1225,6 +1225,18 @@ pub enum VectorAluOp {
     SubNcU32,
     /// `v_subrev_nc_u32` (VOP2 opcode 39): unsigned sub, SCC = unchanged.
     SubrevNcU32,
+    /// `v_lshrrev_b32` (VOP2 opcode 22): bitwise lshr, SCC = unchanged.
+    LshrrevB32,
+    /// `v_ashrrev_i32` (VOP2 opcode 24): signed ashr, SCC = unchanged.
+    AshrrevI32,
+    /// `v_lshlrev_b32` (VOP2 opcode 26): bitwise lshl, SCC = unchanged.
+    LshlrevB32,
+    /// `v_and_b32` (VOP2 opcode 27): bitwise and, SCC = unchanged.
+    AndB32,
+    /// `v_or_b32` (VOP2 opcode 28): bitwise or, SCC = unchanged.
+    OrB32,
+    /// `v_xor_b32` (VOP2 opcode 29): bitwise xor, SCC = unchanged.
+    XorB32,
 }
 
 /// VectorAluOp by VOP2 OP field value; `None` for undeclared opcodes.
@@ -1251,14 +1263,14 @@ const VECTOR_ALU_OP_BY_OPCODE: [Option<VectorAluOp>; 64] = [
     Some(VectorAluOp::MinU32),
     Some(VectorAluOp::MaxU32),
     None,
+    Some(VectorAluOp::LshrrevB32),
     None,
+    Some(VectorAluOp::AshrrevI32),
     None,
-    None,
-    None,
-    None,
-    None,
-    None,
-    None,
+    Some(VectorAluOp::LshlrevB32),
+    Some(VectorAluOp::AndB32),
+    Some(VectorAluOp::OrB32),
+    Some(VectorAluOp::XorB32),
     Some(VectorAluOp::XnorB32),
     None,
     None,
@@ -1297,7 +1309,7 @@ const VECTOR_ALU_OP_BY_OPCODE: [Option<VectorAluOp>; 64] = [
 
 impl VectorAluOp {
     /// Every operation, in registry order.
-    pub const ALL: [Self; 12] = [
+    pub const ALL: [Self; 18] = [
         Self::MulI32I24,
         Self::MulHiI32I24,
         Self::MulU32U24,
@@ -1310,6 +1322,12 @@ impl VectorAluOp {
         Self::AddNcU32,
         Self::SubNcU32,
         Self::SubrevNcU32,
+        Self::LshrrevB32,
+        Self::AshrrevI32,
+        Self::LshlrevB32,
+        Self::AndB32,
+        Self::OrB32,
+        Self::XorB32,
     ];
 
     /// Selects the operation from a first instruction word: the VOP2 encoding
@@ -1336,6 +1354,12 @@ impl VectorAluOp {
             Self::AddNcU32 => "v_add_nc_u32",
             Self::SubNcU32 => "v_sub_nc_u32",
             Self::SubrevNcU32 => "v_subrev_nc_u32",
+            Self::LshrrevB32 => "v_lshrrev_b32",
+            Self::AshrrevI32 => "v_ashrrev_i32",
+            Self::LshlrevB32 => "v_lshlrev_b32",
+            Self::AndB32 => "v_and_b32",
+            Self::OrB32 => "v_or_b32",
+            Self::XorB32 => "v_xor_b32",
         }
     }
 
@@ -1354,6 +1378,12 @@ impl VectorAluOp {
             Self::AddNcU32 => 65,
             Self::SubNcU32 => 66,
             Self::SubrevNcU32 => 67,
+            Self::LshrrevB32 => 68,
+            Self::AshrrevI32 => 69,
+            Self::LshlrevB32 => 70,
+            Self::AndB32 => 71,
+            Self::OrB32 => 72,
+            Self::XorB32 => 73,
         }]
     }
 
@@ -1372,6 +1402,12 @@ impl VectorAluOp {
             Self::AddNcU32 => "v_add_nc_u32_e32",
             Self::SubNcU32 => "v_sub_nc_u32_e32",
             Self::SubrevNcU32 => "v_subrev_nc_u32_e32",
+            Self::LshrrevB32 => "v_lshrrev_b32_e32",
+            Self::AshrrevI32 => "v_ashrrev_i32_e32",
+            Self::LshlrevB32 => "v_lshlrev_b32_e32",
+            Self::AndB32 => "v_and_b32_e32",
+            Self::OrB32 => "v_or_b32_e32",
+            Self::XorB32 => "v_xor_b32_e32",
         }
     }
 
@@ -1390,6 +1426,12 @@ impl VectorAluOp {
             Self::AddNcU32 => VectorBinary::Add,
             Self::SubNcU32 => VectorBinary::Sub,
             Self::SubrevNcU32 => VectorBinary::Sub,
+            Self::LshrrevB32 => VectorBinary::ShiftRight,
+            Self::AshrrevI32 => VectorBinary::ArithmeticShiftRight,
+            Self::LshlrevB32 => VectorBinary::ShiftLeft,
+            Self::AndB32 => VectorBinary::And,
+            Self::OrB32 => VectorBinary::Or,
+            Self::XorB32 => VectorBinary::Xor,
         }
     }
 
@@ -1408,6 +1450,36 @@ impl VectorAluOp {
             Self::AddNcU32 => false,
             Self::SubNcU32 => false,
             Self::SubrevNcU32 => true,
+            Self::LshrrevB32 => true,
+            Self::AshrrevI32 => true,
+            Self::LshlrevB32 => true,
+            Self::AndB32 => false,
+            Self::OrB32 => false,
+            Self::XorB32 => false,
+        }
+    }
+
+    /// The operand rule the decoder applies to the 32-bit encoding.
+    pub const fn operand_rule(self) -> OperandRule {
+        match self {
+            Self::MulI32I24 => OperandRule::Vop2Vgpr,
+            Self::MulHiI32I24 => OperandRule::Vop2Vgpr,
+            Self::MulU32U24 => OperandRule::Vop2Vgpr,
+            Self::MulHiU32U24 => OperandRule::Vop2Vgpr,
+            Self::MinI32 => OperandRule::Vop2Vgpr,
+            Self::MaxI32 => OperandRule::Vop2Vgpr,
+            Self::MinU32 => OperandRule::Vop2Vgpr,
+            Self::MaxU32 => OperandRule::Vop2Vgpr,
+            Self::XnorB32 => OperandRule::Vop2Vgpr,
+            Self::AddNcU32 => OperandRule::Vop2Vgpr,
+            Self::SubNcU32 => OperandRule::Vop2Vgpr,
+            Self::SubrevNcU32 => OperandRule::Vop2Vgpr,
+            Self::LshrrevB32 => OperandRule::Vop2Vgpr2,
+            Self::AshrrevI32 => OperandRule::Vop2Vgpr2,
+            Self::LshlrevB32 => OperandRule::Vop2Vgpr2,
+            Self::AndB32 => OperandRule::Vop2Vgpr2,
+            Self::OrB32 => OperandRule::Vop2Vgpr2,
+            Self::XorB32 => OperandRule::Vop2Vgpr2,
         }
     }
 }
@@ -1764,22 +1836,22 @@ impl VectorCompareOp {
     /// The validated registry row.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::CmpLtI32 => 68,
-            Self::CmpEqI32 => 69,
-            Self::CmpLeI32 => 70,
-            Self::CmpGtI32 => 71,
-            Self::CmpNeI32 => 72,
-            Self::CmpGeI32 => 73,
-            Self::CmpLtU32 => 74,
-            Self::CmpEqU32 => 75,
-            Self::CmpLeU32 => 76,
-            Self::CmpGtU32 => 77,
-            Self::CmpNeU32 => 78,
-            Self::CmpGeU32 => 79,
-            Self::CmpFI32 => 80,
-            Self::CmpTI32 => 81,
-            Self::CmpFU32 => 82,
-            Self::CmpTU32 => 83,
+            Self::CmpLtI32 => 74,
+            Self::CmpEqI32 => 75,
+            Self::CmpLeI32 => 76,
+            Self::CmpGtI32 => 77,
+            Self::CmpNeI32 => 78,
+            Self::CmpGeI32 => 79,
+            Self::CmpLtU32 => 80,
+            Self::CmpEqU32 => 81,
+            Self::CmpLeU32 => 82,
+            Self::CmpGtU32 => 83,
+            Self::CmpNeU32 => 84,
+            Self::CmpGeU32 => 85,
+            Self::CmpFI32 => 86,
+            Self::CmpTI32 => 87,
+            Self::CmpFU32 => 88,
+            Self::CmpTU32 => 89,
         }]
     }
 
@@ -2005,22 +2077,22 @@ impl VectorCompareVop3Op {
     /// The validated registry row of this encoding.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::CmpLtI32 => 84,
-            Self::CmpEqI32 => 85,
-            Self::CmpLeI32 => 86,
-            Self::CmpGtI32 => 87,
-            Self::CmpNeI32 => 88,
-            Self::CmpGeI32 => 89,
-            Self::CmpLtU32 => 90,
-            Self::CmpEqU32 => 91,
-            Self::CmpLeU32 => 92,
-            Self::CmpGtU32 => 93,
-            Self::CmpNeU32 => 94,
-            Self::CmpGeU32 => 95,
-            Self::CmpFI32 => 96,
-            Self::CmpTI32 => 97,
-            Self::CmpFU32 => 98,
-            Self::CmpTU32 => 99,
+            Self::CmpLtI32 => 90,
+            Self::CmpEqI32 => 91,
+            Self::CmpLeI32 => 92,
+            Self::CmpGtI32 => 93,
+            Self::CmpNeI32 => 94,
+            Self::CmpGeI32 => 95,
+            Self::CmpLtU32 => 96,
+            Self::CmpEqU32 => 97,
+            Self::CmpLeU32 => 98,
+            Self::CmpGtU32 => 99,
+            Self::CmpNeU32 => 100,
+            Self::CmpGeU32 => 101,
+            Self::CmpFI32 => 102,
+            Self::CmpTI32 => 103,
+            Self::CmpFU32 => 104,
+            Self::CmpTU32 => 105,
         }]
     }
 }
@@ -2134,24 +2206,24 @@ impl VectorAluVop3Op {
     /// The validated registry row of this encoding.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::AddNcU32 => 100,
-            Self::MulI32I24 => 101,
-            Self::MulHiI32I24 => 102,
-            Self::MulU32U24 => 103,
-            Self::MulHiU32U24 => 104,
-            Self::MinI32 => 105,
-            Self::MaxI32 => 106,
-            Self::MinU32 => 107,
-            Self::MaxU32 => 108,
-            Self::XnorB32 => 109,
-            Self::SubNcU32 => 110,
-            Self::SubrevNcU32 => 111,
+            Self::AddNcU32 => 106,
+            Self::MulI32I24 => 107,
+            Self::MulHiI32I24 => 108,
+            Self::MulU32U24 => 109,
+            Self::MulHiU32U24 => 110,
+            Self::MinI32 => 111,
+            Self::MaxI32 => 112,
+            Self::MinU32 => 113,
+            Self::MaxU32 => 114,
+            Self::XnorB32 => 115,
+            Self::SubNcU32 => 116,
+            Self::SubrevNcU32 => 117,
         }]
     }
 }
 
 /// Identity of every registry form and encoding variant, in registry order.
-pub const FORM_IDS: [(&str, EncodingFamily); 112] = [
+pub const FORM_IDS: [(&str, EncodingFamily); 118] = [
     ("S_ADD_U32", EncodingFamily::Sop2),
     ("S_SUB_U32", EncodingFamily::Sop2),
     ("S_ADD_I32", EncodingFamily::Sop2),
@@ -2220,6 +2292,12 @@ pub const FORM_IDS: [(&str, EncodingFamily); 112] = [
     ("V_ADD_NC_U32", EncodingFamily::Vop2),
     ("V_SUB_NC_U32", EncodingFamily::Vop2),
     ("V_SUBREV_NC_U32", EncodingFamily::Vop2),
+    ("V_LSHRREV_B32", EncodingFamily::Vop2),
+    ("V_ASHRREV_I32", EncodingFamily::Vop2),
+    ("V_LSHLREV_B32", EncodingFamily::Vop2),
+    ("V_AND_B32", EncodingFamily::Vop2),
+    ("V_OR_B32", EncodingFamily::Vop2),
+    ("V_XOR_B32", EncodingFamily::Vop2),
     ("V_CMP_LT_I32", EncodingFamily::Vopc),
     ("V_CMP_EQ_I32", EncodingFamily::Vopc),
     ("V_CMP_LE_I32", EncodingFamily::Vopc),
@@ -2267,7 +2345,7 @@ pub const FORM_IDS: [(&str, EncodingFamily); 112] = [
 ];
 
 /// One validated row per registry form, in registry order.
-pub static FORMS: [FormSemantics; 112] = [
+pub static FORMS: [FormSemantics; 118] = [
     FormSemantics {
         name: "S_ADD_U32",
         family: EncodingFamily::Sop2,
@@ -3694,6 +3772,132 @@ pub static FORMS: [FormSemantics; 112] = [
         wave: Wave::Any,
         operands: OperandRule::Vop2Vgpr,
         spec: &[SpecRef { document: Document::Guide, section: "12.7", page: 134 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "V_LSHRREV_B32",
+        family: EncodingFamily::Vop2,
+        opcode: 22,
+        operation: Operation::LogicalShiftRight,
+        signedness: Signedness::Bitwise,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 5,
+        shift_amount: 0,
+        swap_sources: true,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::Vop2Vgpr2,
+        spec: &[SpecRef { document: Document::Guide, section: "12.7", page: 133 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "V_ASHRREV_I32",
+        family: EncodingFamily::Vop2,
+        opcode: 24,
+        operation: Operation::ArithmeticShiftRight,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 5,
+        shift_amount: 0,
+        swap_sources: true,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::Vop2Vgpr2,
+        spec: &[SpecRef { document: Document::Guide, section: "12.7", page: 133 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "V_LSHLREV_B32",
+        family: EncodingFamily::Vop2,
+        opcode: 26,
+        operation: Operation::ShiftLeft,
+        signedness: Signedness::Bitwise,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 5,
+        shift_amount: 0,
+        swap_sources: true,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::Vop2Vgpr2,
+        spec: &[SpecRef { document: Document::Guide, section: "12.7", page: 133 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "V_AND_B32",
+        family: EncodingFamily::Vop2,
+        opcode: 27,
+        operation: Operation::And,
+        signedness: Signedness::Bitwise,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::Vop2Vgpr2,
+        spec: &[SpecRef { document: Document::Guide, section: "12.7", page: 133 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "V_OR_B32",
+        family: EncodingFamily::Vop2,
+        opcode: 28,
+        operation: Operation::Or,
+        signedness: Signedness::Bitwise,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::Vop2Vgpr2,
+        spec: &[SpecRef { document: Document::Guide, section: "12.7", page: 133 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "V_XOR_B32",
+        family: EncodingFamily::Vop2,
+        opcode: 29,
+        operation: Operation::Xor,
+        signedness: Signedness::Bitwise,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::Vop2Vgpr2,
+        spec: &[SpecRef { document: Document::Guide, section: "12.7", page: 133 }],
         verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
     },
     FormSemantics {

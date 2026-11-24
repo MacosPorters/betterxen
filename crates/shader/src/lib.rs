@@ -9,8 +9,8 @@ pub use graphics::{PIXEL_ENTRY_POINT, VERTEX_ENTRY_POINT, compile_graphics};
 
 pub use xenora_decoder::Architecture;
 use xenora_decoder::{
-    DecodeError, DecodedInstruction, Instruction, ScalarSource, VectorAluVop3Op, VectorBinary,
-    VectorCompareOp, VectorSource,
+    DecodeError, DecodedInstruction, Instruction, ScalarSource, VectorAluOp, VectorAluVop3Op,
+    VectorBinary, VectorCompareOp, VectorSource,
 };
 
 /// SGPR index of `vcc_lo`.
@@ -156,14 +156,7 @@ impl Op {
                     Binary::FloatAdd | Binary::FloatMul => format!(
                         "as_type<uint>(as_type<float>({left}) {symbol} as_type<float>({right}))"
                     ),
-                    Binary::ArithmeticShiftRight => {
-                        format!("as_type<uint>(as_type<int>({left}) {symbol} ({right} & 31u))")
-                    }
-                    Binary::ShiftLeft | Binary::ShiftRight => {
-                        format!("{left} {symbol} ({right} & 31u)")
-                    }
                     Binary::Vector(operation) => vector_expression(operation, &left, &right),
-                    _ => format!("{left} {symbol} {right}"),
                 }
             }
             Self::MergeLanes {
@@ -215,12 +208,6 @@ fn compare_expression(op: VectorCompareOp, left: &str, right: &str) -> String {
 
 #[derive(Clone, Copy)]
 enum Binary {
-    ShiftLeft,
-    ShiftRight,
-    ArithmeticShiftRight,
-    And,
-    Or,
-    Xor,
     FloatAdd,
     FloatMul,
     /// A registry VOP2 integer operation (or its VOP3 encoding), lowered by its
@@ -231,12 +218,6 @@ enum Binary {
 impl Binary {
     fn operator(self) -> (&'static str, &'static str) {
         match self {
-            Self::ShiftLeft => ("lshl.b32", "<<"),
-            Self::ShiftRight => ("lshr.b32", ">>"),
-            Self::ArithmeticShiftRight => ("ashr.i32", ">>"),
-            Self::And => ("and.b32", "&"),
-            Self::Or => ("or.b32", "|"),
-            Self::Xor => ("xor.b32", "^"),
             Self::FloatAdd => ("add.f32", "+"),
             Self::FloatMul => ("mul.f32", "*"),
             Self::Vector(operation) => (
@@ -252,6 +233,12 @@ impl Binary {
                     VectorBinary::Mul24Unsigned => "mul24.u32",
                     VectorBinary::MulHi24Signed => "mulhi24.i32",
                     VectorBinary::MulHi24Unsigned => "mulhi24.u32",
+                    VectorBinary::And => "and.b32",
+                    VectorBinary::Or => "or.b32",
+                    VectorBinary::Xor => "xor.b32",
+                    VectorBinary::ShiftLeft => "lshl.b32",
+                    VectorBinary::ShiftRight => "lshr.b32",
+                    VectorBinary::ArithmeticShiftRight => "ashr.i32",
                 },
                 "",
             ),
@@ -286,6 +273,15 @@ fn vector_expression(operation: VectorBinary, left: &str, right: &str) -> String
             format!("as_type<uint>(mulhi({}, {}))", i24(left), i24(right))
         }
         VectorBinary::MulHi24Unsigned => format!("mulhi({}, {})", u24(left), u24(right)),
+        VectorBinary::And => format!("{left} & {right}"),
+        VectorBinary::Or => format!("{left} | {right}"),
+        VectorBinary::Xor => format!("{left} ^ {right}"),
+        // MSL leaves shifts by 32 or more undefined; the guide reads S0[4:0].
+        VectorBinary::ShiftLeft => format!("{left} << ({right} & 31u)"),
+        VectorBinary::ShiftRight => format!("{left} >> ({right} & 31u)"),
+        VectorBinary::ArithmeticShiftRight => {
+            format!("as_type<uint>(as_type<int>({left}) >> ({right} & 31u))")
+        }
     }
 }
 
@@ -696,15 +692,22 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     dst,
                     ..
                 }
-                | Instruction::VectorLshlrevB32 { dst, .. }
-                | Instruction::VectorLshrrevB32 { dst, .. }
-                | Instruction::VectorAshrrevI32 { dst, .. }
-                | Instruction::VectorAndB32 { dst, .. }
-                | Instruction::VectorOrB32 { dst, .. }
-                | Instruction::VectorXorB32 { dst, .. } => dst,
+                // Of the registry VOP2 forms, the contract admits only the six
+                // logical and shift forms that were hand-written before (#215 M27).
+                | Instruction::VectorAlu {
+                    op:
+                        VectorAluOp::LshlrevB32
+                        | VectorAluOp::LshrrevB32
+                        | VectorAluOp::AshrrevI32
+                        | VectorAluOp::AndB32
+                        | VectorAluOp::OrB32
+                        | VectorAluOp::XorB32,
+                    dst,
+                    ..
+                } => dst,
                 _ => {
                     return Err(error(
-                        "code skipped by a runtime s_cbranch_vccz may contain only v_mov_b32, v_add_nc_u32_e64 and the hand-written integer VOP2 forms",
+                        "code skipped by a runtime s_cbranch_vccz may contain only v_mov_b32, v_add_nc_u32_e64 and the VOP2 logical and shift forms",
                     ));
                 }
             };
@@ -739,12 +742,6 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
             match instruction.instruction {
                 Instruction::MoveB32 { .. }
                 | Instruction::VectorAluVop3 { .. }
-                | Instruction::VectorLshlrevB32 { .. }
-                | Instruction::VectorLshrrevB32 { .. }
-                | Instruction::VectorAshrrevI32 { .. }
-                | Instruction::VectorAndB32 { .. }
-                | Instruction::VectorOrB32 { .. }
-                | Instruction::VectorXorB32 { .. }
                 | Instruction::VectorAddF32 { .. }
                 | Instruction::VectorMulF32 { .. }
                 | Instruction::VectorAlu { .. } => continue,
@@ -874,27 +871,6 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     Some(dst),
                     Op::Binary(Binary::Vector(op.lowering()), left, right),
                 )
-            }
-            Instruction::VectorLshlrevB32 { dst, src0, src1 } => (
-                Some(dst),
-                Op::Binary(Binary::ShiftLeft, read(src1)?, read(src0)?),
-            ),
-            Instruction::VectorAshrrevI32 { dst, src0, src1 } => (
-                Some(dst),
-                Op::Binary(Binary::ArithmeticShiftRight, read(src1)?, read(src0)?),
-            ),
-            Instruction::VectorLshrrevB32 { dst, src0, src1 } => (
-                Some(dst),
-                Op::Binary(Binary::ShiftRight, read(src1)?, read(src0)?),
-            ),
-            Instruction::VectorAndB32 { dst, src0, src1 } => {
-                (Some(dst), Op::Binary(Binary::And, read(src0)?, read(src1)?))
-            }
-            Instruction::VectorOrB32 { dst, src0, src1 } => {
-                (Some(dst), Op::Binary(Binary::Or, read(src0)?, read(src1)?))
-            }
-            Instruction::VectorXorB32 { dst, src0, src1 } => {
-                (Some(dst), Op::Binary(Binary::Xor, read(src0)?, read(src1)?))
             }
             Instruction::ScalarMoveB32 { dst, src } => {
                 let value = read_scalar(src)?;
@@ -1135,9 +1111,9 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
         };
         let value_bits = match operation {
             Op::Constant(bits) => KnownBits::constant(bits),
-            Op::Binary(Binary::And, left, right) => facts[left.0].and(facts[right.0]),
-            Op::Binary(Binary::Or, left, right) => facts[left.0].or(facts[right.0]),
-            Op::Binary(Binary::Xor, left, right) => facts[left.0].xor(facts[right.0]),
+            Op::Binary(Binary::Vector(VectorBinary::And), left, right) => facts[left.0].and(facts[right.0]),
+            Op::Binary(Binary::Vector(VectorBinary::Or), left, right) => facts[left.0].or(facts[right.0]),
+            Op::Binary(Binary::Vector(VectorBinary::Xor), left, right) => facts[left.0].xor(facts[right.0]),
             Op::Binary(operator @ (Binary::FloatAdd | Binary::FloatMul), left, right) => {
                 exact_float_result(operator, facts[left.0], facts[right.0])
                     .ok_or_else(|| error("FP32 operation is not proven exact for positive normal operands and results"))?

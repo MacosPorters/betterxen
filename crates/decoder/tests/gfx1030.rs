@@ -554,22 +554,32 @@ fn reference_op(instruction: Instruction) -> Op {
             target,
             condition: BranchCondition::Always,
         },
-        Instruction::VectorAndB32 { dst, src0, src1 } => {
-            Op::Vector(VectorAlu::And, dst, src0, src1)
-        }
-        Instruction::VectorLshlrevB32 { dst, src0, src1 } => {
-            Op::Vector(VectorAlu::ShiftLeft, dst, src0, src1)
-        }
-        Instruction::VectorAshrrevI32 { dst, src0, src1 } => {
-            Op::Vector(VectorAlu::ArithmeticShiftRight, dst, src0, src1)
-        }
-        Instruction::VectorLshrrevB32 { dst, src0, src1 } => {
-            Op::Vector(VectorAlu::ShiftRight, dst, src0, src1)
-        }
-        Instruction::VectorOrB32 { dst, src0, src1 } => Op::Vector(VectorAlu::Or, dst, src0, src1),
-        Instruction::VectorXorB32 { dst, src0, src1 } => {
-            Op::Vector(VectorAlu::Xor, dst, src0, src1)
-        }
+        // The six logical and shift forms migrated from hand-written code
+        // (#215 M27) keep the reference's VGPR-only VectorAlu ops.
+        Instruction::VectorAlu {
+            op:
+                op @ (VectorAluOp::AndB32
+                | VectorAluOp::OrB32
+                | VectorAluOp::XorB32
+                | VectorAluOp::LshlrevB32
+                | VectorAluOp::LshrrevB32
+                | VectorAluOp::AshrrevI32),
+            dst,
+            src0: VectorSource::Register(src0),
+            src1,
+        } => Op::Vector(
+            match op {
+                VectorAluOp::AndB32 => VectorAlu::And,
+                VectorAluOp::OrB32 => VectorAlu::Or,
+                VectorAluOp::XorB32 => VectorAlu::Xor,
+                VectorAluOp::LshlrevB32 => VectorAlu::ShiftLeft,
+                VectorAluOp::LshrrevB32 => VectorAlu::ShiftRight,
+                _ => VectorAlu::ArithmeticShiftRight,
+            },
+            dst,
+            src0,
+            src1,
+        ),
         Instruction::VectorAddF32 { dst, src0, src1 } => {
             Op::Vector(VectorAlu::FloatAdd, dst, src0, src1)
         }
@@ -625,6 +635,7 @@ fn reference_op(instruction: Instruction) -> Op {
                 VectorAluOp::AddNcU32 => VectorInteger::Add,
                 VectorAluOp::SubNcU32 => VectorInteger::Subtract,
                 VectorAluOp::SubrevNcU32 => VectorInteger::SubtractReverse,
+                _ => panic!("{op:?} decodes only with a VGPR SRC0 (operand rule vop2_vgpr2)"),
             },
             dst,
             match src0 {

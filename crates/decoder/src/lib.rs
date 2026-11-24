@@ -10,13 +10,12 @@ pub use xenora_isa::{
 use xenora_isa::{
     BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
     S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
-    V_AND_B32, V_ASHRREV_I32, V_INTERP_P1_F32, V_INTERP_P2_F32, V_LSHLREV_B32, V_LSHRREV_B32,
-    V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32, VCC_LO,
+    V_INTERP_P1_F32, V_INTERP_P2_F32, V_MOV_B32, V_MUL_F32, VCC_LO,
 };
 
 use xenora_isa::meta::EncodingFamily;
-use xenora_isa::semantics::FORM_IDS;
 pub use xenora_isa::semantics::VectorBinary;
+use xenora_isa::semantics::{FORM_IDS, OperandRule};
 
 /// Metadata forms that [`decode`] turns into an [`Instruction`] for at least one
 /// operand combination: the hand-written forms below followed by every form of
@@ -41,7 +40,7 @@ const fn concat_forms<const N: usize>() -> [(&'static str, EncodingFamily); N] {
 }
 
 /// Decoded forms not yet described by the semantic registry.
-const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 23] = [
+const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 17] = [
     ("BUFFER_LOAD_DWORD", EncodingFamily::Mubuf),
     ("BUFFER_STORE_DWORD", EncodingFamily::Mubuf),
     ("EXP", EncodingFamily::Exp),
@@ -55,16 +54,10 @@ const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 23] = [
     ("S_WAITCNT", EncodingFamily::Sopp),
     ("S_WAITCNT_VSCNT", EncodingFamily::Sopk),
     ("V_ADD_F32", EncodingFamily::Vop2),
-    ("V_AND_B32", EncodingFamily::Vop2),
-    ("V_ASHRREV_I32", EncodingFamily::Vop2),
     ("V_INTERP_P1_F32", EncodingFamily::Vintrp),
     ("V_INTERP_P2_F32", EncodingFamily::Vintrp),
-    ("V_LSHLREV_B32", EncodingFamily::Vop2),
-    ("V_LSHRREV_B32", EncodingFamily::Vop2),
     ("V_MOV_B32", EncodingFamily::Vop1),
     ("V_MUL_F32", EncodingFamily::Vop2),
-    ("V_OR_B32", EncodingFamily::Vop2),
-    ("V_XOR_B32", EncodingFamily::Vop2),
 ];
 
 /// A successfully decoded instruction and its location in the input stream.
@@ -421,7 +414,14 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
         // VOP2: SRC0 in bits 0-8, VSRC1 in bits 9-16, VDST in bits 17-24.
         let dst = ((first >> 17) & 0xff) as u8;
         let src1 = ((first >> 9) & 0xff) as u8;
-        let (src0, len) = vector_src0(first, bytes, op.assembly_name())?;
+        let (src0, len) = match op.operand_rule() {
+            // Operand rule `vop2_vgpr2`: SRC0 must select a VGPR (256-511).
+            OperandRule::Vop2Vgpr2 => {
+                let (_, src0, _) = vop2_registers(first, op.assembly_name())?;
+                (VectorSource::Register(src0), 4)
+            }
+            _ => vector_src0(first, bytes, op.assembly_name())?,
+        };
         return Ok((
             Instruction::VectorAlu {
                 op,
@@ -430,48 +430,6 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
                 src1,
             },
             len,
-        ));
-    }
-    if V_LSHLREV_B32.matches(first) {
-        let (dst, src0, src1) = vop2_registers(first, "v_lshlrev_b32_e32")?;
-        return Ok((
-            Instruction::VectorLshlrevB32 { dst, src0, src1 },
-            V_LSHLREV_B32.byte_len(),
-        ));
-    }
-    if V_ASHRREV_I32.matches(first) {
-        let (dst, src0, src1) = vop2_registers(first, "v_ashrrev_i32_e32")?;
-        return Ok((
-            Instruction::VectorAshrrevI32 { dst, src0, src1 },
-            V_ASHRREV_I32.byte_len(),
-        ));
-    }
-    if V_LSHRREV_B32.matches(first) {
-        let (dst, src0, src1) = vop2_registers(first, "v_lshrrev_b32_e32")?;
-        return Ok((
-            Instruction::VectorLshrrevB32 { dst, src0, src1 },
-            V_LSHRREV_B32.byte_len(),
-        ));
-    }
-    if V_AND_B32.matches(first) {
-        let (dst, src0, src1) = vop2_registers(first, "v_and_b32_e32")?;
-        return Ok((
-            Instruction::VectorAndB32 { dst, src0, src1 },
-            V_AND_B32.byte_len(),
-        ));
-    }
-    if V_OR_B32.matches(first) {
-        let (dst, src0, src1) = vop2_registers(first, "v_or_b32_e32")?;
-        return Ok((
-            Instruction::VectorOrB32 { dst, src0, src1 },
-            V_OR_B32.byte_len(),
-        ));
-    }
-    if V_XOR_B32.matches(first) {
-        let (dst, src0, src1) = vop2_registers(first, "v_xor_b32_e32")?;
-        return Ok((
-            Instruction::VectorXorB32 { dst, src0, src1 },
-            V_XOR_B32.byte_len(),
         ));
     }
     if V_ADD_F32.matches(first) {

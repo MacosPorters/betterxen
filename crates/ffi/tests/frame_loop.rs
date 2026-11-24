@@ -82,25 +82,6 @@ fn wait_until(session: u64, what: &str, done: impl Fn(&Status) -> bool) -> Statu
     }
 }
 
-/// Footprint once it has stopped changing. After a session is destroyed, Metal gives
-/// back its memory asynchronously: measured on an Apple M5, a reading taken right after
-/// destroy was up to about 45 MiB above the floor it returned to within one second,
-/// every time. A single immediate reading therefore mixes in memory that is already on
-/// its way out. Read every 50 ms until two consecutive readings agree within 1 MiB
-/// (at most 5 s). A genuine leak still settles high, so it is still caught.
-fn settled_footprint() -> u64 {
-    let deadline = Instant::now() + Duration::from_secs(5);
-    let mut previous = footprint();
-    loop {
-        std::thread::sleep(Duration::from_millis(50));
-        let current = footprint();
-        if current.abs_diff(previous) < 1 << 20 || Instant::now() >= deadline {
-            return current;
-        }
-        previous = current;
-    }
-}
-
 /// Physical memory footprint of this process (macOS `proc_pid_rusage`, RUSAGE_INFO_V2).
 fn footprint() -> u64 {
     unsafe extern "C" {
@@ -264,15 +245,152 @@ fn repeated_sessions_do_not_grow_the_memory_footprint() {
     // Warm up so one-time allocations (Metal device, shader compiler) are excluded.
     run();
     run();
-    let baseline = settled_footprint();
+    let baseline = footprint();
     for _ in 0..5 {
         run();
     }
-    let after = settled_footprint();
+    let after = footprint();
     let growth = after.saturating_sub(baseline);
     println!("footprint baseline={baseline} after_5_sessions={after} growth={growth}");
     assert!(
         growth < 16 << 20,
         "footprint grew by {growth} bytes over 5 sessions of 300 frames"
     );
+}
+
+/// Regression test for #290: the footprint read right after each destroy must stay
+/// flat across many sessions. Each session used to open its own Metal command queue,
+/// and the GPU driver frees a queue's working set (about 45 MiB on an Apple M5 with
+/// validation) asynchronously after release, so these readings swung by about 50 MiB
+/// from session to session. Sessions now share one queue. The mix of sessions covers
+/// normal completion, pause and resume, and destruction while running.
+#[test]
+fn fifty_sessions_keep_a_flat_footprint_after_each_destroy() {
+    let _serial = SERIAL.lock().unwrap_or_else(|p| p.into_inner());
+    let one = |kind: usize| {
+        let session = session();
+        match kind {
+            0 => {
+                assert_eq!(xenora_session_start_frame_loop(session, 100), XENORA_OK);
+                let s = wait_until(session, "100 frames", |s| s.state != XENORA_LOOP_RUNNING);
+                assert_eq!((s.state, s.completed), (XENORA_LOOP_FINISHED, 100));
+            }
+            1 => {
+                assert_eq!(xenora_session_start_frame_loop(session, 100), XENORA_OK);
+                wait_until(session, "10 frames", |s| s.completed >= 10);
+                assert_eq!(xenora_session_pause_frame_loop(session), XENORA_OK);
+                assert_eq!(xenora_session_resume_frame_loop(session), XENORA_OK);
+                let s = wait_until(session, "100 frames", |s| s.state != XENORA_LOOP_RUNNING);
+                assert_eq!((s.state, s.completed), (XENORA_LOOP_FINISHED, 100));
+            }
+            _ => {
+                assert_eq!(
+                    xenora_session_start_frame_loop(session, XENORA_FRAME_LOOP_MAX_FRAMES),
+                    XENORA_OK
+                );
+                wait_until(session, "a frame", |s| s.completed >= 1);
+            }
+        }
+        assert_eq!(xenora_session_destroy(session), XENORA_OK);
+        footprint()
+    };
+    one(0); // the first session allocates the shared queue's working set
+    let readings: Vec<u64> = (0..50).map(|i| one(i % 3)).collect();
+    let mib: Vec<u64> = readings.iter().map(|r| r >> 20).collect();
+    println!("footprint after each destroy (MiB): {mib:?}");
+    let median = |values: &[u64]| {
+        let mut sorted = values.to_vec();
+        sorted.sort_unstable();
+        sorted[sorted.len() / 2]
+    };
+    // Sustained growth: the typical reading at the end against the start.
+    let (start, end) = (median(&readings[..10]), median(&readings[40..]));
+    assert!(
+        end.saturating_sub(start) < 16 << 20,
+        "footprint grew from {start} to {end} bytes (median of first and last ten sessions)"
+    );
+    // Per-session churn, the cause fixed in #290: with a queue per session, about half
+    // of all readings sat some 45 MiB away from the median. With the shared queue,
+    // a reading is still occasionally caught while the driver frees a batch of
+    // per-frame render resources: graphics-tagged memory only, 16 to 44 MiB, gone
+    // within about 100 ms, measured in 13 of 6,000 sessions (0.22%). Allowing two such
+    // readings in 50 keeps a false failure near 1 in 5,000 runs while per-session
+    // churn would exceed it every time.
+    let centre = median(&readings);
+    let outliers: Vec<u64> = readings
+        .iter()
+        .filter(|&&r| r.abs_diff(centre) >= 16 << 20)
+        .map(|r| r >> 20)
+        .collect();
+    assert!(
+        outliers.len() <= 2,
+        "{} of 50 readings were 16 MiB or more from the median {} MiB: {outliers:?}",
+        outliers.len(),
+        centre >> 20
+    );
+}
+
+/// Two sessions render at the same time through the shared Metal queue (#290). Each
+/// must keep its own frame sequence and pixels, pausing one must not stop the other,
+/// and destroying one mid-run must not disturb the other.
+#[test]
+fn concurrent_sessions_share_the_queue_but_stay_isolated() {
+    let _serial = SERIAL.lock().unwrap_or_else(|p| p.into_inner());
+    let (a, b) = (session(), session());
+    assert_eq!(xenora_session_start_frame_loop(a, 400), XENORA_OK);
+    assert_eq!(xenora_session_start_frame_loop(b, 250), XENORA_OK);
+    wait_until(a, "session A started", |s| s.completed >= 5);
+    wait_until(b, "session B started", |s| s.completed >= 5);
+
+    // Pausing A holds only A.
+    assert_eq!(xenora_session_pause_frame_loop(a), XENORA_OK);
+    let a_held = wait_until(a, "session A paused", |s| s.state == XENORA_LOOP_PAUSED);
+    let b_before = status(b).completed;
+    let b_moving = wait_until(b, "session B progress while A is paused", |s| {
+        s.completed >= b_before + 20 || s.state != XENORA_LOOP_RUNNING
+    });
+    assert!(
+        b_moving.completed > b_before,
+        "B kept rendering while A was paused"
+    );
+    let a_still = status(a);
+    assert_eq!(a_still.state, XENORA_LOOP_PAUSED);
+    // At most the frame A was rendering when paused can still complete.
+    assert!(a_still.completed <= a_held.completed + 1);
+    assert_eq!(a_still.rgba.to_vec(), expected(a_still.frame_id));
+    assert_eq!(xenora_session_resume_frame_loop(a), XENORA_OK);
+
+    // Both finish with their own counts and their own final frames.
+    let a_done = wait_until(a, "session A finished", |s| s.state != XENORA_LOOP_RUNNING);
+    let b_done = wait_until(b, "session B finished", |s| s.state != XENORA_LOOP_RUNNING);
+    assert_eq!(
+        (a_done.state, a_done.completed, a_done.frame_id),
+        (XENORA_LOOP_FINISHED, 400, 399)
+    );
+    assert_eq!(
+        (b_done.state, b_done.completed, b_done.frame_id),
+        (XENORA_LOOP_FINISHED, 250, 249)
+    );
+    assert_eq!(a_done.rgba.to_vec(), expected(399));
+    assert_eq!(b_done.rgba.to_vec(), expected(249));
+    assert_eq!(xenora_session_destroy(a), XENORA_OK);
+    assert_eq!(xenora_session_destroy(b), XENORA_OK);
+
+    // Destroying one running session leaves the other running to completion.
+    let (c, d) = (session(), session());
+    assert_eq!(
+        xenora_session_start_frame_loop(c, XENORA_FRAME_LOOP_MAX_FRAMES),
+        XENORA_OK
+    );
+    assert_eq!(xenora_session_start_frame_loop(d, 300), XENORA_OK);
+    wait_until(c, "session C started", |s| s.completed >= 5);
+    wait_until(d, "session D started", |s| s.completed >= 5);
+    assert_eq!(xenora_session_destroy(c), XENORA_OK);
+    let d_done = wait_until(d, "session D finished", |s| s.state != XENORA_LOOP_RUNNING);
+    assert_eq!(
+        (d_done.state, d_done.completed, d_done.frame_id),
+        (XENORA_LOOP_FINISHED, 300, 299)
+    );
+    assert_eq!(d_done.rgba.to_vec(), expected(299));
+    assert_eq!(xenora_session_destroy(d), XENORA_OK);
 }

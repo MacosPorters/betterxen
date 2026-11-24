@@ -103,8 +103,8 @@ fn vector_alu_dispatch_selects_exactly_the_registry_vop2_forms() {
         assert_eq!(op.swaps_sources(), row.swap_sources);
         assert_eq!(row.scc, SccEffect::Unchanged);
     }
-    // The hand-written VOP2 forms (v_and_b32, v_add_f32, ...) must not be
-    // dispatched here.
+    // Exactly the registry VOP2 forms are dispatched here; the hand-written
+    // ones (v_add_f32, v_mul_f32) must not be.
     dispatch_selects_exactly(EncodingFamily::Vop2, |word| {
         VectorAluOp::from_word(word).map(|op| op.semantics().name)
     });

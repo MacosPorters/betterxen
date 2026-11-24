@@ -97,12 +97,13 @@ The root file holds:
   `guide` (the AMD RDNA 2 ISA reference guide) and `xml` (the AMD
   machine-readable ISA) are allowed, and each must match the title and file
   pinned in the generator, so a citation cannot point at another file.
-- `[operand_rules.<name>]`: an operand rule shared by a whole family. The
-  decoder implements each rule once, and the generator only accepts a rule
-  whose declaration matches the decoder's implementation exactly. Today there
-  is one rule, `sop2_sgpr`: an SGPR destination `s0`-`s105`, two scalar sources
+- `[operand_rules.<name>]`: an operand rule of one family, shared by its forms.
+  The decoder implements each rule once, and the generator only accepts a rule
+  whose declaration matches the decoder's implementation exactly. A family may
+  have several rules (VOP2 has `vop2_vgpr` and the VGPR-only `vop2_vgpr2`). For
+  example `sop2_sgpr` is an SGPR destination `s0`-`s105`, two scalar sources
   (an SGPR, an inline integer -16 to 64, or a literal word) and at most one
-  literal. Its `unsupported` list names the encodings the rule rejects, which
+  literal. A rule's `unsupported` list names the encodings it rejects, which
   stay unsupported instead of being guessed. The list must name exactly the
   encodings the decoder rejects.
 
@@ -123,7 +124,7 @@ error.
 | `relation` | Compares only: the relation tested with S0 on the left | `eq`, `lg` (not equal), `gt`, `ge`, `lt`, `le`; required for `compare`, rejected elsewhere |
 | `source_order` | Vector forms only: `reversed` when the guide computes `op(S1, S0)` (the XML records no operand order); absent otherwise | `reversed` |
 | `shift_amount` | `lshl_add` only: the fixed left shift of S0 before the add | `1` to `4`; required for `lshl_add`, rejected elsewhere |
-| `shift_count_bits` | Shifts only: the low bits of S1 used as the count. The generator masks S1 with it, and the XML must list S1 as unsigned | `5` (log2 of `width`); required for shifts, rejected elsewhere |
+| `shift_count_bits` | Shifts only: the low bits of the count source used as the count: S1, or S0 for a vector form with `source_order = "reversed"`. Scalar forms mask it in the generated evaluation, vector forms in their MSL template; the XML must list the count source as unsigned | `5` (log2 of `width`); required for shifts, rejected elsewhere |
 | `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (SOPC compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
 | `vcc`, `exec` | Effect on VCC and EXEC, stated rather than implied | `unchanged`; `vcc` is `lane_mask` exactly for the VOPC compares (VCC_LO bit n = EXEC[n] & test, fully written; VCC_HI unknown afterwards, see [vector-compare.md](vector-compare.md)); `exec` must be `unchanged` (no EXEC-writing contract yet) |
 | `wave` | Wave sizes the form is valid in | `wave32` exactly for the VOPC compares (their one entry point is the Wave32 compute fixture ABI, vector-compare.md section 2), `any` for everything else; the decoder has no wave-size input, so no other form may claim `wave32` |
@@ -158,7 +159,9 @@ fixes the `scc` value:
 | `lshl_add` / `unsigned` | `carry_out` | `lshl_add_carry_u32` (with `shift_amount`) | no |
 | `compare` / `signed` or `unsigned` | `relation` | `eq_b32`, `ne_b32` (for both signednesses), `gt_i32`/`gt_u32`, `ge_*`, `lt_*`, `le_*` | no |
 
-Vector forms (operand rule `vop2_vgpr`, kind `vector`) use a separate table:
+Vector forms (operand rules `vop2_vgpr` and `vop2_vgpr2`, kind `vector`; both
+generate the one `VectorAluOp` enum, whose `operand_rule()` tells the decoder
+which rule a form uses) use a separate table:
 the pair picks the per-lane `VectorBinary` the MSL lowering uses, and `scc`
 must be `unchanged` (VOP2 integer forms write no SCC, VCC or EXEC):
 
@@ -168,6 +171,15 @@ must be `unchanged` (VOP2 integer forms write no SCC, VCC or EXEC):
 | `xnor` / `bitwise` | `Xnor` |
 | `min`, `max` / `signed` or `unsigned` | `MinSigned`, `MinUnsigned`, `MaxSigned`, `MaxUnsigned` |
 | `mul24`, `mul_hi24` / `signed` or `unsigned` | `Mul24Signed`, `Mul24Unsigned`, `MulHi24Signed`, `MulHi24Unsigned` |
+| `and`, `or`, `xor` / `bitwise` | `And`, `Or`, `Xor` |
+| `lshl`, `lshr` / `bitwise`, `ashr` / `signed` (with `shift_count_bits = 5`) | `ShiftLeft`, `ShiftRight`, `ArithmeticShiftRight` |
+
+`vop2_vgpr2` is the VGPR-only subset (SRC0 256-511) that the hand-written decoder
+accepted for `v_and_b32`, `v_or_b32`, `v_xor_b32`, `v_lshlrev_b32`, `v_lshrrev_b32`
+and `v_ashrrev_i32` before they moved into the registry (#215 M27); widening them
+to `vop2_vgpr` would be a behaviour change and needs its own oracle. The three
+shifts declare `source_order = "reversed"` (D = S1 shifted by S0[4:0]), so the
+generator checks the XML's unsigned count format on SRC0, not VSRC1.
 
 VOPC compares (operand rule `vopc_vcc`, kind `vector_compare`: SRC0 a
 `vector_source` as for VOP2, VSRC1 a VGPR, destination implicitly `vcc_lo`)

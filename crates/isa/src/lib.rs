@@ -218,18 +218,6 @@ pub enum Instruction {
     BranchVccZero { target: usize },
     /// SOPP unconditional jump to a stream byte offset.
     Branch { target: usize },
-    /// VOP2 logical left shift with the count in src0.
-    VectorLshlrevB32 { dst: u8, src0: u8, src1: u8 },
-    /// VOP2 logical right shift with the count in src0.
-    VectorLshrrevB32 { dst: u8, src0: u8, src1: u8 },
-    /// VOP2 arithmetic right shift with the count in src0.
-    VectorAshrrevI32 { dst: u8, src0: u8, src1: u8 },
-    /// VOP2 bitwise AND.
-    VectorAndB32 { dst: u8, src0: u8, src1: u8 },
-    /// VOP2 bitwise OR.
-    VectorOrB32 { dst: u8, src0: u8, src1: u8 },
-    /// VOP2 bitwise XOR.
-    VectorXorB32 { dst: u8, src0: u8, src1: u8 },
     /// VOP2 single-precision addition. Execution requires an explicit FP mode.
     VectorAddF32 { dst: u8, src0: u8, src1: u8 },
     /// VOP2 single-precision multiplication. Execution requires an explicit FP mode.
@@ -298,12 +286,6 @@ impl Instruction {
             Self::BranchExecZero { .. } => "s_cbranch_execz",
             Self::BranchVccZero { .. } => "s_cbranch_vccz",
             Self::Branch { .. } => "s_branch",
-            Self::VectorLshlrevB32 { .. } => "v_lshlrev_b32_e32",
-            Self::VectorLshrrevB32 { .. } => "v_lshrrev_b32_e32",
-            Self::VectorAshrrevI32 { .. } => "v_ashrrev_i32_e32",
-            Self::VectorAndB32 { .. } => "v_and_b32_e32",
-            Self::VectorOrB32 { .. } => "v_or_b32_e32",
-            Self::VectorXorB32 { .. } => "v_xor_b32_e32",
             Self::VectorAddF32 { .. } => "v_add_f32_e32",
             Self::VectorMulF32 { .. } => "v_mul_f32_e32",
             Self::Export { .. } => "exp",
@@ -347,12 +329,6 @@ impl fmt::Display for Instruction {
             Self::VectorAluVop3 {
                 dst, src0, src1, ..
             }
-            | Self::VectorLshlrevB32 { dst, src0, src1 }
-            | Self::VectorLshrrevB32 { dst, src0, src1 }
-            | Self::VectorAshrrevI32 { dst, src0, src1 }
-            | Self::VectorAndB32 { dst, src0, src1 }
-            | Self::VectorOrB32 { dst, src0, src1 }
-            | Self::VectorXorB32 { dst, src0, src1 }
             | Self::VectorAddF32 { dst, src0, src1 }
             | Self::VectorMulF32 { dst, src0, src1 } => {
                 write!(formatter, " v{dst}, v{src0}, v{src1}")

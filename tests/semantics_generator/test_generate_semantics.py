@@ -391,6 +391,25 @@ class Validate(unittest.TestCase):
     def test_accepts_the_real_registry(self):
         self.assertEqual(gen.validate(gen.load_registry(), gen.load_snapshot()), [])
 
+    def test_a_reversed_shift_takes_its_count_from_src0(self):
+        # V_ASHRREV_I32: D = S1 >> S0[4:0]; the XML gives SRC0 FMT_NUM_U32 (the
+        # count) and VSRC1 FMT_NUM_I32. Without the declared reversed order the
+        # count check lands on VSRC1 and must fail.
+        reg = gen.load_registry()
+        form = next(f for f in reg["form"] if f["name"] == "V_ASHRREV_I32")
+        del form["source_order"]
+        errors = gen.validate(reg, gen.load_snapshot())
+        self.assertIn(
+            "V_ASHRREV_I32: control operand VSRC1 has XML format FMT_NUM_I32, not FMT_NUM_U32",
+            errors,
+        )
+
+    def test_rules_sharing_an_enum_render_it_once_with_each_forms_rule(self):
+        text = gen.render(gen.load_registry(), gen.load_snapshot())
+        self.assertEqual(text.count("pub enum VectorAluOp {"), 1)
+        self.assertIn("Self::AndB32 => OperandRule::Vop2Vgpr2,", text)
+        self.assertIn("Self::MinI32 => OperandRule::Vop2Vgpr,", text)
+
     # ---- top level ----
 
     def test_rejects_wrong_schema(self):

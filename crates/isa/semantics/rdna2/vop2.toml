@@ -223,3 +223,128 @@ wave = "any"
 operands = "vop2_vgpr"
 spec = [{ document = "guide", section = "12.7", page = 134 }]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+# ---- VOP2 logical and shift forms migrated from hand-written code (#215 M27) ----
+# Per lane under EXEC; no SCC, VCC or EXEC write (guide 12.7). The shifts read
+# their sources reversed: D = S1 shifted by S0[4:0]; ASHRREV fills with S1's sign.
+# These keep the subset the hand-written decoder accepted: both sources VGPRs.
+[operand_rules.vop2_vgpr2]
+family = "VOP2"
+dst = { field = "VDST", class = "vgpr", min = 0, max = 255 }
+src = [
+  { field = "SRC0", class = "vgpr" },
+  { field = "VSRC1", class = "vgpr" },
+]
+max_literals = 0
+unsupported = [
+  "src_sgpr", "src_vcc", "src_exec", "src_m0", "src_ttmp", "src_null", "src_inline",
+  "src_float_inline", "src_special", "src_literal",
+]
+
+[[form]]
+name = "V_LSHRREV_B32"
+family = "VOP2"
+opcode = 22
+variant = "LshrrevB32"
+operation = "lshr"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+shift_count_bits = 5
+source_order = "reversed"
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "vop2_vgpr2"
+spec = [{ document = "guide", section = "12.7", page = 133 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_ASHRREV_I32"
+family = "VOP2"
+opcode = 24
+variant = "AshrrevI32"
+operation = "ashr"
+signedness = "signed"
+carry_in = "none"
+width = 32
+shift_count_bits = 5
+source_order = "reversed"
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "vop2_vgpr2"
+spec = [{ document = "guide", section = "12.7", page = 133 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_LSHLREV_B32"
+family = "VOP2"
+opcode = 26
+variant = "LshlrevB32"
+operation = "lshl"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+shift_count_bits = 5
+source_order = "reversed"
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "vop2_vgpr2"
+spec = [{ document = "guide", section = "12.7", page = 133 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_AND_B32"
+family = "VOP2"
+opcode = 27
+variant = "AndB32"
+operation = "and"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "vop2_vgpr2"
+spec = [{ document = "guide", section = "12.7", page = 133 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_OR_B32"
+family = "VOP2"
+opcode = 28
+variant = "OrB32"
+operation = "or"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "vop2_vgpr2"
+spec = [{ document = "guide", section = "12.7", page = 133 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_XOR_B32"
+family = "VOP2"
+opcode = 29
+variant = "XorB32"
+operation = "xor"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "vop2_vgpr2"
+spec = [{ document = "guide", section = "12.7", page = 133 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
