@@ -262,6 +262,8 @@ pub enum OperandRule {
     /// Wave32 VOPC with a VGPR pair, even normal SGPR pair or inline integer
     /// as SRC0 and a VGPR pair as VSRC1. The destination is `vcc_lo`.
     VopcVccPair,
+    /// VOPC with low-half operands and no literal selector.
+    VopcVccHalf,
     /// VOP3 encoding of a VOP2 vector form: VDST is v0-v255, SRC0 and SRC1 are
     /// VGPRs, no input or output modifiers, SRC2 unused. Everything else is
     /// rejected as unsupported.

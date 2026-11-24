@@ -9,8 +9,8 @@ use xenora_decoder::{
 };
 use xenora_isa::semantics::Signedness;
 use xenora_ref::{
-    BranchCondition, CompareSource, Comparison, Op, ScalarAlu, ScalarImmediate, ScalarUnary,
-    Source, VectorAlu, VectorInteger, VectorUnary,
+    BranchCondition, CompareSource, CompareWidth, Comparison, Op, ScalarAlu, ScalarImmediate,
+    ScalarUnary, Source, VectorAlu, VectorInteger, VectorUnary,
 };
 
 const FIXTURE: &[u8] = include_bytes!("../../../fixtures/rdna2/add.bin");
@@ -627,8 +627,8 @@ fn reference_op(instruction: Instruction) -> Op {
             panic!("compute reference matrix received a graphics/image instruction")
         }
 
-        Instruction::VectorCompare { op, src0, src1 } => Op::Compare(
-            Comparison {
+        Instruction::VectorCompare { op, src0, src1 } => {
+            let comparison = Comparison {
                 offset: match op.relation() {
                     CompareRelation::Less => 1,
                     CompareRelation::Equal => 2,
@@ -640,14 +640,19 @@ fn reference_op(instruction: Instruction) -> Op {
                     CompareRelation::True => 7,
                 },
                 signed: op.signed(),
-            },
-            match src0 {
+            };
+            let src0 = match src0 {
                 VectorSource::Register(reg) => CompareSource::Vector(reg),
                 VectorSource::Scalar(reg) => CompareSource::Scalar(reg),
                 VectorSource::Immediate(bits) => CompareSource::Immediate(bits),
-            },
-            src1,
-        ),
+            };
+            match op.semantics().width {
+                16 => Op::WideCompare(comparison, CompareWidth::Half, src0, src1),
+                32 => Op::Compare(comparison, src0, src1),
+                64 => Op::WideCompare(comparison, CompareWidth::Double, src0, src1),
+                width => panic!("unexpected VOPC operand width {width}"),
+            }
+        }
         Instruction::VectorCompareVop3 { .. } => {
             panic!("VOPC reference fixture matrix received a VOP3A compare")
         }
@@ -710,12 +715,13 @@ fn compares_fixture_instructions_against_llvm() {
         include_bytes!("../../../fixtures/rdna2/vector-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare-ft.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-unary.bin"),
+        include_bytes!("../../../fixtures/rdna2/vector-compare-16.bin"),
         high_registers,
         &matrix,
     ] {
         count += compare_against_llvm(fixture, &mut forms);
     }
-    assert_eq!(forms.len(), 126, "forms compared: {forms:?}");
+    assert_eq!(forms.len(), 138, "forms compared: {forms:?}");
     eprintln!(
         "{count} three-way instruction comparisons across {} forms",
         forms.len()
