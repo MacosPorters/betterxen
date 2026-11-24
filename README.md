@@ -309,7 +309,7 @@ These require a Metal-capable Apple Silicon Mac.
 scripts/test-gpu.sh
 ```
 
-The native test suite enables Metal API and shader validation and tests the supported compute, rendering and texture paths. The full semantic-review batch defaults to a 300-second timeout; set `XENORA_SEMANTIC_TIMEOUT` to raise or lower it for a slower or faster host.
+The native test suite enables Metal API and shader validation and tests the supported compute, rendering and texture paths. The full semantic-review batch defaults to a 300-second timeout; set `XENORA_SEMANTIC_TIMEOUT` to raise or lower it for a slower or faster host. On macOS, the script uses a Python 3 fallback when GNU `timeout` is unavailable.
 
 ### Verify guest execution
 

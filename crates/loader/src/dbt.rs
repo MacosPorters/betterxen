@@ -335,6 +335,9 @@ pub fn is_native(insn: &Insn) -> bool {
     let scanned = matches!(insn.size, 2 | 4 | 8);
     match insn.op {
         Op::Add | Op::Sub | Op::Cmp | Op::And | Op::Or | Op::Xor | Op::Test => wide,
+        // Register and immediate forms only; a memory destination would have
+        // to restore the guest carry again after the store helper call.
+        Op::Adc | Op::Sbb => wide && insn.memory().is_none(),
         Op::Inc | Op::Dec | Op::Neg | Op::Not => wide,
         Op::Cmov => wide,
         Op::Bsf | Op::Bsr => scanned,
@@ -587,9 +590,26 @@ impl Emitter<'_> {
     }
 
     /// X11 = X9 op X10, setting host NZCV only for the arithmetic operations.
+    /// ADC and SBB also read the guest CF and clobber X12 and X13.
     fn compute(&mut self, op: Op, wide: bool) {
         let asm = &mut *self.asm;
+        if matches!(op, Op::Adc | Op::Sbb) {
+            // ADCS adds the host C, so C must equal the guest CF. SBCS
+            // subtracts NOT C, while x86 SBB subtracts the borrow CF, so there
+            // C must be its inverse. A compare sets C when it does not borrow.
+            asm.ldrb_uoff(X12, X19, CF);
+            if op == Op::Adc {
+                asm.load_imm_64(X13, 1);
+                asm.cmp_reg_32(X12, X13); // C = CF >= 1
+            } else {
+                asm.cmp_reg_32(XZR, X12); // C = 0 >= CF
+            }
+        }
         match (op, wide) {
+            (Op::Adc, true) => asm.adcs_reg_64(X11, X9, X10),
+            (Op::Adc, false) => asm.adcs_reg_32(X11, X9, X10),
+            (Op::Sbb, true) => asm.sbcs_reg_64(X11, X9, X10),
+            (Op::Sbb, false) => asm.sbcs_reg_32(X11, X9, X10),
             (Op::Add | Op::Inc, true) => asm.adds_reg_64(X11, X9, X10),
             (Op::Add | Op::Inc, false) => asm.adds_reg_32(X11, X9, X10),
             (Op::And | Op::Test, true) => asm.ands_reg_64(X11, X9, X10),
@@ -623,7 +643,7 @@ impl Emitter<'_> {
             match op {
                 // INC and DEC leave CF unchanged.
                 Op::Inc | Op::Dec => {}
-                Op::Add => {
+                Op::Add | Op::Adc => {
                     asm.cset_32(X12, Condition::Cs);
                     asm.strb_uoff(X12, X19, CF);
                 }

@@ -1,4 +1,4 @@
-use std::collections::BTreeMap;
+use std::collections::{BTreeMap, VecDeque};
 use std::ffi::c_void;
 use std::fmt;
 use std::mem::size_of_val;
@@ -37,6 +37,16 @@ const MAX_GROUPS: usize = 64;
 const MAX_GRID_WORDS: usize = MAX_GROUPS * MAX_THREADS_PER_GROUP;
 const MAX_SOURCE_BYTES: usize = 64 * 1024;
 const MAX_IN_FLIGHT: usize = 16;
+const MAX_CACHED_PIPELINES: usize = 16;
+
+type ComputePipeline = Retained<ProtocolObject<dyn MTLComputePipelineState>>;
+
+struct CachedPipeline {
+    source: Box<str>,
+    entry: Box<str>,
+    shader_validation: bool,
+    pipeline: ComputePipeline,
+}
 
 const BC_READBACK: &str = r"
 #include <metal_stdlib>
@@ -148,7 +158,9 @@ impl std::error::Error for MetalError {}
 /// measure a single submission and are not a benchmark distribution.
 #[derive(Debug, Clone)]
 pub struct RunProfile {
+    /// Host library compilation time, or zero when reusing a compute pipeline.
     pub library_seconds: f64,
+    /// Host pipeline creation time, or zero when reusing a compute pipeline.
     pub pipeline_seconds: f64,
     pub gpu_seconds: f64,
     /// Host wall time from the start of setup until wait observes completion.
@@ -171,6 +183,8 @@ pub struct NativeCompute {
     device: Retained<ProtocolObject<dyn MTLDevice>>,
     queue: Retained<ProtocolObject<dyn MTLCommandQueue>>,
     submissions: Mutex<SubmissionTable>,
+    // Least recently used first. In-flight submissions retain their own reference.
+    compute_pipelines: Mutex<VecDeque<CachedPipeline>>,
 }
 
 /// A submitted dispatch whose result can be collected by its issuing context.
@@ -247,7 +261,7 @@ struct SubmissionEntry {
 /// Metal reports Completed or Error.
 struct InFlightResources {
     command: Retained<ProtocolObject<dyn MTLCommandBuffer>>,
-    _pipeline: Retained<ProtocolObject<dyn MTLComputePipelineState>>,
+    _pipeline: ComputePipeline,
     _input: Option<Retained<ProtocolObject<dyn MTLBuffer>>>,
     output: Retained<ProtocolObject<dyn MTLBuffer>>,
     _texture: Option<Retained<ProtocolObject<dyn MTLTexture>>>,
@@ -348,6 +362,7 @@ impl NativeCompute {
                 device,
                 queue,
                 submissions: Mutex::default(),
+                compute_pipelines: Mutex::default(),
             })
         })
     }
@@ -901,7 +916,7 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         self.run_profiled_words(source, entry, input, Some(width))
     }
 
-    /// Compile the kernel and report the smaller of the device and pipeline width limits.
+    /// Find or compile the kernel and report the smaller of the device and pipeline width limits.
     ///
     /// Input size and threadgroup count are checked separately at dispatch.
     ///
@@ -911,11 +926,7 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
     pub fn max_group_width(&self, source: &str, entry: &str) -> Result<usize, MetalError> {
         validate_source(source, &[entry])?;
         autoreleasepool(|_| {
-            let options = compile_options()?;
-            let library = self.compile_library(source, &options)?;
-            let function = find_function(&library, entry)?;
-            let pipeline = self.compute_pipeline(&function)?;
-            verify_shader_validation(&pipeline)?;
+            let (pipeline, _, _) = self.prepare_compute_pipeline(source, entry)?;
             Ok(self.pipeline_group_width_limit(&pipeline))
         })
     }
@@ -963,15 +974,8 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         host_start: Instant,
     ) -> Result<Submission<'_>, MetalError> {
         self.submissions().check_capacity()?;
-        let options = compile_options()?;
-        let library_start = Instant::now();
-        let library = self.compile_library(source, &options)?;
-        let library_seconds = library_start.elapsed().as_secs_f64();
-        let function = find_function(&library, entry)?;
-        let pipeline_start = Instant::now();
-        let pipeline = self.compute_pipeline(&function)?;
-        let pipeline_seconds = pipeline_start.elapsed().as_secs_f64();
-        verify_shader_validation(&pipeline)?;
+        let (pipeline, library_seconds, pipeline_seconds) =
+            self.prepare_compute_pipeline(source, entry)?;
 
         let limit = self.pipeline_group_width_limit(&pipeline);
         let width = match group_width {
@@ -1108,18 +1112,67 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
             })
     }
 
-    fn compute_pipeline(
+    fn prepare_compute_pipeline(
         &self,
-        function: &ProtocolObject<dyn MTLFunction>,
-    ) -> Result<Retained<ProtocolObject<dyn MTLComputePipelineState>>, MetalError> {
-        self.device
-            .newComputePipelineStateWithFunction_error(function)
+        source: &str,
+        entry: &str,
+    ) -> Result<(ComputePipeline, f64, f64), MetalError> {
+        let shader_validation = std::env::var("MTL_SHADER_VALIDATION").as_deref() == Ok("1");
+        // Device identity is fixed by this context. All misses use the same
+        // compile options (safe math, precise functions, default language,
+        // no macros) and unspecialized functions. Any configurable options
+        // must become part of the key before they are used here.
+        let mut cache = self
+            .compute_pipelines
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner);
+        if let Some(index) = cache.iter().position(|cached| {
+            cached.source.as_ref() == source
+                && cached.entry.as_ref() == entry
+                && cached.shader_validation == shader_validation
+        }) {
+            let cached = cache.remove(index).expect("position in the locked cache");
+            let pipeline = cached.pipeline.clone();
+            cache.push_back(cached);
+            return Ok((pipeline, 0.0, 0.0));
+        }
+
+        // Serialize cache misses in this context so concurrent requests for
+        // one key share the same build. The submission table is unlocked here.
+        let options = compile_options()?;
+        let library_start = Instant::now();
+        let library = self.compile_library(source, &options)?;
+        let library_seconds = library_start.elapsed().as_secs_f64();
+        let function = find_function(&library, entry)?;
+        let pipeline_start = Instant::now();
+        let pipeline = self
+            .device
+            .newComputePipelineStateWithFunction_error(&function)
             .map_err(|error| {
                 MetalError::new(
                     "newComputePipelineStateWithFunction",
                     error.localizedDescription().to_string(),
                 )
-            })
+            })?;
+        let pipeline_seconds = pipeline_start.elapsed().as_secs_f64();
+        if shader_validation {
+            verify_shader_validation(&pipeline)?;
+        }
+
+        // Bound owned key text to 1 MiB. A valid oversized key can run
+        // uncached, so this budget does not alter source or entry validation.
+        if entry.len() <= MAX_SOURCE_BYTES.saturating_sub(source.len()) {
+            if cache.len() == MAX_CACHED_PIPELINES {
+                cache.pop_front();
+            }
+            cache.push_back(CachedPipeline {
+                source: source.into(),
+                entry: entry.into(),
+                shader_validation,
+                pipeline: pipeline.clone(),
+            });
+        }
+        Ok((pipeline, library_seconds, pipeline_seconds))
     }
 
     fn pipeline_group_width_limit(
@@ -1232,10 +1285,6 @@ fn check_command_status(
 fn verify_shader_validation(
     pipeline: &ProtocolObject<dyn MTLComputePipelineState>,
 ) -> Result<(), MetalError> {
-    if std::env::var("MTL_SHADER_VALIDATION").as_deref() != Ok("1") {
-        return Ok(());
-    }
-
     if !pipeline.respondsToSelector(sel!(shaderValidation)) {
         return Err(MetalError::new(
             "shaderValidation",

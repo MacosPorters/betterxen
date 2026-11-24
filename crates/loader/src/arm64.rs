@@ -430,6 +430,46 @@ impl Arm64Assembler {
         );
     }
 
+    /// ADCS (64-bit, flags updating): ADCS Xd, Xn, Xm computes Xn + Xm + C.
+    pub fn adcs_reg_64(&mut self, xd: u8, xn: u8, xm: u8) {
+        self.emit(
+            0xba000000
+                | ((xm as u32 & 0x1f) << 16)
+                | ((xn as u32 & 0x1f) << 5)
+                | (xd as u32 & 0x1f),
+        );
+    }
+
+    /// ADCS (32-bit, flags updating): ADCS Wd, Wn, Wm computes Wn + Wm + C.
+    pub fn adcs_reg_32(&mut self, wd: u8, wn: u8, wm: u8) {
+        self.emit(
+            0x3a000000
+                | ((wm as u32 & 0x1f) << 16)
+                | ((wn as u32 & 0x1f) << 5)
+                | (wd as u32 & 0x1f),
+        );
+    }
+
+    /// SBCS (64-bit, flags updating): SBCS Xd, Xn, Xm computes Xn - Xm - !C.
+    pub fn sbcs_reg_64(&mut self, xd: u8, xn: u8, xm: u8) {
+        self.emit(
+            0xfa000000
+                | ((xm as u32 & 0x1f) << 16)
+                | ((xn as u32 & 0x1f) << 5)
+                | (xd as u32 & 0x1f),
+        );
+    }
+
+    /// SBCS (32-bit, flags updating): SBCS Wd, Wn, Wm computes Wn - Wm - !C.
+    pub fn sbcs_reg_32(&mut self, wd: u8, wn: u8, wm: u8) {
+        self.emit(
+            0x7a000000
+                | ((wm as u32 & 0x1f) << 16)
+                | ((wn as u32 & 0x1f) << 5)
+                | (wd as u32 & 0x1f),
+        );
+    }
+
     /// ADD (immediate, 64-bit): ADD Xd, Xn, #imm12
     pub fn add_imm_64(&mut self, xd: u8, xn: u8, imm12: u16) {
         self.emit(
