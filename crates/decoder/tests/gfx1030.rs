@@ -1089,6 +1089,45 @@ fn decodes_registry_vop3_integer_encodings() {
 }
 
 #[test]
+fn decodes_vop3_integer_fixture() {
+    use VectorAluVop3Op::*;
+
+    let code = include_bytes!("../../../fixtures/rdna2/vop3-integer.bin");
+    let decoded = decode(Architecture::Gfx1030, code).unwrap();
+    let expected = [
+        (MulI32I24, 2, 1, 1),
+        (MulHiI32I24, 3, 2, 1),
+        (MulU32U24, 4, 2, 1),
+        (MulHiU32U24, 255, 4, 1),
+        (MinI32, 6, 1, 2),
+        (MaxI32, 7, 1, 4),
+        (MinU32, 8, 3, 1),
+        (MaxU32, 9, 255, 2),
+        (XnorB32, 10, 1, 255),
+        (SubNcU32, 11, 6, 10),
+        (SubrevNcU32, 1, 1, 9),
+    ];
+    let actual: Vec<_> = decoded
+        .iter()
+        .filter_map(|decoded| match decoded.instruction {
+            Instruction::VectorAluVop3 {
+                op,
+                dst,
+                src0,
+                src1,
+            } => Some((decoded.offset, decoded.byte_len, op, dst, src0, src1)),
+            _ => None,
+        })
+        .collect();
+    let expected: Vec<_> = expected
+        .into_iter()
+        .enumerate()
+        .map(|(index, (op, dst, src0, src1))| (12 + 8 * index, 8, op, dst, src0, src1))
+        .collect();
+    assert_eq!(actual, expected);
+}
+
+#[test]
 fn rejects_registry_vop3_integer_modifiers_and_other_sources() {
     for (op, first) in VOP3_INTEGER_ENCODINGS {
         let second = VOP3_INTEGER_SOURCE_WORD;
