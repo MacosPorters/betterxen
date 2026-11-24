@@ -35,3 +35,130 @@ spec = [
   { document = "guide", section = "12.7", page = 134 },
 ]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+# ABS and NEG apply to floating-point inputs (guide 6.2.1) and OMOD
+# applies to floating-point results (6.2.2). These integer forms use neither.
+# OP_SEL selects 16-bit halves (13.3.4). CLAMP saturates integer results
+# (6.5), which these registry forms do not declare. SGPR, inline and literal
+# sources remain outside this operand rule.
+
+[[encoding_variant]]
+of = "V_MUL_I32_I24"
+family = "VOP3"
+opcode = 265
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 131 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_MUL_HI_I32_I24"
+family = "VOP3"
+opcode = 266
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 132 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_MUL_U32_U24"
+family = "VOP3"
+opcode = 267
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 132 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_MUL_HI_U32_U24"
+family = "VOP3"
+opcode = 268
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 132 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_MIN_I32"
+family = "VOP3"
+opcode = 273
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 133 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_MAX_I32"
+family = "VOP3"
+opcode = 274
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 133 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_MIN_U32"
+family = "VOP3"
+opcode = 275
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 133 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_MAX_U32"
+family = "VOP3"
+opcode = 276
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 133 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_XNOR_B32"
+family = "VOP3"
+opcode = 286
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 134 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_SUB_NC_U32"
+family = "VOP3"
+opcode = 294
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 134 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[encoding_variant]]
+of = "V_SUBREV_NC_U32"
+family = "VOP3"
+opcode = 295
+operands = "vop3_vgpr2"
+spec = [
+  { document = "guide", section = "12.12", page = 167 },
+  { document = "guide", section = "12.7", page = 134 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
