@@ -1308,6 +1308,21 @@ mod review {
     // ---- VOPC integer compares (docs/shaders/vector-compare.md) ----
 
     const COMPARE_FIXTURE: &[u8] = include_bytes!("../../fixtures/rdna2/vector-compare.bin");
+    const COMPARE_FT_FIXTURE: &[u8] = include_bytes!("../../fixtures/rdna2/vector-compare-ft.bin");
+
+    /// fixtures/rdna2/vector-compare-ft.s, from its listing and guide 12.9
+    /// Table 61 (F: D = 0, T: D = 1) with VCC_LO[n] = EXEC_LO[n] & test: every
+    /// F mask is 0 and every T mask is EXEC_LO & the lanes that exist, so the
+    /// T branch is never taken and the F branch always is.
+    fn compare_ft_expected(input: &[u32]) -> Vec<u32> {
+        let mut output = Vec::new();
+        for wave in input.chunks(32) {
+            let exists = wave_mask(wave, u32::MAX, |_| true);
+            let folded = ((exists << 1) ^ (exists & 0x0f0f_0f0f)) << 1;
+            output.extend(wave.iter().map(|&x| folded ^ x));
+        }
+        output
+    }
     const COMPARE_VALUES: [u32; 10] = [
         0,
         1,
@@ -1410,6 +1425,30 @@ mod review {
             16,
         ]);
         input
+    }
+
+    #[test]
+    fn compare_ft_fixture_matches_exact_definitions() {
+        // A full wave and a final partial wave of 7 lanes.
+        let mut input = compare_fixture_input()[..32].to_vec();
+        input.extend([0, 1, u32::MAX, 0x8000_0000, 0x7fff_ffff, 64, 0x1234_5678]);
+        let expected = compare_ft_expected(&input);
+        verify(COMPARE_FT_FIXTURE, &input, Some(&expected));
+        // The partial wave's T masks have only its 7 lanes.
+        assert_eq!(expected[32], ((0x7f << 1) ^ 0x0f) << 1);
+        let compiled = compile(Architecture::Gfx1030, COMPARE_FT_FIXTURE).unwrap();
+        assert_eq!(
+            compiled.ir.matches("wave.mask").count(),
+            7,
+            "{}",
+            compiled.ir
+        );
+        assert_eq!(
+            compiled.ir.matches("join.vccz").count(),
+            2,
+            "{}",
+            compiled.ir
+        );
     }
 
     #[test]
@@ -1802,12 +1841,10 @@ mod review {
         let mut code = base.clone();
         code[0x14..0x18].copy_from_slice(&vopc(129, 256 + 1, 9).to_le_bytes());
         rejected_at(&code, 0x14);
-        // v_cmpx (writes EXEC), F and T forms, and the VOP3 encoding.
-        for word in [vopc(210, 257, 3), vopc(128, 257, 3), vopc(135, 257, 3)] {
-            let mut code = base.clone();
-            code[0x14..0x18].copy_from_slice(&word.to_le_bytes());
-            rejected_at(&code, 0x14);
-        }
+        // v_cmpx (writes EXEC) and the VOP3 encoding.
+        let mut code = base.clone();
+        code[0x14..0x18].copy_from_slice(&vopc(210, 257, 3).to_le_bytes());
+        rejected_at(&code, 0x14);
         let mut e64 = base[..0x14].to_vec();
         e64.extend(words(&[0xd481_006a, 0x0002_0701]));
         e64.extend_from_slice(&base[0x18..]);
@@ -1894,6 +1931,10 @@ mod review {
         assert_eq!(run(&join, &[1, 0, 5, 0]), [0b1010; 4]);
         assert_eq!(run(&join, &[0, 0, 0, 0]), [0; 4]);
         programs += 2;
+        let mut input = compare_fixture_input()[..32].to_vec();
+        input.extend([0, 1, u32::MAX, 0x8000_0000, 0x7fff_ffff, 64, 0x1234_5678]);
+        assert_eq!(run(COMPARE_FT_FIXTURE, &input), compare_ft_expected(&input));
+        programs += 1;
         eprintln!("{programs} VOPC programs matched on native Metal");
     }
 }

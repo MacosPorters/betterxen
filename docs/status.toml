@@ -951,6 +951,54 @@ recognized = true
 decoded = true
 llvm = "three-way passed"
 [[instruction]]
+form = "v_cmp_f_i32_e32"
+encoding = "VOPC, Wave32; VGPR, normal SGPR (known during translation), vcc_lo, inline integer or literal SRC0 (signed); VGPR VSRC1; VCC_LO[n] = EXEC_LO[n] & false, fully written"
+representation = "`7D000501`"
+lowering = "per-thread Wave32 mask over the dispatch's own 32 lanes, reading no operand bits; runtime s_cbranch_vccz as a join select"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_t_i32_e32"
+encoding = "VOPC, Wave32; VGPR, normal SGPR (known during translation), vcc_lo, inline integer or literal SRC0 (signed); VGPR VSRC1; VCC_LO[n] = EXEC_LO[n] & true, fully written"
+representation = "`7D0E0501`"
+lowering = "per-thread Wave32 mask over the dispatch's own 32 lanes, reading no operand bits; runtime s_cbranch_vccz as a join select"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_f_u32_e32"
+encoding = "VOPC, Wave32; VGPR, normal SGPR (known during translation), vcc_lo, inline integer or literal SRC0 (unsigned); VGPR VSRC1; VCC_LO[n] = EXEC_LO[n] & false, fully written"
+representation = "`7D800501`"
+lowering = "per-thread Wave32 mask over the dispatch's own 32 lanes, reading no operand bits; runtime s_cbranch_vccz as a join select"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_t_u32_e32"
+encoding = "VOPC, Wave32; VGPR, normal SGPR (known during translation), vcc_lo, inline integer or literal SRC0 (unsigned); VGPR VSRC1; VCC_LO[n] = EXEC_LO[n] & true, fully written"
+representation = "`7D8E0501`"
+lowering = "per-thread Wave32 mask over the dispatch's own 32 lanes, reading no operand bits; runtime s_cbranch_vccz as a join select"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
 form = "s_cbranch_scc0"
 encoding = "Nonnegative signed dword displacement"
 representation = "`BF840002`"

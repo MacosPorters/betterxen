@@ -18,7 +18,9 @@ pub use rdna2::{
     V_CMP_NE_I32, V_CMP_NE_U32, V_INTERP_P1_F32, V_INTERP_P2_F32, V_LSHLREV_B32, V_LSHRREV_B32,
     V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32,
 };
-pub use semantics_gen::{ScalarAluOp, ScalarCompareOp, ScalarUnaryOp, VectorAluOp};
+pub use semantics_gen::{
+    ScalarAluOp, ScalarCompareOp, ScalarUnaryOp, VectorAluOp, VectorCompareOp,
+};
 
 /// SGPR index of `vcc_lo`, the Wave32 vector condition code.
 pub const VCC_LO: u8 = 106;
@@ -93,7 +95,8 @@ impl fmt::Display for ScalarSource {
     }
 }
 
-/// Relation tested by a VOPC integer compare; S0 is SRC0 and S1 is VSRC1.
+/// Relation tested by a SOPC or VOPC integer compare; S0 (SSRC0 or SRC0) is on
+/// the left.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CompareRelation {
     /// S0 < S1 (opcode offset 1).
@@ -108,64 +111,10 @@ pub enum CompareRelation {
     NotEqual,
     /// S0 >= S1 (offset 6).
     GreaterOrEqual,
-}
-
-/// A 32-bit VOPC integer compare: one relation over signed or unsigned operands.
-///
-/// The per-lane test follows the RDNA 2 ISA guide, section 12.9 (Table 59) and
-/// the pinned XML descriptions. VCC and EXEC rules are in
-/// docs/shaders/vector-compare.md.
-#[derive(Clone, Copy, Debug, Eq, PartialEq)]
-pub struct VectorCompareOp {
-    /// The tested relation.
-    pub relation: CompareRelation,
-    /// `_i32` (two's complement) when true, `_u32` when false.
-    pub signed: bool,
-}
-
-impl VectorCompareOp {
-    /// Lower-case mnemonic of the 32-bit VOPC encoding.
-    pub fn mnemonic(self) -> &'static str {
-        const SIGNED: [&str; 6] = [
-            "v_cmp_lt_i32_e32",
-            "v_cmp_eq_i32_e32",
-            "v_cmp_le_i32_e32",
-            "v_cmp_gt_i32_e32",
-            "v_cmp_ne_i32_e32",
-            "v_cmp_ge_i32_e32",
-        ];
-        const UNSIGNED: [&str; 6] = [
-            "v_cmp_lt_u32_e32",
-            "v_cmp_eq_u32_e32",
-            "v_cmp_le_u32_e32",
-            "v_cmp_gt_u32_e32",
-            "v_cmp_ne_u32_e32",
-            "v_cmp_ge_u32_e32",
-        ];
-        let index = self.relation as usize;
-        if self.signed {
-            SIGNED[index]
-        } else {
-            UNSIGNED[index]
-        }
-    }
-
-    /// The per-lane test result for operand bits S0 and S1.
-    pub fn test(self, src0: u32, src1: u32) -> bool {
-        let ordering = if self.signed {
-            (src0 as i32).cmp(&(src1 as i32))
-        } else {
-            src0.cmp(&src1)
-        };
-        match self.relation {
-            CompareRelation::Less => ordering.is_lt(),
-            CompareRelation::Equal => ordering.is_eq(),
-            CompareRelation::LessOrEqual => ordering.is_le(),
-            CompareRelation::Greater => ordering.is_gt(),
-            CompareRelation::NotEqual => ordering.is_ne(),
-            CompareRelation::GreaterOrEqual => ordering.is_ge(),
-        }
-    }
+    /// Never holds (VOPC F, offset 0).
+    False,
+    /// Always holds (VOPC T, offset 7).
+    True,
 }
 
 /// Output targeted by a supported uncompressed four-component export.
@@ -327,7 +276,7 @@ impl Instruction {
             Self::ScalarUnary { op, .. } => op.mnemonic(),
             Self::ScalarAlu { op, .. } => op.mnemonic(),
             Self::ScalarCompare { op, .. } => op.mnemonic(),
-            Self::VectorCompare { op, .. } => op.mnemonic(),
+            Self::VectorCompare { op, .. } => op.assembly_name(),
             Self::VectorAlu { op, .. } => op.assembly_name(),
             Self::BranchSccZero { .. } => "s_cbranch_scc0",
             Self::BranchExecZero { .. } => "s_cbranch_execz",

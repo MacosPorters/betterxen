@@ -27,7 +27,7 @@
 //! production operator. SOP2 arithmetic runs through a bit-serial ripple
 //! adder (subtraction as addition of the complement), not host integer ops.
 //!
-//! Wave32 VOPC integer compares (`v_cmp_{lt,eq,le,gt,ne,ge}_{i32,u32}_e32`,
+//! Wave32 VOPC integer compares (`v_cmp_{f,lt,eq,le,gt,ne,ge,t}_{i32,u32}_e32`,
 //! contract `docs/shaders/vector-compare.md`) need all lanes of a wave, so execution
 //! runs lockstep waves of 32 consecutive dispatch indices with wave-uniform
 //! scalar state and per-lane vector state. A lane-local failure stops only that
@@ -75,7 +75,7 @@ enum Insn {
     VMovFromSgpr(u8, u8),
     /// `v_mov_b32_e32 vD, vcc_lo`.
     VMovFromVcc(u8),
-    /// VOPC compare into VCC_LO: relation 1 lt, 2 eq, 3 le, 4 gt, 5 ne, 6 ge.
+    /// VOPC compare into VCC_LO: relation 0 f, 1 lt, 2 eq, 3 le, 4 gt, 5 ne, 6 ge, 7 t.
     VCmp {
         relation: u8,
         signed: bool,
@@ -585,13 +585,17 @@ fn compare(
         } else {
             (a, b)
         };
+        // Guide 12.9 Table 59 offsets; F (0) and T (7) ignore the operand
+        // values but still read them (contract 5: sources are validated).
         let pass = match relation {
+            0 => false,
             1 => a < b,
             2 => a == b,
             3 => a <= b,
             4 => a > b,
             5 => a != b,
-            _ => a >= b,
+            6 => a >= b,
+            _ => true,
         };
         mask |= u32::from(pass) << n;
     }
@@ -1039,8 +1043,8 @@ fn decode_one(code: &[u8], offset: usize) -> Result<(Insn, usize), String> {
     if first >> 25 == 0b011_1110 {
         let opcode = (first >> 17) & 0xff;
         let (signed, relation) = match opcode {
-            129..=134 => (true, opcode - 128),
-            193..=198 => (false, opcode - 192),
+            128..=135 => (true, opcode - 128),
+            192..=199 => (false, opcode - 192),
             _ => return Err(fail("unsupported VOPC opcode")),
         };
         let (src0, len) = vector_src0(code, offset, first, "VOPC")?;

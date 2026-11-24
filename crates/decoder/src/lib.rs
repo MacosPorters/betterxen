@@ -9,10 +9,8 @@ pub use xenora_isa::{
 use xenora_isa::{
     BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
     S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
-    V_ADD_NC_U32, V_AND_B32, V_ASHRREV_I32, V_CMP_EQ_I32, V_CMP_EQ_U32, V_CMP_GE_I32, V_CMP_GE_U32,
-    V_CMP_GT_I32, V_CMP_GT_U32, V_CMP_LE_I32, V_CMP_LE_U32, V_CMP_LT_I32, V_CMP_LT_U32,
-    V_CMP_NE_I32, V_CMP_NE_U32, V_INTERP_P1_F32, V_INTERP_P2_F32, V_LSHLREV_B32, V_LSHRREV_B32,
-    V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32, VCC_LO,
+    V_ADD_NC_U32, V_AND_B32, V_ASHRREV_I32, V_INTERP_P1_F32, V_INTERP_P2_F32, V_LSHLREV_B32,
+    V_LSHRREV_B32, V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32, VCC_LO,
 };
 
 use xenora_isa::meta::EncodingFamily;
@@ -42,7 +40,7 @@ const fn concat_forms<const N: usize>() -> [(&'static str, EncodingFamily); N] {
 }
 
 /// Decoded forms not yet described by the semantic registry.
-const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 36] = [
+const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 24] = [
     ("BUFFER_LOAD_DWORD", EncodingFamily::Mubuf),
     ("BUFFER_STORE_DWORD", EncodingFamily::Mubuf),
     ("EXP", EncodingFamily::Exp),
@@ -59,18 +57,6 @@ const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 36] = [
     ("V_ADD_NC_U32", EncodingFamily::Vop3),
     ("V_AND_B32", EncodingFamily::Vop2),
     ("V_ASHRREV_I32", EncodingFamily::Vop2),
-    ("V_CMP_EQ_I32", EncodingFamily::Vopc),
-    ("V_CMP_EQ_U32", EncodingFamily::Vopc),
-    ("V_CMP_GE_I32", EncodingFamily::Vopc),
-    ("V_CMP_GE_U32", EncodingFamily::Vopc),
-    ("V_CMP_GT_I32", EncodingFamily::Vopc),
-    ("V_CMP_GT_U32", EncodingFamily::Vopc),
-    ("V_CMP_LE_I32", EncodingFamily::Vopc),
-    ("V_CMP_LE_U32", EncodingFamily::Vopc),
-    ("V_CMP_LT_I32", EncodingFamily::Vopc),
-    ("V_CMP_LT_U32", EncodingFamily::Vopc),
-    ("V_CMP_NE_I32", EncodingFamily::Vopc),
-    ("V_CMP_NE_U32", EncodingFamily::Vopc),
     ("V_INTERP_P1_F32", EncodingFamily::Vintrp),
     ("V_INTERP_P2_F32", EncodingFamily::Vintrp),
     ("V_LSHLREV_B32", EncodingFamily::Vop2),
@@ -338,26 +324,8 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
     if V_MOV_B32.matches(first) {
         return move_b32(first, bytes);
     }
-    {
-        use CompareRelation::{Equal, Greater, GreaterOrEqual, Less, LessOrEqual, NotEqual};
-        for (opcode, relation, signed) in [
-            (V_CMP_LT_I32, Less, true),
-            (V_CMP_EQ_I32, Equal, true),
-            (V_CMP_LE_I32, LessOrEqual, true),
-            (V_CMP_GT_I32, Greater, true),
-            (V_CMP_NE_I32, NotEqual, true),
-            (V_CMP_GE_I32, GreaterOrEqual, true),
-            (V_CMP_LT_U32, Less, false),
-            (V_CMP_EQ_U32, Equal, false),
-            (V_CMP_LE_U32, LessOrEqual, false),
-            (V_CMP_GT_U32, Greater, false),
-            (V_CMP_NE_U32, NotEqual, false),
-            (V_CMP_GE_U32, GreaterOrEqual, false),
-        ] {
-            if opcode.matches(first) {
-                return vector_compare(VectorCompareOp { relation, signed }, first, bytes);
-            }
-        }
+    if let Some(op) = VectorCompareOp::from_word(first) {
+        return vector_compare(op, first, bytes);
     }
     if V_ADD_NC_U32.matches(first) {
         let len = V_ADD_NC_U32.byte_len();
@@ -715,7 +683,7 @@ fn vector_compare(
     bytes: &[u8],
 ) -> Result<(Instruction, u8), DecodeErrorKind> {
     let src1 = ((first >> 9) & 0xff) as u8;
-    let (src0, len) = vector_src0(first, bytes, op.mnemonic())?;
+    let (src0, len) = vector_src0(first, bytes, op.assembly_name())?;
     Ok((Instruction::VectorCompare { op, src0, src1 }, len))
 }
 

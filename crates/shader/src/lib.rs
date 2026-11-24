@@ -195,15 +195,18 @@ impl Op {
 
 fn compare_expression(op: VectorCompareOp, left: &str, right: &str) -> String {
     use xenora_decoder::CompareRelation;
-    let symbol = match op.relation {
+    let symbol = match op.relation() {
         CompareRelation::Less => "<",
         CompareRelation::Equal => "==",
         CompareRelation::LessOrEqual => "<=",
         CompareRelation::Greater => ">",
         CompareRelation::NotEqual => "!=",
         CompareRelation::GreaterOrEqual => ">=",
+        // F and T read no operand bits.
+        CompareRelation::False => return "false".to_owned(),
+        CompareRelation::True => return "true".to_owned(),
     };
-    if op.signed {
+    if op.signed() {
         format!("as_type<int>({left}) {symbol} as_type<int>({right})")
     } else {
         format!("{left} {symbol} {right}")
@@ -485,7 +488,7 @@ pub fn compile(architecture: Architecture, bytes: &[u8]) -> Result<CompiledShade
                 let _ = writeln!(
                     ir,
                     "{offset:04x}: {dest} = wave.mask {} {src0}, {src1} exec=0x{exec:08x}",
-                    op.mnemonic()
+                    op.assembly_name()
                 );
                 emit_lane_mask(&mut msl, &operations, &uniform, index, op, src0, src1, exec);
                 continue;
@@ -523,7 +526,15 @@ fn emit_lane_mask(
     exec: u32,
 ) {
     let mut cone = vec![false; index];
-    let mut pending = vec![src0, src1];
+    // F and T do not depend on the operands, so their lanes compute none.
+    let mut pending = if matches!(
+        op.relation(),
+        xenora_decoder::CompareRelation::False | xenora_decoder::CompareRelation::True
+    ) {
+        Vec::new()
+    } else {
+        vec![src0, src1]
+    };
     while let Some(value) = pending.pop() {
         if uniform[value.0] || cone[value.0] {
             continue;

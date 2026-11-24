@@ -53,8 +53,13 @@ The 32-bit VOPC encoding (bits 31:25 = 0b0111110), no SDWA or DPP:
 | v_cmp_gt_i32 / v_cmp_gt_u32 | S0 > S1 |
 | v_cmp_ne_i32 / v_cmp_ne_u32 | S0 != S1 |
 | v_cmp_ge_i32 / v_cmp_ge_u32 | S0 >= S1 |
+| v_cmp_f_i32 / v_cmp_f_u32 | false (Table 59 offset 0) |
+| v_cmp_t_i32 / v_cmp_t_u32 | true (offset 7) |
 
 `_i32` compares the 32-bit two's-complement values, `_u32` the unsigned values.
+The forms are declared in the semantic registry
+(`crates/isa/semantics/rdna2.toml`, operand rule `vopc_vcc`); the decoder
+dispatches them from the generated `VectorCompareOp`.
 Operand order matters (S0 is SRC0): lt with swapped operands is gt.
 
 SRC0 selectors, exhaustively: 0-105 (normal SGPR), 106 (VCC_LO, see 5),
@@ -95,7 +100,7 @@ this wave (all 32 except in a final partial wave, see 7). As an unsigned
 
 - V_CMPX_* (writes EXEC: divergent execution; needs its own contract).
 - The VOP3 encoding of any compare (arbitrary SGPR destination, modifiers).
-- SDWA and DPP forms; F/T, 16-bit, 64-bit and float compares; v_cmp_class.
+- SDWA and DPP forms; 16-bit, 64-bit and float compares; v_cmp_class.
 - SRC0 inline float constants (240-248), SGPRs other than s0-s106, TTMPs,
   M0, EXEC_LO/HI, VCC_HI, SCC/VCCZ/EXECZ selectors, LDS direct.
 - A normal-SGPR SRC0 without a known value, when EXEC_LO != 0.
@@ -194,7 +199,7 @@ instructions are pure 32-bit ALU and are evaluated unconditionally.
 ## 9. Verification
 
 `fixtures/rdna2/vector-compare.s` is an original program, assembled by LLVM.
-It uses all twelve forms with VGPR, SGPR, inline, literal and `vcc_lo`
+It uses the twelve relational forms with VGPR, SGPR, inline, literal and `vcc_lo`
 sources, a compare and a mask move under partial EXEC, a compare under empty
 EXEC that must clear a stale VCC, SCC kept across compares, and a runtime
 `s_cbranch_vccz`. Its expected output is written in
@@ -202,7 +207,13 @@ EXEC that must clear a stale VCC, SCC kept across compares, and a runtime
 relation for each row. The test input has a wave whose branch is taken, one
 whose branch is not, and a final partial wave of 9 lanes.
 
-The same file runs each form against 10 boundary values (0, 1, 0x7ffffffe,
+`fixtures/rdna2/vector-compare-ft.s` does the same for the four F and T
+forms: an F that clears a stale VCC, T and F under partial EXEC, a T reading
+`vcc_lo`, and runtime `s_cbranch_vccz` on a T result (never taken) and an F
+result (always taken). The independent oracle for F and T is
+`tests/validation/tests/vopc_f_t.rs`.
+
+`tests/validation/known_answers.rs` runs each relational form against 10 boundary values (0, 1, 0x7ffffffe,
 0x7fffffff, 0x80000000, 0x80000001, 0xfffffff0, 0xfffffffe, 0xffffffff,
 0x0f0f0f0f), in both operand orders. That is 240 programs, checked against
 exact i128 differences. It also covers partial and empty EXEC with seeded
@@ -210,9 +221,10 @@ destinations, both runtime branch edges in one dispatch, and 32 rejections
 pinned to their byte offset. The translator, the reference (lockstep waves,
 compares on widened i64 values) and the second interpreter (sign-bit flip,
 then an unsigned compare) must all agree. The 9 ordered compare slots in the
-fixture each change the result when their signedness is flipped. The same
-programs, plus 2 mask-chain programs (252 in all), match on native Metal with API and shader validation
-(`vector_compare_native_metal_known_answers`, run by `scripts/test-gpu.sh`).
+relational fixture each change the result when their signedness is flipped. The same
+programs, plus 2 mask-chain programs (252 in all), and the F/T fixture (253) match on native Metal with API and shader validation
+(`vector_compare_native_metal_known_answers`, run by `scripts/test-gpu.sh`). The F/T oracle's own native Metal cases
+run in `vopc_f_t_match_the_guide_on_native_metal`.
 
 A deliberately broken copy of each implementation fails these tests: the
 reference with unsigned-only compares or with the EXEC test removed; the

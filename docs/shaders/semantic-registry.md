@@ -60,9 +60,9 @@ error.
 | `source_order` | Vector forms only: `reversed` when the guide computes `op(S1, S0)` (the XML records no operand order); absent otherwise | `reversed` |
 | `shift_amount` | `lshl_add` only: the fixed left shift of S0 before the add | `1` to `4`; required for `lshl_add`, rejected elsewhere |
 | `shift_count_bits` | Shifts only: the low bits of S1 used as the count. The generator masks S1 with it, and the XML must list S1 as unsigned | `5` (log2 of `width`); required for shifts, rejected elsewhere |
-| `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
-| `vcc`, `exec` | Effect on VCC and EXEC, stated rather than implied | `unchanged` |
-| `wave` | Wave sizes the form is valid in | `any` (`wave32` is in the vocabulary but rejected until the decoder can enforce it) |
+| `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (SOPC compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
+| `vcc`, `exec` | Effect on VCC and EXEC, stated rather than implied | `unchanged`; `vcc` is `lane_mask` exactly for the VOPC compares (VCC_LO bit n = EXEC[n] & test, fully written; VCC_HI unknown afterwards, see [vector-compare.md](vector-compare.md)); `exec` must be `unchanged` (no EXEC-writing contract yet) |
+| `wave` | Wave sizes the form is valid in | `wave32` exactly for the VOPC compares (their one entry point is the Wave32 compute fixture ABI, vector-compare.md section 2), `any` for everything else; the decoder has no wave-size input, so no other form may claim `wave32` |
 | `operands` | Name of an `[operand_rules]` entry for the same family | e.g. `sop2_sgpr` |
 | `spec` | References `{ document, section, page }` | at least one `guide` reference with a page above 0 |
 | `verify` | Evidence the form needs before it counts as verified | `reference`, `independent`, `metal`, `llvm_encoding` |
@@ -105,7 +105,15 @@ must be `unchanged` (VOP2 integer forms write no SCC, VCC or EXEC):
 | `min`, `max` / `signed` or `unsigned` | `MinSigned`, `MinUnsigned`, `MaxSigned`, `MaxUnsigned` |
 | `mul24`, `mul_hi24` / `signed` or `unsigned` | `Mul24Signed`, `Mul24Unsigned`, `MulHi24Signed`, `MulHi24Unsigned` |
 
-A compare must use an operand rule of the compare kind (`sopc_scalar`: two
+VOPC compares (operand rule `vopc_vcc`, kind `vector_compare`: SRC0 a
+`vector_source` as for VOP2, VSRC1 a VGPR, destination implicitly `vcc_lo`)
+take the same `relation` and primitive as SOPC compares, but declare
+`scc = "unchanged"`, `vcc = "lane_mask"` and `wave = "wave32"`. The XML's implicit
+64-bit VCC output must be present and is accounted for by `lane_mask`. Signedness
+still matters for `eq` and `lg`, because the MSL lowering casts signed operands.
+`v_cmpx_*` (EXEC writes), the VOP3 encoding and Wave64 stay unsupported.
+
+A SOPC compare must use an operand rule of the compare kind (`sopc_scalar`: two
 sources, no destination), a unary operation one of the unary kind (`sop1_sgpr`:
 one source and an SGPR destination), and a two-source ALU operation
 `sop2_sgpr`.
@@ -119,6 +127,10 @@ vocabularies above, it rejects:
 
 - contradictions: a declared `scc` or `carry_in` that the primitive does not
   have, `bitwise` on an arithmetic operation or the reverse;
+- VOPC compares whose opcode is not the group base (128 for `signed`, 192
+  for `unsigned`) plus the relation's offset in guide Table 59 (F 0, LT 1,
+  EQ 2, LE 3, GT 4, LG/NE 5, GE 6, T 7), and a `lane_mask` form whose XML
+  does not have exactly one implicit VCC operand that is written and not read;
 - duplicates: the same `name`, the same `(family, opcode)`, or the same
   `variant` twice in one generated enum;
 - XML disagreements: a family with no XML encoding, a form with no default XML

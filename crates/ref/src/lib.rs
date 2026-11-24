@@ -79,10 +79,10 @@ pub enum Op {
 ///
 /// AMD RDNA 2 ISA guide section 12.9, Tables 59 and 61: opcode 128 + offset
 /// for signed and 192 + offset for unsigned 32-bit operands, with offsets
-/// LT 1, EQ 2, LE 3, GT 4, NE 5, GE 6.
+/// F 0, LT 1, EQ 2, LE 3, GT 4, NE 5, GE 6, T 7.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub struct Comparison {
-    /// Opcode offset 1-6 within the 32-bit integer group.
+    /// Opcode offset 0-7 within the 32-bit integer group.
     pub offset: u8,
     /// Whether the operands are two's-complement integers.
     pub signed: bool,
@@ -100,12 +100,16 @@ impl Comparison {
         };
         let (s0, s1) = (widen(s0), widen(s1));
         match self.offset {
+            // Table 61: V_CMP_F_{I,U}32 `D[threadId] = 0`.
+            0 => false,
             1 => s0 < s1,
             2 => s0 == s1,
             3 => s0 <= s1,
             4 => s0 > s1,
             5 => s0 != s1,
-            _ => s0 >= s1,
+            6 => s0 >= s1,
+            // Table 61: V_CMP_T_{I,U}32 `D[threadId] = 1`.
+            _ => true,
         }
     }
 }
@@ -579,7 +583,7 @@ pub fn decode(code: &[u8]) -> Result<Vec<DecodedInstruction>, ReferenceError> {
             [lo, packed, upper, tag @ 0x7c..=0x7d, tail @ ..]
                 if matches!(
                     (u16::from(*tag & 1) << 7) | u16::from(*upper >> 1),
-                    129..=134 | 193..=198
+                    128..=135 | 192..=199
                 ) =>
             {
                 let opcode = (u16::from(*tag & 1) << 7) | u16::from(*upper >> 1);

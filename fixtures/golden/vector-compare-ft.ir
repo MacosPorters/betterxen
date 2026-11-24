@@ -1,0 +1,28 @@
+0000: t0 = load.u32 input[index]
+0014: t1 = const.u32 0x00000000
+0018: t2 = const.u32 0x00000001
+0020: t3 = wave.mask v_cmp_f_i32_e32 t0, t0 exec=0xffffffff
+0028: t4 = xor.b32 t1, t3
+002c: t5 = const.u32 0x12345678
+002c: t6 = wave.mask v_cmp_t_i32_e32 t5, t0 exec=0xffffffff
+0034: t7 = lshl.b32 t4, t2
+0038: t8 = xor.b32 t7, t6
+0044: t9 = const.u32 0xfffffff9
+0044: t10 = wave.mask v_cmp_t_u32_e32 t9, t0 exec=0x0f0f0f0f
+0050: t11 = lshl.b32 t8, t2
+0054: t12 = xor.b32 t11, t10
+0058: t13 = wave.mask v_cmp_t_i32_e32 t0, t0 exec=0xffffffff
+0064: t14 = const.u32 0xdeadbeef
+0064: t15 = wave.mask v_cmp_f_u32_e32 t14, t0 exec=0x3c3c3c3c
+0074: t16 = lshl.b32 t12, t2
+0078: t17 = xor.b32 t16, t15
+007c: t18 = wave.mask v_cmp_t_u32_e32 t15, t0 exec=0xffffffff
+0080: branch.vccz t18 -> 0x0088
+0084: t20 = xor.b32 t17, t0
+0088: t21 = join.vccz t18, t20, t17
+0088: t22 = const.u32 0x00000040
+0088: t23 = wave.mask v_cmp_f_i32_e32 t22, t0 exec=0xffffffff
+008c: branch.vccz t23 -> 0x0094
+0090: t25 = const.u32 0x00000000
+0094: t26 = join.vccz t23, t25, t21
+0094: store.u32 output[index], t26

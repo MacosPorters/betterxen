@@ -112,7 +112,7 @@ def main(argv: list[str] | None = None) -> int:
     r = sub.add_parser("rdna2", help="read-only RDNA2 expansion planning")
     r.add_argument(
         "action",
-        choices=("inventory", "candidates", "plan", "discrepancies", "diff", "manifests", "reconcile"),
+        choices=("inventory", "candidates", "plan", "discrepancies", "diff", "manifests", "reconcile", "rank"),
     )
     r.add_argument("--limit", type=int, default=0)
     r.add_argument("--family", action="append", default=[], help="filter by encoding family")
@@ -127,6 +127,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--out", default="", help="write full JSON under this path (prefer artifacts/)")
     r.add_argument("--before", default="", help="JSON inventory for diff")
     r.add_argument("--after", default="", help="JSON inventory for diff")
+    r.add_argument("--no-float", action="store_true", help="rank: exclude floating-point groups")
 
     cpu = sub.add_parser("cpu-coverage", help="legacy heuristic CPU/runtime coverage scan")
     cpu.add_argument("--blockers", action="store_true")
@@ -168,6 +169,12 @@ def main(argv: list[str] | None = None) -> int:
     br.add_argument("--behind", type=int, required=True)
 
     args = p.parse_args(argv)
+    if args.command == "rdna2" and args.action == "rank":
+        from .rdna2_rank import run_rank
+
+        return run_rank(_root(), args)
+    if args.command == "rdna2" and args.no_float:
+        r.error("--no-float requires the rank action")
     root = _root()
 
     if args.command == "orchestrate":

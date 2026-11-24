@@ -99,6 +99,16 @@ pub const fn ashr_nonzero_i32(a: u32, count: u32) -> (u32, bool) {
     (value, value != 0)
 }
 
+/// The VOPC F test: false for every operand pair.
+pub const fn false_b32(_a: u32, _b: u32) -> bool {
+    false
+}
+
+/// The VOPC T test: true for every operand pair.
+pub const fn true_b32(_a: u32, _b: u32) -> bool {
+    true
+}
+
 /// `a == b` on the raw bits; signedness does not matter for equality.
 pub const fn eq_b32(a: u32, b: u32) -> bool {
     a == b
