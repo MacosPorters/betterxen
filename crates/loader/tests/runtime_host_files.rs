@@ -162,11 +162,17 @@ fn symlink(target: &Path, link: &Path) {
 
 #[test]
 fn synthetic_file_times_follow_the_file_until_deletion() {
-    let mut guest = guest_with(vec![]);
+    let clock = Arc::new(MockClock::new(100));
+    let state = ServicesState::new(clock.clone());
+    let mut guest = Guest::with_state(IMPORTS, &[], state);
     let source = r"C:\Before.dat";
     let target = r"C:\After.dat";
     let handle = open(&mut guest, source, GENERIC_READ | GENERIC_WRITE, 0, CREATE_NEW);
     assert_ne!(handle, INVALID);
+    assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, BUFFER + 8, BUFFER + 16]), 1);
+    assert_eq!(guest.u64_at(BUFFER), 100);
+    assert_eq!(guest.u64_at(BUFFER + 8), 100);
+    assert_eq!(guest.u64_at(BUFFER + 16), 100);
     let created = 133_444_736_001_234_567;
     let modified = 133_444_736_012_345_678;
     guest.memory.write_u64(COUNT, created).unwrap();
@@ -174,31 +180,40 @@ fn synthetic_file_times_follow_the_file_until_deletion() {
     assert_eq!(guest.call("SetFileTime", &[handle, COUNT, 0, COUNT + 8]), 1);
     assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, BUFFER + 8, BUFFER + 16]), 1);
     assert_eq!(guest.u64_at(BUFFER), created);
-    assert_eq!(guest.u64_at(BUFFER + 8), 0);
+    assert_eq!(guest.u64_at(BUFFER + 8), 100);
     assert_eq!(guest.u64_at(BUFFER + 16), modified);
+    clock.advance(10);
+    assert!(write(&mut guest, handle, b"data"));
+    assert_eq!(guest.call("SetFilePointerEx", &[handle, 0, 0, 0]), 1);
+    clock.advance(10);
+    assert_eq!(read(&mut guest, handle, 4).unwrap(), b"data");
+    assert_eq!(guest.call("GetFileTime", &[handle, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(guest.u64_at(BUFFER), 120);
+    assert_eq!(guest.u64_at(BUFFER + 8), 110);
     assert_eq!(guest.call("CloseHandle", &[handle]), 1);
 
     put_path(&mut guest, OTHER_PATH, target);
     assert_eq!(guest.call("MoveFileW", &[PATH, OTHER_PATH]), 1);
+    clock.advance(10);
     let handle = open(&mut guest, target, GENERIC_WRITE, 0, CREATE_ALWAYS);
     assert_ne!(handle, INVALID);
     assert_eq!(guest.call("CloseHandle", &[handle]), 1);
     assert_eq!(guest.call("GetFileAttributesExW", &[PATH, 0, BUFFER]), 1);
     assert_eq!(guest.u64_at(BUFFER + 4), created);
-    assert_eq!(guest.u64_at(BUFFER + 20), modified);
+    assert_eq!(guest.u64_at(BUFFER + 20), 130);
 
     let search = guest.call("FindFirstFileW", &[PATH, FIND_DATA]);
     assert_ne!(search, INVALID);
     assert_eq!(guest.u64_at(FIND_DATA + 4), created);
-    assert_eq!(guest.u64_at(FIND_DATA + 20), modified);
+    assert_eq!(guest.u64_at(FIND_DATA + 20), 130);
     assert_eq!(guest.call("FindClose", &[search]), 1);
     assert_eq!(guest.call("DeleteFileW", &[PATH]), 1);
 
     let handle = open(&mut guest, target, GENERIC_READ, 0, CREATE_NEW);
     assert_ne!(handle, INVALID);
     assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, 0, BUFFER + 8]), 1);
-    assert_eq!(guest.u64_at(BUFFER), 0);
-    assert_eq!(guest.u64_at(BUFFER + 8), 0);
+    assert_eq!(guest.u64_at(BUFFER), 130);
+    assert_eq!(guest.u64_at(BUFFER + 8), 130);
     assert_eq!(guest.call("CloseHandle", &[handle]), 1);
 }
 

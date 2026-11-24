@@ -34,10 +34,15 @@ const MAX_DIRECTORIES: usize = 256;
 const MAX_BYTES: usize = 16 * 1024 * 1024;
 const MAX_TRANSFER: usize = 1024 * 1024;
 
-#[derive(Default)]
 pub(super) struct SyntheticFile {
     data: Vec<u8>,
     times: [u64; 3],
+}
+
+impl SyntheticFile {
+    fn new(now: u64) -> Self {
+        Self { data: Vec::new(), times: [now; 3] }
+    }
 }
 
 #[derive(Clone)]
@@ -662,7 +667,7 @@ fn temp_file_name(
         if objects.files.contains_key(&key) || objects.directories.contains(&key) {
             return Ok(false);
         }
-        objects.files.insert(key, SyntheticFile::default());
+        objects.files.insert(key, SyntheticFile::new(state.clock.now_filetime()));
         Ok(true)
     });
     match result {
@@ -904,9 +909,11 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 if objects.files.len() >= MAX_FILES {
                     return open.fail(cpu.gs_base, DISK_FULL, INVALID_HANDLE);
                 }
-                objects.files.insert(path.clone(), SyntheticFile::default());
+                objects.files.insert(path.clone(), SyntheticFile::new(open.clock.now_filetime()));
             } else if matches!(disposition, 2 | 5) {
-                objects.files.get_mut(&path).expect("existing file").data.clear();
+                let file = objects.files.get_mut(&path).expect("existing file");
+                file.data.clear();
+                file.times[2] = open.clock.now_filetime();
             }
             if matches!(disposition, 2 | 4) {
                 open.fail(cpu.gs_base, if exists { ALREADY_EXISTS } else { 0 }, 0)?;
@@ -1396,7 +1403,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             return truncate.fail(cpu.gs_base, DISK_FULL, 0);
         }
         let used = files.values().map(|file| file.data.len()).sum::<usize>();
-        let data = &mut files.get_mut(&file.path).expect("open file exists").data;
+        let synthetic = files.get_mut(&file.path).expect("open file exists");
+        let data = &mut synthetic.data;
         let length = position as usize;
         let growth = length.saturating_sub(data.len());
         if growth > MAX_BYTES - used {
@@ -1410,6 +1418,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         } else {
             data.resize(length, 0);
         }
+        synthetic.times[2] = truncate.clock.now_filetime();
         Ok(1)
     });
 
@@ -1478,7 +1487,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             } else {
                 0
             };
-            let data = &mut files.get_mut(&file.path).expect("open file exists").data;
+            let synthetic = files.get_mut(&file.path).expect("open file exists");
+            let data = &mut synthetic.data;
             let position = file.position.load(Ordering::Relaxed);
             let transferred = if writing {
                 if count == 0 {
@@ -1523,6 +1533,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             memory
                 .write_u32(args.r9, transferred as u32)
                 .map_err(ExitReason::MemoryFault)?;
+            if transferred != 0 {
+                synthetic.times[if writing { 2 } else { 1 }] = state.clock.now_filetime();
+            }
             file.position
                 .store(position + transferred as u64, Ordering::Relaxed);
             Ok(1)
