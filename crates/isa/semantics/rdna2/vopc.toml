@@ -358,3 +358,352 @@ spec = [
   { document = "guide", section = "3.9", page = 19 },
 ]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+# Wave32 64-bit integer compares (guide 3.6.3, 6.2 Table 20 and 12.9).
+[operand_rules.vopc_vcc_pair]
+family = "VOPC"
+src = [
+  { field = "SRC0", class = "vector_pair_or_inline_integer" },
+  { field = "VSRC1", class = "vgpr_pair" },
+]
+max_literals = 0
+unsupported = [
+  "src_vcc", "src_literal", "src_exec", "src_m0", "src_ttmp", "src_null",
+  "src_float_inline", "src_special",
+]
+
+[[form]]
+name = "V_CMP_LT_I64"
+family = "VOPC"
+opcode = 161
+variant = "CmpLtI64"
+operation = "compare"
+relation = "lt"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_EQ_I64"
+family = "VOPC"
+opcode = 162
+variant = "CmpEqI64"
+operation = "compare"
+relation = "eq"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_LE_I64"
+family = "VOPC"
+opcode = 163
+variant = "CmpLeI64"
+operation = "compare"
+relation = "le"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_GT_I64"
+family = "VOPC"
+opcode = 164
+variant = "CmpGtI64"
+operation = "compare"
+relation = "gt"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_NE_I64"
+family = "VOPC"
+opcode = 165
+variant = "CmpNeI64"
+operation = "compare"
+relation = "lg"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_GE_I64"
+family = "VOPC"
+opcode = 166
+variant = "CmpGeI64"
+operation = "compare"
+relation = "ge"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_LT_U64"
+family = "VOPC"
+opcode = 225
+variant = "CmpLtU64"
+operation = "compare"
+relation = "lt"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_EQ_U64"
+family = "VOPC"
+opcode = 226
+variant = "CmpEqU64"
+operation = "compare"
+relation = "eq"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_LE_U64"
+family = "VOPC"
+opcode = 227
+variant = "CmpLeU64"
+operation = "compare"
+relation = "le"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_GT_U64"
+family = "VOPC"
+opcode = 228
+variant = "CmpGtU64"
+operation = "compare"
+relation = "gt"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_NE_U64"
+family = "VOPC"
+opcode = 229
+variant = "CmpNeU64"
+operation = "compare"
+relation = "lg"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_GE_U64"
+family = "VOPC"
+opcode = 230
+variant = "CmpGeU64"
+operation = "compare"
+relation = "ge"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_F_I64"
+family = "VOPC"
+opcode = 160
+variant = "CmpFI64"
+operation = "compare"
+relation = "f"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_T_I64"
+family = "VOPC"
+opcode = 167
+variant = "CmpTI64"
+operation = "compare"
+relation = "t"
+signedness = "signed"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_F_U64"
+family = "VOPC"
+opcode = 224
+variant = "CmpFU64"
+operation = "compare"
+relation = "f"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]
+
+[[form]]
+name = "V_CMP_T_U64"
+family = "VOPC"
+opcode = 231
+variant = "CmpTU64"
+operation = "compare"
+relation = "t"
+signedness = "unsigned"
+carry_in = "none"
+width = 64
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_pair"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal"]

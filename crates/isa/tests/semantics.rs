@@ -169,7 +169,8 @@ fn vector_alu_dispatch_selects_exactly_the_registry_vop2_forms() {
 
 #[test]
 fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
-    const OPERANDS: [u32; 6] = [0, 1, 0x7fff_ffff, 0x8000_0000, 0xffff_fffe, 0xffff_ffff];
+    const OPERANDS32: [u64; 6] = [0, 1, 0x7fff_ffff, 0x8000_0000, 0xffff_fffe, 0xffff_ffff];
+    const OPERANDS64: [u64; 6] = [0, 1, u64::MAX >> 1, 1 << 63, u64::MAX - 1, u64::MAX];
     for op in VectorCompareOp::ALL {
         let row = op.semantics();
         assert_eq!(row.family, EncodingFamily::Vopc);
@@ -188,9 +189,16 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
         );
         // The per-lane test is the declared relation over the declared
         // signedness, with SRC0 on the left.
-        for src0 in OPERANDS {
-            for src1 in OPERANDS {
-                let ordering = if op.signed() {
+        let operands = if row.width == 64 {
+            OPERANDS64
+        } else {
+            OPERANDS32
+        };
+        for src0 in operands {
+            for src1 in operands {
+                let ordering = if op.signed() && row.width == 64 {
+                    (src0 as i64).cmp(&(src1 as i64))
+                } else if op.signed() {
                     (src0 as i32).cmp(&(src1 as i32))
                 } else {
                     src0.cmp(&src1)
@@ -206,7 +214,7 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
                     CompareRelation::True => true,
                 };
                 assert_eq!(
-                    op.test(src0, src1),
+                    op.test_bits(src0, src1),
                     expected,
                     "{} {src0:#x} {src1:#x}",
                     row.name
@@ -214,7 +222,7 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
             }
         }
     }
-    // v_cmpx and the 16-, 64-bit and float compares must not be dispatched.
+    // v_cmpx and the 16-bit and float compares must not be dispatched.
     dispatch_selects_exactly(EncodingFamily::Vopc, |word| {
         VectorCompareOp::from_word(word).map(|op| op.semantics().name)
     });
@@ -240,16 +248,20 @@ fn vop3_variant_dispatch_selects_exactly_the_registry_vop3_rows() {
         assert_eq!(row.swap_sources, base.swap_sources);
         assert_eq!(op.assembly_name(), format!("{}_e64", op.base().mnemonic()));
     }
-    assert_eq!(VectorCompareVop3Op::ALL.len(), VectorCompareOp::ALL.len());
     for base_op in VectorCompareOp::ALL {
+        let base = base_op.semantics();
         let mut variants = VectorCompareVop3Op::ALL
             .into_iter()
             .filter(|op| op.base() == base_op);
+        if base.width == 64 {
+            assert_eq!(variants.next(), None, "{}", base.name);
+            continue;
+        }
         let op = variants
             .next()
-            .expect("VOPC form must have a VOP3A encoding");
+            .expect("32-bit VOPC form must have a VOP3A encoding");
         assert_eq!(variants.next(), None);
-        let (row, base) = (op.semantics(), base_op.semantics());
+        let row = op.semantics();
         assert_eq!((row.name, row.family), (base.name, EncodingFamily::Vop3));
         assert_eq!(row.operation, base.operation);
         assert_eq!(row.signedness, base.signedness);
