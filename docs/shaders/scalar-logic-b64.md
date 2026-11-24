@@ -24,7 +24,10 @@ is written, so either source pair may alias the destination.
 
 Inline selectors 128–208 supply integers from −16 to 64 (§5.2), with negative
 values represented in 64-bit two's complement. One source may use selector
-255 and consume a following literal dword. The pinned AMD XML declares the
+255 and consume a following literal dword. The pinned XML also defines a
+`has_lit_0_has_lit_1` form, where both sources name the same literal; Xenora
+does not accept it yet and rejects a second 255 selector (a subset restriction,
+not a guide rule). The pinned AMD XML declares the
 SOP2 logical literal operands as unsigned 64-bit values (`FMT_NUM_U64`). The
 unsigned expansion rule in §6.2.1 gives them a zero high word even when bit
 31 of the literal is set.
@@ -41,9 +44,11 @@ The compiler resolves pairs and SCC at translation time and emits Metal
 Shading Language for the resulting vector operations. The original
 `scalar-logic-b64.s` fixture uses all eight instructions and folds their
 results into an XOR key. Local CPU checks cover 4,432 oracle cases and 2,608
-operand rejections, and the LLVM three-way check covers fixture disassembly
-and instruction boundaries. These are local checks against the guide, XML,
-and LLVM. Native Metal readback and independent acceptance are pending.
+operand rejections (on both interpreters and the compiler), and the LLVM
+three-way check covers fixture disassembly and instruction boundaries. Through
+the translator, the 4,432 cases also pass on native Metal (Apple M5, API and
+shader validation on: 185 programs). These are local checks against the guide,
+XML and LLVM; independent acceptance is pending.
 
 ```sh
 cargo test --locked -p xenora-semantic-review --test sop2_b64

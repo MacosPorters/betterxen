@@ -6,7 +6,8 @@ the decoder uses. This page explains where entries live, what each field means,
 how to check and regenerate the tables, and what the generator does not do for
 you.
 
-The registry covers the nine SOP2 forms listed in [SOP2 scalar ALU](scalar-alu.md).
+The registry covers the forms counted in [semantic coverage](semantic-coverage.md); the SOP2
+forms are listed in [SOP2 scalar ALU](scalar-alu.md) and [64-bit scalar logic](scalar-logic-b64.md).
 
 ## Files
 
