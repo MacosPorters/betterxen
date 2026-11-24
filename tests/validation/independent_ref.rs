@@ -15,7 +15,9 @@
 //! and XOR, the stage C forms ANDN2, ORN2, NAND, NOR, XNOR, LSHL, LSHR and
 //! ASHR (32-bit), the 32-bit integer forms MIN/MAX (I32, U32), CSELECT, BFM,
 //! MUL_I32, BFE (U32, I32), ABSDIFF, LSHL1-4_ADD and MUL_HI (U32, I32), VOP1 move
-//! (including from an SGPR),
+//! (including from an SGPR), the VOP1 integer forms NOT, BFREV, FFBH_U32,
+//! FFBL_B32 and FFBH_I32 (any SRC0 a VOPC compare takes; bit scans as the
+//! guide's loops over bits from integer division) and SWAP_B32 (VGPR SRC0),
 //! VOP2 bitwise, shift, arithmetic-shift and float, the VOP2 integer forms
 //! MUL_I32_I24, MUL_HI_I32_I24, MUL_U32_U24, MUL_HI_U32_U24, MIN/MAX (I32,
 //! U32), XNOR and ADD/SUB/SUBREV_NC_U32 (any SRC0 a VOPC compare takes; a
@@ -27,8 +29,10 @@
 //! production operator. SOP2 arithmetic runs through a bit-serial ripple
 //! adder (subtraction as addition of the complement), not host integer ops.
 //!
-//! Wave32 VOPC integer compares (`v_cmp_{f,lt,eq,le,gt,ne,ge,t}_{i32,u32}_e32`,
-//! contract `docs/shaders/vector-compare.md`) need all lanes of a wave, so execution
+//! Wave32 VOPC integer compares
+//! (`v_cmp_{f,lt,eq,le,gt,ne,ge,t}_{i32,u32,i64,u64}_e32` and
+//! `v_cmp_{lt,eq,le,gt,ne,ge}_{i16,u16}_e32`, contract
+//! `docs/shaders/vector-compare.md`) need all lanes of a wave, so execution
 //! runs lockstep waves of 32 consecutive dispatch indices with wave-uniform
 //! scalar state and per-lane vector state. A lane-local failure stops only that
 //! lane and the lowest-index error is reported, so programs without compares
@@ -76,9 +80,11 @@ enum Insn {
     /// `v_mov_b32_e32 vD, vcc_lo`.
     VMovFromVcc(u8),
     /// VOPC compare into VCC_LO: relation 0 f, 1 lt, 2 eq, 3 le, 4 gt, 5 ne, 6 ge, 7 t.
+    /// `bits` is 16, 32 or 64; 64-bit register operands name the low register of a pair.
     VCmp {
         relation: u8,
         signed: bool,
+        bits: u32,
         src0: CmpSrc,
         src1: u8,
     },
@@ -91,6 +97,10 @@ enum Insn {
     VXor(u8, u8, u8),
     /// VOP2 integer opcode 9-12, 17-20, 30 or 37-39: VDST, SRC0, VSRC1.
     VInt(u32, u8, CmpSrc, u8),
+    /// VOP1 integer opcode 55-59: VDST, SRC0.
+    VUnary(u32, u8, CmpSrc),
+    /// `v_swap_b32 vD, vS` (VOP1 opcode 101).
+    VSwap(u8, u8),
     VAddF(u8, u8, u8),
     VMulF(u8, u8, u8),
     Load(u8),
@@ -196,6 +206,7 @@ fn run_wave(program: &[(usize, Insn)], wave: &[u32]) -> Result<Vec<u32>, String>
             Insn::VCmp {
                 relation,
                 signed,
+                bits,
                 src0,
                 src1,
             } => {
@@ -208,7 +219,7 @@ fn run_wave(program: &[(usize, Insn)], wave: &[u32]) -> Result<Vec<u32>, String>
                     &lanes,
                     &sgpr,
                     execution_mask,
-                    (relation, signed, src0, src1),
+                    (relation, signed, bits, src0, src1),
                     offset,
                 )
                 .map(|mask| {
@@ -545,29 +556,58 @@ fn compare(
     lanes: &[Lane],
     sgpr: &[Option<u32>; 128],
     execution_mask: u32,
-    (relation, signed, src0, src1): (u8, bool, CmpSrc, u8),
+    (relation, signed, bits, src0, src1): (u8, bool, u32, CmpSrc, u8),
     offset: usize,
 ) -> Result<u32, String> {
     if execution_mask == 0 {
         // Encoding already validated; nothing is read (contract 5).
         return Ok(0);
     }
-    let scalar_src0 = match src0 {
-        CmpSrc::Sgpr(reg) => {
-            Some(sgpr[reg as usize].ok_or_else(|| format!("{offset:#x}: uninitialized s{reg}"))?)
+    // Registers per operand: a 64-bit operand is {reg (bits 31:0), reg+1 (63:32)}.
+    let count: u8 = if bits == 64 { 2 } else { 1 };
+    let read_s = |reg: u8| -> Result<u64, String> {
+        let mut value = 0u64;
+        for half in (0..count).rev() {
+            let r = reg + half;
+            let word =
+                sgpr[r as usize].ok_or_else(|| format!("{offset:#x}: uninitialized s{r}"))?;
+            value = value * (1 << 32) + u64::from(word);
         }
-        CmpSrc::Vcc => Some(sgpr[106].ok_or_else(|| format!("{offset:#x}: uninitialized vcc_lo"))?),
-        CmpSrc::Imm(value) => Some(value),
+        Ok(value)
+    };
+    let read_v = |lane: &Lane, reg: u8| -> Result<u64, String> {
+        let mut value = 0u64;
+        for half in (0..count).rev() {
+            value = value * (1 << 32) + u64::from(read_vgpr(lane, reg + half, offset)?);
+        }
+        Ok(value)
+    };
+    let scalar_src0 = match src0 {
+        CmpSrc::Sgpr(reg) => Some(read_s(reg)?),
+        CmpSrc::Vcc => {
+            Some(u64::from(sgpr[106].ok_or_else(|| {
+                format!("{offset:#x}: uninitialized vcc_lo")
+            })?))
+        }
+        // Inline integers -16..64 keep their value at every width; a
+        // 32-bit literal (32-bit forms only) is used as its 32 bits.
+        CmpSrc::Imm(value) if bits == 64 && value >= 0x8000_0000 => {
+            Some(u64::from(value) + 0xffff_ffff_0000_0000)
+        }
+        CmpSrc::Imm(value) => Some(u64::from(value)),
         CmpSrc::Vgpr(_) => None,
     };
     // VGPR readiness is wave-uniform; validate it on every existing lane so
     // acceptance does not depend on which lanes are active.
     for lane in lanes {
         if let CmpSrc::Vgpr(reg) = src0 {
-            read_vgpr(lane, reg, offset)?;
+            read_v(lane, reg)?;
         }
-        read_vgpr(lane, src1, offset)?;
+        read_v(lane, src1)?;
     }
+    // Only the low `bits` bits take part (16-bit forms ignore bits 31:16).
+    let keep = u64::MAX >> (64 - bits);
+    let sign = 1u64 << (bits - 1);
     let mut mask = 0u32;
     for (n, lane) in lanes.iter().enumerate() {
         if (execution_mask >> n) & 1 == 0 {
@@ -575,16 +615,13 @@ fn compare(
         }
         let a = match (scalar_src0, src0) {
             (Some(value), _) => value,
-            (None, CmpSrc::Vgpr(reg)) => read_vgpr(lane, reg, offset)?,
+            (None, CmpSrc::Vgpr(reg)) => read_v(lane, reg)?,
             (None, _) => unreachable!(),
         };
-        let b = read_vgpr(lane, src1, offset)?;
+        let b = read_v(lane, src1)?;
+        let (a, b) = (a & keep, b & keep);
         // Signed order equals unsigned order after flipping the sign bit.
-        let (a, b) = if signed {
-            (a ^ 0x8000_0000, b ^ 0x8000_0000)
-        } else {
-            (a, b)
-        };
+        let (a, b) = if signed { (a ^ sign, b ^ sign) } else { (a, b) };
         // Guide 12.9 Table 59 offsets; F (0) and T (7) ignore the operand
         // values but still read them (contract 5: sources are validated).
         let pass = match relation {
@@ -689,6 +726,8 @@ fn lane_step(
             | Insn::VShiftRight(dst, ..)
             | Insn::VShiftRightArithmetic(dst, ..)
             | Insn::VInt(_, dst, ..)
+            | Insn::VUnary(_, dst, _)
+            | Insn::VSwap(dst, _)
             | Insn::VAddF(dst, ..)
             | Insn::VMulF(dst, ..) => {
                 if execution_mask != 0 && lane.vgpr[usize::from(dst)].is_none() {
@@ -717,6 +756,22 @@ fn lane_step(
                                 CmpSrc::Imm(_) => {}
                             }
                             read_vgpr(lane, src1, offset)?;
+                        }
+                        Insn::VUnary(_, _, src0) => match src0 {
+                            CmpSrc::Sgpr(reg) => {
+                                read_s(reg)?;
+                            }
+                            CmpSrc::Vcc => {
+                                read_vcc()?;
+                            }
+                            CmpSrc::Vgpr(reg) => {
+                                read_vgpr(lane, reg, offset)?;
+                            }
+                            CmpSrc::Imm(_) => {}
+                        },
+                        Insn::VSwap(dst, src0) => {
+                            read_vgpr(lane, dst, offset)?;
+                            read_vgpr(lane, src0, offset)?;
                         }
                         _ => {}
                     }
@@ -823,6 +878,25 @@ fn lane_step(
             };
             (dst, vector_integer(opcode, a, read_v(src1)?))
         }
+        Insn::VUnary(opcode, dst, src0) => {
+            check_destination(dst, pending_read, offset)?;
+            let a = match src0 {
+                CmpSrc::Sgpr(reg) => read_s(reg)?,
+                CmpSrc::Vcc => read_vcc()?,
+                CmpSrc::Imm(value) => value,
+                CmpSrc::Vgpr(reg) => read_v(reg)?,
+            };
+            (dst, vector_unary(opcode, a))
+        }
+        // Guide 12.8: tmp = D; D = S0; S0 = tmp. Both are VGPR writes.
+        Insn::VSwap(dst, src0) => {
+            let (old_dst, old_src0) = (read_v(dst)?, read_v(src0)?);
+            check_destination(dst, pending_read, offset)?;
+            check_destination(src0, pending_read, offset)?;
+            lane.vgpr[dst as usize] = Some(old_src0);
+            lane.vgpr[src0 as usize] = Some(old_dst);
+            return Ok(());
+        }
         Insn::VAddF(dst, a, b) => {
             check_destination(dst, pending_read, offset)?;
             (dst, exact_float(true, read_v(a)?, read_v(b)?, offset)?)
@@ -835,6 +909,22 @@ fn lane_step(
     };
     lane.vgpr[value.0 as usize] = Some(value.1);
     Ok(())
+}
+
+/// D of VOP1 integer opcode `opcode` (guide 12.8 pseudocode) for S0 = `value`.
+fn vector_unary(opcode: u32, value: u32) -> u32 {
+    // Bit i of S0, by integer division rather than a host shift.
+    let bit = |i: u32| (value / 2_u32.pow(i)) % 2 == 1;
+    // D = -1 unless the loop finds a position.
+    let found = |position: Option<u32>| position.unwrap_or(u32::MAX);
+    match opcode {
+        55 => u32::MAX - value,
+        // D[31:0] = S0[0:31]: S0 bit 0 becomes D bit 31.
+        56 => (0..32).fold(0, |word, i| word * 2 + u32::from(bit(i))),
+        57 => found((0..32).find(|&i| bit(31 - i))),
+        58 => found((0..32).find(|&i| bit(i))),
+        _ => found((1..32).find(|&i| bit(31 - i) != bit(31))),
+    }
 }
 
 /// D of VOP2 integer opcode `opcode` (guide 12.7) for S0 = `a`, S1 = `b`.
@@ -1039,20 +1129,58 @@ fn decode_one(code: &[u8], offset: usize) -> Result<(Insn, usize), String> {
         };
         return Ok((Insn::VMov(dst, src), len));
     }
+    // VOP1 integer forms: bits 31:25 = 0b0111111, VDST 24:17, OP 16:9, SRC0 8:0.
+    if first >> 25 == 0b011_1111 {
+        let dst = (first >> 17) as u8;
+        match (first >> 9) & 0xff {
+            opcode @ 55..=59 => {
+                let (src0, len) = vector_src0(code, offset, first, "VOP1")?;
+                return Ok((Insn::VUnary(opcode, dst, src0), len));
+            }
+            // SRC0 is written back, so only a VGPR is meaningful.
+            101 => {
+                return match vector_src0(code, offset, first, "VOP1")? {
+                    (CmpSrc::Vgpr(src0), _) => Ok((Insn::VSwap(dst, src0), 4)),
+                    _ => Err(fail("v_swap_b32 needs a VGPR SRC0")),
+                };
+            }
+            _ => {}
+        }
+    }
     // VOPC: bits 31:25 = 0b0111110, OP 24:17, VSRC1 16:9, SRC0 8:0.
     if first >> 25 == 0b011_1110 {
         let opcode = (first >> 17) & 0xff;
-        let (signed, relation) = match opcode {
-            128..=135 => (true, opcode - 128),
-            192..=199 => (false, opcode - 192),
+        // Guide 12.9 Table 61 opcode groups (16-bit groups lack F and T).
+        let (signed, bits, relation) = match opcode {
+            128..=135 => (true, 32, opcode - 128),
+            192..=199 => (false, 32, opcode - 192),
+            137..=142 => (true, 16, opcode - 136),
+            169..=174 => (false, 16, opcode - 168),
+            160..=167 => (true, 64, opcode - 160),
+            224..=231 => (false, 64, opcode - 224),
             _ => return Err(fail("unsupported VOPC opcode")),
         };
         let (src0, len) = vector_src0(code, offset, first, "VOPC")?;
+        let src1 = (first >> 9) as u8;
+        // Accepted subset: no literal for 16-bit forms; 64-bit forms take an
+        // even SGPR pair below VCC, a VGPR pair below v255 or an inline integer.
+        let allowed = match (bits, src0) {
+            (16 | 64, CmpSrc::Imm(_)) if len == 8 => false,
+            (64, CmpSrc::Vcc) => false,
+            (64, CmpSrc::Sgpr(reg)) => reg % 2 == 0 && src1 != 255,
+            (64, CmpSrc::Vgpr(reg)) => reg != 255 && src1 != 255,
+            (64, _) => src1 != 255,
+            _ => true,
+        };
+        if !allowed {
+            return Err(fail("unsupported VOPC operand"));
+        }
         let insn = Insn::VCmp {
             relation: relation as u8,
             signed,
+            bits,
             src0,
-            src1: (first >> 9) as u8,
+            src1,
         };
         return Ok((insn, len));
     }
