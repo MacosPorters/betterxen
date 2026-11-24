@@ -26,6 +26,8 @@ mod texture_bc_alpha;
 mod texture_bc_channel;
 #[path = "native/texture_sampling.rs"]
 mod texture_sampling;
+#[path = "native/translated_bc1.rs"]
+mod translated_bc1;
 #[path = "native/translated_render.rs"]
 mod translated_render;
 

@@ -25,6 +25,11 @@ cargo test --locked -p xenora-loader --features gpu-tests --test graphics_d3d12 
 timeout 30s cargo test --locked -p xenora-loader --features gpu-tests --test graphics_d3d12 -- \
     --nocapture --test-threads=1
 
+# Guest draws sample textures bound through descriptor tables (#303).
+cargo test --locked -p xenora-loader --features gpu-tests --test graphics_textures --no-run
+timeout 30s cargo test --locked -p xenora-loader --features gpu-tests --test graphics_textures -- \
+    --nocapture --test-threads=1
+
 # The native app interface runs the trusted fixture's guest draw on Metal.
 cargo test --locked -p xenora-ffi --features gpu-tests --test native_frame --no-run
 timeout 30s cargo test --locked -p xenora-ffi --features gpu-tests --test native_frame -- \
