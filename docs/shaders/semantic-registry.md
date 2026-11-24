@@ -13,7 +13,7 @@ The registry covers the nine SOP2 forms listed in [SOP2 scalar ALU](scalar-alu.m
 | File | Role |
 | --- | --- |
 | `crates/isa/semantics/rdna2.toml` | The registry root: schema, architecture, the snapshot hash, the cited documents and the ordered `include` list of family files. |
-| `crates/isa/semantics/rdna2/<family>.toml` | One file per encoding family (`sop2.toml`, `sopc.toml`, `sop1.toml`, `vop2.toml`, `vopc.toml`, `vop3.toml`): that family's operand rules, forms and encoding variants only. Data only: every value comes from a closed vocabulary. |
+| `crates/isa/semantics/rdna2/<family>.toml` | One file per encoding family (`sop2.toml`, `sopc.toml`, `sopk.toml`, `sop1.toml`, `vop2.toml`, `vopc.toml`, `vop3.toml`): that family's operand rules, forms and encoding variants only. Data only: every value comes from a closed vocabulary. |
 | `crates/isa/generate_semantics.py` | Validates the registry and writes the Rust tables. Python 3.11 or newer, standard library only. |
 | `crates/isa/data/rdna2.jsonl` | Pinned snapshot of the AMD machine-readable ISA XML, used to cross-check identity and operands. |
 | `crates/isa/src/semantics_gen.rs` | Generated output. Never edit it by hand. |
@@ -116,7 +116,7 @@ error.
 | `family` | Encoding family; must match the XML base encoding | e.g. `SOP2` |
 | `opcode` | Opcode; must match the XML | non-negative integer |
 | `variant` | Rust enum variant of the typed operation | CamelCase, e.g. `AddU32` |
-| `operation` | The primitive the form uses | `add`, `sub`, `and`, `or`, `xor`, `andn2`, `orn2`, `nand`, `nor`, `xnor`, `lshl`, `lshr`, `ashr`, `min`, `max`, `cselect`, `bfm`, `mul`, `mul_hi`, `bfe`, `absdiff`, `lshl_add`, `mul24`, `mul_hi24` (vector only), `compare` and the SOP1 unaries |
+| `operation` | The primitive the form uses | `add`, `sub`, `and`, `or`, `xor`, `andn2`, `orn2`, `nand`, `nor`, `xnor`, `lshl`, `lshr`, `ashr`, `min`, `max`, `cselect`, `bfm`, `mul`, `mul_hi`, `bfe`, `absdiff`, `lshl_add`, `mul24`, `mul_hi24` (vector only), `mov` and `cmov` (SOPK only), `compare` and the SOP1 unaries |
 | `signedness` | How operands are read | `unsigned`, `signed`, `bitwise` (always `bitwise` for the logical operations, `cselect` and `bfm`; never for the arithmetic ones, `add`, `sub`, `min`, `max`, `mul`, `mul_hi`, `bfe`, `absdiff` and `lshl_add`; shifts take their primitive's signedness) |
 | `carry_in` | Whether the form reads SCC: carry-in, borrow-in or the select condition | `none`, `scc` (`scc` only for unsigned `add` and `sub`, and required for `cselect`) |
 | `width` | Operand and result width in bits | `32` |
@@ -125,7 +125,7 @@ error.
 | `source_order` | Vector forms only: `reversed` when the guide computes `op(S1, S0)` (the XML records no operand order); absent otherwise | `reversed` |
 | `shift_amount` | `lshl_add` only: the fixed left shift of S0 before the add | `1` to `4`; required for `lshl_add`, rejected elsewhere |
 | `shift_count_bits` | Shifts only: the low bits of the count source used as the count: S1, or S0 for a vector form with `source_order = "reversed"`. Scalar forms mask it in the generated evaluation, vector forms in their MSL template; the XML must list the count source as unsigned | `5` (log2 of `width`); required for shifts, rejected elsewhere |
-| `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (SOPC compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
+| `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (SOPC and SOPK compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
 | `vcc`, `exec` | Effect on VCC and EXEC, stated rather than implied | `unchanged`; `vcc` is `lane_mask` exactly for the VOPC compares (VCC_LO bit n = EXEC[n] & test, fully written; VCC_HI unknown afterwards, see [vector-compare.md](vector-compare.md)); `exec` must be `unchanged` (no EXEC-writing contract yet) |
 | `wave` | Wave sizes the form is valid in | `wave32` exactly for the VOPC compares (their one entry point is the Wave32 compute fixture ABI, vector-compare.md section 2), `any` for everything else; the decoder has no wave-size input, so no other form may claim `wave32` |
 | `operands` | Name of an `[operand_rules]` entry for the same family | e.g. `sop2_sgpr` |
@@ -157,6 +157,8 @@ fixes the `scc` value:
 | `bfe` / `unsigned` or `signed` | `nonzero` | `bfe_nonzero_u32`, `bfe_nonzero_i32` | no |
 | `absdiff` / `signed` | `nonzero` | `absdiff_nonzero_i32` | no |
 | `lshl_add` / `unsigned` | `carry_out` | `lshl_add_carry_u32` (with `shift_amount`) | no |
+| `mov` / `signed` (SOPK only) | `unchanged` | `sext_simm16` | no |
+| `cmov` / `signed` (SOPK only) | `unchanged` | `sext_simm16` | required |
 | `compare` / `signed` or `unsigned` | `relation` | `eq_b32`, `ne_b32` (for both signednesses), `gt_i32`/`gt_u32`, `ge_*`, `lt_*`, `le_*` | no |
 
 Vector forms (operand rules `vop2_vgpr` and `vop2_vgpr2`, kind `vector`; both
@@ -194,6 +196,19 @@ A SOPC compare must use an operand rule of the compare kind (`sopc_scalar`: two
 sources, no destination), a unary operation one of the unary kind (`sop1_sgpr`:
 one source and an SGPR destination), and a two-source ALU operation
 `sop2_sgpr`.
+
+SOPK forms (guide 12.2) use two rules. `sopk_sgpr` (kind `immediate`, enum
+`ScalarImmediateOp`) has SDST `s0`-`s105` as the destination and SIMM16 as the one
+source; it takes `mov`, `cmov` (reads SCC, so `carry_in = "scc"`), `add` (`D = D +
+signext(SIMM16)`, `scc = "signed_overflow"`) and `mul` (`scc = "unchanged"`), all
+`signed`, and the `add` and `mul` forms read the old SDST. `sopk_compare` (kind
+`immediate_compare`, enum `ScalarImmediateCompareOp`) takes `compare` with SDST as
+the left operand and the SIMM16 as the right one: sign-extended for `signed`,
+zero-extended for `unsigned`. A SOPK compare's opcode must be 3 (`signed`) or 9
+(`unsigned`) plus the relation's index in `eq, lg, gt, ge, lt, le` (guide 13.1.2).
+The XML must give SIMM16 as 16-bit `FMT_NUM_I16` (`FMT_NUM_U16` for `unsigned`).
+The word never takes a literal dword. The details are in
+[scalar-immediate.md](scalar-immediate.md).
 
 Behaviour is chosen only from these declared fields, never from the mnemonic.
 

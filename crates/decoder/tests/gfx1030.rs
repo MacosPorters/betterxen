@@ -4,13 +4,13 @@ use std::process::{Command, Stdio};
 
 use xenora_decoder::{
     Architecture, CompareRelation, DecodeError, DecodeErrorKind, DecodedInstruction, Instruction,
-    ScalarAluOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareVop3Op,
-    VectorSource, decode, decode_at,
+    ScalarAluOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op,
+    VectorCompareVop3Op, VectorSource, decode, decode_at,
 };
 use xenora_isa::semantics::Signedness;
 use xenora_ref::{
-    BranchCondition, CompareSource, Comparison, Op, ScalarAlu, ScalarUnary, Source, VectorAlu,
-    VectorInteger,
+    BranchCondition, CompareSource, Comparison, Op, ScalarAlu, ScalarImmediate, ScalarUnary,
+    Source, VectorAlu, VectorInteger,
 };
 
 const FIXTURE: &[u8] = include_bytes!("../../../fixtures/rdna2/add.bin");
@@ -538,6 +538,25 @@ fn reference_op(instruction: Instruction) -> Op {
                 ),
             }
         }
+        Instruction::ScalarImmediate { op, dst, simm16 } => Op::ScalarImmediate(
+            match op {
+                ScalarImmediateOp::MovkI32 => ScalarImmediate::Move,
+                ScalarImmediateOp::CmovkI32 => ScalarImmediate::ConditionalMove,
+                ScalarImmediateOp::AddkI32 => ScalarImmediate::Add,
+                ScalarImmediateOp::MulkI32 => ScalarImmediate::Multiply,
+            },
+            dst,
+            simm16,
+        ),
+        Instruction::ScalarImmediateCompare { op, src, simm16 } => Op::ScalarImmediate(
+            ScalarImmediate::Compare(Comparison {
+                // The reference's VOPC relation offsets, as for SOPC above.
+                offset: op.relation() as u8 + 1,
+                signed: op.semantics().signedness == Signedness::Signed,
+            }),
+            src,
+            simm16,
+        ),
         Instruction::BranchSccZero { target } => Op::Branch {
             target,
             condition: BranchCondition::SccZero,
@@ -670,6 +689,7 @@ fn compares_fixture_instructions_against_llvm() {
         include_bytes!("../../../fixtures/rdna2/scalar-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-unary.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-arith.bin"),
+        include_bytes!("../../../fixtures/rdna2/scalar-immediate.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-integer.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare-ft.bin"),
@@ -678,7 +698,7 @@ fn compares_fixture_instructions_against_llvm() {
     ] {
         count += compare_against_llvm(fixture, &mut forms);
     }
-    assert_eq!(forms.len(), 104, "forms compared: {forms:?}");
+    assert_eq!(forms.len(), 120, "forms compared: {forms:?}");
     eprintln!(
         "{count} three-way instruction comparisons across {} forms",
         forms.len()
@@ -736,6 +756,12 @@ fn assemble_matrix() -> Vec<u8> {
         s_or_b32 s103, s3, 0x80000000
         s_xor_b32 s102, s104, -16
         s_xor_b32 s7, s7, lit(0x1)
+        s_movk_i32 s105, 0xffff
+        s_movk_i32 s8, 0
+        s_cmovk_i32 s105, 0x8000
+        s_addk_i32 s9, 0x7fff
+        s_addk_i32 s105, 0xffff
+        s_mulk_i32 s8, 0x8001
         v_mov_b32_e32 v255, s105
         v_mov_b32_e32 v0, s0
         v_mov_b32_e32 v128, vcc_lo
@@ -759,6 +785,15 @@ fn assemble_matrix() -> Vec<u8> {
                 writeln!(assembly, "v_cmp_{relation}_{kind}_e32 vcc_lo, {src0}, v128").unwrap();
             }
             writeln!(assembly, "v_cmp_{relation}_{kind}_e32 vcc_lo, v1, v255").unwrap();
+        }
+    }
+    // Every SOPK compare on the lowest and highest readable SGPR.
+    for relation in ["eq", "lg", "gt", "ge", "lt", "le"] {
+        for kind in ["i32", "u32"] {
+            for register in ["s0", "s7", "s8", "s105"] {
+                writeln!(assembly, "s_cmpk_{relation}_{kind} {register}, 0x8000").unwrap();
+            }
+            writeln!(assembly, "s_cmpk_{relation}_{kind} s9, 0").unwrap();
         }
     }
     for value in -16..=64 {
@@ -1291,4 +1326,109 @@ fn rejects_registry_vop3_integer_modifiers_and_other_sources() {
         reject(first, (second & !(0x1ff << 9)) | (128 << 9)); // SRC1 = inline zero
         reject(first, second | (1 << 18)); // SRC2 = inline one
     }
+}
+
+#[test]
+fn decodes_sopk_immediates_and_rejects_non_sgpr_operands() {
+    use xenora_decoder::ScalarImmediateCompareOp;
+    let decode_word = |word: u32| decode(Architecture::Gfx1030, &word.to_le_bytes());
+    // Words assembled by LLVM for gfx1030 (llvm-mc --show-encoding).
+    // s_movk_i32 s8, 0x8000
+    let decoded = decode_word(0xb008_8000).unwrap();
+    assert_eq!(decoded[0].byte_len, 4);
+    assert_eq!(
+        decoded[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::MovkI32,
+            dst: 8,
+            simm16: 0x8000
+        }
+    );
+    // s_cmovk_i32 s105, 0xffff keeps the full 16 bits: the sign extension is
+    // the translator's job, not the decoder's.
+    assert_eq!(
+        decode_word(0xb169_ffff).unwrap()[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::CmovkI32,
+            dst: 105,
+            simm16: 0xffff
+        }
+    );
+    // s_cmpk_gt_u32 s0, 0x1234 and s_cmpk_le_i32 s7, 0xffff read SDST s0-s7.
+    assert_eq!(
+        decode_word(0xb580_1234).unwrap()[0].instruction,
+        Instruction::ScalarImmediateCompare {
+            op: ScalarImmediateCompareOp::CmpkGtU32,
+            src: 0,
+            simm16: 0x1234
+        }
+    );
+    assert_eq!(
+        decode_word(0xb407_ffff).unwrap()[0].instruction,
+        Instruction::ScalarImmediateCompare {
+            op: ScalarImmediateCompareOp::CmpkLeI32,
+            src: 7,
+            simm16: 0xffff
+        }
+    );
+    // s_addk_i32 s9, 0x7fff and s_mulk_i32 s105, 0
+    assert_eq!(
+        decode_word(0xb789_7fff).unwrap()[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::AddkI32,
+            dst: 9,
+            simm16: 0x7fff
+        }
+    );
+    assert_eq!(
+        decode_word(0xb869_0000).unwrap()[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::MulkI32,
+            dst: 105,
+            simm16: 0
+        }
+    );
+    // vcc_lo, exec_lo, null and ttmp0 as SDST, and s_cmpk_eq_i32 m0: refused.
+    for (word, mnemonic, detail) in [
+        (
+            0xb06a_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb07e_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb07d_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb06c_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb1fc_0001,
+            "s_cmpk_eq_i32",
+            "expected a normal SGPR operand",
+        ),
+    ] {
+        assert_eq!(
+            decode_word(word).unwrap_err().kind,
+            DecodeErrorKind::UnsupportedForm { mnemonic, detail },
+            "{word:#010x}"
+        );
+    }
+    // Other SOPK opcodes (opcode 1 s_version, 17 s_getreg_b32) stay unsupported.
+    for word in [0xb080_0000u32, 0xb888_0000] {
+        assert!(decode_word(word).is_err(), "{word:#010x}");
+    }
+    // The fixed store fence is still the one decoded SOPK word outside the registry.
+    assert_eq!(
+        decode_word(0xbbfd_0000).unwrap()[0].instruction,
+        Instruction::WaitStore
+    );
 }

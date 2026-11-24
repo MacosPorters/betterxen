@@ -943,6 +943,46 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 scc = Some(op.test(read_scalar(src0)?, read_scalar(src1)?));
                 continue;
             }
+            // docs/shaders/scalar-immediate.md.
+            Instruction::ScalarImmediate { op, dst, simm16 } => {
+                if dst < 8 {
+                    return Err(error("scalar immediate would modify a resource descriptor"));
+                }
+                let scc_in = if op.reads_scc() {
+                    scc.ok_or_else(|| error("SOPK SCC input reads uninitialized SCC"))?
+                } else {
+                    false
+                };
+                let slot = scalars
+                    .get_mut(usize::from(dst))
+                    .ok_or_else(|| error("scalar destination exceeds the fixture register file"))?;
+                let old = if op.reads_dst() {
+                    match *slot {
+                        ScalarValue::Known(value) => value,
+                        ScalarValue::RuntimeMask => {
+                            return Err(error("SOPK reads a runtime-only SGPR compare mask"));
+                        }
+                        ScalarValue::Uninitialized => {
+                            return Err(error("SOPK reads an uninitialized SGPR"));
+                        }
+                    }
+                } else {
+                    0
+                };
+                let (value, flag) = op.evaluate(old, simm16, scc_in);
+                if let Some(value) = value {
+                    *slot = ScalarValue::Known(value);
+                }
+                if let Some(flag) = flag {
+                    scc = Some(flag);
+                }
+                continue;
+            }
+            Instruction::ScalarImmediateCompare { op, src, simm16 } => {
+                scc = Some(op.test(read_scalar(ScalarSource::Register(src))?, simm16));
+                continue;
+            }
+            // docs/shaders/vector-compare.md sections 3 and 5.
             // Both encodings share the Wave32 lane mask implementation.
             compare @ (Instruction::VectorCompare { .. }
             | Instruction::VectorCompareVop3 { .. }) => {

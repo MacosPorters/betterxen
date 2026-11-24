@@ -1298,6 +1298,107 @@ fn division_accepts_exactly_the_representable_quotients() {
     }
 }
 
+/// The bit scans and the bit test keep the destination and the flags where
+/// the architecture puts them.
+///
+/// The expectations come from the Intel SDM Volume 2B, "BSF", "BSR" and "BT":
+/// BSF writes the index of the lowest set bit of the source and BSR the index
+/// of the highest set bit, and both set the zero flag when the source is
+/// zero, in which case the destination is undefined and keeps its value. BT
+/// sets the carry flag from the tested bit, leaves the other flags alone and
+/// masks the bit index to the operand width.
+///
+/// The encodings are `bsf rbx, r9` (49 0F BC D9), `bsr rbx, r9` (49 0F BD
+/// D9), `bt rbx, r9` (4C 0F A3 CB), `bsf ebx, r9d` (41 0F BC D9),
+/// `bsr ebx, r9d` (41 0F BD D9), `bt ebx, r9d` (44 0F A3 CB), `bsf bx, r9w`
+/// (66 41 0F BC D9) and `bt bx, r9w` (66 44 0F A3 CB), as produced by LLVM
+/// 23.1.6 `llvm-mc -show-encoding`.
+#[test]
+fn bit_scans_and_bit_tests_follow_the_architecture() {
+    const BSF64: &[u8] = &[0x49, 0x0F, 0xBC, 0xD9]; // bsf rbx, r9
+    const BSR64: &[u8] = &[0x49, 0x0F, 0xBD, 0xD9]; // bsr rbx, r9
+    const BT64: &[u8] = &[0x4C, 0x0F, 0xA3, 0xCB]; // bt rbx, r9
+    const BSF32: &[u8] = &[0x41, 0x0F, 0xBC, 0xD9]; // bsf ebx, r9d
+    const BSR32: &[u8] = &[0x41, 0x0F, 0xBD, 0xD9]; // bsr ebx, r9d
+    const BT32: &[u8] = &[0x44, 0x0F, 0xA3, 0xCB]; // bt ebx, r9d
+    const BSF16: &[u8] = &[0x66, 0x41, 0x0F, 0xBC, 0xD9]; // bsf bx, r9w
+    const BT16: &[u8] = &[0x66, 0x44, 0x0F, 0xA3, 0xCB]; // bt bx, r9w
+
+    /// A machine with R9 and RBX set and every other register zero.
+    fn machine(source: u64, destination: u64) -> Machine {
+        let mut gpr = [0; 16];
+        gpr[3] = destination;
+        gpr[9] = source;
+        Machine {
+            gpr,
+            flags: Flags::default(),
+            operand: 0,
+            pushed: 0,
+            top: STACK_TOP,
+        }
+    }
+
+    // The lowest set bit of the source is the index BSF writes.
+    let (state, _, _) = run_both(&machine(0x0000_0000_0000_0028, 0xFFFF), BSF64, 1);
+    assert_eq!(state.gpr[3], 3);
+    assert!(!state.flags.zf);
+
+    // The highest set bit of the source is the index BSR writes.
+    let (state, _, _) = run_both(&machine(0x8000_0000_0000_0028, 0xFFFF), BSR64, 1);
+    assert_eq!(state.gpr[3], 63);
+    assert!(!state.flags.zf);
+
+    // A zero source sets the zero flag and leaves the destination alone.
+    let (state, _, _) = run_both(&machine(0, 0xFFFF_FFFF_FFFF_FFFF), BSF64, 1);
+    assert_eq!(state.gpr[3], 0xFFFF_FFFF_FFFF_FFFF);
+    assert!(state.flags.zf);
+    let (state, _, _) = run_both(&machine(0, 0xFFFF_FFFF_FFFF_FFFF), BSR64, 1);
+    assert_eq!(state.gpr[3], 0xFFFF_FFFF_FFFF_FFFF);
+    assert!(state.flags.zf);
+
+    // A 32-bit destination holds a 32-bit index and clears the half above it.
+    let (state, _, _) = run_both(&machine(0x0000_0028, 0xFFFF_FFFF_FFFF_FFFF), BSF32, 1);
+    assert_eq!(state.gpr[3], 3);
+    let (state, _, _) = run_both(&machine(0x8000_0000, 0xFFFF_FFFF_FFFF_FFFF), BSR32, 1);
+    assert_eq!(state.gpr[3], 31);
+
+    // A 16-bit destination keeps the bits above it.
+    let (state, _, _) = run_both(&machine(0x0100, 0xFFFF_FFFF_FFFF_FFFF), BSF16, 1);
+    assert_eq!(state.gpr[3], 0xFFFF_FFFF_FFFF_0008);
+
+    // BT reports the tested bit in the carry flag and leaves the bit string
+    // alone.
+    let (state, _, _) = run_both(&machine(1, 0b1010), BT64, 1);
+    assert!(state.flags.cf);
+    assert_eq!(state.gpr[3], 0b1010);
+    let (state, _, _) = run_both(&machine(0, 0b1010), BT64, 1);
+    assert!(!state.flags.cf);
+    assert_eq!(state.gpr[3], 0b1010);
+
+    // The bit index is masked to the operand width, so 64 selects bit 0 of a
+    // 64-bit bit string and 32 selects bit 0 of a 32-bit one.
+    let (state, _, _) = run_both(&machine(64, 0b1), BT64, 1);
+    assert!(state.flags.cf);
+    let (state, _, _) = run_both(&machine(32, 0b1), BT32, 1);
+    assert!(state.flags.cf);
+    let (state, _, _) = run_both(&machine(16, 0b1), BT16, 1);
+    assert!(state.flags.cf);
+
+    // The bit scans and the register form of the bit test are lowered to
+    // ARM64 instead of falling back to the shared semantics.
+    for code in [BSF64, BSR64, BT64, BSF32, BSR32, BT32, BSF16, BT16] {
+        let insn = decode(ENTRY, |address| {
+            code.get((address - ENTRY) as usize).copied().ok_or(())
+        })
+        .expect("decode");
+        assert!(is_native(&insn), "{code:02X?} is not native");
+        let mut engine = DbtEngine::new(64 * 1024).unwrap();
+        let (mut cpu, mut memory) = load(&machine(0x28, 0), code);
+        engine.run(&mut cpu, &mut memory, 1);
+        assert_eq!(engine.metrics.interpreter_fallbacks, 0, "{code:02X?}");
+    }
+}
+
 #[test]
 fn pop_rsp_and_push_rsp_use_the_architectural_stack_pointer() {
     let machine = Random(17).machine();

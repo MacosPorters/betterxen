@@ -330,10 +330,18 @@ pub fn is_translatable(insn: &Insn) -> bool {
 /// [`DbtMetrics::interpreter_fallbacks`].
 pub fn is_native(insn: &Insn) -> bool {
     let wide = matches!(insn.size, 4 | 8);
+    // The bit scans work on any register or memory source, and the bit test
+    // needs the index in a register.
+    let scanned = matches!(insn.size, 2 | 4 | 8);
     match insn.op {
         Op::Add | Op::Sub | Op::Cmp | Op::And | Op::Or | Op::Xor | Op::Test => wide,
         Op::Inc | Op::Dec | Op::Neg | Op::Not => wide,
         Op::Cmov => wide,
+        Op::Bsf | Op::Bsr => scanned,
+        // Only the `0F A3` form has the bit index in a register. The `0F BA`
+        // group form takes an immediate index and may write memory, so it
+        // stays on the shared semantics.
+        Op::Bt => scanned && insn.encoding == Encoding::RmReg,
         Op::Pop => insn.encoding == Encoding::OpReg,
         Op::Mov
         | Op::Movzx
@@ -497,6 +505,18 @@ impl Emitter<'_> {
                 self.asm.str_uoff_64(X13, X19, offset);
             }
             _ => self.asm.strb_uoff(xs, X19, offset + u32::from(reg.high)),
+        }
+    }
+
+    /// Zero-extend the low `size` bytes of `xd` to the full 64-bit register.
+    ///
+    /// An operation narrower than the register reads only the low bytes of its
+    /// source, so the bits above them must not take part in a bit scan.
+    fn zero_extend(&mut self, xd: u8, size: u8) {
+        match size {
+            8 => {}
+            4 => self.asm.mov_reg_32(xd, xd),
+            _ => self.asm.uxth_32(xd, xd),
         }
     }
 
@@ -1031,6 +1051,71 @@ impl Emitter<'_> {
             Op::Setcc => {
                 self.load_condition(insn.condition);
                 self.store_rm(insn, X12, completed);
+            }
+            Op::Bsf | Op::Bsr => {
+                // BSF and BSR write the index of the lowest or the highest set
+                // bit of the source into the destination and set the zero flag
+                // when the source is zero (Intel SDM Volume 2B, "BSF" and
+                // "BSR"). A zero source leaves the destination undefined, so
+                // the destination keeps its value, which is the same rule the
+                // interpreter and the reference apply.
+                self.load_rm(X9, insn, completed);
+                self.zero_extend(X9, insn.size);
+                match insn.op {
+                    // The lowest set bit is the highest set bit of the
+                    // reversed value, so its index is the leading zero count
+                    // of the reversed value.
+                    Op::Bsf => {
+                        self.asm.rbit_64(X10, X9);
+                        self.asm.clz_64(X10, X10);
+                    }
+                    // The highest set bit sits at 63 minus the leading zero
+                    // count.
+                    _ => {
+                        self.asm.clz_64(X10, X9);
+                        self.asm.movz_64(X13, 63, 0);
+                        self.asm.sub_reg_64(X10, X13, X10);
+                    }
+                }
+                self.load_reg(X11, insn.reg);
+                self.asm.tst_reg_64(X9, X9);
+                // CSEL takes the first operand when the condition holds, so
+                // the index is the value that replaces the destination.
+                self.asm.csel_64(X11, X10, X11, Condition::Ne);
+                match insn.size {
+                    // A 16-bit destination keeps the bits above it, so the
+                    // register is merged rather than replaced.
+                    2 => self.store_reg(insn.reg, insn.size, X11),
+                    // A 32-bit or 64-bit destination is written in full. The
+                    // index has no bits above the operand width, so this
+                    // matches the interpreter's 32-bit write, and a zero
+                    // source keeps the whole register unchanged.
+                    _ => self.asm.str_uoff_64(X11, X19, reg_offset(insn.reg.index)),
+                }
+                if flags {
+                    // The zero flag is set when the source is zero. The other
+                    // flags are undefined and keep their value.
+                    self.asm.cset_32(X12, Condition::Eq);
+                    self.asm.strb_uoff(X12, X19, ZF);
+                }
+            }
+            Op::Bt => {
+                // BT sets the carry flag from the tested bit and leaves the
+                // other flags undefined (Intel SDM Volume 2B, "BT"). The bit
+                // index comes from the register operand and is masked to the
+                // operand width.
+                self.load_rm(X9, insn, completed);
+                self.zero_extend(X9, insn.size);
+                self.load_reg(X10, insn.reg);
+                self.asm.load_imm_64(X13, u64::from(8 * insn.size - 1));
+                self.asm.and_reg_64(X10, X10, X13);
+                self.asm.load_imm_64(X11, 1);
+                self.asm.lslv_64(X11, X11, X10);
+                self.asm.tst_reg_64(X9, X11);
+                if flags {
+                    self.asm.cset_32(X12, Condition::Ne);
+                    self.asm.strb_uoff(X12, X19, CF);
+                }
             }
             Op::Cmov => {
                 self.load_rm(X10, insn, completed);

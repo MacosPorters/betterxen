@@ -4,8 +4,8 @@ use std::fmt;
 
 pub use xenora_isa::{
     Architecture, CompareRelation, ExportTarget, Instruction, InterpolationPhase, ScalarAluOp,
-    ScalarCompareOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
-    VectorCompareVop3Op, VectorSource,
+    ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp,
+    VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorCompareVop3Op, VectorSource,
 };
 use xenora_isa::{
     BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
@@ -381,6 +381,26 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
             Instruction::ScalarCompare { op, src0, src1 },
             len0.max(len1),
         ));
+    }
+    if let Some(op) = ScalarImmediateOp::from_word(first) {
+        // SOPK: SIMM16 in bits 0-15, SDST in bits 16-22; the word has no literal.
+        let dst = ((first >> 16) & 0x7f) as u8;
+        if dst > 105 {
+            return Err(unsupported(
+                op.mnemonic(),
+                "expected a normal SGPR destination",
+            ));
+        }
+        let simm16 = first as u16;
+        return Ok((Instruction::ScalarImmediate { op, dst, simm16 }, 4));
+    }
+    if let Some(op) = ScalarImmediateCompareOp::from_word(first) {
+        let src = ((first >> 16) & 0x7f) as u8;
+        if src > 105 {
+            return Err(unsupported(op.mnemonic(), "expected a normal SGPR operand"));
+        }
+        let simm16 = first as u16;
+        return Ok((Instruction::ScalarImmediateCompare { op, src, simm16 }, 4));
     }
     if S_BRANCH.matches(first) {
         let target = branch_target(first, offset, "s_branch")?;

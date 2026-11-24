@@ -19,6 +19,7 @@ source_sha256 = "d671ecbc36543674ab59e9b2feffd56718fd2137e7ad913c314f2e2508b9f4f
 include = [
   "rdna2/sop2.toml",
   "rdna2/sopc.toml",
+  "rdna2/sopk.toml",
   "rdna2/sop1.toml",
   "rdna2/vop2.toml",
   "rdna2/vopc.toml",

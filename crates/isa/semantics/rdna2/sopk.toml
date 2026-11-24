@@ -1,0 +1,358 @@
+# SOPK forms of the gfx1030 semantic registry; included by ../rdna2.toml.
+# Data only; see the root file for the field meanings.
+
+# ---- SOPK 16-bit immediate integer forms (#215) ----
+# SDST is the destination, and the left operand of the compares; SIMM16 is
+# sign-extended except by the unsigned compares (guide 12.2). The word never
+# takes a literal dword. SDST s0-s105 only; s0-s7 hold resource descriptors,
+# so the decoder accepts them as compare operands and the translator never
+# writes them.
+
+[operand_rules.sopk_sgpr]
+family = "SOPK"
+dst = { field = "SDST", class = "sgpr", min = 0, max = 105 }
+src = [{ field = "SIMM16", class = "simm16" }]
+max_literals = 0
+unsupported = ["dst_vcc", "dst_exec", "dst_ttmp", "dst_m0", "dst_null"]
+
+[operand_rules.sopk_compare]
+family = "SOPK"
+src = [
+  { field = "SDST", class = "sgpr", min = 0, max = 105 },
+  { field = "SIMM16", class = "simm16" },
+]
+max_literals = 0
+unsupported = ["dst_vcc", "dst_exec", "dst_ttmp", "dst_m0", "dst_null"]
+
+[[form]]
+name = "S_MOVK_I32"
+family = "SOPK"
+opcode = 0
+variant = "MovkI32"
+operation = "mov"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_sgpr"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMOVK_I32"
+family = "SOPK"
+opcode = 2
+variant = "CmovkI32"
+operation = "cmov"
+signedness = "signed"
+carry_in = "scc"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_sgpr"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_EQ_I32"
+family = "SOPK"
+opcode = 3
+variant = "CmpkEqI32"
+operation = "compare"
+relation = "eq"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_LG_I32"
+family = "SOPK"
+opcode = 4
+variant = "CmpkLgI32"
+operation = "compare"
+relation = "lg"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_GT_I32"
+family = "SOPK"
+opcode = 5
+variant = "CmpkGtI32"
+operation = "compare"
+relation = "gt"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_GE_I32"
+family = "SOPK"
+opcode = 6
+variant = "CmpkGeI32"
+operation = "compare"
+relation = "ge"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_LT_I32"
+family = "SOPK"
+opcode = 7
+variant = "CmpkLtI32"
+operation = "compare"
+relation = "lt"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_LE_I32"
+family = "SOPK"
+opcode = 8
+variant = "CmpkLeI32"
+operation = "compare"
+relation = "le"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_EQ_U32"
+family = "SOPK"
+opcode = 9
+variant = "CmpkEqU32"
+operation = "compare"
+relation = "eq"
+signedness = "unsigned"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_LG_U32"
+family = "SOPK"
+opcode = 10
+variant = "CmpkLgU32"
+operation = "compare"
+relation = "lg"
+signedness = "unsigned"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_GT_U32"
+family = "SOPK"
+opcode = 11
+variant = "CmpkGtU32"
+operation = "compare"
+relation = "gt"
+signedness = "unsigned"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_GE_U32"
+family = "SOPK"
+opcode = 12
+variant = "CmpkGeU32"
+operation = "compare"
+relation = "ge"
+signedness = "unsigned"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_LT_U32"
+family = "SOPK"
+opcode = 13
+variant = "CmpkLtU32"
+operation = "compare"
+relation = "lt"
+signedness = "unsigned"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CMPK_LE_U32"
+family = "SOPK"
+opcode = 14
+variant = "CmpkLeU32"
+operation = "compare"
+relation = "le"
+signedness = "unsigned"
+carry_in = "none"
+width = 32
+scc = "relation"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_compare"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_ADDK_I32"
+family = "SOPK"
+opcode = 15
+variant = "AddkI32"
+operation = "add"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "signed_overflow"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_sgpr"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+  { document = "guide", section = "5.3", page = 33 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_MULK_I32"
+family = "SOPK"
+opcode = 16
+variant = "MulkI32"
+operation = "mul"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sopk_sgpr"
+spec = [
+  { document = "guide", section = "12.2", page = 106 },
+  { document = "guide", section = "13.1.2", page = 240 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]

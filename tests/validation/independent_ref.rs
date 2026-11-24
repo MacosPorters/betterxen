@@ -69,6 +69,8 @@ enum Insn {
     SAlu(u32, u8, Src, Src),
     /// SOPC opcode 0-11: `s_cmp_{eq,lg,gt,ge,lt,le}_i32` then `_u32`.
     SCmp(u32, Src, Src),
+    /// SOPK opcode 0 or 2-16 on SGPR `SDST` (s0-s105) with the raw SIMM16.
+    SImm(u32, u8, u16),
     BranchScc0(usize),
     BranchMask {
         target: usize,
@@ -268,6 +270,9 @@ fn run_wave(program: &[(usize, Insn)], wave: &[u32]) -> Result<Vec<u32>, String>
                     None
                 })
             }),
+            Insn::SImm(opcode, dst, simm16) => {
+                scalar_immediate(&mut sgpr, &mut scc, (opcode, dst, simm16), offset).map(|()| None)
+            }
             Insn::SAlu(opcode, dst, a, b) => {
                 scalar_alu(&mut sgpr, &mut scc, (opcode, dst, a, b), offset).map(|()| None)
             }
@@ -328,6 +333,65 @@ fn run_wave(program: &[(usize, Insn)], wave: &[u32]) -> Result<Vec<u32>, String>
         }
     }
     Err(first_error(&lanes).unwrap_or_else(|| "stream ended without s_endpgm".to_string()))
+}
+
+/// One SOPK instruction, per the operation text of guide 12.2. SDST names
+/// the destination and, for every form but the two moves, the first source.
+fn scalar_immediate(
+    sgpr: &mut [Option<u32>; 128],
+    scc: &mut Option<bool>,
+    (opcode, dst, simm16): (u32, u8, u16),
+    offset: usize,
+) -> Result<(), String> {
+    let d = |sgpr: &[Option<u32>; 128]| {
+        sgpr[dst as usize].ok_or_else(|| format!("{offset:#x}: uninitialized s{dst}"))
+    };
+    // signext(SIMM16[15:0]): copy bit 15 into bits 16-31.
+    let sext = u32::from(simm16) | if simm16 >> 15 == 1 { 0xffff_0000 } else { 0 };
+    // The unsigned compares use SIMM16[15:0] as is, zero-extended.
+    let zext = u32::from(simm16);
+    if (3..=14).contains(&opcode) {
+        let s0 = d(sgpr)?;
+        let (a, k) = (s0 as i32, sext as i32);
+        *scc = Some(match opcode {
+            3 => a == k,
+            4 => a != k,
+            5 => a > k,
+            6 => a >= k,
+            7 => a < k,
+            8 => a <= k,
+            9 => s0 == zext,
+            10 => s0 != zext,
+            11 => s0 > zext,
+            12 => s0 >= zext,
+            13 => s0 < zext,
+            _ => s0 <= zext,
+        });
+        return Ok(());
+    }
+    if dst < 8 {
+        return Err(format!("{offset:#x}: write to a resource SGPR"));
+    }
+    let value = match opcode {
+        0 => sext,
+        2 => {
+            if !scc.ok_or_else(|| format!("{offset:#x}: uninitialized SCC"))? {
+                return Ok(());
+            }
+            sext
+        }
+        15 => {
+            let tmp = d(sgpr)?;
+            let sum = tmp.wrapping_add(sext);
+            // tmp[31] == SIMM16[15] && tmp[31] != D[31].
+            *scc = Some(tmp >> 31 == u32::from(simm16 >> 15) && tmp >> 31 != sum >> 31);
+            sum
+        }
+        // 16: the low 32 bits of the product, the same for both signednesses.
+        _ => d(sgpr)?.wrapping_mul(sext),
+    };
+    sgpr[dst as usize] = Some(value);
+    Ok(())
 }
 
 fn scalar_alu(
@@ -1250,6 +1314,15 @@ fn decode_one(code: &[u8], offset: usize) -> Result<(Insn, usize), String> {
         }
         let (src, len) = scalar_source(code, offset, first as u8)?;
         return Ok((Insn::SMov(dst, src), len));
+    }
+    // SOPK: ENCODING 0b1011 in bits 28-31, OP 23-27, SDST 16-22, SIMM16 0-15
+    // (guide 13.1.2). Guide 12.2: no literal dword may follow.
+    if first >> 28 == 0b1011 && matches!((first >> 23) & 0x1f, 0 | 2..=16) {
+        let dst = ((first >> 16) & 0x7f) as u8;
+        if dst > 105 {
+            return Err(fail("unsupported SOPK register"));
+        }
+        return Ok((Insn::SImm((first >> 23) & 0x1f, dst, first as u16), 4));
     }
     // SOP2: ENCODING 0b10 in bits 30-31, OP in bits 23-29, SDST in 16-22.
     if first >> 30 == 0b10

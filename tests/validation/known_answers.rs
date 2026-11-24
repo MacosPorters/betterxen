@@ -774,6 +774,10 @@ mod review {
     const SCALAR_COMPARE_FIXTURE: &[u8] = include_bytes!("../../fixtures/rdna2/scalar-compare.bin");
     // Hand-derived in fixtures/rdna2/scalar-compare.s from the guide's 12.4 pseudocode.
     const SCALAR_COMPARE_KEY: u32 = 0x0000_0d5b;
+    const SCALAR_IMMEDIATE_FIXTURE: &[u8] =
+        include_bytes!("../../fixtures/rdna2/scalar-immediate.bin");
+    // Hand-derived in fixtures/rdna2/scalar-immediate.s from the guide's 12.2 pseudocode.
+    const SCALAR_IMMEDIATE_KEY: u32 = 0x4000_8275;
     const SCALAR_UNARY_FIXTURE: &[u8] = include_bytes!("../../fixtures/rdna2/scalar-unary.bin");
     // Hand-derived in fixtures/rdna2/scalar-unary.s from the guide's 12.3 pseudocode.
     const SCALAR_UNARY_KEY: u32 = 0x0f00_80f5;
@@ -962,6 +966,18 @@ mod review {
         verify(SCALAR_COMPARE_FIXTURE, &input, Some(&expected));
         let compiled = compile(Architecture::Gfx1030, SCALAR_COMPARE_FIXTURE).unwrap();
         assert!(compiled.disassembly.contains("s_cmp_le_u32 s9, 64"));
+    }
+
+    #[test]
+    fn scalar_immediate_fixture_records_every_registry_sopk_form() {
+        let input = [0, 1, u32::MAX, SCALAR_IMMEDIATE_KEY, 0x1234_5678];
+        let expected: Vec<_> = input
+            .iter()
+            .map(|word| word ^ SCALAR_IMMEDIATE_KEY)
+            .collect();
+        verify(SCALAR_IMMEDIATE_FIXTURE, &input, Some(&expected));
+        let compiled = compile(Architecture::Gfx1030, SCALAR_IMMEDIATE_FIXTURE).unwrap();
+        assert!(compiled.disassembly.contains("s_cmpk_le_u32 s8, 0x8000"));
     }
 
     #[test]
