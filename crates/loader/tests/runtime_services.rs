@@ -334,11 +334,11 @@ fn system_time_comes_from_the_injected_clock() {
     }
 }
 
-#[test]
-fn guest_wcstok_resumes_from_its_win64_context_argument() {
+fn tokenization_guest(symbol: &'static str) -> (DbtEngine, GuestMemory) {
     let image = build(&[
-        ("ucrtbase.dll", Symbol::Name("wcstok")),
-        ("api-ms-win-crt-string-l1-1-0.dll", Symbol::Name("wcstok")),
+        ("ucrtbase.dll", Symbol::Name(symbol)),
+        ("api-ms-win-crt-string-l1-1-0.dll", Symbol::Name(symbol)),
+        ("ucrtbase.dll", Symbol::Name("_errno")),
     ]);
     let pe = ParsedPe::parse(&image.bytes).unwrap();
     let mut memory = pe.load_into_memory(&image.bytes).unwrap().memory;
@@ -353,10 +353,32 @@ fn guest_wcstok_resumes_from_its_win64_context_argument() {
         registry
             .bind_imports(&pe, &image.bytes, BASE, &mut memory)
             .unwrap(),
-        2
+        3
     );
     let mut engine = DbtEngine::new(256 * 1024).unwrap();
     engine.set_import_registry(registry);
+    (engine, memory)
+}
+
+fn call_tokenization_import(
+    engine: &mut DbtEngine,
+    memory: &mut GuestMemory,
+    slot: u32,
+    [input, separators, context]: [u64; 3],
+) -> u64 {
+    let entry = BASE + u64::from(CODE_RVA + 16 * slot);
+    let mut cpu = CpuState::new(entry, STACK_TOP);
+    cpu.set(Register::Rcx, input);
+    cpu.set(Register::Rdx, separators);
+    cpu.set(Register::R8, context);
+    let result = engine.run(&mut cpu, memory, 8);
+    assert_eq!(result.exit_reason, ExitReason::Halt);
+    cpu.get(Register::Rax)
+}
+
+#[test]
+fn guest_wcstok_resumes_from_its_win64_context_argument() {
+    let (mut engine, mut memory) = tokenization_guest("wcstok");
     let input = SCRATCH;
     let separators = SCRATCH + 32;
     let context = SCRATCH + 64;
@@ -370,25 +392,46 @@ fn guest_wcstok_resumes_from_its_win64_context_argument() {
     };
     write(&mut memory, input, "☃λ☃μ;ν");
     write(&mut memory, separators, "☃");
-    let mut call = |memory: &mut GuestMemory, alias: bool, text| {
-        let entry = BASE + u64::from(CODE_RVA) + 16 * u64::from(alias);
-        let mut cpu = CpuState::new(entry, STACK_TOP);
-        cpu.set(Register::Rcx, text);
-        cpu.set(Register::Rdx, separators);
-        cpu.set(Register::R8, context);
-        let result = engine.run(&mut cpu, memory, 8);
-        assert_eq!(result.exit_reason, ExitReason::Halt);
-        cpu.get(Register::Rax)
+    let mut call = |memory: &mut GuestMemory, slot, text| {
+        call_tokenization_import(&mut engine, memory, slot, [text, separators, context])
     };
-    assert_eq!(call(&mut memory, false, input), input + 2);
+    assert_eq!(call(&mut memory, 0, input), input + 2);
     assert_eq!(memory.read_u16(input + 4).unwrap(), 0);
     assert_eq!(memory.read_u64(context).unwrap(), input + 6);
     write(&mut memory, separators, ";");
-    assert_eq!(call(&mut memory, true, 0), input + 6);
+    assert_eq!(call(&mut memory, 1, 0), input + 6);
     assert_eq!(memory.read_u16(input + 8).unwrap(), 0);
-    assert_eq!(call(&mut memory, false, 0), input + 10);
+    assert_eq!(call(&mut memory, 0, 0), input + 10);
     assert_eq!(memory.read_u64(context).unwrap(), 0);
-    assert_eq!(call(&mut memory, true, 0), 0);
+    assert_eq!(call(&mut memory, 1, 0), 0);
+}
+
+#[test]
+fn guest_strtok_s_shares_context_across_win64_import_aliases() {
+    let (mut engine, mut memory) = tokenization_guest("strtok_s");
+    let input = SCRATCH;
+    let delimiters = SCRATCH + 32;
+    let context = SCRATCH + 64;
+    memory.write_bytes(input, b",a,b;c\0").unwrap();
+    memory.write_bytes(delimiters, b",\0;\0").unwrap();
+
+    let mut call = |memory: &mut GuestMemory, slot, args| {
+        call_tokenization_import(&mut engine, memory, slot, args)
+    };
+    let errno = call(&mut memory, 2, [0; 3]);
+    assert_eq!(call(&mut memory, 1, [0, delimiters, context]), 0);
+    assert_eq!(memory.read_u32(errno).unwrap(), 22);
+    memory.write_u32(errno, 0).unwrap();
+
+    assert_eq!(call(&mut memory, 0, [input, delimiters, context]), input + 1);
+    assert_eq!(memory.read_u8(input + 2).unwrap(), 0);
+    assert_eq!(memory.read_u64(context).unwrap(), input + 3);
+    assert_eq!(call(&mut memory, 1, [0, delimiters + 2, context]), input + 3);
+    assert_eq!(memory.read_u8(input + 4).unwrap(), 0);
+    assert_eq!(call(&mut memory, 0, [0, delimiters, context]), input + 5);
+    assert_eq!(call(&mut memory, 1, [0, delimiters, context]), 0);
+    assert_eq!(memory.read_u64(context).unwrap(), input + 6);
+    assert_eq!(memory.read_u32(errno).unwrap(), 0);
 }
 
 #[test]
