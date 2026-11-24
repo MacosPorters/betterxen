@@ -25,11 +25,11 @@
 //! Not covered: another host process that moves a directory or file the guest
 //! already holds open out of the mount. The guest keeps its handle to that
 //! object. Host processes with write access to a mounted directory are
-//! trusted. Name-based removal still has a short race against a concurrent
-//! host rename between the final identity check and `unlinkat` (on Linux,
-//! file and directory removal prefer `AT_EMPTY_PATH` on the verified
-//! descriptor). This boundary was agent-reviewed for guest path confinement;
-//! it is not a substitute for an independent human security audit.
+//! trusted. Removal is name-based `unlinkat` after a final listing check, so
+//! a concurrent host rename in that window can delete a different entry
+//! inside the root (never outside it); directories have no post-unlink check.
+//! This boundary was agent-reviewed for guest path confinement; it is not a
+//! substitute for an independent human security audit.
 
 use std::ffi::{CStr, CString};
 use std::fs::File;
@@ -473,26 +473,19 @@ pub(super) fn create_directory(directory: &OwnedFd, name: &str) -> io::Result<()
 
 /// Remove the entry `name` after checking it is still the object `expected`.
 ///
-/// On Linux, removal uses `unlinkat` with `AT_EMPTY_PATH` on the verified
-/// descriptor so the unlink targets that inode, not whatever name currently
-/// points at. Elsewhere, the directory entry is re-checked immediately before
-/// a name-based `unlinkat`; a concurrent host rename in that remaining window
-/// can still remove a different in-tree entry (never one outside the root).
-/// After a name-based file unlink, the held descriptor must show `nlink == 0`
-/// or the call fails, so a lost race is not reported as success.
+/// Removal is always name-based `unlinkat` after re-checking the directory
+/// listing. A concurrent host rename between that check and the unlink can
+/// still remove a different in-tree entry (never one outside the root). Host
+/// writers under the mount are trusted for that residual race. After a file
+/// unlink, the held descriptor must show `nlink == 0` or the call fails, so a
+/// lost race on a file is not reported as success; directories have no such
+/// post-check.
 pub(super) fn remove(directory: &OwnedFd, name: &str, expected: &Entry) -> io::Result<()> {
     let opened = match expected.kind {
         Kind::Directory => open_directory(directory, name, Some(expected.id))?,
         Kind::File => open_at(directory, name, libc::O_RDONLY, 0)?,
     };
     verify(&opened, expected.kind, Some(expected.id))?;
-
-    #[cfg(target_os = "linux")]
-    {
-        if unlink_verified_fd(&opened, expected.kind).is_ok() {
-            return Ok(());
-        }
-    }
 
     // Confirm the directory entry still names this object before unlinking.
     match find(directory, name)? {
@@ -515,20 +508,6 @@ pub(super) fn remove(directory: &OwnedFd, name: &str, expected: &Entry) -> io::R
             // still linked.
             return Err(refused());
         }
-    }
-    Ok(())
-}
-
-/// Unlink the inode referred to by `fd` (Linux `AT_EMPTY_PATH`).
-#[cfg(target_os = "linux")]
-fn unlink_verified_fd(fd: &OwnedFd, kind: Kind) -> io::Result<()> {
-    let flags = match kind {
-        Kind::Directory => libc::AT_REMOVEDIR | libc::AT_EMPTY_PATH,
-        Kind::File => libc::AT_EMPTY_PATH,
-    };
-    // SAFETY: empty path with AT_EMPTY_PATH operates on `fd` itself.
-    if unsafe { libc::unlinkat(fd.as_raw_fd(), c"".as_ptr(), flags) } != 0 {
-        return Err(io::Error::last_os_error());
     }
     Ok(())
 }
