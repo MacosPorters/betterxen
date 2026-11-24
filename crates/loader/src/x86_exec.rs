@@ -241,6 +241,25 @@ fn shift(op: Op, value: u64, count: u64, size: u8, old: RFlags) -> Option<(u64, 
             flags.cf = signed >> (count - 1) & 1 != 0;
             (signed >> count) as u64
         }
+        Op::Rcl | Op::Rcr => {
+            // The carry flag is one more bit above the operand, so the rotation
+            // is over `bits + 1` positions and the count is reduced modulo that.
+            let width = bits + 1;
+            let ring = wide | u128::from(old.cf) << bits;
+            let by = count % width;
+            let left = if op == Op::Rcl {
+                by
+            } else {
+                (width - by) % width
+            };
+            let rotated = if left == 0 {
+                ring
+            } else {
+                ring << left | ring >> (width - left)
+            };
+            flags.cf = rotated >> bits & 1 != 0;
+            rotated as u64
+        }
         _ => {
             let by = count % bits;
             let left = if op == Op::Rol {
@@ -268,7 +287,7 @@ fn shift(op: Op, value: u64, count: u64, size: u8, old: RFlags) -> Option<(u64, 
     // OF is defined only for a count of one.
     if count == 1 {
         flags.of = match op {
-            Op::Shl | Op::Rol => (result & top != 0) != flags.cf,
+            Op::Shl | Op::Rol | Op::Rcl => (result & top != 0) != flags.cf,
             Op::Shr => value & top != 0,
             Op::Sar => false,
             _ => (result & top != 0) != (result & (top >> 1) != 0),
@@ -367,6 +386,14 @@ pub fn execute(
                 write_reg(cpu, insn.reg, size, offset(cpu, &operand));
             }
         }
+        Op::Xchg if insn.encoding == Encoding::OpReg => {
+            // The accumulator with the register in the opcode, never itself:
+            // 90 without REX.B is NOP.
+            let rax = accumulator(RAX);
+            let (a, b) = (read_reg(cpu, rax, size), read_reg(cpu, insn.reg, size));
+            write_reg(cpu, rax, size, b);
+            write_reg(cpu, insn.reg, size, a);
+        }
         Op::Xchg => {
             let (a, b) = operands(cpu, memory, insn)?;
             write_rm(cpu, memory, insn, b)?;
@@ -419,7 +446,7 @@ pub fn execute(
                 if negative { mask(size) } else { 0 },
             );
         }
-        Op::Rol | Op::Ror | Op::Shl | Op::Shr | Op::Sar => {
+        Op::Rol | Op::Ror | Op::Rcl | Op::Rcr | Op::Shl | Op::Shr | Op::Sar => {
             let (a, count) = operands(cpu, memory, insn)?;
             match shift(insn.op, a, count, size, cpu.flags) {
                 Some((value, flags)) => {

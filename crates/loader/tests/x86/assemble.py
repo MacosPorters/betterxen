@@ -54,7 +54,7 @@ def cases():
         for bits in (8, 16, 32, 64):
             out += [f"{op} {reg(1, bits)}", f"{op} {reg(9, bits)}", f"{op} {mem(bits)}"]
         out.append(f"{op} ch")
-    for op in "rol ror shl shr sar".split():
+    for op in "rol ror rcl rcr shl shr sar".split():
         for bits in (8, 16, 32, 64):
             for count in ("1", "3", "7", "cl"):
                 out += [f"{op} {reg(3, bits)}, {count}", f"{op} {mem(bits)}, {count}"]
@@ -98,6 +98,11 @@ def cases():
             "cbw", "cwde", "cdqe", "cwd", "cdq", "cqo", "clc", "stc", "cmc", "nop", "cpuid",
             "nop dword ptr [rax + 8]", "pause", "push r9", "push rbx", "push -5", "push 0x12345678",
             f"push {mem(64)}", "pop rbx", "pop r12", f"pop {mem(64)}", "leave"]
+    # The accumulator short form of XCHG: 91..97, and 90 with REX.B.
+    for index in range(1, 16):
+        bits = (16, 32, 64)[index % 3]
+        out.append(f"xchg {reg(0, bits)}, {reg(index, bits)}")
+    out += ["xchg r8w, ax", "xchg r8, rax", "xchg r8d, eax", "xchg ecx, eax", "xchg r15w, ax"]
     return list(dict.fromkeys(out))
 
 

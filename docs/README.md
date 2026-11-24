@@ -40,6 +40,8 @@ either path. The [changelog](../CHANGELOG.md) records notable changes.
 
 ## Testing, validation, and benchmarks
 
+- [Testing and acceptance index](testing/README.md) — Entry point for test procedures, evidence and review records.
+- [AMD RDNA2 desktop GPU (gfx1030) form acceptance](testing/shader-form-acceptance.md) — Independence, command, log and promotion rules for fixture-verified instruction forms.
 - [Engineering progress](progress.md) — Verification commands, metric definitions, and open release gates.
 - [Test inventory comparison](testing/test-inventory.md) — Detect missing or newly ignored Cargo tests across commits.
 - [Persistent resource and translated rendering acceptance](testing/x9-acceptance.md) — Pinned upstream tests, native ARM64 results and unsupported cases.

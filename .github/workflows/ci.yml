@@ -41,6 +41,8 @@ jobs:
           python3 crates/isa/generate_semantics.py --check
           python3 scripts/audit/semantic_coverage.py --check
           python3 scripts/audit/status.py --check
+          # The generated status check must not depend on the host locale encoding.
+          LC_ALL=C PYTHONCOERCECLOCALE=0 PYTHONUTF8=0 python3 scripts/audit/status.py --check
           for fixture in x2 x3 x4; do
             python3 "experiments/x1/fixtures/$fixture.py" --check || exit 1
           done
@@ -65,7 +67,7 @@ jobs:
           cargo test --locked --workspace
           cargo test --locked --manifest-path experiments/x1/Cargo.toml
           scripts/audit/dependencies.sh
-          scripts/audit/claims.sh
+          LC_ALL=C PYTHONCOERCECLOCALE=0 PYTHONUTF8=0 scripts/audit/claims.sh
       - name: Inspect native CLI
         run: |
           cargo build --locked -p xenora

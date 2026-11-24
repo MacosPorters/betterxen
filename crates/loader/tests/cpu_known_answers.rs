@@ -1307,6 +1307,18 @@ addr32_sum_wraps_at_32_bits: rbx=ffff0000 rcx=10000+D rax=0 m0=44332211 => rax=1
   486601d8
   SDM 2A 2.2.1
 rex_not_adjacent_to_opcode_is_ignored: rax=112233445566ffff rbx=1 => rax=1122334455660000 f=CPAZso
+@ .byte 0x41,0x66,0x01,0xd8
+  416601d8
+  SDM 2A 2.2.1
+ignored_rex_b_does_not_select_r8: rax=112233445566ffff rbx=1 r8=5 => rax=1122334455660000 f=CPAZso
+@ .byte 0x48,0x64,0x8b,0x03
+  48648b03
+  SDM 2A 2.2.1; 1 3.4.1.1
+ignored_rex_w_before_segment_prefix_loads_32_bits: rax=ffffffffffffffff rbx=8 fs8=1122334455667788 => rax=44332211 f=*
+@ .byte 0x41,0x66,0x41,0x01,0xd8
+  41664101d8
+  SDM 2A 2.2.1
+rex_after_ignored_rex_applies: rax=7 rbx=1 r8=112233445566ffff => r8=1122334455660000 f=CPAZso
 @ .byte 0x66,0x48,0x01,0xd8
   664801d8
   SDM 2A 2.2.1.2
@@ -2596,12 +2608,15 @@ add_memory_crosses_contiguous_pages: rdi=D+1000 mffd=ffffffffffffffff => mffd=00
 push_pop_cross_contiguous_pages: rsp=D+1004 rax=1122334455667788 => rbx=1122334455667788 mffc=8877665544332211 f=*
 ";
 
-const DEFECT_EXACT_UNMASKED_OVERFLOW: &str = r"
+const EXACT_UNMASKED_OVERFLOW: &str = r"
 @ mulss xmm1, xmm2
   !f30f59ca
   SDM 1 D.4.2.3 Table D-16 (PE only if inexact); APM 1 4.10.2.8
 unmasked_overflow_exact_sets_only_oe: x1=s:7f7fffff x2=s:40000000 mx=1b80 => mx=1b88 f=* ! XM
 unmasked_negative_overflow_exact_sets_only_oe: x1=s:ff7fffff x2=s:40000000 mx=1b80 => mx=1b88 f=* ! XM
+unmasked_overflow_exact_sets_only_oe_down: x1=s:7f7fffff x2=s:40000000 mx=3b80 => mx=3b88 f=* ! XM
+unmasked_overflow_exact_sets_only_oe_up: x1=s:7f7fffff x2=s:40000000 mx=5b80 => mx=5b88 f=* ! XM
+unmasked_overflow_exact_sets_only_oe_zero: x1=s:7f7fffff x2=s:40000000 mx=7b80 => mx=7b88 f=* ! XM
 @ addsd xmm1, xmm2
   !f20f58ca
   SDM 1 D.4.2.3 Table D-16 (PE only if inexact); APM 1 4.10.2.8
@@ -2649,10 +2664,7 @@ const GROUPS: &[(&str, &str)] = &[
     ("fp_mxcsr_and_unmasked", FP_MXCSR_AND_UNMASKED),
     ("fp_beyond_sse2", FP_BEYOND_SSE2),
     ("defect_overlong_instruction", DEFECT_OVERLONG_INSTRUCTION),
-    (
-        "defect_exact_unmasked_overflow",
-        DEFECT_EXACT_UNMASKED_OVERFLOW,
-    ),
+    ("exact_unmasked_overflow", EXACT_UNMASKED_OVERFLOW),
     ("page_crossing", PAGE_CROSSING),
 ];
 
@@ -2720,22 +2732,9 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("ptest_flags", 0),
     ("push16_moves_rsp_by_two", 0),
     ("pushfq_popfq_status_round_trip", 0),
-    ("rcl16_by16", 0),
-    ("rcl16_by17_is_identity", 0),
-    ("rcl32_by31", 0),
-    ("rcl32_cl32_affects_nothing_but_extension", 0),
-    ("rcl64_by63", 0),
-    ("rcl8_by1_clear_carry_in", 0),
-    ("rcl8_by1_set_carry_in_preserves_szap", 0),
-    ("rcl8_by8", 0),
-    ("rcl8_by9_is_identity", 0),
     ("rcpps_special_values", 0),
     ("rcpss_relative_error_bound", 0),
     ("rcpss_rsqrtss_signal_nothing", 0),
-    ("rcr64_by1", 0),
-    ("rcr8_by10_is_by_one_mod_9", 0),
-    ("rcr8_by1_clear_carry_in", 0),
-    ("rcr8_by1_set_carry_in", 0),
     ("rep_lodsb_source_fault", 1),
     ("rep_movsb_addr32_uses_32bit_registers", 1),
     ("repe_cmpsb_fault_restores_flags", 1),
@@ -2746,7 +2745,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("repne_scasb_finds_byte", 1),
     ("repne_scasb_finds_byte_df_clear", 0),
     ("repne_scasd_exhausts_count", 1),
-    ("rex_not_adjacent_to_opcode_is_ignored", 0),
     ("roundps_uses_mxcsr_rc", 0),
     ("roundsd_suppress_precision", 0),
     ("roundss_imm_modes", 0),
@@ -2757,13 +2755,9 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("shld32_by4", 0),
     ("shld32_cl32_is_count_zero", 0),
     ("shld64_by63", 0),
-    ("shr_rcr_128bit_right_shift", 1),
     ("shrd32_by8", 0),
     ("shrd64_by1_sign_change", 0),
     ("shrd64_cl64_is_count_zero", 0),
-    ("xchg_ax_r9w_preserves_both_uppers", 0),
-    ("xchg_eax_ebx_clears_both_uppers", 0),
-    ("xchg_rax_r8_is_not_nop", 0),
 ];
 
 // ---------------------------------------------------------------------------
@@ -3513,9 +3507,8 @@ fn defect_overlong_instruction() {
 }
 
 #[test]
-#[ignore = "known defect (#155): an exact unmasked overflow sets PE as well as OE"]
-fn defect_exact_unmasked_overflow() {
-    check_group(DEFECT_EXACT_UNMASKED_OVERFLOW);
+fn exact_unmasked_overflow() {
+    check_group(EXACT_UNMASKED_OVERFLOW);
 }
 
 #[test]
@@ -4044,11 +4037,7 @@ fn shift_and_rotate_sweep_matches_operation_pseudocode() {
             runs += bench.runs;
         }
     }
-    let wanted: Vec<String> = ["rcl", "rcr"]
-        .iter()
-        .flat_map(|op| WIDTHS.map(|bits| format!("{op}{bits}")))
-        .collect();
-    assert_eq!(refused, wanted, "unsupported shift forms changed");
+    assert_eq!(refused, Vec::<String>::new(), "a shift form is refused");
     println!("{runs} engine runs");
 }
 
@@ -4738,12 +4727,7 @@ fn deliver(
     }
     if lowest + precision - 1 > format.max_exponent() {
         if mxcsr & OM == 0 {
-            // PE of an exact overflow is `defect_exact_unmasked_overflow`; this
-            // sweep compares every other bit.
-            return Outcome {
-                open: if unbounded_exact { PE } else { 0 },
-                ..outcome(0, OE | unbounded_inexact)
-            };
+            return outcome(0, OE | unbounded_inexact);
         }
         let to_infinity = match mode {
             0 => true,

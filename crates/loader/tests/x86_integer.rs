@@ -397,7 +397,7 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             write(m, places[0], (1u128 << bits) - 1 - a);
             Outcome::Done(none)
         }
-        "shl" | "shr" | "sar" | "rol" | "ror" => {
+        "shl" | "shr" | "sar" | "rol" | "ror" | "rcl" | "rcr" => {
             let count = match rest.split(", ").nth(1) {
                 Some("cl") => u32::from(m.gpr[1] as u8),
                 _ => read(m, places[1], 8) as u32,
@@ -405,13 +405,22 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             let start = read(m, places[0], bits);
             let mut value = start;
             let top = 1u128 << (bits - 1);
-            let mut carry = m.flags.cf;
-            for _ in 0..count {
+            let carry_in = m.flags.cf;
+            let mut carry = carry_in;
+            // RCL and RCR rotate through CF, so `bits + 1` steps come round again.
+            let steps = if matches!(name, "rcl" | "rcr") {
+                count % (bits + 1)
+            } else {
+                count
+            };
+            for _ in 0..steps {
                 // One step at a time, as the SDM loop does.
                 let (high, low) = (bit(value, bits - 1), bit(value, 0));
                 (value, carry) = match name {
                     "shl" => (truncate(value * 2, bits), high),
                     "rol" => (truncate(value * 2, bits) + u128::from(high), high),
+                    "rcl" => (truncate(value * 2, bits) + u128::from(carry), high),
+                    "rcr" => (value / 2 + if carry { top } else { 0 }, low),
                     "shr" => (value / 2, low),
                     "sar" => (value / 2 + if high { top } else { 0 }, low),
                     _ => (value / 2 + if low { top } else { 0 }, low),
@@ -424,7 +433,8 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
                 let (msb, next) = (bit(value, bits - 1), bit(value, bits - 2));
                 if count == 1 {
                     m.flags.of = match name {
-                        "shl" | "rol" => msb != carry,
+                        "shl" | "rol" | "rcl" => msb != carry,
+                        "rcr" => bit(start, bits - 1) != carry_in,
                         "shr" => bit(start, bits - 1),
                         "sar" => false,
                         _ => msb != next,
@@ -1222,10 +1232,9 @@ fn undeclared_and_ambiguous_encodings_are_rejected() {
         &[0x66, 0xE8, 0, 0],       // call rel16
         &[0x66, 0x0F, 0xC9],       // bswap cx (undefined)
         &[0x66, 0x63, 0xC1],       // 16-bit movsxd
-        &[0x41, 0x90],             // xchg r8, rax
+        &[0xF3, 0x41, 0x90],       // F3 on xchg r8, rax
         &[0x8D, 0xC0],             // lea with a register operand
         &[0x0F, 0xA3, 0x06],       // bt [rsi], eax
-        &[0xC0, 0xD0, 0x01],       // rcl al, 1
         &[0xC6, 0xC8, 0x01],       // C6 /1
         &[0xFF, 0xF8],             // FF /7
         &[0xFE, 0xD0],             // FE /2

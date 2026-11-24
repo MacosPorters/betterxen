@@ -237,6 +237,15 @@ impl<E, F: FnMut(u64) -> Result<u8, E>> Cursor<F> {
     }
 }
 
+/// Whether `byte` is a legacy prefix: an operand-size, address-size, segment,
+/// LOCK or repeat prefix (Intel SDM Vol. 2A, 2.1.1).
+fn is_legacy_prefix(byte: u8) -> bool {
+    matches!(
+        byte,
+        0x26 | 0x2E | 0x36 | 0x3E | 0x64 | 0x65 | 0x66 | 0x67 | 0xF0 | 0xF2 | 0xF3
+    )
+}
+
 /// Decode one instruction at `rip`. `fetch` supplies the byte at an address and
 /// is called only for bytes that belong to the instruction, in order.
 ///
@@ -258,9 +267,22 @@ pub fn decode<E>(
     let mut repne = false;
     let mut lock = false;
     let mut segment = None;
+    let mut rex = 0;
     let mut byte = cursor.u8()?;
     loop {
         let selected = match byte {
+            // REX applies only immediately before the opcode. One that is
+            // followed by a legacy prefix is ignored (Intel SDM Vol. 2A, 2.2.1).
+            0x40..=0x4F => {
+                let next = cursor.u8()?;
+                if !is_legacy_prefix(next) {
+                    rex = byte;
+                    byte = next;
+                    break;
+                }
+                byte = next;
+                continue;
+            }
             0x64 => Segment::Fs,
             0x65 => Segment::Gs,
             0x66 => {
@@ -299,10 +321,6 @@ pub fn decode<E>(
         byte = cursor.u8()?;
     }
 
-    let rex = if byte & 0xF0 == 0x40 { byte } else { 0 };
-    if rex != 0 {
-        byte = cursor.u8()?;
-    }
     let (rex_w, rex_r, rex_x, rex_b) =
         (rex & 8 != 0, (rex & 4) << 1, (rex & 2) << 2, (rex & 1) << 3);
 
@@ -345,9 +363,24 @@ pub fn decode<E>(
             GROUPS[usize::from(index)][usize::from((modrm >> 3) & 7)]
         }
     };
-    let form = FORMS
+    let mut form = FORMS
         .get(usize::from(form_index))
         .ok_or(DecodeError::Unsupported(opcode))?;
+    let mut form_index = form_index;
+    if form.no_rex_b && rex_b != 0 {
+        // 90 is NOP only without REX.B. With it the byte exchanges r8 with the
+        // accumulator, as the first register of the 91..97 row would (Intel
+        // SDM Vol. 2B, "NOP" and "XCHG").
+        match ONE_BYTE[slot + 1] {
+            Entry::Form(index)
+                if !two_byte && !rep && FORMS[usize::from(index)].encoding == Encoding::OpReg =>
+            {
+                form_index = index;
+                form = &FORMS[usize::from(index)];
+            }
+            _ => return Err(DecodeError::Unsupported(opcode)),
+        }
+    }
     if form.has_modrm && matches!(entry, Entry::Form(_)) {
         modrm = cursor.u8()?;
     }
@@ -368,10 +401,6 @@ pub fn decode<E>(
     if operand_size && !takes_operand_size && !overridden {
         return Err(DecodeError::Unsupported(0x66));
     }
-    if form.no_rex_b && rex_b != 0 {
-        return Err(DecodeError::Unsupported(opcode));
-    }
-
     let rm_size = if form.source != 0 { form.source } else { size };
     let register = |field: u8, extension: u8, width: u8| {
         if width == 1 && rex == 0 && field >= 4 {

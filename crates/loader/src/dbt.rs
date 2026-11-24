@@ -2267,4 +2267,207 @@ mod tests {
             ExitReason::MemoryFault(MemoryError::UnmappedAddress(FS_BASE + 8))
         );
     }
+
+    /// Intel SDM Volume 1, section 3.4.3.1: for `SUB` and `CMP`, `CF` is the
+    /// borrow out of the most significant bit. `JB` is `CF = 1`, `JAE` is
+    /// `CF = 0`, `JBE` is `CF = 1 or ZF = 1` and `JA` is `CF = 0 and ZF = 0`.
+    ///
+    /// ARM64 reports the inverse: `SUBS` sets `C` when the subtraction does
+    /// *not* borrow, and its `HI`/`LS` conditions are defined on that same
+    /// inverted carry. These four x86 conditions therefore cannot be taken
+    /// from an ARM64 condition code without translating the borrow first,
+    /// which makes them the ones to pin at the boundaries.
+    /// One unsigned condition: the low nibble pair as encoded in the `0x70`
+    /// block, and the rule that decides it from CF and ZF.
+    type UnsignedCondition = (u8, fn(bool, bool) -> bool);
+
+    const UNSIGNED_CONDITIONS: [UnsignedCondition; 4] = [
+        (0x72, |cf, _zf| cf),        // JB, JC, JNAE
+        (0x73, |cf, _zf| !cf),       // JAE, JNB, JNC
+        (0x76, |cf, zf| cf || zf),   // JBE, JNA
+        (0x77, |cf, zf| !cf && !zf), // JA, JNBE
+    ];
+
+    /// Build `<op> eax, ebx` (or `rax, rbx`) followed by the short or near form
+    /// of `condition`. The not-taken path writes 1 to `ECX` and halts, the
+    /// taken path writes 2. A near branch targets offset 140, which a `disp8`
+    /// cannot reach, so the two encodings are exercised separately.
+    fn unsigned_branch_program(op: [u8; 2], condition: u8, wide: bool, near: bool) -> Vec<u8> {
+        let mut code = Vec::new();
+        if wide {
+            code.push(0x48); // REX.W
+        }
+        code.extend_from_slice(&op); // cmp/sub eax, ebx
+        let jcc = code.len();
+        if near {
+            // The near form is `0F 8x`, where x is the low nibble of the
+            // short form's opcode.
+            code.extend_from_slice(&[0x0F, 0x80 | (condition & 0x0F), 0, 0, 0, 0]);
+        } else {
+            code.extend_from_slice(&[condition, 0]);
+        }
+        code.extend_from_slice(&[0xB9, 1, 0, 0, 0]); // mov ecx, 1
+        code.push(0xF4); // hlt
+        let target = if near { 140 } else { code.len() };
+        while code.len() < target {
+            code.push(0x90); // nop
+        }
+        code.extend_from_slice(&[0xB9, 2, 0, 0, 0]); // mov ecx, 2
+        code.push(0xF4); // hlt
+        let next = jcc + if near { 6 } else { 2 };
+        let displacement = target as i64 - next as i64;
+        if near {
+            code[jcc + 2..jcc + 6].copy_from_slice(&(displacement as i32).to_le_bytes());
+        } else {
+            code[jcc + 1] = displacement as i8 as u8;
+        }
+        code
+    }
+
+    /// Run one branch program and return `(ecx, cf, zf)`.
+    fn run_unsigned_branch(code: &[u8], left: u64, right: u64) -> (u64, bool, bool) {
+        let (mut engine, mut cpu, mut memory) = fixture(code);
+        cpu.set(Register::Rax, left);
+        cpu.set(Register::Rbx, right);
+        let result = engine.run(&mut cpu, &mut memory, 32);
+        assert_eq!(result.exit_reason, ExitReason::Halt);
+        // Either the two-instruction taken path or the two-instruction
+        // not-taken path runs after the compare and the branch.
+        assert_eq!(result.instructions_executed, 4);
+        // The compare, the branch and the halting move all run as translated
+        // ARM64, not through the shared interpreter.
+        assert_eq!(engine.metrics.interpreter_fallbacks, 0);
+        (cpu.get(Register::Rcx), cpu.flags.cf, cpu.flags.zf)
+    }
+
+    /// The four unsigned conditions, at both ends of the 32-bit and 64-bit
+    /// ranges, in the short and the near encoding. Expected flags and
+    /// outcomes come from the SDM rules above, not from the lowering.
+    #[test]
+    fn unsigned_branch_conditions_follow_the_borrow_at_every_boundary() {
+        const CMP: [u8; 2] = [0x39, 0xD8];
+        let cases: &[(bool, u64, u64)] = &[
+            // 32-bit: zero, one, equal operands, both ends of the range, and
+            // the pair where the sign bit flips but the unsigned order holds.
+            (false, 0, 0),
+            (false, 0, 1),
+            (false, 1, 0),
+            (false, 0xFFFF_FFFF, 0xFFFF_FFFF),
+            (false, 0xFFFF_FFFF, 0),
+            (false, 0, 0xFFFF_FFFF),
+            (false, 0x7FFF_FFFF, 0x8000_0000),
+            (false, 0x8000_0000, 0x7FFF_FFFF),
+            // The same boundaries at 64 bits, plus a subtraction that clears
+            // the sign bit without borrowing.
+            (true, 0, 0),
+            (true, 0, 1),
+            (true, 1, 0),
+            (true, u64::MAX, u64::MAX),
+            (true, u64::MAX, 0),
+            (true, 0, u64::MAX),
+            (true, 0x7FFF_FFFF_FFFF_FFFF, 0x8000_0000_0000_0000),
+            (true, 0x8000_0000_0000_0000, 0x7FFF_FFFF_FFFF_FFFF),
+            (true, 0x8000_0000_0000_0000, 1),
+        ];
+
+        for &(wide, left, right) in cases {
+            let mask = if wide { u64::MAX } else { u64::from(u32::MAX) };
+            let (left, right) = (left & mask, right & mask);
+            // SDM: CF is the borrow out of the most significant bit, ZF is a
+            // zero result. Both follow from the operands alone.
+            let (cf, zf) = (left < right, left == right);
+            for &(condition, holds) in &UNSIGNED_CONDITIONS {
+                let taken = holds(cf, zf);
+                for &near in &[false, true] {
+                    let code = unsigned_branch_program(CMP, condition, wide, near);
+                    let (ecx, got_cf, got_zf) = run_unsigned_branch(&code, left, right);
+                    let case = format!(
+                        "{condition:#04x} {:#x} {:#x} {}",
+                        left,
+                        right,
+                        if near { "near" } else { "short" }
+                    );
+                    assert_eq!(got_cf, cf, "{case}: CF");
+                    assert_eq!(got_zf, zf, "{case}: ZF");
+                    assert_eq!(ecx, if taken { 2 } else { 1 }, "{case}: branch outcome");
+                }
+            }
+        }
+    }
+
+    /// `SUB` is the other producer of the carry these conditions read, and the
+    /// one where the ARM64 carry is inverted: `0 - 1` borrows, while
+    /// `0x8000_0000_0000_0000 - 1` does not borrow even though it clears the
+    /// sign bit.
+    #[test]
+    fn subtract_borrow_into_and_out_of_the_high_bit_feeds_the_unsigned_branches() {
+        const SUB: [u8; 2] = [0x29, 0xD8];
+        let cases: &[(bool, u64, u64)] = &[
+            (false, 0, 1),
+            (false, 0x8000_0000, 1),
+            (true, 0, 1),
+            (true, 0x8000_0000_0000_0000, 1),
+        ];
+
+        for &(wide, left, right) in cases {
+            let mask = if wide { u64::MAX } else { u64::from(u32::MAX) };
+            let (left, right) = (left & mask, right & mask);
+            let (cf, zf) = (left < right, left == right);
+            for &(condition, holds) in &UNSIGNED_CONDITIONS {
+                let taken = holds(cf, zf);
+                for &near in &[false, true] {
+                    let code = unsigned_branch_program(SUB, condition, wide, near);
+                    let (ecx, got_cf, got_zf) = run_unsigned_branch(&code, left, right);
+                    let case = format!(
+                        "{condition:#04x} {:#x} {:#x} {}",
+                        left,
+                        right,
+                        if near { "near" } else { "short" }
+                    );
+                    assert_eq!(got_cf, cf, "{case}: CF");
+                    assert_eq!(got_zf, zf, "{case}: ZF");
+                    assert_eq!(ecx, if taken { 2 } else { 1 }, "{case}: branch outcome");
+                }
+            }
+        }
+    }
+
+    /// The carry these conditions read is produced in one translated block and
+    /// consumed in the next. A lowering that left it in the host's condition
+    /// flags would pass the single-block cases above and fail here.
+    #[test]
+    fn unsigned_branch_reads_flags_stored_by_a_previous_block() {
+        const CMP: [u8; 2] = [0x39, 0xD8];
+        let cases: &[(bool, u64, u64)] = &[
+            (false, 0, 0),                    // CF = 0, ZF = 1
+            (false, 0, 1),                    // CF = 1, ZF = 0
+            (false, 0xFFFF_FFFF, 0),          // CF = 0, ZF = 0
+            (true, 0x8000_0000_0000_0000, 1), // CF = 0 although the sign bit clears
+        ];
+
+        for &(wide, left, right) in cases {
+            let (cf, zf) = (left < right, left == right);
+            for &(condition, holds) in &UNSIGNED_CONDITIONS {
+                let taken = holds(cf, zf);
+                let code = unsigned_branch_program(CMP, condition, wide, false);
+                let (mut engine, mut cpu, mut memory) = fixture(&code);
+                cpu.set(Register::Rax, left);
+                cpu.set(Register::Rbx, right);
+
+                // One instruction per run: the compare is translated as a
+                // one-instruction block, so the branch is compiled separately
+                // and can only read the flags the first block stored.
+                let first = engine.run(&mut cpu, &mut memory, 1);
+                assert_eq!(first.exit_reason, ExitReason::StepLimitExceeded);
+                assert_eq!(cpu.rip, ENTRY + if wide { 3 } else { 2 });
+                assert_eq!((cpu.flags.cf, cpu.flags.zf), (cf, zf));
+
+                let second = engine.run(&mut cpu, &mut memory, 8);
+                assert_eq!(second.exit_reason, ExitReason::Halt);
+                assert_eq!(second.instructions_executed, 3);
+                assert_eq!(cpu.get(Register::Rcx), if taken { 2 } else { 1 });
+                assert_eq!(engine.metrics.interpreter_fallbacks, 0);
+            }
+        }
+    }
 }

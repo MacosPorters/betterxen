@@ -8,6 +8,10 @@ export MTL_SHADER_VALIDATION=1
 export MTL_SHADER_VALIDATION_REPORT_TO_STDERR=1
 export MTL_SHADER_VALIDATION_ABORT_ON_FAULT=1
 export CARGO_BUILD_JOBS=${CARGO_BUILD_JOBS:-4}
+# The full semantic-review batch is much larger than the individual GPU tests.
+# Cold Apple Silicon runs can exceed two minutes; keep the default bounded but
+# allow slower hosts to raise it without editing the script.
+export XENORA_SEMANTIC_TIMEOUT=${XENORA_SEMANTIC_TIMEOUT:-300s}
 
 cargo test --locked -p xenora-metal --features gpu-tests --test native_compute --no-run
 timeout 30s cargo test --locked -p xenora-metal --features gpu-tests --test native_compute -- \
@@ -58,4 +62,4 @@ timeout 30s cargo test --locked -p xenora-ffi --features gpu-tests --test audio_
 # Native Metal known answers of the independent semantic review, including SOP2 scalar ALU
 # and VOPC compares.
 cargo test --locked -p xenora-semantic-review --no-run
-timeout 120s cargo test --locked -p xenora-semantic-review -- --ignored --nocapture --test-threads=1
+timeout "$XENORA_SEMANTIC_TIMEOUT" cargo test --locked -p xenora-semantic-review -- --ignored --nocapture --test-threads=1
