@@ -157,7 +157,6 @@ fn scalar_unary_dispatch_selects_exactly_the_registry_sop1_forms() {
         assert_eq!(row.name.to_ascii_lowercase(), op.mnemonic());
         assert_eq!(op.writes_scc(), row.scc != SccEffect::Unchanged);
     }
-    // s_mov_b32 (opcode 3) stays hand-written, so it must not be dispatched here.
     dispatch_selects_exactly(EncodingFamily::Sop1, |word| {
         ScalarUnaryOp::from_word(word).map(|op| op.semantics().name)
     });

@@ -9,8 +9,8 @@ pub use graphics::{PIXEL_ENTRY_POINT, VERTEX_ENTRY_POINT, compile_graphics};
 
 pub use xenora_decoder::Architecture;
 use xenora_decoder::{
-    DecodeError, DecodedInstruction, Instruction, ScalarSource, ScalarSource64, VectorAluOp,
-    VectorAluVop3Op, VectorBinary, VectorCompareOp, VectorSource,
+    DecodeError, DecodedInstruction, Instruction, ScalarSource, ScalarSource64, ScalarUnaryOp,
+    VectorAluOp, VectorAluVop3Op, VectorBinary, VectorCompareOp, VectorSource,
 };
 
 /// SGPR index of `vcc_lo`.
@@ -848,8 +848,12 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     Op::Binary(Binary::Vector(op.lowering()), left, right),
                 )
             }
-            Instruction::ScalarMoveB32 { dst, src } => {
-                let value = read_scalar(src)?;
+            Instruction::ScalarUnary {
+                op: op @ ScalarUnaryOp::MovB32,
+                dst,
+                src,
+            } => {
+                let (value, _) = op.evaluate(read_scalar(src)?);
                 if dst < 8 {
                     return Err(error("scalar move would modify a resource descriptor"));
                 }

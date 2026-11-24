@@ -184,10 +184,8 @@ pub enum Instruction {
         src0: u8,
         src1: u8,
     },
-    /// SOP1 32-bit move to a normal SGPR or an EXEC/VCC half.
-    ScalarMoveB32 { dst: u8, src: ScalarSource },
-    /// SOP1 32-bit unary integer operation writing a normal SGPR (s0-s105) and,
-    /// for some operations, SCC.
+    /// SOP1 32-bit unary integer operation. The move also allows an explicit
+    /// VCC or EXEC half destination. Some unary operations write SCC.
     ScalarUnary {
         op: ScalarUnaryOp,
         dst: u8,
@@ -310,7 +308,6 @@ impl Instruction {
             Self::WaitStore => "s_waitcnt_vscnt",
             Self::MoveB32 { .. } => "v_mov_b32_e32",
             Self::VectorAluVop3 { op, .. } => op.assembly_name(),
-            Self::ScalarMoveB32 { .. } => "s_mov_b32",
             Self::ScalarUnary { op, .. } => op.mnemonic(),
             Self::ScalarAlu64 { op, .. } => op.mnemonic(),
             Self::ScalarAlu { op, .. } => op.mnemonic(),
@@ -370,7 +367,7 @@ impl fmt::Display for Instruction {
             | Self::VectorMulF32 { dst, src0, src1 } => {
                 write!(formatter, " v{dst}, v{src0}, v{src1}")
             }
-            Self::ScalarMoveB32 { dst, src } | Self::ScalarUnary { dst, src, .. } => {
+            Self::ScalarUnary { dst, src, .. } => {
                 write!(formatter, " {}, {src}", ScalarDestination(dst))
             }
             Self::ScalarAlu64 {

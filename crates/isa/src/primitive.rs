@@ -379,3 +379,8 @@ pub const fn xnor_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
     let value = !(a ^ b);
     (value, value != 0)
 }
+
+/// A bitwise copy of the source (RDNA 2 guide section 12.3).
+pub(crate) const fn mov_b32(src: u32) -> u32 {
+    src
+}

@@ -454,10 +454,16 @@ fn run_imports_sync(
     let mut counts: BTreeMap<&'static str, usize> = BTreeMap::new();
 
     let mut lines = csv_text.lines();
-    let has_import_kind = lines
-        .next()
-        .is_some_and(|header| header.ends_with(",import_kind"));
+    let header = lines.next().unwrap_or_default();
+    let has_import_kind = header.ends_with(",import_kind");
+    // Binding does not resolve delay-loaded imports, so the backlog omits them.
+    let table_column = header
+        .split(',')
+        .position(|column| column == "import_table");
     for line in lines {
+        if table_column.and_then(|index| line.split(',').nth(index)) == Some("delayed") {
+            continue;
+        }
         // Format: "module","symbol",0xRVA,category,registered,status,is_alias,"canonical",priority,cluster
         // We re-query the live registry rather than trusting cached status.
         let fields: Vec<&str> = line.splitn(10, ',').collect();
