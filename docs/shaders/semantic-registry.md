@@ -115,7 +115,7 @@ error.
 | `operation` | The primitive the form uses | `add`, `sub`, `and`, `or`, `xor`, `andn2`, `orn2`, `nand`, `nor`, `xnor`, `lshl`, `lshr`, `ashr`, `min`, `max`, `cselect`, `bfm`, `mul`, `mul_hi`, `bfe`, `absdiff`, `lshl_add`, `mul24`, `mul_hi24` (vector only), `mov` (SOP1 and SOPK), `cmov` (SOPK only), `compare` and the SOP1 unaries |
 | `signedness` | How operands are read | `unsigned`, `signed`, `bitwise` (always `bitwise` for the logical operations, `cselect` and `bfm`; never for the arithmetic ones, `add`, `sub`, `min`, `max`, `mul`, `mul_hi`, `bfe`, `absdiff` and `lshl_add`; shifts take their primitive's signedness) |
 | `carry_in` | Whether the form reads SCC: carry-in, borrow-in or the select condition | `none`, `scc` (`scc` only for unsigned `add` and `sub`, and required for `cselect`) |
-| `width` | Operand and result width in bits | `64` for `sop2_sgpr_pair`, otherwise `32` |
+| `width` | Operand and result width in bits (operand width for compares) | `64` for `sop2_sgpr_pair` and `vopc_vcc_pair`, otherwise `32` |
 | `source_bits` | Sign extension only: the low bits of S0 that are read. The XML must list S0 with that size and format (`FMT_NUM_I8` or `FMT_NUM_I16`) | `8`, `16`; required for `sext`, rejected elsewhere |
 | `relation` | Compares only: the relation tested with S0 on the left | `eq`, `lg` (not equal), `gt`, `ge`, `lt`, `le`; required for `compare`, rejected elsewhere |
 | `source_order` | Vector forms only: `reversed` when the guide computes `op(S1, S0)` (the XML records no operand order); absent otherwise | `reversed` |
@@ -187,9 +187,10 @@ to `vop2_vgpr` would be a behaviour change and needs its own oracle. The three
 shifts declare `source_order = "reversed"` (D = S1 shifted by S0[4:0]), so the
 generator checks the XML's unsigned count format on SRC0, not VSRC1.
 
-VOPC compares (operand rule `vopc_vcc`, kind `vector_compare`: SRC0 a
-`vector_source` as for VOP2, VSRC1 a VGPR, destination implicitly `vcc_lo`)
-take the same `relation` and primitive as SOPC compares, but declare
+VOPC compares (kind `vector_compare`) write `vcc_lo`. The 32-bit rule
+`vopc_vcc` accepts a `vector_source` as for VOP2 and a VGPR. The 64-bit rule
+`vopc_vcc_pair` accepts a VGPR pair, an even normal SGPR pair or an inline
+integer as SRC0 and a VGPR pair as VSRC1. Both declare a `relation`,
 `scc = "unchanged"`, `vcc = "lane_mask"` and `wave = "wave32"`. The XML's implicit
 64-bit VCC output must be present and is accounted for by `lane_mask`. Signedness
 still matters for `eq` and `lg`, because the MSL lowering casts signed operands.
@@ -222,8 +223,8 @@ vocabularies above, it rejects:
 
 - contradictions: a declared `scc` or `carry_in` that the primitive does not
   have, `bitwise` on an arithmetic operation or the reverse;
-- VOPC compares whose opcode is not the group base (128 for `signed`, 192
-  for `unsigned`) plus the relation's offset in guide Table 59 (F 0, LT 1,
+- VOPC compares whose opcode is not the group base (128 and 192 for signed and
+  unsigned 32-bit forms, 160 and 224 for their 64-bit counterparts) plus the relation's offset in guide Table 59 (F 0, LT 1,
   EQ 2, LE 3, GT 4, LG/NE 5, GE 6, T 7), and a `lane_mask` form whose XML
   does not have exactly one implicit VCC operand that is written and not read;
 - duplicates: the same `name`, the same `(family, opcode)`, or the same

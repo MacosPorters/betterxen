@@ -241,6 +241,9 @@ pub enum OperandRule {
     /// s0-s105, `vcc_lo`, an inline integer -16..64 or a literal word; VSRC1 is a
     /// VGPR. Everything else is rejected as unsupported.
     VopcVcc,
+    /// Wave32 VOPC with a VGPR pair, even normal SGPR pair or inline integer
+    /// as SRC0 and a VGPR pair as VSRC1. The destination is `vcc_lo`.
+    VopcVccPair,
     /// VOP3 encoding of a VOP2 vector form: VDST is v0-v255, SRC0 and SRC1 are
     /// VGPRs, no input or output modifiers, SRC2 unused. Everything else is
     /// rejected as unsupported.

@@ -729,7 +729,19 @@ fn vector_compare(
     bytes: &[u8],
 ) -> Result<(Instruction, u8), DecodeErrorKind> {
     let src1 = ((first >> 9) & 0xff) as u8;
-    let (src0, len) = vector_src0(first, bytes, op.assembly_name())?;
+    let mnemonic = op.assembly_name();
+    if op.semantics().width == 64 {
+        // Guide §3.6.3 requires even SGPR bases. Reject invalid selectors
+        // before reading a literal word or considering the execution mask.
+        let source = first & 0x1ff;
+        if src1 == 255
+            || !matches!(source, 0..=104 | 128..=208 | 256..=510)
+            || (source <= 104 && !source.is_multiple_of(2))
+        {
+            return Err(unsupported(mnemonic, "invalid 64-bit compare source"));
+        }
+    }
+    let (src0, len) = vector_src0(first, bytes, mnemonic)?;
     Ok((Instruction::VectorCompare { op, src0, src1 }, len))
 }
 
