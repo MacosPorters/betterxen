@@ -970,42 +970,53 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         Ok(1)
     });
 
-    let attributes = Arc::clone(state);
-    registry.register(KERNEL32, "GetFileAttributesW", move |args, cpu, memory| {
-        const INVALID_ATTRIBUTES: u64 = u32::MAX as u64;
-        if let Some(resolved) = host_path(&attributes, memory, args.rcx)? {
-            let found = resolved.and_then(|resolved| {
-                let writable = resolved.mount.writable();
-                let (_, entry) = resolved.lookup()?;
-                entry
-                    .map(|entry| host_attributes(&entry, writable))
-                    .ok_or(FILE_NOT_FOUND)
-            });
-            return match found {
-                Ok(value) => Ok(u64::from(value)),
-                Err(error) => attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES),
+    for (symbol, wide) in [("GetFileAttributesA", false), ("GetFileAttributesW", true)] {
+        let attributes = Arc::clone(state);
+        registry.register(KERNEL32, symbol, move |args, cpu, memory| {
+            const INVALID_ATTRIBUTES: u64 = u32::MAX as u64;
+            let raw = if wide {
+                read_raw_path(memory, args.rcx)
+            } else {
+                read_ascii_path(memory, args.rcx)
+            }
+            .map_err(ExitReason::MemoryFault)?;
+            let Some(raw) = raw else {
+                return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
             };
-        }
-        let objects = attributes.objects.lock().expect("guest object state");
-        let Some(path) = guest_path(memory, args.rcx, &objects.current_directory)
-            .map_err(ExitReason::MemoryFault)?
-        else {
-            return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
-        };
-        if objects.directories.contains(&path) {
-            return Ok(0x10); // FILE_ATTRIBUTE_DIRECTORY
-        }
-        if objects.files.contains_key(&path) {
-            return Ok(0x80); // FILE_ATTRIBUTE_NORMAL
-        }
-        let parent = parent(&path);
-        let error = if parent.is_empty() || objects.directories.contains(parent) {
-            FILE_NOT_FOUND
-        } else {
-            PATH_NOT_FOUND
-        };
-        attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES)
-    });
+            if let Some(resolved) = host_files::resolve(&attributes.mounts, &raw, valid_component) {
+                let found = resolved.and_then(|resolved| {
+                    let writable = resolved.mount.writable();
+                    let (_, entry) = resolved.lookup()?;
+                    entry
+                        .map(|entry| host_attributes(&entry, writable))
+                        .ok_or(FILE_NOT_FOUND)
+                });
+                return match found {
+                    Ok(value) => Ok(u64::from(value)),
+                    Err(error) => attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES),
+                };
+            }
+            let objects = attributes.objects.lock().expect("guest object state");
+            let Some(path) = resolve_synthetic_path(&raw, &objects.current_directory)
+                .filter(|path| path.split('\\').all(valid_component))
+            else {
+                return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
+            };
+            if objects.directories.contains(&path) {
+                return Ok(0x10); // FILE_ATTRIBUTE_DIRECTORY
+            }
+            if objects.files.contains_key(&path) {
+                return Ok(0x80); // FILE_ATTRIBUTE_NORMAL
+            }
+            let parent = parent(&path);
+            let error = if parent.is_empty() || objects.directories.contains(parent) {
+                FILE_NOT_FOUND
+            } else {
+                PATH_NOT_FOUND
+            };
+            attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES)
+        });
+    }
 
     let rename = Arc::clone(state);
     registry.register(KERNEL32, "MoveFileW", move |args, cpu, memory| {
@@ -1361,6 +1372,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "CreateDirectoryW",
         "RemoveDirectoryW",
         "DeleteFileW",
+        "GetFileAttributesA",
         "GetFileAttributesW",
         "MoveFileW",
         "FindFirstFileW",

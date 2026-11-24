@@ -1669,7 +1669,7 @@ fn test_guest_synthetic_file_io_through_iat() {
         append_import_call(&mut code, 0x2060);
         code.extend_from_slice(&[0x48, 0x83, 0xc4, 0x48, 0xf4]);
         code.resize(0x80, 0);
-        if symbol == "SetCurrentDirectoryA" {
+        if matches!(symbol, "SetCurrentDirectoryA" | "GetFileAttributesA") {
             code.extend_from_slice(name.as_bytes());
             code.push(0);
         } else {
@@ -1789,6 +1789,7 @@ fn test_guest_synthetic_file_io_through_iat() {
             .collect::<Vec<_>>(),
         "C:\\work".encode_utf16().chain([0]).collect::<Vec<_>>()
     );
+    assert_eq!(namespace("GetFileAttributesA", "C:/WORK"), 0x10);
     assert_eq!(namespace("RemoveDirectoryW", "C:/work"), 0);
     let relative = open("relative.dat", 0x4000_0000, 2);
     assert_ne!(relative, u64::MAX);

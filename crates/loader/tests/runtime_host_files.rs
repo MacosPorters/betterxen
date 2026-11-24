@@ -30,6 +30,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "GetFileSizeEx"),
     (KERNEL32, "SetFilePointerEx"),
     (KERNEL32, "SetEndOfFile"),
+    (FILE_API, "GetFileAttributesA"),
     (FILE_API, "GetFileAttributesW"),
     (KERNEL32, "FindFirstFileW"),
     (KERNEL32, "FindNextFileW"),
@@ -232,6 +233,15 @@ fn read_only_mounts_serve_files_without_escaping_the_root() {
     symlink(&tree.0, &tree.path("root/link"));
     let mount = HostMount::new('D', &tree.path("root"), false).unwrap();
     let mut guest = guest_with(vec![mount]);
+
+    guest.memory.write_bytes(PATH, b"D:\\data\\LEVEL1.BIN\0").unwrap();
+    assert_eq!(guest.call("GetFileAttributesA", &[PATH]), 1);
+    guest.memory.write_bytes(PATH, b"D:\\data\\missing.bin\0").unwrap();
+    assert_eq!(guest.call("GetFileAttributesA", &[PATH]), u64::from(u32::MAX));
+    assert_eq!(guest.error(), 2);
+    guest.memory.write_bytes(PATH, b"D:\\data\\\xff\0").unwrap();
+    assert_eq!(guest.call("GetFileAttributesA", &[PATH]), u64::from(u32::MAX));
+    assert_eq!(guest.error(), 123);
 
     // Names match case-insensitively against the host listing.
     let file = open(
