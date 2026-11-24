@@ -18,6 +18,11 @@ fn test_builtin_db_classifies_crt_string() {
     let strlen_cls = db.get("api-ms-win-crt-string-l1-1-0.dll", "strlen");
     assert!(matches!(strlen_cls, Some(Classification::StandardService)));
 
+    assert!(matches!(
+        db.get("api-ms-win-crt-string-l1-1-0.dll", "strtok"),
+        Some(Classification::StandardService)
+    ));
+
     let strcat_s_cls = db.get("api-ms-win-crt-string-l1-1-0.dll", "strcat_s");
     assert!(matches!(
         strcat_s_cls,
@@ -71,8 +76,8 @@ fn typed_csv_preserves_ordinals_and_identically_spelled_names() {
 fn test_manifest_and_codegen_pipeline() {
     let csv_content = r#""module","symbol_or_ordinal","iat_rva"
 "api-ms-win-crt-math-l1-1-0.dll","acos",0x1000
-"api-ms-win-crt-string-l1-1-0.dll","tolower",0x1008
-"API-MS-WIN-CRT-STRING-L1-1-0.DLL","tolower",0x1048
+"api-ms-win-crt-utility-l1-1-0.dll","llabs",0x1008
+"API-MS-WIN-CRT-UTILITY-L1-1-0.DLL","llabs",0x1048
 "api-ms-win-core-processthreads-l1-1-0.dll","CreateThread",0x1010
 "custom.dll","UnknownCustomFunc",0x1018
 "kernel32.dll","QueryPerformanceCounter",0x1020
@@ -113,7 +118,7 @@ fn test_manifest_and_codegen_pipeline() {
 
     let files = generate(&manifest, &db);
     assert!(files.crt_rs.contains("register_generated_crt_services"));
-    assert_eq!(files.crt_rs.matches("\"tolower\"").count(), 1);
+    assert_eq!(files.crt_rs.matches("\"llabs\"").count(), 1);
     let acos = files.crt_rs.split_once("\"acos\"").unwrap().1;
     let acos = acos.split("registry.register_with_status").next().unwrap();
     assert!(acos.contains("ServiceStatus::Stub"));
@@ -131,7 +136,7 @@ fn test_manifest_and_codegen_pipeline() {
     assert!(!files.stubs_rs.contains("GetThreadId"));
     assert!(!files.stubs_rs.contains("DuplicateHandle"));
     assert!(!files.stubs_rs.contains("GetTickCount64"));
-    assert!(files.tests_rs.contains("generated_test_tolower"));
+    assert!(files.tests_rs.contains("generated_test_llabs"));
 
     let out_dir = tmp_dir.join("out");
     files.write_all(out_dir.to_str().unwrap()).unwrap();

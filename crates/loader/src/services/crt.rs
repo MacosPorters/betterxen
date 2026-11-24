@@ -268,6 +268,9 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strcspn", |args, _, memory| {
         span_length(memory, args.rcx, args.rdx, false)
     });
+    registry.register(UCRT, "strtok", |args, cpu, memory| {
+        tokenize(memory, cpu.gs_base, args.rcx, args.rdx)
+    });
     registry.register(UCRT, "wcscpy", |args, _, memory| {
         copy_wide(memory, args.rcx, args.rdx, u64::MAX, true)
     });
@@ -285,7 +288,7 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     });
     for symbol in [
         "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "strspn", "strcspn",
-        "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr",
+        "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr", "strtok",
     ] {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
@@ -415,25 +418,72 @@ fn span_length(
     if address == 0 || set == 0 {
         return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
     }
-    let mut present = [false; 256];
-    for index in 0..SCAN_BUDGET {
-        let byte = memory
-            .read_u8(set + index)
-            .map_err(ExitReason::MemoryFault)?;
-        if byte == 0 {
-            break;
-        }
-        present[byte as usize] = true;
-        if index + 1 == SCAN_BUDGET {
-            return Err(ExitReason::IllegalInstruction(0xFE));
-        }
-    }
+    let present = byte_set(memory, set)?;
     for index in 0..SCAN_BUDGET {
         let byte = memory
             .read_u8(address + index)
             .map_err(ExitReason::MemoryFault)?;
         if byte == 0 || present[byte as usize] != accept {
             return Ok(index);
+        }
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn byte_set(memory: &GuestMemory, address: u64) -> Result<[bool; 256], ExitReason> {
+    let mut present = [false; 256];
+    for offset in 0..SCAN_BUDGET {
+        let byte = StringUnit::Byte.read(memory, address, offset)? as usize;
+        if byte == 0 {
+            return Ok(present);
+        }
+        present[byte] = true;
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn tokenize(
+    memory: &mut GuestMemory,
+    teb: u64,
+    input: u64,
+    delimiters: u64,
+) -> Result<u64, ExitReason> {
+    let cursor = if input == 0 {
+        let Some(&saved) = memory.crt_token_cursors.get(&teb) else {
+            return Ok(0);
+        };
+        saved
+    } else {
+        input
+    };
+    if delimiters == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    let present = byte_set(memory, delimiters)?;
+    let mut token = None;
+    for offset in 0..SCAN_BUDGET {
+        let byte = StringUnit::Byte.read(memory, cursor, offset)? as usize;
+        if byte == 0 {
+            memory.crt_token_cursors.remove(&teb);
+            return Ok(token.unwrap_or(0));
+        }
+        let position = cursor + offset;
+        if !present[byte] {
+            token.get_or_insert(position);
+        } else if let Some(token) = token {
+            if memory.crt_token_cursors.len() >= 1024
+                && !memory.crt_token_cursors.contains_key(&teb)
+            {
+                return Err(ExitReason::MemoryFault(MemoryError::AllocationFailed));
+            }
+            let next = position
+                .checked_add(1)
+                .ok_or(ExitReason::MemoryFault(MemoryError::Overflow))?;
+            memory
+                .write_u8(position, 0)
+                .map_err(ExitReason::MemoryFault)?;
+            memory.crt_token_cursors.insert(teb, next);
+            return Ok(token);
         }
     }
     Err(ExitReason::IllegalInstruction(0xFE))
@@ -946,4 +996,28 @@ fn strcpy_strncpy_strcat_and_memchr_operate_on_guest_memory() {
     let mut joined = [0u8; 4];
     memory.read_bytes(dest, &mut joined).unwrap();
     assert_eq!(&joined, b"xab\0");
+}
+
+#[cfg(test)]
+#[test]
+fn strtok_keeps_independent_cursors_and_accepts_new_delimiters() {
+    use crate::memory::MemoryPermissions;
+
+    let mut memory = GuestMemory::new();
+    memory
+        .map_region(0x1000, 0x100, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    memory.write_bytes(0x1000, b",a,b;c\0").unwrap();
+    memory.write_bytes(0x1020, b"x,y\0").unwrap();
+    memory.write_bytes(0x1040, b",\0").unwrap();
+    memory.write_bytes(0x1048, b";\0").unwrap();
+    assert_eq!(tokenize(&mut memory, 1, 0x1000, 0x1040).unwrap(), 0x1001);
+    assert_eq!(tokenize(&mut memory, 2, 0x1020, 0x1040).unwrap(), 0x1020);
+    assert_eq!(memory.read_u8(0x1002).unwrap(), 0);
+    assert!(tokenize(&mut memory, 1, 0, 0x2000).is_err());
+    assert_eq!(tokenize(&mut memory, 1, 0, 0x1048).unwrap(), 0x1003);
+    assert_eq!(tokenize(&mut memory, 2, 0, 0x1040).unwrap(), 0x1022);
+    assert_eq!(tokenize(&mut memory, 1, 0, 0x1048).unwrap(), 0x1005);
+    assert_eq!(tokenize(&mut memory, 1, 0, 0x1048).unwrap(), 0);
+    assert_eq!(tokenize(&mut memory, 2, 0, 0x1040).unwrap(), 0);
 }
