@@ -120,10 +120,11 @@ pub enum GraphicsError {
     /// An index buffer format other than DXGI `R16_UINT` (57) or `R32_UINT` (42).
     InvalidIndexFormat(u32),
     /// An indexed draw reads past its index buffer or fetches a vertex,
-    /// after applying the base vertex, outside its vertex buffer.
+    /// after applying the base vertex, outside its vertex buffer, or a flat
+    /// draw reads its vertices outside the vertex buffer.
     IndexOutOfRange,
-    /// A descriptor heap, view, sampler, root signature or binding outside
-    /// the supported texture-binding subset. Nothing is drawn.
+    /// A descriptor heap, view, sampler, root signature, binding or draw
+    /// outside the supported subset. Nothing is drawn.
     Unsupported(&'static str),
 }
 
@@ -151,8 +152,8 @@ impl std::fmt::Display for GraphicsError {
             Self::InvalidIndexFormat(format) => {
                 write!(f, "unsupported index buffer format {format}")
             }
-            Self::IndexOutOfRange => write!(f, "indexed draw outside its index or vertex buffer"),
-            Self::Unsupported(what) => write!(f, "unsupported texture binding: {what}"),
+            Self::IndexOutOfRange => write!(f, "draw outside its index or vertex buffer"),
+            Self::Unsupported(what) => write!(f, "unsupported graphics operation: {what}"),
         }
     }
 }
@@ -1673,8 +1674,21 @@ impl GraphicsContext {
                         rendered_output = Some(pixels);
                         continue;
                     }
-                    if *vertex_count_per_instance < 3 {
+                    // Zero instances, or fewer vertices than one triangle,
+                    // draw nothing. The flat path draws only the first
+                    // triangle of the view, once; anything else is rejected
+                    // rather than drawn as a different triangle.
+                    if *vertex_count_per_instance < 3 || *instance_count == 0 {
                         continue;
+                    }
+                    if *vertex_count_per_instance != 3
+                        || *instance_count != 1
+                        || *start_vertex_location != 0
+                        || *start_instance_location != 0
+                    {
+                        return Err(GraphicsError::Unsupported(
+                            "flat draw other than one instance of the view's first three vertices",
+                        ));
                     }
                     draw_count += 1;
                     let v_res_handle =
@@ -1684,15 +1698,10 @@ impl GraphicsContext {
                         .get(&v_res_handle)
                         .ok_or(GraphicsError::InvalidResourceHandle)?;
 
-                    // Read vertices from guest memory backing or resource data
-                    let mut raw_vtx = [0u8; 48]; // 3 * 4 * float32
-                    if let Some(guest_addr) = v_res.guest_backing_addr {
-                        memory.read_bytes(guest_addr + vertex_offset as u64, &mut raw_vtx)?;
-                    } else if v_res.data.len() >= vertex_offset + 48 {
-                        raw_vtx.copy_from_slice(&v_res.data[vertex_offset..vertex_offset + 48]);
-                    } else {
-                        return Err(GraphicsError::InvalidDescriptor);
-                    }
+                    // Three float4 positions, inside the resource whether it
+                    // is backed by guest memory or by its own bytes.
+                    let mut raw_vtx = [0u8; 48];
+                    Self::read_resource(v_res, memory, vertex_offset, &mut raw_vtx)?;
 
                     let mut vertices = [[0.0f32; 4]; 3];
                     for (i, row) in vertices.iter_mut().enumerate() {
