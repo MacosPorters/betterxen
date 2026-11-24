@@ -843,10 +843,20 @@ fn other_vop1_opcodes_stay_unsupported() {
 }
 
 #[test]
-#[ignore = "requires a native Metal device with API and shader validation, and the translator's VOP1 integer forms (skipped by scripts/test-gpu.sh until then)"]
-fn vop1_integer_forms_match_the_guide_on_native_metal() {
-    assert_eq!(std::env::var("MTL_DEBUG_LAYER").as_deref(), Ok("1"));
-    assert_eq!(std::env::var("MTL_SHADER_VALIDATION").as_deref(), Ok("1"));
+fn compiler_matches_the_vop1_integer_operand_domain() {
+    let cases = checked_cases();
+    for case in &cases {
+        compile(Architecture::Gfx1030, &case.code)
+            .unwrap_or_else(|error| panic!("compiler rejected {}: {error:?}", case.label));
+    }
+    check_compiler_rejections();
+    eprintln!(
+        "vop1_integer: {} compiler cases and {REJECTIONS} rejections",
+        cases.len()
+    );
+}
+
+fn check_compiler_rejections() {
     for (label, code, offset) in rejections() {
         // Refused at the same word as by the interpreters, so a later failure
         // cannot stand in.
@@ -857,7 +867,15 @@ fn vop1_integer_forms_match_the_guide_on_native_metal() {
         };
         assert_eq!(at, offset, "compiler rejected {label} elsewhere");
     }
+}
+
+#[test]
+#[ignore = "requires a native Metal device with API and shader validation"]
+fn vop1_integer_forms_match_the_guide_on_native_metal() {
+    assert_eq!(std::env::var("MTL_DEBUG_LAYER").as_deref(), Ok("1"));
+    assert_eq!(std::env::var("MTL_SHADER_VALIDATION").as_deref(), Ok("1"));
     let cases = checked_cases();
+    check_compiler_rejections();
     let (failures, programs) = harness::check_metal(&cases);
     failures.assert_none("native Metal disagrees with the guide");
     eprintln!(

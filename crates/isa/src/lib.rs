@@ -20,7 +20,7 @@ pub use rdna2::{
 };
 pub use semantics_gen::{
     ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarUnaryOp,
-    VectorAluOp, VectorAluVop3Op, VectorCompareOp,
+    VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSwapOp, VectorUnaryOp,
 };
 
 /// SGPR index of `vcc_lo`, the Wave32 vector condition code.
@@ -155,6 +155,14 @@ pub enum Instruction {
     WaitStore,
     /// VOP1 unmodified 32-bit vector move.
     MoveB32 { dst: u8, src: VectorSource },
+    /// VOP1 unary integer operation with a single VGPR result.
+    VectorUnary {
+        op: VectorUnaryOp,
+        dst: u8,
+        src: VectorSource,
+    },
+    /// VOP1 register swap. Both operands are inputs and outputs.
+    VectorSwap { op: VectorSwapOp, dst: u8, src: u8 },
     /// VOP3 encoding of a registry VOP2 integer operation (operand rule
     /// `vop3_vgpr2`): two VGPR sources and no input or output modifiers.
     VectorAluVop3 {
@@ -279,6 +287,8 @@ impl Instruction {
             Self::WaitLoad => "s_waitcnt",
             Self::WaitStore => "s_waitcnt_vscnt",
             Self::MoveB32 { .. } => "v_mov_b32_e32",
+            Self::VectorUnary { op, .. } => op.assembly_name(),
+            Self::VectorSwap { op, .. } => op.assembly_name(),
             Self::VectorAluVop3 { op, .. } => op.assembly_name(),
             Self::ScalarUnary { op, .. } => op.mnemonic(),
             Self::ScalarAlu { op, .. } => op.mnemonic(),
@@ -330,7 +340,10 @@ impl fmt::Display for Instruction {
             }
             Self::WaitLoad => formatter.write_str(" vmcnt(0)"),
             Self::WaitStore => formatter.write_str(" null, 0"),
-            Self::MoveB32 { dst, src } => write!(formatter, " v{dst}, {src}"),
+            Self::MoveB32 { dst, src } | Self::VectorUnary { dst, src, .. } => {
+                write!(formatter, " v{dst}, {src}")
+            }
+            Self::VectorSwap { dst, src, .. } => write!(formatter, " v{dst}, v{src}"),
             Self::VectorAluVop3 {
                 dst, src0, src1, ..
             }

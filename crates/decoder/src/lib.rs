@@ -5,7 +5,7 @@ use std::fmt;
 pub use xenora_isa::{
     Architecture, CompareRelation, ExportTarget, Instruction, InterpolationPhase, ScalarAluOp,
     ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp,
-    VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSource,
+    VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSource, VectorSwapOp, VectorUnaryOp,
 };
 use xenora_isa::{
     BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
@@ -14,8 +14,8 @@ use xenora_isa::{
 };
 
 use xenora_isa::meta::EncodingFamily;
-pub use xenora_isa::semantics::VectorBinary;
 use xenora_isa::semantics::{FORM_IDS, OperandRule};
+pub use xenora_isa::semantics::{VectorBinary, VectorUnary};
 
 /// Metadata forms that [`decode`] turns into an [`Instruction`] for at least one
 /// operand combination: the hand-written forms below followed by every form of
@@ -315,6 +315,23 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
     }
     if V_MOV_B32.matches(first) {
         return move_b32(first, bytes);
+    }
+    // AMD RDNA 2 ISA guide 13.3.2: VDST occupies bits 17–24 and SRC0 bits 0–8.
+    if let Some(op) = VectorUnaryOp::from_word(first) {
+        let dst = (first >> 17) as u8;
+        let (src, len) = vector_src0(first, bytes, op.assembly_name())?;
+        return Ok((Instruction::VectorUnary { op, dst, src }, len));
+    }
+    if let Some(op) = VectorSwapOp::from_word(first) {
+        if first & 0x100 == 0 {
+            return Err(unsupported(
+                op.assembly_name(),
+                "expected a VGPR SRC0 for writeback",
+            ));
+        }
+        let dst = (first >> 17) as u8;
+        let src = first as u8;
+        return Ok((Instruction::VectorSwap { op, dst, src }, 4));
     }
     if let Some(op) = VectorCompareOp::from_word(first) {
         return vector_compare(op, first, bytes);
@@ -661,7 +678,7 @@ fn vector_compare(
     Ok((Instruction::VectorCompare { op, src0, src1 }, len))
 }
 
-/// The 9-bit SRC0 of a VOPC or VOP2 word: a VGPR, `s0-s105`, `vcc_lo`, an
+/// The 9-bit SRC0 of a VOP1, VOP2 or VOPC word: a VGPR, `s0-s105`, `vcc_lo`, an
 /// inline integer -16..64 or a literal word; everything else is unsupported.
 fn vector_src0(
     first: u32,

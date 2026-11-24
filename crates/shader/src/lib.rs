@@ -10,7 +10,7 @@ pub use graphics::{PIXEL_ENTRY_POINT, VERTEX_ENTRY_POINT, compile_graphics};
 pub use xenora_decoder::Architecture;
 use xenora_decoder::{
     DecodeError, DecodedInstruction, Instruction, ScalarSource, ScalarUnaryOp, VectorAluOp,
-    VectorAluVop3Op, VectorBinary, VectorCompareOp, VectorSource,
+    VectorAluVop3Op, VectorBinary, VectorCompareOp, VectorSource, VectorUnary,
 };
 
 /// SGPR index of `vcc_lo`.
@@ -92,6 +92,7 @@ enum Op {
     Load,
     Constant(u32),
     Binary(Binary, Value, Value),
+    Unary(VectorUnary, Value),
     MergeLanes {
         mask: u32,
         active: Value,
@@ -129,6 +130,7 @@ impl Op {
         match self {
             Self::Load | Self::Constant(_) | Self::ScalarBranch { .. } => Vec::new(),
             Self::Binary(_, left, right) => vec![left, right],
+            Self::Unary(_, source) => vec![source],
             Self::MergeLanes {
                 active, inactive, ..
             } => vec![active, inactive],
@@ -149,6 +151,21 @@ impl Op {
         match self {
             Self::Load => format!("input[{index}]"),
             Self::Constant(value) => format!("0x{value:08x}u"),
+            Self::Unary(op, source) => {
+                let src = name(source);
+                // AMD guide 12.8: all three scans return -1 if no bit matches.
+                match op {
+                    VectorUnary::Not => format!("~{src}"),
+                    VectorUnary::ReverseBits => format!("reverse_bits({src})"),
+                    VectorUnary::FindHighUnsigned => {
+                        format!("{src} == 0u ? 0xffffffffu : clz({src})")
+                    }
+                    VectorUnary::FindLow => format!("{src} == 0u ? 0xffffffffu : ctz({src})"),
+                    VectorUnary::FindHighSigned => format!(
+                        "({src} == 0u || {src} == 0xffffffffu) ? 0xffffffffu : clz({src} ^ (0u - ({src} >> 31u)))"
+                    ),
+                }
+            }
             Self::Binary(operator, left, right) => {
                 let (left, right) = (name(left), name(right));
                 let (_, symbol) = operator.operator();
@@ -440,6 +457,19 @@ pub fn compile(architecture: Architecture, bytes: &[u8]) -> Result<CompiledShade
                 format!("{dest} = const.u32 0x{value:08x}"),
                 format!("uint {dest} = {};", operation.expression(&thread, "", "")),
             ),
+            Op::Unary(operator, source) => {
+                let mnemonic = match operator {
+                    VectorUnary::Not => "not.b32",
+                    VectorUnary::ReverseBits => "brev.b32",
+                    VectorUnary::FindHighUnsigned => "ffbh.u32",
+                    VectorUnary::FindLow => "ffbl.b32",
+                    VectorUnary::FindHighSigned => "ffbh.i32",
+                };
+                (
+                    format!("{dest} = {mnemonic} {source}"),
+                    format!("uint {dest} = {};", operation.expression(&thread, "", "")),
+                )
+            }
             Op::Binary(operator, left, right) => (
                 format!("{dest} = {} {left}, {right}", operator.operator().0),
                 format!("uint {dest} = {};", operation.expression(&thread, "", "")),
@@ -726,6 +756,25 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 .flatten()
                 .ok_or_else(|| error("scalar source has no known value")),
         };
+        let read_vector = |source, operations: &mut Vec<_>, facts: &mut Vec<_>| {
+            Ok(match source {
+                VectorSource::Register(register) => read(register)?,
+                VectorSource::Scalar(register) if usize::from(register) == VCC_LO => {
+                    match (lane_vcc, scalars[VCC_LO]) {
+                        (Some(mask), _) => mask,
+                        (None, Some(bits)) => constant(operations, facts, offset, bits),
+                        (None, None) => {
+                            return Err(error("vector ALU reads uninitialized VCC_LO"));
+                        }
+                    }
+                }
+                VectorSource::Scalar(register) => {
+                    let bits = read_scalar(ScalarSource::Register(register))?;
+                    constant(operations, facts, offset, bits)
+                }
+                VectorSource::Immediate(bits) => constant(operations, facts, offset, bits),
+            })
+        };
         // Scalar instructions and waits still execute when all lanes are inactive.
         if exec == 0 {
             match instruction.instruction {
@@ -733,7 +782,9 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 | Instruction::VectorAluVop3 { .. }
                 | Instruction::VectorAddF32 { .. }
                 | Instruction::VectorMulF32 { .. }
-                | Instruction::VectorAlu { .. } => continue,
+                | Instruction::VectorAlu { .. }
+                | Instruction::VectorUnary { .. }
+                | Instruction::VectorSwap { .. } => continue,
                 _ => {}
             }
         }
@@ -1037,27 +1088,7 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 src0,
                 src1,
             } => {
-                let src0 = match src0 {
-                    VectorSource::Register(register) => read(register)?,
-                    VectorSource::Scalar(register) if usize::from(register) == VCC_LO => {
-                        match (lane_vcc, scalars[VCC_LO]) {
-                            (Some(mask), _) => mask,
-                            (None, Some(bits)) => {
-                                constant(&mut operations, &mut facts, offset, bits)
-                            }
-                            (None, None) => {
-                                return Err(error("vector ALU reads uninitialized VCC_LO"));
-                            }
-                        }
-                    }
-                    VectorSource::Scalar(register) => {
-                        let bits = read_scalar(ScalarSource::Register(register))?;
-                        constant(&mut operations, &mut facts, offset, bits)
-                    }
-                    VectorSource::Immediate(bits) => {
-                        constant(&mut operations, &mut facts, offset, bits)
-                    }
-                };
+                let src0 = read_vector(src0, &mut operations, &mut facts)?;
                 let src1 = read(src1)?;
                 let (left, right) = if op.swaps_sources() {
                     (src1, src0)
@@ -1068,6 +1099,35 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     Some(dst),
                     Op::Binary(Binary::Vector(op.lowering()), left, right),
                 )
+            }
+            Instruction::VectorUnary { op, dst, src } => {
+                let source = read_vector(src, &mut operations, &mut facts)?;
+                (Some(dst), Op::Unary(op.lowering(), source))
+            }
+            Instruction::VectorSwap { dst, src, .. } => {
+                // Guide 12.8: capture both old values before updating either VGPR.
+                // read() also rejects v0 and registers with outstanding loads.
+                let old_dst = read(dst)?;
+                let old_src = read(src)?;
+                if dst != src {
+                    registers[usize::from(dst)] = Some(merge_lanes(
+                        &mut operations,
+                        &mut facts,
+                        offset,
+                        exec,
+                        old_src,
+                        Some(old_dst),
+                    )?);
+                    registers[usize::from(src)] = Some(merge_lanes(
+                        &mut operations,
+                        &mut facts,
+                        offset,
+                        exec,
+                        old_dst,
+                        Some(old_src),
+                    )?);
+                }
+                continue;
             }
             Instruction::VectorAddF32 { dst, src0, src1 } => (
                 Some(dst),
