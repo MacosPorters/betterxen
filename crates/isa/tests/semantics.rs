@@ -168,6 +168,14 @@ fn vector_alu_dispatch_selects_exactly_the_registry_vop2_forms() {
 
 #[test]
 fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
+    const OPERANDS16: [u64; 6] = [
+        0xaaaa_0000,
+        0x5555_0001,
+        0xdead_7fff,
+        0x8000,
+        0xfffe,
+        0xffff,
+    ];
     const OPERANDS32: [u64; 6] = [0, 1, 0x7fff_ffff, 0x8000_0000, 0xffff_fffe, 0xffff_ffff];
     const OPERANDS64: [u64; 6] = [0, 1, u64::MAX >> 1, 1 << 63, u64::MAX - 1, u64::MAX];
     for op in VectorCompareOp::ALL {
@@ -188,14 +196,20 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
         );
         // The per-lane test is the declared relation over the declared
         // signedness, with SRC0 on the left.
-        let operands = if row.width == 64 {
-            OPERANDS64
-        } else {
-            OPERANDS32
+        let operands = match row.width {
+            16 => OPERANDS16,
+            64 => OPERANDS64,
+            _ => OPERANDS32,
         };
         for src0 in operands {
             for src1 in operands {
-                let ordering = if op.signed() && row.width == 64 {
+                let ordering = if row.width == 16 {
+                    if op.signed() {
+                        (src0 as i16).cmp(&(src1 as i16))
+                    } else {
+                        (src0 as u16).cmp(&(src1 as u16))
+                    }
+                } else if op.signed() && row.width == 64 {
                     (src0 as i64).cmp(&(src1 as i64))
                 } else if op.signed() {
                     (src0 as i32).cmp(&(src1 as i32))
@@ -221,7 +235,7 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
             }
         }
     }
-    // v_cmpx and the 16-bit and float compares must not be dispatched.
+    // v_cmpx and the float compares must not be dispatched.
     dispatch_selects_exactly(EncodingFamily::Vopc, |word| {
         VectorCompareOp::from_word(word).map(|op| op.semantics().name)
     });

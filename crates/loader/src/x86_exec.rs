@@ -22,6 +22,8 @@ const RDX: usize = Register::Rdx as usize;
 const RBX: usize = Register::Rbx as usize;
 const RSP: usize = Register::Rsp as usize;
 const RBP: usize = Register::Rbp as usize;
+const RSI: usize = Register::Rsi as usize;
+const RDI: usize = Register::Rdi as usize;
 
 /// Value mask of an operand of `size` bytes.
 fn mask(size: u8) -> u64 {
@@ -582,6 +584,37 @@ pub fn execute(
                 cpu.gpr[register] = u64::from(value);
             }
         }
+        Op::Movs | Op::Stos => {
+            // One element per execution. A REP form with elements left keeps
+            // RIP on itself, so every element is a step of its own: it counts
+            // against the step budget, and a fault keeps the elements already
+            // done, with RSI, RDI and RCX at the element that faulted.
+            if !(insn.rep && cpu.gpr[RCX] == 0) {
+                let value = if insn.op == Op::Movs {
+                    read_rm(cpu, memory, insn)?
+                } else {
+                    cpu.gpr[RAX] & mask(size)
+                };
+                write_mem(memory, cpu.gpr[RDI], size, value)?;
+                let step = if cpu.df {
+                    u64::from(size).wrapping_neg()
+                } else {
+                    u64::from(size)
+                };
+                if insn.op == Op::Movs {
+                    cpu.gpr[RSI] = cpu.gpr[RSI].wrapping_add(step);
+                }
+                cpu.gpr[RDI] = cpu.gpr[RDI].wrapping_add(step);
+                if insn.rep {
+                    cpu.gpr[RCX] -= 1;
+                    if cpu.gpr[RCX] != 0 {
+                        next = insn.rip;
+                    }
+                }
+            }
+        }
+        Op::Cld => cpu.df = false,
+        Op::Std => cpu.df = true,
         Op::Clc => cpu.flags.cf = false,
         Op::Stc => cpu.flags.cf = true,
         Op::Cmc => cpu.flags.cf = !cpu.flags.cf,

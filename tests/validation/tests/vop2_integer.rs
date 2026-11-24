@@ -745,9 +745,9 @@ fn unsupported_vop2_integer_encodings_are_rejected() {
 fn other_vop2_opcodes_stay_unsupported() {
     // Every VOP2 opcode (0-61; 62 and 63 are the VOPC and VOP1 encodings)
     // except the forms supported before this set (V_ADD_F32 3, V_MUL_F32 8,
-    // the shifts 22, 24, 26 and AND, OR, XOR 27-29) and these twelve. VDST is
+    // the shifts 22, 24, 26 and AND, OR, XOR 27-29) and the registered integer forms. VDST is
     // initialized, so a form that also reads it fails only on the opcode.
-    let earlier = [3, 8, 22, 24, 26, 27, 28, 29];
+    let earlier = [1, 3, 8, 22, 24, 26, 27, 28, 29, 40, 41, 42];
     let supported: Vec<u32> = FORMS
         .iter()
         .map(|&(form, _)| form as u32)

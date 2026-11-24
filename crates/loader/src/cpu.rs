@@ -97,6 +97,8 @@ pub struct CpuState {
     /// XMM0-XMM15, lane 0 in the low bits.
     pub xmm: [u128; 16],
     pub mxcsr: Mxcsr,
+    /// Direction flag: string instructions step RSI and RDI down when set.
+    pub df: bool,
 }
 
 impl CpuState {
@@ -111,6 +113,7 @@ impl CpuState {
             fs_base: 0,
             xmm: [0; 16],
             mxcsr: Mxcsr::default(),
+            df: false,
         }
     }
 

@@ -40,6 +40,7 @@ SRCS = {"": 0, "b": 1, "w": 2, "d": 4, "q": 8, "x": 16}
 # encoding -> (Rust variant, has ModRM, required immediates)
 ENCS = {
     "none": ("None", False, {""}),
+    "string": ("String", False, {""}),
     "rm_reg": ("RmReg", True, {""}),
     "reg_rm": ("RegRm", True, {""}),
     "reg_rm_imm": ("RegRmImm", True, {"ib", "iz"}),
