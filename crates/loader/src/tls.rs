@@ -144,9 +144,20 @@ pub fn parse_tls_directory(bytes: &[u8], pe: &ParsedPe) -> Result<Option<TlsDire
     }))
 }
 
+/// Bytes reserved at `thread_tls_base` for the thread's TLS pointer array.
+const TLS_ARRAY_SIZE: usize = 0x1000;
+
 /// Set up TLS runtime state in guest memory:
-/// 1. Assign TLS index (e.g. 0) at `index_address`.
-/// 2. Allocate and initialize per-thread TLS storage from the template.
+/// 1. Assign TLS index 0 at `index_address`.
+/// 2. Map the thread's TLS pointer array at `thread_tls_base`.
+/// 3. Map the thread's data block one page above it, initialized from the
+///    template and zero fill, and store its address in the array slot of the
+///    index.
+///
+/// `thread_tls_base` is the value the thread environment block holds as its
+/// TLS pointer. Compiled code loads that pointer, indexes it by the module's
+/// TLS index to find the data block, and then adds a variable's offset, so the
+/// array and the data are separate regions.
 pub fn setup_tls(
     tls: &TlsDirectory,
     loaded_base: u64,
@@ -187,15 +198,25 @@ pub fn setup_tls(
             memory.read_bytes(actual_start, &mut template_data)?;
         }
 
-        // Allocate per-thread TLS block
+        // Allocate the pointer array and the per-thread TLS block.
+        let block_base = thread_tls_base
+            .checked_add(TLS_ARRAY_SIZE as u64)
+            .ok_or(MemoryError::Overflow)?;
         let page_size = 4096;
         let map_size = (total_size + page_size - 1) & !(page_size - 1);
-        memory.map_region_with_data(
+        memory.map_region(
             thread_tls_base,
+            TLS_ARRAY_SIZE,
+            MemoryPermissions::READ_WRITE,
+        )?;
+        memory.map_region_with_data(
+            block_base,
             map_size,
             MemoryPermissions::READ_WRITE,
             &template_data,
         )?;
+        // Slot 0 belongs to the index assigned above.
+        memory.write_u64(thread_tls_base, block_base)?;
     }
 
     Ok(())
