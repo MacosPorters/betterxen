@@ -354,6 +354,10 @@ letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Without
 a mount, nothing on the host is reachable through these services. Mounts are
 read-only unless created writable.
 
+The partial `GetFileAttributesExA/W` services return attributes and 64-bit
+sizes for `GetFileExInfoStandard`. The three timestamp fields are zero.
+The ANSI form accepts ASCII paths.
+
 The partial `FlushFileBuffers` service requires a writable file handle.
 It synchronizes the backing file on a host mount. Synthetic file writes
 are already visible in the guest's in-memory filesystem.

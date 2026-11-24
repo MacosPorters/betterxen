@@ -36,6 +36,8 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "SetEndOfFile"),
     (FILE_API, "GetFileAttributesA"),
     (FILE_API, "GetFileAttributesW"),
+    (FILE_API, "GetFileAttributesExW"),
+    (KERNEL32, "GetFileAttributesExA"),
     (KERNEL32, "FindFirstFileW"),
     (KERNEL32, "FindNextFileW"),
     (KERNEL32, "FindClose"),
@@ -167,6 +169,21 @@ fn legacy_file_size_splits_large_lengths_and_distinguishes_failure() {
     let file = open(&mut guest, r"D:\Sparse.dat", GENERIC_READ, 0, OPEN_EXISTING);
     assert_ne!(file, INVALID);
     assert_eq!(guest.call("GetFileType", &[file]), 1);
+    guest.memory.write_bytes(BUFFER, &[0xff; 40]).unwrap();
+    assert_eq!(guest.call("GetFileAttributesExW", &[PATH, 1, BUFFER]), 0);
+    assert_eq!(guest.error(), 87);
+    assert_eq!(guest.u32_at(BUFFER), u32::MAX);
+    assert_eq!(guest.call("GetFileAttributesExW", &[PATH, 0, 1]), 0);
+    assert_eq!(guest.error(), 998);
+    assert_eq!(guest.call("GetFileAttributesExW", &[PATH, 0, BUFFER]), 1);
+    assert_eq!(guest.u32_at(BUFFER), 1);
+    assert_eq!(guest.u32_at(BUFFER + 28), 1);
+    assert_eq!(guest.u32_at(BUFFER + 32), u32::MAX);
+    assert_eq!(guest.u32_at(BUFFER + 36), u32::MAX);
+
+    guest.memory.write_bytes(PATH, b"D:\\Sparse.dat\0").unwrap();
+    assert_eq!(guest.call("GetFileAttributesExA", &[PATH, 0, BUFFER]), 1);
+    assert_eq!(guest.u32_at(BUFFER + 28), 1);
     let invalid_size = u64::from(u32::MAX);
     guest.memory.write_u64(COUNT, u64::MAX).unwrap();
 

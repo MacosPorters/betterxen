@@ -294,6 +294,30 @@ fn host_attributes(entry: &host_files::Entry, writable: bool) -> u32 {
     }
 }
 
+fn file_metadata(state: &ServicesState, raw: &str) -> Result<(u32, u64), u32> {
+    if let Some(resolved) = host_files::resolve(&state.mounts, raw, valid_component) {
+        let resolved = resolved?;
+        let (_, entry) = resolved.lookup()?;
+        let entry = entry.ok_or(FILE_NOT_FOUND)?;
+        return Ok((host_attributes(&entry, resolved.mount.writable()), entry.size));
+    }
+
+    let objects = state.objects.lock().expect("guest object state");
+    let path = resolve_file_path(raw, &objects.current_directory).ok_or(INVALID_NAME)?;
+    if objects.directories.contains(&path) {
+        return Ok((0x10, 0)); // FILE_ATTRIBUTE_DIRECTORY
+    }
+    if let Some(file) = objects.files.get(&path) {
+        return Ok((0x80, file.len() as u64)); // FILE_ATTRIBUTE_NORMAL
+    }
+    let parent = parent(&path);
+    Err(if parent.is_empty() || objects.directories.contains(parent) {
+        FILE_NOT_FOUND
+    } else {
+        PATH_NOT_FOUND
+    })
+}
+
 /// FindFirstFileW on a host mount: a sorted snapshot of matching names.
 fn find_host_entries(state: &ServicesState, raw: &str) -> Option<Result<Vec<SearchEntry>, u32>> {
     let (directory, pattern) = raw.rsplit_once('\\')?;
@@ -990,10 +1014,18 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         });
     }
 
-    for (symbol, wide) in [("GetFileAttributesA", false), ("GetFileAttributesW", true)] {
+    for (symbol, wide, extended) in [
+        ("GetFileAttributesA", false, false),
+        ("GetFileAttributesW", true, false),
+        ("GetFileAttributesExA", false, true),
+        ("GetFileAttributesExW", true, true),
+    ] {
         let attributes = Arc::clone(state);
         registry.register(KERNEL32, symbol, move |args, cpu, memory| {
-            const INVALID_ATTRIBUTES: u64 = u32::MAX as u64;
+            let failure = if extended { 0 } else { u64::from(u32::MAX) };
+            if extended && args.rdx as u32 != 0 {
+                return attributes.fail(cpu.gs_base, ERROR_INVALID_PARAMETER, failure);
+            }
             let raw = if wide {
                 read_raw_path(memory, args.rcx)
             } else {
@@ -1001,39 +1033,25 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             }
             .map_err(ExitReason::MemoryFault)?;
             let Some(raw) = raw else {
-                return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
+                return attributes.fail(cpu.gs_base, INVALID_NAME, failure);
             };
-            if let Some(resolved) = host_files::resolve(&attributes.mounts, &raw, valid_component) {
-                let found = resolved.and_then(|resolved| {
-                    let writable = resolved.mount.writable();
-                    let (_, entry) = resolved.lookup()?;
-                    entry
-                        .map(|entry| host_attributes(&entry, writable))
-                        .ok_or(FILE_NOT_FOUND)
-                });
-                return match found {
-                    Ok(value) => Ok(u64::from(value)),
-                    Err(error) => attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES),
-                };
-            }
-            let objects = attributes.objects.lock().expect("guest object state");
-            let Some(path) = resolve_file_path(&raw, &objects.current_directory)
-            else {
-                return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
+            let (flags, size) = match file_metadata(&attributes, &raw) {
+                Ok(metadata) => metadata,
+                Err(error) => return attributes.fail(cpu.gs_base, error, failure),
             };
-            if objects.directories.contains(&path) {
-                return Ok(0x10); // FILE_ATTRIBUTE_DIRECTORY
+            if !extended {
+                return Ok(u64::from(flags));
             }
-            if objects.files.contains_key(&path) {
-                return Ok(0x80); // FILE_ATTRIBUTE_NORMAL
+
+            // WIN32_FILE_ATTRIBUTE_DATA: flags, three FILETIMEs, then size high and low.
+            let mut data = [0; 36];
+            data[..4].copy_from_slice(&flags.to_le_bytes());
+            data[28..32].copy_from_slice(&((size >> 32) as u32).to_le_bytes());
+            data[32..36].copy_from_slice(&(size as u32).to_le_bytes());
+            if args.r8 == 0 || memory.write_bytes(args.r8, &data).is_err() {
+                return attributes.fail(cpu.gs_base, ERROR_NOACCESS, failure);
             }
-            let parent = parent(&path);
-            let error = if parent.is_empty() || objects.directories.contains(parent) {
-                FILE_NOT_FOUND
-            } else {
-                PATH_NOT_FOUND
-            };
-            attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES)
+            Ok(1)
         });
     }
 
@@ -1435,6 +1453,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "DeleteFileW",
         "GetFileAttributesA",
         "GetFileAttributesW",
+        "GetFileAttributesExA",
+        "GetFileAttributesExW",
         "MoveFileW",
         "FindFirstFileW",
         "FindNextFileW",

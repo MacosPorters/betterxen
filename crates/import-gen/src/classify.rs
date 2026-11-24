@@ -999,6 +999,8 @@ impl SymbolDb {
                 "DeleteFileW",
                 "GetFileAttributesA",
                 "GetFileAttributesW",
+                "GetFileAttributesExA",
+                "GetFileAttributesExW",
                 "GetTempPathA",
                 "GetTempPathW",
                 "GetTempFileNameW",
