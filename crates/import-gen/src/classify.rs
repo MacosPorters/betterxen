@@ -997,6 +997,7 @@ impl SymbolDb {
                 "SetEndOfFile",
                 "CreateDirectoryW",
                 "RemoveDirectoryW",
+                "DeleteFileA",
                 "DeleteFileW",
                 "GetFileAttributesA",
                 "GetFileAttributesW",
@@ -1013,7 +1014,6 @@ impl SymbolDb {
         }
         self.win32_stub(m, "CloseHandle", false, "CloseHandle — no-op stub");
         self.win32_stub(m, "GetFileSize", false, "GetFileSize — stub returning 0");
-        self.win32_stub(m, "DeleteFileA", false, "DeleteFile — stub returning FALSE");
         self.win32_stub(
             m,
             "FlushFileBuffers",

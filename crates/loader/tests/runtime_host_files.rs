@@ -37,6 +37,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "FindClose"),
     (KERNEL32, "CreateDirectoryW"),
     (KERNEL32, "RemoveDirectoryW"),
+    (FILE_API, "DeleteFileA"),
     (KERNEL32, "DeleteFileW"),
     (KERNEL32, "MoveFileW"),
     (UCRT, "fopen"),
@@ -149,6 +150,34 @@ fn found_name(guest: &Guest) -> String {
 
 fn symlink(target: &Path, link: &Path) {
     std::os::unix::fs::symlink(target, link).unwrap();
+}
+
+#[test]
+fn ansi_delete_uses_mount_permissions_and_sharing() {
+    let tree = Tree::new("ansi-delete");
+    let root = tree.path("root");
+    std::fs::create_dir_all(&root).unwrap();
+    std::fs::write(root.join("Mixed.txt"), b"keep until closed").unwrap();
+    let mut guest = guest_with(vec![
+        HostMount::new('D', &root, true).unwrap(),
+        HostMount::new('E', &root, false).unwrap(),
+    ]);
+    let open_file = open(&mut guest, r"D:\Mixed.txt", GENERIC_READ, 1, OPEN_EXISTING);
+    assert_ne!(open_file, INVALID);
+    let delete = |guest: &mut Guest, name: &[u8]| {
+        guest.memory.write_bytes(PATH, name).unwrap();
+        guest.call("DeleteFileA", &[PATH])
+    };
+    assert_eq!(delete(&mut guest, b"E:\\mixed.txt\0"), 0);
+    assert_eq!(guest.error(), 5);
+    assert_eq!(delete(&mut guest, b"D:\\mixed.txt\0"), 0);
+    assert_eq!(guest.error(), 32);
+    assert!(root.join("Mixed.txt").exists());
+    assert_eq!(guest.call("CloseHandle", &[open_file]), 1);
+    assert_eq!(delete(&mut guest, b"D:\\mixed.txt\0"), 1);
+    assert!(!root.join("Mixed.txt").exists());
+    assert_eq!(delete(&mut guest, b"D:\\mixed.txt\0"), 0);
+    assert_eq!(guest.error(), 2);
 }
 
 #[test]

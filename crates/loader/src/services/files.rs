@@ -445,7 +445,11 @@ fn guest_path(
     address: u64,
     cwd: &str,
 ) -> Result<Option<String>, MemoryError> {
-    Ok(read_guest_path(memory, address, cwd)?.filter(|name| name.split('\\').all(valid_component)))
+    Ok(read_raw_path(memory, address)?.and_then(|raw| resolve_file_path(&raw, cwd)))
+}
+
+fn resolve_file_path(raw: &str, cwd: &str) -> Option<String> {
+    resolve_synthetic_path(raw, cwd).filter(|path| path.split('\\').all(valid_component))
 }
 
 struct SearchEntry {
@@ -939,36 +943,44 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         Ok(1)
     });
 
-    let delete = Arc::clone(state);
-    registry.register(KERNEL32, "DeleteFileW", move |args, cpu, memory| {
-        if let Some(resolved) = host_path(&delete, memory, args.rcx)? {
-            return change_host_namespace(&delete, cpu.gs_base, resolved, HostChange::DeleteFile);
-        }
-        let mut objects = delete.objects.lock().expect("guest object state");
-        let Some(path) = guest_path(memory, args.rcx, &objects.current_directory)
-            .map_err(ExitReason::MemoryFault)?
-        else {
-            return delete.fail(cpu.gs_base, INVALID_NAME, 0);
-        };
-        if objects.directories.contains(&path) {
-            return delete.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
-        }
-        let parent = parent(&path);
-        if !parent.is_empty() && !objects.directories.contains(parent) {
-            return delete.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
-        }
-        if objects
-            .handles
-            .values()
-            .any(|object| matches!(object, GuestObject::File(file) if file.path == path))
-        {
-            return delete.fail(cpu.gs_base, SHARING_VIOLATION, 0);
-        }
-        if objects.files.remove(&path).is_none() {
-            return delete.fail(cpu.gs_base, FILE_NOT_FOUND, 0);
-        }
-        Ok(1)
-    });
+    for (symbol, read_path) in [
+        ("DeleteFileA", read_ascii_path as fn(&GuestMemory, u64) -> _),
+        ("DeleteFileW", read_raw_path),
+    ] {
+        let delete = Arc::clone(state);
+        registry.register(KERNEL32, symbol, move |args, cpu, memory| {
+            let raw = read_path(memory, args.rcx).map_err(ExitReason::MemoryFault)?;
+            let Some(raw) = raw else {
+                return delete.fail(cpu.gs_base, INVALID_NAME, 0);
+            };
+            if let Some(resolved) = host_files::resolve(&delete.mounts, &raw, valid_component) {
+                return change_host_namespace(&delete, cpu.gs_base, resolved, HostChange::DeleteFile);
+            }
+            let mut objects = delete.objects.lock().expect("guest object state");
+            let Some(path) = resolve_file_path(&raw, &objects.current_directory)
+            else {
+                return delete.fail(cpu.gs_base, INVALID_NAME, 0);
+            };
+            if objects.directories.contains(&path) {
+                return delete.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
+            }
+            let parent = parent(&path);
+            if !parent.is_empty() && !objects.directories.contains(parent) {
+                return delete.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
+            }
+            if objects
+                .handles
+                .values()
+                .any(|object| matches!(object, GuestObject::File(file) if file.path == path))
+            {
+                return delete.fail(cpu.gs_base, SHARING_VIOLATION, 0);
+            }
+            if objects.files.remove(&path).is_none() {
+                return delete.fail(cpu.gs_base, FILE_NOT_FOUND, 0);
+            }
+            Ok(1)
+        });
+    }
 
     for (symbol, wide) in [("GetFileAttributesA", false), ("GetFileAttributesW", true)] {
         let attributes = Arc::clone(state);
@@ -997,8 +1009,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 };
             }
             let objects = attributes.objects.lock().expect("guest object state");
-            let Some(path) = resolve_synthetic_path(&raw, &objects.current_directory)
-                .filter(|path| path.split('\\').all(valid_component))
+            let Some(path) = resolve_file_path(&raw, &objects.current_directory)
             else {
                 return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
             };
@@ -1371,6 +1382,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "SetEndOfFile",
         "CreateDirectoryW",
         "RemoveDirectoryW",
+        "DeleteFileA",
         "DeleteFileW",
         "GetFileAttributesA",
         "GetFileAttributesW",
