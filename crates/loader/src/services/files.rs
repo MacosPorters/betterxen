@@ -1222,6 +1222,38 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         });
     }
 
+    let times = Arc::clone(state);
+    registry.register(KERNEL32, "GetFileTime", move |args, cpu, memory| {
+        let objects = times.objects.lock().expect("guest object state");
+        let Some(GuestObject::File(file)) = objects.handles.get(&args.rcx) else {
+            return times.fail(cpu.gs_base, ERROR_INVALID_HANDLE, 0);
+        };
+        if file.access & READ == 0 {
+            return times.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
+        }
+        let addresses = [args.rdx, args.r8, args.r9];
+        if addresses
+            .iter()
+            .any(|&address| address != 0 && memory.check_write(address, 8).is_err())
+        {
+            return times.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+        }
+        let values = if let Some(host) = &file.host {
+            match host_files::open_file_times(&host.file) {
+                Ok(values) => values,
+                Err(error) => return times.fail(cpu.gs_base, host_files::win32_error(&error), 0),
+            }
+        } else {
+            [0; 3]
+        };
+        for (address, value) in addresses.into_iter().zip(values) {
+            if address != 0 {
+                memory.write_u64(address, value).map_err(ExitReason::MemoryFault)?;
+            }
+        }
+        Ok(1)
+    });
+
     let file_type = Arc::clone(state);
     registry.register(KERNEL32, "GetFileType", move |args, cpu, _| {
         const FILE_TYPE_DISK: u64 = 1;
@@ -1453,6 +1485,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "GetFileSize",
         "GetFileSizeEx",
         "GetFileType",
+        "GetFileTime",
         "FlushFileBuffers",
         "ReadFile",
         "WriteFile",

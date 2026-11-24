@@ -219,6 +219,10 @@ fn status(fd: BorrowedFd<'_>) -> io::Result<libc::stat> {
     Ok(unsafe { status.assume_init() })
 }
 
+pub(super) fn open_file_times(file: &File) -> io::Result<[u64; 3]> {
+    status(file.as_fd()).map(|status| file_times(&status))
+}
+
 /// Check that an opened descriptor is still the object the listing reported.
 fn verify(fd: &OwnedFd, kind: Kind, expected: Option<FileId>) -> io::Result<FileId> {
     match classify(&status(fd.as_fd())?) {

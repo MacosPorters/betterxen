@@ -30,6 +30,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "CloseHandle"),
     (FILE_API, "GetFileSize"),
     (FILE_API, "GetFileType"),
+    (FILE_API, "GetFileTime"),
     (KERNEL32, "GetFileSizeEx"),
     (FILE_API, "FlushFileBuffers"),
     (KERNEL32, "SetFilePointerEx"),
@@ -181,6 +182,17 @@ fn mounted_metadata_reports_windows_filetimes() {
     assert_eq!(guest.u64_at(BUFFER + 12), 133_444_736_001_234_567);
     assert_eq!(guest.u64_at(BUFFER + 20), 133_444_736_012_345_678);
 
+    let handle = open(&mut guest, r"D:\Times.dat", GENERIC_READ, 0, OPEN_EXISTING);
+    assert_ne!(handle, INVALID);
+    guest.memory.write_u64(COUNT, u64::MAX).unwrap();
+    assert_eq!(guest.call("GetFileTime", &[handle, COUNT, 0, 1]), 0);
+    assert_eq!(guest.error(), 998);
+    assert_eq!(guest.u64_at(COUNT), u64::MAX);
+    assert_eq!(guest.call("GetFileTime", &[handle, COUNT, 0, COUNT + 8]), 1);
+    assert_eq!(guest.u64_at(COUNT), created);
+    assert_eq!(guest.u64_at(COUNT + 8), 133_444_736_012_345_678);
+    assert_eq!(guest.call("CloseHandle", &[handle]), 1);
+
     let search = guest.call("FindFirstFileW", &[PATH, FIND_DATA]);
     assert_ne!(search, INVALID);
     assert_eq!(guest.u64_at(FIND_DATA + 4), created);
@@ -248,6 +260,8 @@ fn ansi_create_file_uses_the_same_mount_and_sharing_rules() {
 
     let file = open_ansi(&mut guest, b"D:\\Mixed.txt\0", CREATE_NEW);
     assert_ne!(file, INVALID);
+    assert_eq!(guest.call("GetFileTime", &[file, 0, 0, COUNT]), 0);
+    assert_eq!(guest.error(), 5);
     assert!(write(&mut guest, file, b"from ANSI"));
     assert_eq!(guest.call("FlushFileBuffers", &[file]), 1);
     assert_eq!(

@@ -358,7 +358,8 @@ The partial `GetFileAttributesExA/W` services return attributes and 64-bit
 sizes for `GetFileExInfoStandard`. Host-mounted entries carry access and
 modification timestamps and creation time where the host supplies it.
 Synthetic entry timestamps are zero. Directory enumeration uses the same
-timestamp representation.
+timestamp representation. `GetFileTime` reads these values from an open
+file with read access and accepts null pointers for omitted values.
 The ANSI form accepts ASCII paths.
 
 The partial `FlushFileBuffers` service requires a writable file handle.
