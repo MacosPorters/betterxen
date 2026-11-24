@@ -96,3 +96,24 @@ correctness checks. The recorded 1-, 5- and 15-minute load averages were
 individual compiler stages and cold/warm timing, tool and capability metadata,
 and noise-based variability reporting. See the
 [generated report](../../benchmarks/results/apple-m5/run-1795352394/report.md).
+
+## Comparing runs
+
+`scripts/compare-benchmarks.py` compares two structured run directories
+(`metadata.json` and `results.json`) only when their revision-independent
+configuration matches (`device`, `host_arch`, `os_version`, `os_build`,
+`rustc`, `xcode`, `profile`, `api_validation`, `shader_validation`, `power`,
+`thermal`, `reps`, and `warmup`). Only `run_id`, `timestamp`, and `commit` may
+differ. If any revision-independent field differs or is missing, the tool exits
+nonzero (`2`) and lists each mismatch instead of computing misleading deltas.
+
+When configuration matches, the tool reports per-fixture, per-size medians,
+interquartile ranges (`q3 - q1`), min-max spans, relative deltas, missing or
+excluded fixtures/sizes/metrics, and factual uncertainty flags (`iqr_overlap`,
+`low_sample_count`, `gpu_timer_zero_samples`, `zero_baseline_median`). It
+intentionally applies no arbitrary pass/fail speedup threshold.
+
+```sh
+python3 scripts/compare-benchmarks.py <baseline-dir> <candidate-dir> [--format text|json]
+python3 scripts/compare-benchmarks.py --self-test
+```

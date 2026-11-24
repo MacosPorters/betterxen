@@ -11,6 +11,7 @@ remains unsupported.
 
 ### Added
 
+- Added `scripts/compare-benchmarks.py` (with built-in `--self-test` unit tests) and documented it in `docs/testing/benchmarks.md`: compares structured benchmark run directories only when revision-independent configuration matches (`device`, `host_arch`, OS/toolchain versions, build profile, Metal validation flags, power source, thermal state, `reps`, and `warmup`), reports medians, IQR/span dispersion, missing or excluded entries, and factual uncertainty signals without an arbitrary pass/fail threshold.
 - Added explicit claim-before-work rules for contributors and coding agents to `AGENTS.md`, `CONTRIBUTING.md` and the pull request template: check for existing claims, claim with `/claim`, keep a 24-hour lease alive with `/progress`, `/release` when stopping, and link the claimed issue. Without the claim workflow, the earliest valid claim comment wins.
 - Added native Metal upload and readback of BC2 and BC3 textures: `xenora-texture` gains a
   pitched `BcAlphaUpload` for 16-byte blocks, and `NativeCompute::read_bc_alpha_upload` sends
