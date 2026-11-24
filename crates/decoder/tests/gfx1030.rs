@@ -4,8 +4,8 @@ use std::process::{Command, Stdio};
 
 use xenora_decoder::{
     Architecture, CompareRelation, DecodeError, DecodeErrorKind, DecodedInstruction, Instruction,
-    ScalarAluOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorSource, decode,
-    decode_at,
+    ScalarAluOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareVop3Op,
+    VectorSource, decode, decode_at,
 };
 use xenora_isa::semantics::Signedness;
 use xenora_ref::{
@@ -69,6 +69,127 @@ fn decodes_each_fixture_instruction_with_offset_and_length() {
         instruction,
     });
     assert_eq!(instructions, wanted);
+}
+
+#[test]
+fn decodes_wave32_vop3_compares_from_llvm_words() {
+    use VectorCompareVop3Op::*;
+
+    // llvm-mc -triple=amdgcn -mcpu=gfx1030 -mattr=+wavefrontsize32 -show-encoding
+    let cases: [(u32, VectorCompareVop3Op, u8); 19] = [
+        // v_cmp_lt_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x81,0xd4,0x01,0x05,0x02,0x02]
+        (0xd481_0004, CmpLtI32, 4),
+        // v_cmp_eq_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x82,0xd4,0x01,0x05,0x02,0x02]
+        (0xd482_0004, CmpEqI32, 4),
+        // v_cmp_le_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x83,0xd4,0x01,0x05,0x02,0x02]
+        (0xd483_0004, CmpLeI32, 4),
+        // v_cmp_gt_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x84,0xd4,0x01,0x05,0x02,0x02]
+        (0xd484_0004, CmpGtI32, 4),
+        // v_cmp_ne_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x85,0xd4,0x01,0x05,0x02,0x02]
+        (0xd485_0004, CmpNeI32, 4),
+        // v_cmp_ge_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x86,0xd4,0x01,0x05,0x02,0x02]
+        (0xd486_0004, CmpGeI32, 4),
+        // v_cmp_lt_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc1,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c1_0004, CmpLtU32, 4),
+        // v_cmp_eq_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc2,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c2_0004, CmpEqU32, 4),
+        // v_cmp_le_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc3,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c3_0004, CmpLeU32, 4),
+        // v_cmp_gt_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc4,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c4_0004, CmpGtU32, 4),
+        // v_cmp_ne_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc5,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c5_0004, CmpNeU32, 4),
+        // v_cmp_ge_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc6,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c6_0004, CmpGeU32, 4),
+        // v_cmp_f_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x80,0xd4,0x01,0x05,0x02,0x02]
+        (0xd480_0004, CmpFI32, 4),
+        // v_cmp_t_i32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0x87,0xd4,0x01,0x05,0x02,0x02]
+        (0xd487_0004, CmpTI32, 4),
+        // v_cmp_f_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc0,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c0_0004, CmpFU32, 4),
+        // v_cmp_t_u32_e64 s4, v1, v2 ; encoding: [0x04,0x00,0xc7,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c7_0004, CmpTU32, 4),
+        // v_cmp_eq_u32_e64 s0, v1, v2 ; encoding: [0x00,0x00,0xc2,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c2_0000, CmpEqU32, 0),
+        // v_cmp_eq_u32_e64 s105, v1, v2 ; encoding: [0x69,0x00,0xc2,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c2_0069, CmpEqU32, 105),
+        // v_cmp_eq_u32_e64 vcc_lo, v1, v2 ; encoding: [0x6a,0x00,0xc2,0xd4,0x01,0x05,0x02,0x02]
+        (0xd4c2_006a, CmpEqU32, 106),
+    ];
+    for (first, op, sdst) in cases {
+        let code: Vec<_> = [first, 0x0202_0501]
+            .into_iter()
+            .flat_map(u32::to_le_bytes)
+            .collect();
+        let decoded = decode(Architecture::Gfx1030, &code).unwrap();
+        let dst = if sdst == 106 {
+            "vcc_lo".to_owned()
+        } else {
+            format!("s{sdst}")
+        };
+        assert_eq!(
+            decoded,
+            [DecodedInstruction {
+                offset: 0,
+                byte_len: 8,
+                instruction: Instruction::VectorCompareVop3 {
+                    op,
+                    sdst,
+                    src0: 1,
+                    src1: 2
+                },
+            }],
+        );
+        assert_eq!(
+            decoded[0].instruction.to_string(),
+            format!("{} {dst}, v1, v2", op.assembly_name())
+        );
+    }
+}
+
+#[test]
+fn rejects_noncanonical_wave32_vop3_compare_operands() {
+    // v_cmp_eq_u32_e64 s4, v1, v2
+    let first = 0xd4c2_0004;
+    let second = 0x0202_0501;
+    let rejects = |first, second| {
+        let code: Vec<_> = [first, second]
+            .into_iter()
+            .flat_map(u32::to_le_bytes)
+            .collect();
+        let error = decode(Architecture::Gfx1030, &code).unwrap_err();
+        assert_eq!(error.offset, 0);
+        assert!(
+            matches!(
+                error.kind,
+                DecodeErrorKind::UnsupportedForm {
+                    mnemonic: "v_cmp_eq_u32_e64",
+                    ..
+                }
+            ),
+            "{first:#010x} {second:#010x}: {error}"
+        );
+    };
+
+    // Includes vcc_hi (107), TTMPs (108-123), null (124), m0 (125) and EXEC (126-127).
+    for sdst in 107..=255 {
+        rejects((first & !0xff) | sdst, second);
+    }
+    for bit in 8..=15 {
+        // ABS, OP_SEL and CLAMP.
+        rejects(first | (1 << bit), second);
+    }
+    for bit in 27..=31 {
+        // OMOD and NEG.
+        rejects(first, second | (1 << bit));
+    }
+    rejects(first, second ^ (1 << 18)); // SRC2 = 129 instead of 128.
+    for shift in [0, 9] {
+        for selector in [4, 106, 128, 240, 255] {
+            // SGPR, VCC_LO, inline integer/float, literal.
+            rejects(first, (second & !(0x1ff << shift)) | (selector << shift));
+        }
+    }
 }
 
 #[test]
@@ -481,6 +602,9 @@ fn reference_op(instruction: Instruction) -> Op {
             },
             src1,
         ),
+        Instruction::VectorCompareVop3 { .. } => {
+            panic!("VOPC reference fixture matrix received a VOP3A compare")
+        }
         Instruction::VectorAlu {
             op,
             dst,
@@ -755,7 +879,7 @@ fn distinguishes_llvm_invalid_encodings_from_xenora_subset_rejections() {
     let outside_subset: &[&[u32]] = &[
         &[0x7e04_026b],                                        // VOP1 VCC_HI source
         &[0x7da2_0501],                                        // v_cmpx_eq_u32_e32
-        &[0xd482_006a, 0x0002_0501],                           // v_cmp_lt_i32_e64
+        &[0xd482_006a, 0x0002_0501],                           // v_cmp_eq_i32_e64 with SRC2 = 0
         &[0x8788_0908],                                        // s_and_b64
         &[0x8008_ffff, 0x1234_5678],                           // SOP2 with two literal sources
         &[0x806c_0908],                                        // SOP2 TTMP destination

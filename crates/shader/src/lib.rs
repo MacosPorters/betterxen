@@ -580,6 +580,13 @@ fn decode_fixture(
     xenora_decoder::decode(architecture, bytes).map_err(CompileError::Decode)
 }
 
+#[derive(Clone, Copy)]
+enum ScalarValue {
+    Uninitialized,
+    Known(u32),
+    RuntimeMask,
+}
+
 fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, Op)>, CompileError> {
     let mut operations = Vec::new();
     let mut registers = [None::<Value>; 256];
@@ -587,12 +594,12 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
     let mut pending_load = None;
     let mut stored = false;
     let mut store_pending = false;
-    let mut scalars = [None; 128];
+    let mut scalars = [ScalarValue::Uninitialized; 128];
     let mut exec = u32::MAX; // The fixture starts with full Wave32 EXEC.
-    scalars[126] = Some(exec);
+    scalars[126] = ScalarValue::Known(exec);
     let mut scc = None;
     let mut skip_before = 0;
-    // Set while VCC_LO holds a lane-derived compare mask (scalars[VCC_LO] is then None).
+    // VCC_LO can forward a lane-derived mask to its supported runtime consumers.
     let mut lane_vcc: Option<Value> = None;
     // An open runtime `s_cbranch_vccz` region: its end, mask and the VGPRs at the branch.
     let mut region: Option<(usize, Value, [Option<Value>; 256])> = None;
@@ -717,11 +724,15 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
         }
         let read_scalar = |source| match source {
             ScalarSource::Immediate(value) => Ok(value),
-            ScalarSource::Register(register) => scalars
-                .get(usize::from(register))
-                .copied()
-                .flatten()
-                .ok_or_else(|| error("scalar source has no known value")),
+            ScalarSource::Register(register) => match scalars.get(usize::from(register)) {
+                Some(ScalarValue::Known(value)) => Ok(*value),
+                Some(ScalarValue::RuntimeMask) => Err(error(
+                    "scalar source reads a runtime-only SGPR compare mask",
+                )),
+                Some(ScalarValue::Uninitialized) | None => {
+                    Err(error("scalar source has no known value"))
+                }
+            },
         };
         // Scalar instructions and waits still execute when all lanes are inactive.
         if exec == 0 {
@@ -747,6 +758,19 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
             )
         {
             return Err(error("vector memory requires full Wave32 EXEC"));
+        }
+        if let Instruction::BufferLoadDword { resource, .. }
+        | Instruction::BufferStoreDword { resource, .. } = instruction.instruction
+        {
+            let start = usize::from(resource);
+            if scalars[start..start + 4]
+                .iter()
+                .any(|value| matches!(value, ScalarValue::RuntimeMask))
+            {
+                return Err(error(
+                    "resource descriptor reads a runtime-only SGPR compare mask",
+                ));
+            }
         }
         let next = Value(operations.len());
         let (dest, operation) = match instruction.instruction {
@@ -886,7 +910,7 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 let slot = scalars
                     .get_mut(usize::from(dst))
                     .ok_or_else(|| error("scalar destination exceeds the fixture register file"))?;
-                *slot = Some(value);
+                *slot = ScalarValue::Known(value);
                 continue;
             }
             Instruction::ScalarUnary { op, dst, src } => {
@@ -898,7 +922,7 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 let slot = scalars
                     .get_mut(usize::from(dst))
                     .ok_or_else(|| error("scalar destination exceeds the fixture register file"))?;
-                *slot = Some(value);
+                *slot = ScalarValue::Known(value);
                 if let Some(flag) = flag {
                     scc = Some(flag);
                 }
@@ -923,7 +947,7 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 let slot = scalars
                     .get_mut(usize::from(dst))
                     .ok_or_else(|| error("scalar destination exceeds the fixture register file"))?;
-                *slot = Some(value);
+                *slot = ScalarValue::Known(value);
                 if let Some(flag) = flag {
                     scc = Some(flag);
                 }
@@ -933,12 +957,32 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 scc = Some(op.test(read_scalar(src0)?, read_scalar(src1)?));
                 continue;
             }
-            // docs/shaders/vector-compare.md sections 3 and 5.
-            Instruction::VectorCompare { op, src0, src1 } => {
+            // Both encodings share the Wave32 lane mask implementation.
+            compare @ (Instruction::VectorCompare { .. }
+            | Instruction::VectorCompareVop3 { .. }) => {
+                let (op, sdst, src0, src1) = match compare {
+                    Instruction::VectorCompare { op, src0, src1 } => (op, VCC_LO, src0, src1),
+                    Instruction::VectorCompareVop3 {
+                        op,
+                        sdst,
+                        src0,
+                        src1,
+                    } => (
+                        op.base(),
+                        usize::from(sdst),
+                        VectorSource::Register(src0),
+                        src1,
+                    ),
+                    _ => unreachable!("only vector compares reach this arm"),
+                };
                 if exec == 0 {
-                    scalars[VCC_HI] = None;
-                    scalars[VCC_LO] = Some(0);
-                    lane_vcc = None;
+                    if sdst == VCC_LO {
+                        scalars[VCC_HI] = ScalarValue::Uninitialized;
+                        scalars[VCC_LO] = ScalarValue::Known(0);
+                        lane_vcc = None;
+                    } else {
+                        scalars[sdst] = ScalarValue::RuntimeMask;
+                    }
                     continue;
                 }
                 let constant =
@@ -953,8 +997,10 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     VectorSource::Scalar(register) if usize::from(register) == VCC_LO => {
                         match (lane_vcc, scalars[VCC_LO]) {
                             (Some(mask), _) => mask,
-                            (None, Some(bits)) => constant(&mut operations, &mut facts, bits),
-                            (None, None) => {
+                            (None, ScalarValue::Known(bits)) => {
+                                constant(&mut operations, &mut facts, bits)
+                            }
+                            (None, _) => {
                                 return Err(error("compare reads uninitialized VCC_LO"));
                             }
                         }
@@ -977,9 +1023,13 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     },
                 ));
                 facts.push(KnownBits::UNKNOWN);
-                scalars[VCC_LO] = None;
-                scalars[VCC_HI] = None;
-                lane_vcc = Some(mask);
+                if sdst == VCC_LO {
+                    scalars[VCC_LO] = ScalarValue::Uninitialized;
+                    scalars[VCC_HI] = ScalarValue::Uninitialized;
+                    lane_vcc = Some(mask);
+                } else {
+                    scalars[sdst] = ScalarValue::RuntimeMask;
+                }
                 continue;
             }
             Instruction::BranchVccZero { target } if let Some(mask) = lane_vcc => {
@@ -999,9 +1049,10 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                         !scc.ok_or_else(|| error("conditional branch reads uninitialized SCC"))?
                     }
                     Instruction::BranchVccZero { .. } => {
-                        scalars[106]
-                            .ok_or_else(|| error("conditional branch reads uninitialized VCC_LO"))?
-                            == 0
+                        let ScalarValue::Known(bits) = scalars[VCC_LO] else {
+                            return Err(error("conditional branch reads uninitialized VCC_LO"));
+                        };
+                        bits == 0
                     }
                     _ => exec == 0,
                 };
@@ -1031,10 +1082,10 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     VectorSource::Scalar(register) if usize::from(register) == VCC_LO => {
                         match (lane_vcc, scalars[VCC_LO]) {
                             (Some(mask), _) => mask,
-                            (None, Some(bits)) => {
+                            (None, ScalarValue::Known(bits)) => {
                                 constant(&mut operations, &mut facts, offset, bits)
                             }
-                            (None, None) => {
+                            (None, _) => {
                                 return Err(error("vector ALU reads uninitialized VCC_LO"));
                             }
                         }

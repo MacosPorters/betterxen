@@ -15,6 +15,110 @@ fn compiles_original_fixture() {
 }
 
 #[test]
+fn vop3_compare_to_vcc_lo_drives_a_runtime_vccz_branch() {
+    let code: Vec<_> = [
+        0x7e02_0281u32, // v_mov_b32_e32 v1, 1
+        0x7e04_0282,    // v_mov_b32_e32 v2, 2
+        0xd4c2_006a,    // v_cmp_eq_u32_e64 vcc_lo, v1, v2
+        0x0202_0501,
+        0xbf86_0001, // s_cbranch_vccz 1
+        0x7e02_0302, // v_mov_b32_e32 v1, v2
+    ]
+    .into_iter()
+    .flat_map(u32::to_le_bytes)
+    .chain(FIXTURE[28..].iter().copied())
+    .collect();
+    let shader = compile(Architecture::Gfx1030, &code).unwrap();
+    assert!(
+        shader
+            .disassembly
+            .contains("v_cmp_eq_u32_e64 vcc_lo, v1, v2")
+    );
+    assert!(shader.ir.contains("0008: t2 = wave.mask"));
+    assert!(shader.ir.contains("0010: branch.vccz t2 -> 0x0018"));
+    assert!(shader.ir.contains("join.vccz t2"));
+    assert!(shader.msl.contains("lane_index >= grid"));
+}
+
+#[test]
+fn vop3_compare_to_s4_rejects_later_scalar_reads() {
+    for (setup, offset) in [
+        (&[0x7e02_0281u32, 0x7e04_0282][..], 16), // Initialize both VGPRs.
+        (&[0xbefe_0380][..], 12),                 // Empty EXEC. The VGPRs need not be initialized.
+    ] {
+        let code: Vec<_> = setup
+            .iter()
+            .copied()
+            .chain([
+                0xd4c2_0004, // v_cmp_eq_u32_e64 s4, v1, v2
+                0x0202_0501,
+                0xbf06_8004, // s_cmp_eq_u32 s4, 0
+                0xbefe_03c1, // s_mov_b32 exec_lo, -1
+                0x7e02_0281, // v_mov_b32_e32 v1, 1
+            ])
+            .flat_map(u32::to_le_bytes)
+            .chain(FIXTURE[28..].iter().copied())
+            .collect();
+        let error = compile(Architecture::Gfx1030, &code).unwrap_err();
+        assert!(
+            matches!(
+                error,
+                CompileError::Verify {
+                    offset: actual,
+                    reason: "scalar source reads a runtime-only SGPR compare mask",
+                } if actual == offset
+            ),
+            "{error}"
+        );
+    }
+}
+
+#[test]
+fn vop3_compare_mask_cannot_be_read_as_a_buffer_descriptor() {
+    let code: Vec<_> = [
+        0x7e02_0281u32, // v_mov_b32_e32 v1, 1
+        0x7e04_0282,    // v_mov_b32_e32 v2, 2
+        0xd4c2_0004,    // v_cmp_eq_u32_e64 s4, v1, v2
+        0x0202_0501,
+    ]
+    .into_iter()
+    .flat_map(u32::to_le_bytes)
+    .chain(FIXTURE[28..].iter().copied())
+    .collect();
+    assert!(matches!(
+        compile(Architecture::Gfx1030, &code),
+        Err(CompileError::Verify {
+            offset: 16,
+            reason: "resource descriptor reads a runtime-only SGPR compare mask",
+        })
+    ));
+}
+
+#[test]
+fn vop3_compare_to_normal_sgpr_preserves_vcc_and_can_be_overwritten() {
+    let code: Vec<_> = [
+        0x7e02_0281u32, // v_mov_b32_e32 v1, 1
+        0x7e04_0282,    // v_mov_b32_e32 v2, 2
+        0xbeea_0381,    // s_mov_b32 vcc_lo, 1
+        0xd4c2_0008,    // v_cmp_eq_u32_e64 s8, v1, v2
+        0x0202_0501,
+        0xbf86_0001, // s_cbranch_vccz 1
+        0xbe88_0381, // s_mov_b32 s8, 1
+        0xbf06_8008, // s_cmp_eq_u32 s8, 0
+    ]
+    .into_iter()
+    .flat_map(u32::to_le_bytes)
+    .chain(FIXTURE[28..].iter().copied())
+    .collect();
+    let shader = compile(Architecture::Gfx1030, &code).unwrap();
+    assert!(
+        shader
+            .ir
+            .contains("0014: branch.uniform 0x001c taken=false")
+    );
+}
+
+#[test]
 fn load_wait_is_required_before_using_loaded_data() {
     let mut code = FIXTURE.to_vec();
     code.drain(8..12);
