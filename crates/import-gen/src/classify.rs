@@ -1008,6 +1008,7 @@ impl SymbolDb {
                 "GetTempPathW",
                 "GetTempFileNameW",
                 "MoveFileW",
+                "MoveFileExW",
                 "FindFirstFileW",
                 "FindNextFileW",
                 "FindClose",

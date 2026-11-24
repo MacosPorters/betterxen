@@ -526,21 +526,39 @@ fn read_ascii_path(memory: &GuestMemory, address: u64) -> Result<Option<String>,
 }
 
 /// The resolved path when `address` names a drive backed by a host mount.
-/// MoveFileW within one writable mount: a file or directory keeps its
-/// contents and identity under the new name. Moving between mounts is not
-/// supported, and an open file cannot be moved.
+const MOVEFILE_REPLACE_EXISTING: u32 = 1;
+const MOVEFILE_COPY_ALLOWED: u32 = 2;
+const MOVEFILE_WRITE_THROUGH: u32 = 8;
+const ERROR_NOT_SAME_DEVICE: u32 = 17;
+
+/// The failure for a move between drives: Windows copies when
+/// `MOVEFILE_COPY_ALLOWED` is set, which is not supported here.
+fn cross_drive(flags: u32) -> u32 {
+    if flags & MOVEFILE_COPY_ALLOWED != 0 {
+        ERROR_NOT_SUPPORTED
+    } else {
+        ERROR_NOT_SAME_DEVICE
+    }
+}
+
+/// MoveFileExW within one writable mount: a file or directory keeps its
+/// contents and identity under the new name. With
+/// `MOVEFILE_REPLACE_EXISTING` a closed file may replace another closed file;
+/// `MOVEFILE_WRITE_THROUGH` flushes both directories before returning. An
+/// open file can neither move nor be replaced.
 fn move_host_entry(
     state: &ServicesState,
     teb: u64,
     source: Result<host_files::Resolved<'_>, u32>,
     target: Result<host_files::Resolved<'_>, u32>,
+    flags: u32,
 ) -> Result<u64, ExitReason> {
     let (source, target) = match (source, target) {
         (Ok(source), Ok(target)) => (source, target),
         (Err(error), _) | (_, Err(error)) => return state.fail(teb, error, 0),
     };
     if !std::ptr::eq(source.mount, target.mount) {
-        return state.fail(teb, ERROR_NOT_SUPPORTED, 0);
+        return state.fail(teb, cross_drive(flags), 0);
     }
     let Some(to) = target.components.last() else {
         return state.fail(teb, ERROR_ACCESS_DENIED, 0);
@@ -553,21 +571,133 @@ fn move_host_entry(
         Ok((_, None)) => return state.fail(teb, FILE_NOT_FOUND, 0),
         Err(error) => return state.fail(teb, error, 0),
     };
-    let to_directory = match target.parent() {
-        Ok(directory) => directory,
+    let (to_directory, existing) = match target.lookup() {
+        Ok(found) => found,
         Err(error) => return state.fail(teb, error, 0),
     };
     let objects = state.objects.lock().expect("guest object state");
     if entry.kind == host_files::Kind::File && is_open(&objects, &Target::Host(entry.id)) {
         return state.fail(teb, SHARING_VIOLATION, 0);
     }
-    match host_files::rename(&from_directory, &entry.name, &entry, &to_directory, to) {
-        Ok(()) => Ok(1),
-        Err(error) if error.raw_os_error() == Some(libc::EEXIST) => {
-            state.fail(teb, ALREADY_EXISTS, 0)
+    let replacing = match existing {
+        Some(old) if old.id != entry.id => {
+            if flags & MOVEFILE_REPLACE_EXISTING == 0 {
+                return state.fail(teb, ALREADY_EXISTS, 0);
+            }
+            if old.kind == host_files::Kind::Directory || entry.kind == host_files::Kind::Directory
+            {
+                return state.fail(teb, ERROR_ACCESS_DENIED, 0);
+            }
+            if is_open(&objects, &Target::Host(old.id)) {
+                return state.fail(teb, SHARING_VIOLATION, 0);
+            }
+            Some(old)
         }
-        Err(error) => state.fail(teb, host_files::win32_error(&error), 0),
+        _ => None,
+    };
+    let renamed = host_files::rename(
+        &from_directory,
+        &entry.name,
+        &entry,
+        &to_directory,
+        to,
+        replacing.as_ref(),
+    );
+    match renamed {
+        Ok(()) => {}
+        Err(error) if error.raw_os_error() == Some(libc::EEXIST) => {
+            return state.fail(teb, ALREADY_EXISTS, 0);
+        }
+        Err(error) => return state.fail(teb, host_files::win32_error(&error), 0),
     }
+    if let Some(old) = &replacing {
+        source.mount.budget().remove_entry(old.size);
+    }
+    if flags & MOVEFILE_WRITE_THROUGH != 0 {
+        let synced = host_files::sync_directory(&to_directory)
+            .and_then(|()| host_files::sync_directory(&from_directory));
+        if let Err(error) = synced {
+            return state.fail(teb, host_files::win32_error(&error), 0);
+        }
+    }
+    Ok(1)
+}
+
+fn move_entry(
+    state: &ServicesState,
+    teb: u64,
+    memory: &GuestMemory,
+    from: u64,
+    to: u64,
+    flags: u32,
+) -> Result<u64, ExitReason> {
+    if flags & !(MOVEFILE_REPLACE_EXISTING | MOVEFILE_COPY_ALLOWED | MOVEFILE_WRITE_THROUGH) != 0 {
+        return state.fail(teb, ERROR_NOT_SUPPORTED, 0);
+    }
+    match (
+        host_path(state, memory, from)?,
+        host_path(state, memory, to)?,
+    ) {
+        (None, None) => {}
+        (Some(source), Some(target)) => {
+            return move_host_entry(state, teb, source, target, flags);
+        }
+        _ => return state.fail(teb, cross_drive(flags), 0),
+    }
+    let mut objects = state.objects.lock().expect("guest object state");
+    let Some(source) =
+        guest_path(memory, from, &objects.current_directory).map_err(ExitReason::MemoryFault)?
+    else {
+        return state.fail(teb, INVALID_NAME, 0);
+    };
+    let Some(target) =
+        guest_path(memory, to, &objects.current_directory).map_err(ExitReason::MemoryFault)?
+    else {
+        return state.fail(teb, INVALID_NAME, 0);
+    };
+    if [parent(&source), parent(&target)]
+        .into_iter()
+        .any(|path| !path.is_empty() && !objects.directories.contains(path))
+    {
+        return state.fail(teb, PATH_NOT_FOUND, 0);
+    }
+    if objects.directories.contains(&source) {
+        return state.fail(teb, ERROR_NOT_SUPPORTED, 0);
+    }
+    if !objects.files.contains_key(&source) {
+        return state.fail(teb, FILE_NOT_FOUND, 0);
+    }
+    let open = |path: &str| {
+        objects
+            .handles
+            .values()
+            .any(|object| matches!(object, GuestObject::File(file) if file.path == path))
+    };
+    if open(&source) {
+        return state.fail(teb, SHARING_VIOLATION, 0);
+    }
+    if source != target {
+        if objects.directories.contains(&target) {
+            let error = if flags & MOVEFILE_REPLACE_EXISTING == 0 {
+                ALREADY_EXISTS
+            } else {
+                ERROR_ACCESS_DENIED
+            };
+            return state.fail(teb, error, 0);
+        }
+        if objects.files.contains_key(&target) {
+            if flags & MOVEFILE_REPLACE_EXISTING == 0 {
+                return state.fail(teb, ALREADY_EXISTS, 0);
+            }
+            if open(&target) {
+                return state.fail(teb, SHARING_VIOLATION, 0);
+            }
+        }
+    }
+    // The synthetic drive lives in memory, so write-through needs no flush.
+    let data = objects.files.remove(&source).expect("source file exists");
+    objects.files.insert(target, data);
+    Ok(1)
 }
 
 fn host_path<'a>(
@@ -1228,56 +1358,18 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         });
     }
 
-    let rename = Arc::clone(state);
-    registry.register(KERNEL32, "MoveFileW", move |args, cpu, memory| {
-        match (
-            host_path(&rename, memory, args.rcx)?,
-            host_path(&rename, memory, args.rdx)?,
-        ) {
-            (None, None) => {}
-            (Some(source), Some(target)) => {
-                return move_host_entry(&rename, cpu.gs_base, source, target);
-            }
-            // Moving between drives would need a copy, which is not supported.
-            _ => return rename.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0),
-        }
-        let mut objects = rename.objects.lock().expect("guest object state");
-        let Some(source) = guest_path(memory, args.rcx, &objects.current_directory)
-            .map_err(ExitReason::MemoryFault)?
-        else {
-            return rename.fail(cpu.gs_base, INVALID_NAME, 0);
-        };
-        let Some(target) = guest_path(memory, args.rdx, &objects.current_directory)
-            .map_err(ExitReason::MemoryFault)?
-        else {
-            return rename.fail(cpu.gs_base, INVALID_NAME, 0);
-        };
-        if [parent(&source), parent(&target)]
-            .into_iter()
-            .any(|path| !path.is_empty() && !objects.directories.contains(path))
-        {
-            return rename.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
-        }
-        if objects.directories.contains(&source) {
-            return rename.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
-        }
-        if !objects.files.contains_key(&source) {
-            return rename.fail(cpu.gs_base, FILE_NOT_FOUND, 0);
-        }
-        if objects.files.contains_key(&target) || objects.directories.contains(&target) {
-            return rename.fail(cpu.gs_base, ALREADY_EXISTS, 0);
-        }
-        if objects
-            .handles
-            .values()
-            .any(|object| matches!(object, GuestObject::File(file) if file.path == source))
-        {
-            return rename.fail(cpu.gs_base, SHARING_VIOLATION, 0);
-        }
-        let data = objects.files.remove(&source).expect("source file exists");
-        objects.files.insert(target, data);
-        Ok(1)
-    });
+    for (symbol, extended) in [("MoveFileW", false), ("MoveFileExW", true)] {
+        let rename = Arc::clone(state);
+        registry.register(KERNEL32, symbol, move |args, cpu, memory| {
+            // MoveFileW behaves as MoveFileExW with MOVEFILE_COPY_ALLOWED.
+            let flags = if extended {
+                args.r8 as u32
+            } else {
+                MOVEFILE_COPY_ALLOWED
+            };
+            move_entry(&rename, cpu.gs_base, memory, args.rcx, args.rdx, flags)
+        });
+    }
 
     let find = Arc::clone(state);
     registry.register(KERNEL32, "FindFirstFileW", move |args, cpu, memory| {
@@ -1759,6 +1851,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "GetFileAttributesExA",
         "GetFileAttributesExW",
         "MoveFileW",
+        "MoveFileExW",
         "FindFirstFileW",
         "FindNextFileW",
         "FindClose",

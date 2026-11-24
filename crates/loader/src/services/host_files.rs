@@ -661,7 +661,8 @@ pub(super) fn remove(directory: &OwnedFd, name: &str, expected: &Entry) -> io::R
 
 /// Rename `from` in `source` to `to` in `target`, after checking the source
 /// entry is still the object `expected`. The target name must not exist,
-/// except when it names the source itself (a change of case only).
+/// except when it names the source itself (a change of case only) or the
+/// regular file `replacing`, which the rename then replaces atomically.
 ///
 /// The exclusive rename is atomic on the host, so a concurrent host change
 /// cannot make the guest replace an existing entry. As with [`remove`], the
@@ -673,13 +674,21 @@ pub(super) fn rename(
     expected: &Entry,
     target: &OwnedFd,
     to: &str,
+    replacing: Option<&Entry>,
 ) -> io::Result<()> {
     match find(source, from)? {
         Some(entry) if entry.id == expected.id && entry.kind == expected.kind => {}
         _ => return Err(refused()),
     }
-    let case_only = match find(target, to)? {
+    let overwrite = match find(target, to)? {
         Some(entry) if entry.id == expected.id => true,
+        Some(entry)
+            if replacing.is_some_and(|old| old.id == entry.id)
+                && entry.kind == Kind::File
+                && expected.kind == Kind::File =>
+        {
+            true
+        }
         Some(_) => return Err(io::Error::from_raw_os_error(libc::EEXIST)),
         None => false,
     };
@@ -687,7 +696,7 @@ pub(super) fn rename(
     let to = c_name(to)?;
     // SAFETY: both names are NUL-terminated and both directories are open.
     let result = unsafe {
-        if case_only {
+        if overwrite {
             libc::renameat(
                 source.as_raw_fd(),
                 from.as_ptr(),
@@ -699,6 +708,15 @@ pub(super) fn rename(
         }
     };
     if result != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    Ok(())
+}
+
+/// Flush a directory's entries to stable storage.
+pub(super) fn sync_directory(directory: &OwnedFd) -> io::Result<()> {
+    // SAFETY: `directory` is an open descriptor.
+    if unsafe { libc::fsync(directory.as_raw_fd()) } != 0 {
         return Err(io::Error::last_os_error());
     }
     Ok(())

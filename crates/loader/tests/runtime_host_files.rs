@@ -49,6 +49,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (FILE_API, "DeleteFileA"),
     (KERNEL32, "DeleteFileW"),
     (KERNEL32, "MoveFileW"),
+    (FILE_API, "MoveFileExW"),
     (UCRT, "fopen"),
     (UCRT, "fclose"),
     (UCRT, "fread"),
@@ -1330,4 +1331,84 @@ fn move_file_renames_within_one_writable_mount() {
     assert_eq!(moved(&mut guest, r"D:\Saves\SLOT2.DAT", r"D:\x.dat"), 0);
     assert_eq!(std::fs::read(root.join("x.dat")).unwrap(), b"two");
     assert_eq!(std::fs::read(tree.path("outside.txt")).unwrap(), b"secret");
+}
+
+/// MoveFileExW flags from the public MoveFileExW page:
+/// MOVEFILE_REPLACE_EXISTING (1) replaces a closed file but never a
+/// directory, MOVEFILE_COPY_ALLOWED (2) selects the error for moves between
+/// drives (ERROR_NOT_SAME_DEVICE, 17, without it) and MOVEFILE_WRITE_THROUGH
+/// (8) is accepted. Other flags are not supported (50). The save-file
+/// pattern - write a temporary file, then replace the old one - is checked on
+/// a host mount and on the synthetic C: drive.
+#[test]
+fn move_file_ex_replaces_closed_files_on_both_drives() {
+    const REPLACE: u64 = 1;
+    const COPY_ALLOWED: u64 = 2;
+    const WRITE_THROUGH: u64 = 8;
+    let tree = Tree::new("host-move-ex");
+    let root = tree.path("root");
+    std::fs::create_dir_all(root.join("Dir")).unwrap();
+    std::fs::write(root.join("save.dat"), b"old save").unwrap();
+    std::fs::write(root.join("other.dat"), b"other").unwrap();
+    let mut guest = guest_with(vec![
+        HostMount::new('D', &root, true).unwrap(),
+        HostMount::new('F', &tree.path("root/Dir"), true).unwrap(),
+    ]);
+    let moved = |guest: &mut Guest, from: &str, to: &str, flags: u64| {
+        put_path(guest, PATH, from);
+        put_path(guest, OTHER_PATH, to);
+        if guest.call("MoveFileExW", &[PATH, OTHER_PATH, flags]) == 1 {
+            0
+        } else {
+            guest.error()
+        }
+    };
+    let rw = GENERIC_READ | GENERIC_WRITE;
+    for drive in ["D", "C"] {
+        let tmp = format!(r"{drive}:\save.tmp");
+        let save = format!(r"{drive}:\save.dat");
+        if drive == "C" {
+            let old = open(&mut guest, &save, rw, 0, CREATE_NEW);
+            assert!(write(&mut guest, old, b"old save"));
+            assert_eq!(guest.call("CloseHandle", &[old]), 1);
+        }
+        let new = open(&mut guest, &tmp, rw, 0, CREATE_NEW);
+        assert_ne!(new, INVALID, "{drive}");
+        assert!(write(&mut guest, new, b"new save"));
+        // Neither the open source nor an open target can be replaced.
+        assert_eq!(moved(&mut guest, &tmp, &save, REPLACE), 32, "{drive}");
+        assert_eq!(guest.call("CloseHandle", &[new]), 1);
+        let reader = open(&mut guest, &save, GENERIC_READ, 3, OPEN_EXISTING);
+        assert_eq!(moved(&mut guest, &tmp, &save, REPLACE), 32, "{drive}");
+        assert_eq!(guest.call("CloseHandle", &[reader]), 1);
+        // Without the flag the target stays; with it the target is replaced.
+        assert_eq!(moved(&mut guest, &tmp, &save, 0), 183, "{drive}");
+        assert_eq!(moved(&mut guest, &tmp, &save, REPLACE | WRITE_THROUGH), 0);
+        let file = open(&mut guest, &save, GENERIC_READ, 0, OPEN_EXISTING);
+        assert_eq!(read(&mut guest, file, 64).unwrap(), b"new save", "{drive}");
+        assert_eq!(guest.call("CloseHandle", &[file]), 1);
+        assert_eq!(
+            open(&mut guest, &tmp, GENERIC_READ, 0, OPEN_EXISTING),
+            INVALID
+        );
+        assert_eq!(guest.error(), 2, "{drive}");
+        // Unsupported flags are refused before anything changes.
+        assert_eq!(moved(&mut guest, &save, &tmp, 4), 50, "{drive}");
+    }
+    assert_eq!(std::fs::read(root.join("save.dat")).unwrap(), b"new save");
+    assert!(!root.join("save.tmp").exists());
+
+    // A directory is never replaced and never replaces a file.
+    assert_eq!(moved(&mut guest, r"D:\other.dat", r"D:\Dir", REPLACE), 5);
+    assert_eq!(moved(&mut guest, r"D:\Dir", r"D:\other.dat", REPLACE), 5);
+    assert_eq!(moved(&mut guest, r"D:\Dir", r"D:\other.dat", 0), 183);
+    assert_eq!(std::fs::read(root.join("other.dat")).unwrap(), b"other");
+    // Between drives the error depends on MOVEFILE_COPY_ALLOWED.
+    assert_eq!(moved(&mut guest, r"D:\other.dat", r"F:\x.dat", 0), 17);
+    assert_eq!(moved(&mut guest, r"D:\other.dat", r"C:\x.dat", 0), 17);
+    assert_eq!(
+        moved(&mut guest, r"D:\other.dat", r"F:\x.dat", COPY_ALLOWED),
+        50
+    );
+    assert!(root.join("other.dat").exists());
 }

@@ -473,8 +473,14 @@ DeleteFileW also work on writable mounts. Files on read-only mounts report
 within one writable mount with an exclusive host rename, so it never replaces
 an existing name (`ERROR_ALREADY_EXISTS`); a change of case alone renames in
 place. An open file reports `ERROR_SHARING_VIOLATION`, since
-`FILE_SHARE_DELETE` is not supported. Moves between drives, which Windows
-performs by copying, return `ERROR_NOT_SUPPORTED`. As with deletion, the source
+`FILE_SHARE_DELETE` is not supported. MoveFileExW accepts
+`MOVEFILE_REPLACE_EXISTING`, which atomically replaces a closed file (never a
+directory, `ERROR_ACCESS_DENIED`), `MOVEFILE_WRITE_THROUGH`, which flushes both
+host directories before returning, and `MOVEFILE_COPY_ALLOWED`; other flags
+return `ERROR_NOT_SUPPORTED`. The synthetic C: drive follows the same rules
+for files. Moves between drives return `ERROR_NOT_SAME_DEVICE`, or
+`ERROR_NOT_SUPPORTED` with `MOVEFILE_COPY_ALLOWED` (and from MoveFileW), since
+the copy Windows would then make is not implemented. As with deletion, the source
 is matched by name after a final listing check, so a concurrent host rename
 can move a different entry inside the mount, never one outside it.
 Times, alternate names and asynchronous I/O are not reported. The mount
