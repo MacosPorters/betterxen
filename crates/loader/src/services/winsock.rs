@@ -348,6 +348,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
     register_socket_options(registry, state);
     register_poll(registry, state);
     register_stream(registry, state);
+    register_ioctl(registry, state);
 
     let get = Arc::clone(state);
     registry.register(MODULE, "WSAGetLastError", move |_, cpu, _| {
@@ -1068,6 +1069,53 @@ fn register_stream(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
                 Ok(0)
             })();
             socket_result(&shutdown, cpu.gs_base, result)
+        },
+    );
+}
+
+fn register_ioctl(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
+    const FIONREAD: u32 = 0x4004_667f;
+    const FIONBIO: u32 = 0x8004_667e;
+
+    let state = Arc::clone(state);
+    registry.register_with_status(
+        MODULE,
+        "ioctlsocket",
+        ServiceStatus::Partial,
+        move |args, cpu, memory| {
+            let net = state.winsock.lock().expect("guest Winsock state");
+            let result = (|| {
+                let socket = net.socket(args.rcx)?;
+                let command = args.rdx as u32;
+                if !matches!(command, FIONREAD | FIONBIO) {
+                    return Err(WSAEINVAL);
+                }
+                if args.r8 == 0 {
+                    return Err(WSAEFAULT);
+                }
+                if command == FIONBIO {
+                    // Every socket here is already non-blocking; blocking mode
+                    // is not supported rather than silently ignored.
+                    let enable = memory.read_u32(args.r8).map_err(|_| WSAEFAULT)?;
+                    return if enable != 0 {
+                        Ok(0)
+                    } else {
+                        Err(WSAEOPNOTSUPP)
+                    };
+                }
+                // FIONREAD: unread stream bytes, or the size of the next
+                // datagram.
+                let available = match socket.kind {
+                    Kind::Stream if socket.stream.listen.is_some() => return Err(WSAEINVAL),
+                    Kind::Stream => socket.stream.inbound.len(),
+                    Kind::Datagram => socket.pending.front().map_or(0, |(_, data)| data.len()),
+                };
+                memory
+                    .write_u32(args.r8, available as u32)
+                    .map_err(|_| WSAEFAULT)?;
+                Ok(0)
+            })();
+            socket_result(&state, cpu.gs_base, result)
         },
     );
 }

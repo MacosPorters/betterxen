@@ -27,6 +27,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (WS2, "getsockname"),
     (WS2, "getsockopt"),
     (WS2, "WSAPoll"),
+    (WS2, "ioctlsocket"),
 ];
 
 const ERROR: u64 = u32::MAX as u64;
@@ -273,5 +274,65 @@ fn loopback_tcp_refuses_what_it_cannot_reach() {
     assert_eq!(
         net.call("socket", &[2, 1, 17], INVALID_SOCKET),
         Err(10043) // WSAEPROTONOSUPPORT
+    );
+}
+
+/// ioctlsocket FIONREAD reports unread stream bytes and the size of the next
+/// datagram; FIONBIO accepts non-blocking mode only, since sockets here never
+/// block. Unknown commands and bad pointers fail.
+#[test]
+fn ioctlsocket_reports_readable_bytes_and_non_blocking_mode() {
+    const FIONREAD: u64 = 0x4004_667f;
+    const FIONBIO: u64 = 0x8004_667e;
+    let mut net = Net::new();
+    let listener = net.stream();
+    assert_eq!(net.bind(listener, 5003), Ok(0));
+    assert_eq!(net.call("listen", &[listener, 1], ERROR), Ok(0));
+    let client = net.stream();
+    assert_eq!(net.connect(client, [127, 0, 0, 1], 5003), Ok(0));
+    let (server, _) = net.accept(listener).unwrap();
+    let readable = |net: &mut Net, socket: u64| {
+        net.0.memory.write_u32(VALUE, 0xdead_beef).unwrap();
+        net.call("ioctlsocket", &[socket, FIONREAD, VALUE], ERROR)
+            .map(|_| net.0.u32_at(VALUE))
+    };
+    assert_eq!(readable(&mut net, server), Ok(0));
+    assert_eq!(net.send(client, b"abc"), Ok(3));
+    assert_eq!(net.send(client, b"de"), Ok(2));
+    assert_eq!(readable(&mut net, server), Ok(5));
+    assert_eq!(net.recv(server, 4).unwrap(), b"abcd");
+    assert_eq!(readable(&mut net, server), Ok(1));
+    assert_eq!(readable(&mut net, listener), Err(WSAEINVAL));
+
+    let receiver = net.call("socket", &[2, 2, 17], INVALID_SOCKET).unwrap();
+    let sender = net.call("socket", &[2, 2, 17], INVALID_SOCKET).unwrap();
+    assert_eq!(net.bind(receiver, 5004), Ok(0));
+    assert_eq!(net.connect(sender, [127, 0, 0, 1], 5004), Ok(0));
+    assert_eq!(readable(&mut net, receiver), Ok(0));
+    assert_eq!(net.send(sender, b"seven!!"), Ok(7));
+    assert_eq!(net.send(sender, b"two"), Ok(3));
+    assert_eq!(readable(&mut net, receiver), Ok(7));
+
+    net.0.memory.write_u32(VALUE, 1).unwrap();
+    assert_eq!(
+        net.call("ioctlsocket", &[server, FIONBIO, VALUE], ERROR),
+        Ok(0)
+    );
+    net.0.memory.write_u32(VALUE, 0).unwrap();
+    assert_eq!(
+        net.call("ioctlsocket", &[server, FIONBIO, VALUE], ERROR),
+        Err(WSAEOPNOTSUPP)
+    );
+    assert_eq!(
+        net.call("ioctlsocket", &[server, FIONREAD, 0], ERROR),
+        Err(10014)
+    );
+    assert_eq!(
+        net.call("ioctlsocket", &[server, 0x1234, VALUE], ERROR),
+        Err(WSAEINVAL)
+    );
+    assert_eq!(
+        net.call("ioctlsocket", &[0x77, FIONREAD, VALUE], ERROR),
+        Err(10038)
     );
 }

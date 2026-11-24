@@ -313,6 +313,10 @@ connections it has not accepted. TCP and UDP ports are separate. `sendto`,
 `recvfrom` and socket options other than `SO_TYPE` are not supported on
 streams, and `shutdown` is not supported on datagram sockets. Raw sockets,
 IPv6, blocking waits on streams and host interfaces remain unsupported.
+`ioctlsocket` supports `FIONREAD` (unread stream bytes, or the size of the
+next datagram; `WSAEINVAL` on a listening socket) and `FIONBIO` with a nonzero
+argument. Every socket is already non-blocking, so asking for blocking mode
+returns `WSAEOPNOTSUPP` instead of being ignored.
 
 ### XAsync helpers
 
