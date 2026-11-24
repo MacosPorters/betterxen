@@ -288,6 +288,8 @@ impl SymbolDb {
                 "ferror",
                 "rewind",
                 "__acrt_iob_func",
+                "fprintf",
+                "printf",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
@@ -309,8 +311,6 @@ impl SymbolDb {
             ("vsprintf", "vsprintf"),
             ("vsnprintf", "vsnprintf"),
             ("vfprintf", "vfprintf"),
-            ("fprintf", "fprintf"),
-            ("printf", "printf"),
             ("sscanf", "sscanf"),
             ("fscanf", "fscanf"),
             ("scanf", "scanf"),

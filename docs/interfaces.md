@@ -249,8 +249,9 @@ service budget.
 In-memory FILE streams implement `fopen`, `fclose`, `fread`, `fwrite`,
 `fseek`, `ftell`, `feof`, `ferror`, `rewind` and `__acrt_iob_func`. Names are
 single path components with no host mapping; up to 32 streams and 16 MiB per
-file. Stdin is empty, stdout/stderr discard writes. `printf`/`fprintf` and
-the `__stdio_common_*` helpers remain unimplemented.
+file. Stdin is empty, stdout/stderr discard writes. `printf` and `fprintf`
+use the same format subset as `sprintf` (stdout discards the payload and
+returns the length). The `__stdio_common_*` helpers remain unimplemented.
 
 ### Process environment
 

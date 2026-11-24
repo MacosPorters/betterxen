@@ -645,6 +645,63 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         })
     });
 
+    let fprintf = Arc::clone(state);
+    registry.register(UCRT, "fprintf", move |args, cpu, memory| {
+        ensure_std_cookies(&fprintf, memory)?;
+        let cookie = args.rcx;
+        let formatted = format_into(memory, args, args.rdx, 2)?;
+        if cookie == 0 {
+            set_errno(memory, cpu.gs_base, EINVAL)?;
+            return Ok(u64::from(u32::MAX));
+        }
+        let count = formatted.len() as u64;
+        with_stream(&fprintf, memory, cookie, |stream, _| {
+            if !stream.writable || stream.kind == Kind::StdIn {
+                stream.error = true;
+                return Ok(u64::from(u32::MAX));
+            }
+            if matches!(stream.kind, Kind::StdOut | Kind::StdErr) {
+                return Ok(count);
+            }
+            let end = stream
+                .position
+                .checked_add(formatted.len())
+                .ok_or(ExitReason::IllegalInstruction(0xFE))?;
+            if end > MAX_FILE_BYTES {
+                stream.error = true;
+                return Ok(u64::from(u32::MAX));
+            }
+            if end > stream.data.len() {
+                stream.data.resize(end, 0);
+            }
+            stream.data[stream.position..end].copy_from_slice(&formatted);
+            stream.position = end;
+            stream.eof = false;
+            Ok(count)
+        })
+    });
+
+    let printf = Arc::clone(state);
+    registry.register(UCRT, "printf", move |args, cpu, memory| {
+        ensure_std_cookies(&printf, memory)?;
+        let stdout = {
+            let stdio = printf.stdio.lock().expect("stdio state");
+            stdio.stdout
+        };
+        let formatted = format_into(memory, args, args.rcx, 1)?;
+        let count = formatted.len() as u64;
+        with_stream(&printf, memory, stdout, |stream, _| {
+            if !stream.writable {
+                stream.error = true;
+                set_errno(memory, cpu.gs_base, EINVAL)?;
+                return Ok(u64::from(u32::MAX));
+            }
+            // stdout discards payload and reports the formatted length.
+            let _ = stream;
+            Ok(count)
+        })
+    });
+
     for symbol in [
         "sprintf",
         "snprintf",
@@ -658,6 +715,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "ferror",
         "rewind",
         "__acrt_iob_func",
+        "fprintf",
+        "printf",
     ] {
         registry.alias(STDIO_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
