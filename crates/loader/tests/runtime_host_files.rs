@@ -592,3 +592,36 @@ fn enumeration_errors_and_limits_are_reported() {
     )
     .unwrap();
 }
+
+#[test]
+fn writable_mounts_bound_how_large_guest_writes_make_files() {
+    let tree = Tree::new("quota");
+    std::fs::create_dir_all(tree.path("root")).unwrap();
+    let mount = HostMount::new('F', &tree.path("root"), true)
+        .unwrap()
+        .with_max_file_size(8);
+    let mut guest = guest_with(vec![mount]);
+    let file = open(
+        &mut guest,
+        r"F:\save.bin",
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        CREATE_NEW,
+    );
+    assert_ne!(file, INVALID);
+    assert!(write(&mut guest, file, b"12345"));
+    assert!(!write(&mut guest, file, b"6789"));
+    assert_eq!(guest.error(), 112); // ERROR_DISK_FULL
+    assert_eq!(std::fs::read(tree.path("root/save.bin")).unwrap(), b"12345");
+    // Seeking far ahead and extending is bounded the same way.
+    assert_eq!(guest.call("SetFilePointerEx", &[file, 1 << 40, 0, 0]), 1);
+    assert_eq!(guest.call("SetEndOfFile", &[file]), 0);
+    assert_eq!(guest.error(), 112);
+    assert_eq!(guest.call("SetFilePointerEx", &[file, 8, 0, 0]), 1);
+    assert_eq!(guest.call("SetEndOfFile", &[file]), 1);
+    assert_eq!(
+        std::fs::metadata(tree.path("root/save.bin")).unwrap().len(),
+        8
+    );
+    assert_eq!(guest.call("CloseHandle", &[file]), 1);
+}

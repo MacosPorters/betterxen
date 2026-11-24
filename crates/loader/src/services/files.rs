@@ -41,13 +41,19 @@ pub(super) struct OpenFile {
     open_access: u32,
     pub(super) access: u32,
     share: u32,
-    /// Set for files on a host mount; `path` is then the handle-table key.
-    host: Option<Arc<File>>,
+    /// Set for files on a host mount; `path` is then a label only.
+    host: Option<Arc<HostFile>>,
+}
+
+/// An open host file and the size limit of the mount it came from.
+pub(super) struct HostFile {
+    file: File,
+    max_size: u64,
 }
 
 impl OpenFile {
     fn host_len(&self) -> Option<Result<u64, u32>> {
-        let file = self.host.as_ref()?;
+        let file = &self.host.as_ref()?.file;
         Some(
             file.metadata()
                 .map(|metadata| metadata.len())
@@ -67,7 +73,10 @@ impl Target<'_> {
     fn matches(&self, file: &OpenFile) -> bool {
         match (self, &file.host) {
             (Self::Path(path), None) => file.path == *path,
-            (Self::Host(id), Some(host)) => host_files::current_id(host) == Some(*id),
+            // An unreadable identity counts as a match, so checks fail closed.
+            (Self::Host(id), Some(host)) => {
+                host_files::current_id(&host.file).is_none_or(|current| current == *id)
+            }
             _ => false,
         }
     }
@@ -173,7 +182,10 @@ fn create_host_file(
             open_access: access,
             access,
             share,
-            host: Some(Arc::new(file)),
+            host: Some(Arc::new(HostFile {
+                file,
+                max_size: resolved.mount.max_file_size(),
+            })),
         }),
     );
     Ok(handle)
@@ -859,7 +871,10 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         }
         let position = file.position.load(Ordering::Relaxed);
         if let Some(host) = &file.host {
-            return match host.set_len(position) {
+            if position > host.max_size {
+                return truncate.fail(cpu.gs_base, DISK_FULL, 0);
+            }
+            return match host.file.set_len(position) {
                 Ok(()) => Ok(1),
                 Err(error) => truncate.fail(cpu.gs_base, host_files::win32_error(&error), 0),
             };
@@ -909,8 +924,11 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             }
             if let Some(host) = file.host.clone() {
                 let position = file.position.load(Ordering::Relaxed);
-                if position.checked_add(count as u64).is_none() {
+                let Some(end) = position.checked_add(count as u64) else {
                     return state.fail(cpu.gs_base, ERROR_INVALID_PARAMETER, 0);
+                };
+                if writing && count != 0 && end > host.max_size {
+                    return state.fail(cpu.gs_base, DISK_FULL, 0);
                 }
                 let mut buffer = vec![0; count];
                 if writing
@@ -925,7 +943,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 {
                     return state.fail(cpu.gs_base, ERROR_NOACCESS, 0);
                 }
-                let transferred = match host_transfer(&host, position, &mut buffer, writing) {
+                let transferred = match host_transfer(&host.file, position, &mut buffer, writing) {
                     Ok(transferred) => transferred,
                     Err(error) => return state.fail(cpu.gs_base, error, 0),
                 };

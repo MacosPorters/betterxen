@@ -289,14 +289,19 @@ module. It has not yet had an independent security review.
   descriptor, so they reach the same file after a host rename. Sharing checks
   and the open-file check in DeleteFileW compare the live device and inode of
   every open handle, not guest paths. A truncating open is checked for
-  sharing before it truncates.
+  sharing before it truncates. If an open handle's identity cannot be read,
+  the check treats it as the same file, so failures deny access rather than
+  grant it.
 - **Read-only enforcement.** Read-only mounts reject creation, truncation,
   writes, deletion and directory changes with `ERROR_ACCESS_DENIED`. They also
   open every file `O_RDONLY`, so the host kernel refuses writes as well.
 - **Resource limits.** A directory listing is bounded at 4,096 visible
   entries. Larger directories report `ERROR_NOT_ENOUGH_MEMORY` rather than a
   partial listing. Open handles share the 1,024-handle object table.
-  Transfers are limited to 1 MiB per call.
+  Transfers are limited to 1 MiB per call. On writable mounts, writes and
+  truncation cannot make a file larger than the mount's limit
+  (`HostMount::with_max_file_size`, 1 GiB by default); they report
+  `ERROR_DISK_FULL` instead.
 - **Errors.** Errors from reading a directory or examining an entry are
   reported, except an entry removed while it is being listed. Host errors map
   to specific Win32 codes (for example `ENOENT` to `ERROR_FILE_NOT_FOUND`,

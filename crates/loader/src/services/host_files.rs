@@ -30,7 +30,7 @@
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io;
-use std::os::fd::{AsFd, AsRawFd, FromRawFd, OwnedFd};
+use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -44,6 +44,8 @@ const ERROR_DISK_FULL: u32 = 112;
 const ERROR_DIR_NOT_EMPTY: u32 = 145;
 const ERROR_FILENAME_EXCED_RANGE: u32 = 206;
 const ERROR_IO_DEVICE: u32 = 1117;
+/// Default largest file guest writes may produce on a writable mount.
+pub const DEFAULT_MAX_FILE_SIZE: u64 = 1 << 30;
 /// Largest number of entries read from one host directory.
 pub const MAX_DIRECTORY_ENTRIES: usize = 4096;
 
@@ -52,6 +54,7 @@ pub struct HostMount {
     drive: u8,
     root: Arc<OwnedFd>,
     writable: bool,
+    max_file_size: u64,
 }
 
 impl HostMount {
@@ -80,12 +83,24 @@ impl HostMount {
         }
         // SAFETY: `fd` is a newly opened descriptor owned by nothing else.
         let root = unsafe { OwnedFd::from_raw_fd(fd) };
-        status(&root)?;
+        status(root.as_fd())?;
         Ok(Self {
             drive: drive as u8,
             root: Arc::new(root),
             writable,
+            max_file_size: DEFAULT_MAX_FILE_SIZE,
         })
+    }
+
+    /// Limit how large guest writes and truncation may make any file on this
+    /// mount. Files that are already larger stay readable.
+    pub fn with_max_file_size(mut self, bytes: u64) -> Self {
+        self.max_file_size = bytes;
+        self
+    }
+
+    pub fn max_file_size(&self) -> u64 {
+        self.max_file_size
     }
 
     pub fn drive(&self) -> char {
@@ -163,7 +178,7 @@ fn classify(status: &libc::stat) -> Option<(Kind, u64, FileId)> {
     Some((kind, status.st_size as u64, id))
 }
 
-fn status(fd: &OwnedFd) -> io::Result<libc::stat> {
+fn status(fd: BorrowedFd<'_>) -> io::Result<libc::stat> {
     let mut status = std::mem::MaybeUninit::<libc::stat>::uninit();
     // SAFETY: `fd` is open and `status` has room for a stat.
     if unsafe { libc::fstat(fd.as_raw_fd(), status.as_mut_ptr()) } != 0 {
@@ -175,7 +190,7 @@ fn status(fd: &OwnedFd) -> io::Result<libc::stat> {
 
 /// Check that an opened descriptor is still the object the listing reported.
 fn verify(fd: &OwnedFd, kind: Kind, expected: Option<FileId>) -> io::Result<FileId> {
-    match classify(&status(fd)?) {
+    match classify(&status(fd.as_fd())?) {
         Some((found, _, id)) if found == kind && expected.is_none_or(|expected| expected == id) => {
             Ok(id)
         }
@@ -187,13 +202,27 @@ fn verify(fd: &OwnedFd, kind: Kind, expected: Option<FileId>) -> io::Result<File
 /// exFAT, change a file's inode number when its storage is first allocated,
 /// so identities are compared as they are now rather than as they were when
 /// the file was opened.
+/// `None` means the identity could not be read; callers must then treat the
+/// file as possibly the same one.
 pub(super) fn current_id(file: &File) -> Option<FileId> {
-    let fd = file.as_fd().try_clone_to_owned().ok()?;
-    let status = status(&fd).ok()?;
+    let status = status(file.as_fd()).ok()?;
     Some(FileId {
         device: status.st_dev as u64,
         inode: status.st_ino,
     })
+}
+
+fn clear_errno() {
+    // SAFETY: errno is thread-local and always writable.
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    unsafe {
+        *libc::__error() = 0
+    };
+    // SAFETY: as above.
+    #[cfg(target_os = "linux")]
+    unsafe {
+        *libc::__errno_location() = 0
+    };
 }
 
 fn c_name(name: &str) -> io::Result<CString> {
@@ -246,8 +275,7 @@ pub(super) fn list(directory: &OwnedFd) -> io::Result<Vec<Entry>> {
     let mut entries = Vec::new();
     let result = loop {
         // readdir signals errors only through errno, so clear it first.
-        // SAFETY: errno is thread-local.
-        unsafe { *libc::__error() = 0 };
+        clear_errno();
         // SAFETY: `stream` is a valid directory stream until closedir below.
         let entry = unsafe { libc::readdir(stream) };
         if entry.is_null() {
@@ -435,6 +463,8 @@ pub(super) fn create_directory(directory: &OwnedFd, name: &str) -> io::Result<()
 }
 
 /// Remove the entry `name` after checking it is still the object `expected`.
+/// A host process could still swap the name between the check and the
+/// unlink; that removes a directory entry inside the root, never data outside.
 pub(super) fn remove(directory: &OwnedFd, name: &str, expected: &Entry) -> io::Result<()> {
     let opened = match expected.kind {
         Kind::Directory => open_directory(directory, name, Some(expected.id))?,
