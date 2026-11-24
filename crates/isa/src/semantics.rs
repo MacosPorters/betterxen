@@ -90,6 +90,10 @@ pub enum Operation {
     Multiply24,
     /// Bits 63:32 of the product of S0[23:0] and S1[23:0] (sign-extended when signed).
     MultiplyHigh24,
+    /// SOPK: SDST receives the sign-extended SIMM16.
+    Move,
+    /// SOPK: SDST receives the sign-extended SIMM16 when SCC is set.
+    ConditionalMove,
 }
 
 /// The per-lane integer operation a vector form lowers to. One reusable MSL
@@ -204,6 +208,13 @@ pub enum OperandRule {
     /// SOP1 unary: SDST is s0-s105; SSRC0 is s0-s105, an inline integer -16..64 or
     /// a literal word. Everything else is rejected as unsupported.
     Sop1Sgpr,
+    /// SOPK integer: SDST is s0-s105 and, except for compares, written (never s0-s7,
+    /// which hold resource descriptors); SIMM16 is the 16-bit immediate. The word
+    /// never takes a literal. Everything else is rejected as unsupported.
+    SopkSgpr,
+    /// SOPK integer compare: SDST (s0-s105) is the left operand, SIMM16 the right
+    /// (sign-extended for `_i32`, zero-extended for `_u32`); only SCC is written.
+    SopkCompare,
     /// VOPC vector compare: the destination is `vcc_lo` (Wave32); SRC0 is a VGPR,
     /// s0-s105, `vcc_lo`, an inline integer -16..64 or a literal word; VSRC1 is a
     /// VGPR. Everything else is rejected as unsupported.

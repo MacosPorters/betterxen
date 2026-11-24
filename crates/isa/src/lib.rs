@@ -19,7 +19,8 @@ pub use rdna2::{
     V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32,
 };
 pub use semantics_gen::{
-    ScalarAluOp, ScalarCompareOp, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
+    ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarUnaryOp,
+    VectorAluOp, VectorAluVop3Op, VectorCompareOp,
 };
 
 /// SGPR index of `vcc_lo`, the Wave32 vector condition code.
@@ -185,6 +186,21 @@ pub enum Instruction {
         src0: ScalarSource,
         src1: ScalarSource,
     },
+    /// SOPK 32-bit integer operation on SDST (s0-s105, never s0-s7) and the
+    /// 16-bit immediate `simm16`; `s_addk_i32` also writes SCC and
+    /// `s_cmovk_i32` reads it.
+    ScalarImmediate {
+        op: ScalarImmediateOp,
+        dst: u8,
+        simm16: u16,
+    },
+    /// SOPK 32-bit integer compare of `src` (s0-s105) with the 16-bit
+    /// immediate, writing only SCC.
+    ScalarImmediateCompare {
+        op: ScalarImmediateCompareOp,
+        src: u8,
+        simm16: u16,
+    },
     /// VOPC 32-bit integer compare writing a Wave32 mask to `vcc_lo`.
     /// `src0` is a VGPR, `s0-s105`, `vcc_lo`, an inline integer or a literal.
     VectorCompare {
@@ -270,6 +286,8 @@ impl Instruction {
             Self::ScalarUnary { op, .. } => op.mnemonic(),
             Self::ScalarAlu { op, .. } => op.mnemonic(),
             Self::ScalarCompare { op, .. } => op.mnemonic(),
+            Self::ScalarImmediate { op, .. } => op.mnemonic(),
+            Self::ScalarImmediateCompare { op, .. } => op.mnemonic(),
             Self::VectorCompare { op, .. } => op.assembly_name(),
             Self::VectorAlu { op, .. } => op.assembly_name(),
             Self::BranchSccZero { .. } => "s_cbranch_scc0",
@@ -330,6 +348,12 @@ impl fmt::Display for Instruction {
                 dst, src0, src1, ..
             } => write!(formatter, " {}, {src0}, {src1}", ScalarDestination(dst)),
             Self::ScalarCompare { src0, src1, .. } => write!(formatter, " {src0}, {src1}"),
+            Self::ScalarImmediate { dst, simm16, .. } => {
+                write!(formatter, " s{dst}, {simm16:#x}")
+            }
+            Self::ScalarImmediateCompare { src, simm16, .. } => {
+                write!(formatter, " s{src}, {simm16:#x}")
+            }
             Self::VectorCompare { src0, src1, .. } => {
                 write!(formatter, " vcc_lo, {src0}, v{src1}")
             }

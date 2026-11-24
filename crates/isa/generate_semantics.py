@@ -61,6 +61,7 @@ OPERATIONS = {
     "mul": "Multiply", "mul_hi": "MultiplyHigh", "bfe": "BitfieldExtract",
     "absdiff": "AbsoluteDifference", "lshl_add": "ShiftLeftAdd",
     "mul24": "Multiply24", "mul_hi24": "MultiplyHigh24",
+    "mov": "Move", "cmov": "ConditionalMove",
 }
 # Unary operations read one source; they need an operand rule of the unary kind.
 UNARY = {"not", "brev", "bcnt0", "bcnt1", "ff0", "ff1", "flbit", "sext", "abs"}
@@ -106,7 +107,7 @@ SHIFTS = {"lshl", "lshr", "ashr"}
 # descriptor), so the XML gives it FMT_NUM_U32 whatever the form's signedness.
 CONTROL_S1 = SHIFTS | {"bfe"}
 # Operations that always read SCC: the select condition. They need carry_in scc.
-SCC_READERS = {"cselect"}
+SCC_READERS = {"cselect", "cmov"}
 # XML number formats a source may have for each declared signedness.
 SOURCE_FORMATS = {
     "signed": {"FMT_NUM_I32"},
@@ -208,6 +209,22 @@ PRIMITIVES = {
     ("lshl_add", "unsigned"): ("carry_out", "lshl_add_carry_u32", False),
 }
 
+# SOPK forms (operation, signedness) -> (SCC effect, primitive, reads SCC). D is
+# SDST and the immediate is SIMM16 sign-extended (guide 12.2); `sext_simm16` is
+# the sign extension, so a move or conditional move writes it unchanged.
+IMMEDIATE_PRIMITIVES = {
+    ("mov", "signed"): ("unchanged", "sext_simm16", False),
+    ("cmov", "signed"): ("unchanged", "sext_simm16", True),
+    ("add", "signed"): ("signed_overflow", "add_overflow_i32", False),
+    ("mul", "signed"): ("unchanged", "mul_lo_i32", False),
+}
+# SOPK compares: the opcode is the group base (3 signed, 9 unsigned) plus the
+# relation's index in this order (guide 13.1.2).
+SOPK_COMPARE_BASES = {"signed": 3, "unsigned": 9}
+SOPK_RELATION_ORDER = ["eq", "lg", "gt", "ge", "lt", "le"]
+# Operand-rule kinds whose forms have a 16-bit immediate field.
+IMMEDIATE_KINDS = {"immediate", "immediate_compare"}
+
 # Vector (VOP2) forms: (operation, signedness) -> the per-lane VectorBinary their
 # MSL lowering uses. They write no SCC, VCC or EXEC, so scc must be unchanged.
 VECTOR_PRIMITIVES = {
@@ -285,6 +302,34 @@ OPERAND_RULES = {
         # One source, so two literals cannot occur; the rest are rejected.
         "unsupported": {combo for combo in UNSUPPORTED_COMBOS if combo != "two_literals"},
         "kind": "unary",
+    },
+    "sopk_sgpr": {
+        "rust": "SopkSgpr",
+        "enum": "ScalarImmediateOp",
+        "shape": {
+            "family": "SOPK",
+            "dst": {"field": "SDST", "class": "sgpr", "min": 0, "max": 105},
+            "src": [{"field": "SIMM16", "class": "simm16"}],
+            "max_literals": 0,
+        },
+        # SOPK never takes a literal dword; the decoder rejects SDST 106-127.
+        "unsupported": {combo for combo in UNSUPPORTED_COMBOS if combo.startswith("dst_")},
+        "kind": "immediate",
+    },
+    "sopk_compare": {
+        "rust": "SopkCompare",
+        "enum": "ScalarImmediateCompareOp",
+        "shape": {
+            "family": "SOPK",
+            "src": [
+                {"field": "SDST", "class": "sgpr", "min": 0, "max": 105},
+                {"field": "SIMM16", "class": "simm16"},
+            ],
+            "max_literals": 0,
+        },
+        # The compared register is SDST (S0); the decoder rejects SDST 106-127.
+        "unsupported": {combo for combo in UNSUPPORTED_COMBOS if combo.startswith("dst_")},
+        "kind": "immediate_compare",
     },
     "vopc_vcc": {
         "rust": "VopcVcc",
@@ -579,6 +624,15 @@ def _check_xml(form, rule, snapshot, errors):
             errors.append(f"{label}: XML has no operand {field}")
             continue
         data_format, size, is_input, is_output = operands[field]
+        if field == "SIMM16":
+            # The 16-bit immediate: signed forms read it as FMT_NUM_I16 (sign
+            # extended), unsigned compares as FMT_NUM_U16 (zero extended).
+            wanted = "FMT_NUM_U16" if form["signedness"] == "unsigned" else "FMT_NUM_I16"
+            if size != 16 or data_format != wanted:
+                errors.append(f"{label}: SIMM16 is {size} bits {data_format} in the XML, expected 16 {wanted}")
+            if (is_input, is_output) != (True, False):
+                errors.append(f"{label}: {field} direction disagrees with the XML")
+            continue
         bits = form.get(SOURCE_BITS_KEY) if is_source else None
         expected = bits if type(bits) is int else form["width"]
         if size != expected:
@@ -730,6 +784,15 @@ def validate(registry, snapshot):
                 errors.append(f"{label}: no primitive implements {relation}/{form['signedness']}")
             elif relation in VECTOR_ONLY_RELATIONS and _rule_kind(form) != "vector_compare":
                 errors.append(f"{label}: relation {relation} exists only for VOPC compares")
+            elif _rule_kind(form) == "immediate_compare":
+                base = SOPK_COMPARE_BASES.get(form["signedness"])
+                expected = None if base is None else base + SOPK_RELATION_ORDER.index(relation) \
+                    if relation in SOPK_RELATION_ORDER else None
+                if form["opcode"] != expected:
+                    errors.append(
+                        f"{label}: relation {relation}/{form['signedness']} has SOPK opcode "
+                        f"{expected} (guide 13.1.2), not {form['opcode']}"
+                    )
             elif _rule_kind(form) == "vector_compare":
                 base = VOPC_INTEGER_BASES.get(form["signedness"])
                 expected = None if base is None else base + VOPC_RELATION_OFFSETS[relation]
@@ -753,7 +816,8 @@ def validate(registry, snapshot):
         else:
             if RELATION_KEY in form:
                 errors.append(f"{label}: {RELATION_KEY} on a non-compare operation")
-            primitive = PRIMITIVES.get((form["operation"], form["signedness"]))
+            table = IMMEDIATE_PRIMITIVES if _rule_kind(form) == "immediate" else PRIMITIVES
+            primitive = table.get((form["operation"], form["signedness"]))
         if primitive is None:
             errors.append(f"{label}: no primitive implements {form['operation']}/{form['signedness']}")
         else:
@@ -773,10 +837,11 @@ def validate(registry, snapshot):
         elif rule.get("family") != form["family"]:
             errors.append(f"{label}: operand rule {form['operands']} is for {rule.get('family')}")
         elif form["operands"] in OPERAND_RULES and OPERAND_RULES[form["operands"]]["kind"] != (
-            ("vector_compare" if _rule_kind(form) == "vector_compare" else "compare")
+            (_rule_kind(form) if _rule_kind(form) in ("vector_compare", "immediate_compare") else "compare")
             if form["operation"] == "compare"
             else "unary" if form["operation"] in UNARY
             else "vector" if _rule_kind(form) == "vector" and form["operation"] not in UNARY
+            else "immediate" if _rule_kind(form) == "immediate"
             else "alu"
         ):
             errors.append(f"{label}: operation {form['operation']} does not fit rule {form['operands']}")
@@ -1209,6 +1274,98 @@ def _render_enum(rule_name, forms, snapshot, positions):
         "        }]",
         "    }",
     ]
+    if kind == "immediate":
+        out += [
+            "",
+            "    /// Whether the operation reads SCC (the conditional move's condition).",
+            "    pub const fn reads_scc(self) -> bool {",
+            "        match self {",
+        ]
+        out += [
+            f"            Self::{form['variant']} => {'true' if form['carry_in'] == 'scc' else 'false'},"
+            for form in forms
+        ]
+        out += [
+            "        }",
+            "    }",
+            "",
+            "    /// Whether the operation writes SCC.",
+            "    pub const fn writes_scc(self) -> bool {",
+            "        match self {",
+        ]
+        out += [
+            f"            Self::{form['variant']} => {'false' if form['scc'] == 'unchanged' else 'true'},"
+            for form in forms
+        ]
+        out += [
+            "        }",
+            "    }",
+            "",
+            "    /// Whether the operation always reads the old SDST (`D = D op imm`).",
+            "    pub const fn reads_dst(self) -> bool {",
+            "        match self {",
+        ]
+        out += [
+            f"            Self::{form['variant']} => {'true' if form['operation'] in ('add', 'mul') else 'false'},"
+            for form in forms
+        ]
+        out += [
+            "        }",
+            "    }",
+            "",
+            "    /// The new SDST (`None` leaves it unchanged) and, for forms that write it, the",
+            "    /// new SCC (`None` leaves SCC unchanged). `dst` is the old SDST (ignored by",
+            "    /// forms that do not read it) and `scc_in` the SCC read by the conditional move.",
+            "    pub const fn evaluate(self, dst: u32, simm16: u16, scc_in: bool) -> (Option<u32>, Option<bool>) {",
+            "        match self {",
+        ]
+        for form in forms:
+            _, function, _ = IMMEDIATE_PRIMITIVES[(form["operation"], form["signedness"])]
+            immediate = "primitive::sext_simm16(simm16)"
+            variant = form["variant"]
+            if form["operation"] == "mov":
+                out.append(f"            Self::{variant} => (Some({immediate}), None),")
+            elif form["operation"] == "cmov":
+                out.append(
+                    f"            Self::{variant} => (if scc_in {{ Some({immediate}) }} else {{ None }}, None),"
+                )
+            elif form["scc"] == "unchanged":
+                out.append(f"            Self::{variant} => (Some(primitive::{function}(dst, {immediate})), None),")
+            else:
+                out += [
+                    f"            Self::{variant} => {{",
+                    f"                let (value, scc) = primitive::{function}(dst, {immediate});",
+                    "                (Some(value), Some(scc))",
+                    "            }",
+                ]
+        out += ["        }", "    }", "}"]
+        return out
+    if kind == "immediate_compare":
+        out += [
+            "",
+            "    /// The relation tested, with SDST (S0) on the left.",
+            "    pub const fn relation(self) -> CompareRelation {",
+            "        match self {",
+        ]
+        out += [
+            f"            Self::{form['variant']} => CompareRelation::{RELATIONS[form[RELATION_KEY]]},"
+            for form in forms
+        ]
+        out += [
+            "        }",
+            "    }",
+            "",
+            "    /// The SCC: whether the relation holds for SDST and SIMM16, which signed forms",
+            "    /// sign-extend and unsigned forms zero-extend.",
+            "    pub const fn test(self, dst: u32, simm16: u16) -> bool {",
+            "        match self {",
+        ]
+        for form in forms:
+            function = COMPARE_PRIMITIVES[(form[RELATION_KEY], form["signedness"])]
+            immediate = "primitive::sext_simm16(simm16)" if form["signedness"] == "signed" else "simm16 as u32"
+            out.append(f"            Self::{form['variant']} => primitive::{function}(dst, {immediate}),")
+        out += ["        }", "    }", "}"]
+        return out
     if kind == "unary":
         out += [
             "",

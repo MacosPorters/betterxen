@@ -344,17 +344,17 @@ impl ScalarUnaryOp {
     /// The validated registry row.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::NotB32 => 45,
-            Self::BrevB32 => 46,
-            Self::Bcnt0I32B32 => 47,
-            Self::Bcnt1I32B32 => 48,
-            Self::Ff0I32B32 => 49,
-            Self::Ff1I32B32 => 50,
-            Self::FlbitI32B32 => 51,
-            Self::FlbitI32 => 52,
-            Self::SextI32I8 => 53,
-            Self::SextI32I16 => 54,
-            Self::AbsI32 => 55,
+            Self::NotB32 => 61,
+            Self::BrevB32 => 62,
+            Self::Bcnt0I32B32 => 63,
+            Self::Bcnt1I32B32 => 64,
+            Self::Ff0I32B32 => 65,
+            Self::Ff1I32B32 => 66,
+            Self::FlbitI32B32 => 67,
+            Self::FlbitI32 => 68,
+            Self::SextI32I8 => 69,
+            Self::SextI32I16 => 70,
+            Self::AbsI32 => 71,
         }]
     }
 
@@ -1198,6 +1198,304 @@ impl ScalarCompareOp {
     }
 }
 
+/// SOPK operations declared in the semantic registry (operand rule `sopk_compare`).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ScalarImmediateCompareOp {
+    /// `s_cmpk_eq_i32` (SOPK opcode 3): signed compare eq, SCC = relation.
+    CmpkEqI32,
+    /// `s_cmpk_lg_i32` (SOPK opcode 4): signed compare lg, SCC = relation.
+    CmpkLgI32,
+    /// `s_cmpk_gt_i32` (SOPK opcode 5): signed compare gt, SCC = relation.
+    CmpkGtI32,
+    /// `s_cmpk_ge_i32` (SOPK opcode 6): signed compare ge, SCC = relation.
+    CmpkGeI32,
+    /// `s_cmpk_lt_i32` (SOPK opcode 7): signed compare lt, SCC = relation.
+    CmpkLtI32,
+    /// `s_cmpk_le_i32` (SOPK opcode 8): signed compare le, SCC = relation.
+    CmpkLeI32,
+    /// `s_cmpk_eq_u32` (SOPK opcode 9): unsigned compare eq, SCC = relation.
+    CmpkEqU32,
+    /// `s_cmpk_lg_u32` (SOPK opcode 10): unsigned compare lg, SCC = relation.
+    CmpkLgU32,
+    /// `s_cmpk_gt_u32` (SOPK opcode 11): unsigned compare gt, SCC = relation.
+    CmpkGtU32,
+    /// `s_cmpk_ge_u32` (SOPK opcode 12): unsigned compare ge, SCC = relation.
+    CmpkGeU32,
+    /// `s_cmpk_lt_u32` (SOPK opcode 13): unsigned compare lt, SCC = relation.
+    CmpkLtU32,
+    /// `s_cmpk_le_u32` (SOPK opcode 14): unsigned compare le, SCC = relation.
+    CmpkLeU32,
+}
+
+/// ScalarImmediateCompareOp by SOPK OP field value; `None` for undeclared opcodes.
+const SCALAR_IMMEDIATE_COMPARE_OP_BY_OPCODE: [Option<ScalarImmediateCompareOp>; 32] = [
+    None,
+    None,
+    None,
+    Some(ScalarImmediateCompareOp::CmpkEqI32),
+    Some(ScalarImmediateCompareOp::CmpkLgI32),
+    Some(ScalarImmediateCompareOp::CmpkGtI32),
+    Some(ScalarImmediateCompareOp::CmpkGeI32),
+    Some(ScalarImmediateCompareOp::CmpkLtI32),
+    Some(ScalarImmediateCompareOp::CmpkLeI32),
+    Some(ScalarImmediateCompareOp::CmpkEqU32),
+    Some(ScalarImmediateCompareOp::CmpkLgU32),
+    Some(ScalarImmediateCompareOp::CmpkGtU32),
+    Some(ScalarImmediateCompareOp::CmpkGeU32),
+    Some(ScalarImmediateCompareOp::CmpkLtU32),
+    Some(ScalarImmediateCompareOp::CmpkLeU32),
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+];
+
+impl ScalarImmediateCompareOp {
+    /// Every operation, in registry order.
+    pub const ALL: [Self; 12] = [
+        Self::CmpkEqI32,
+        Self::CmpkLgI32,
+        Self::CmpkGtI32,
+        Self::CmpkGeI32,
+        Self::CmpkLtI32,
+        Self::CmpkLeI32,
+        Self::CmpkEqU32,
+        Self::CmpkLgU32,
+        Self::CmpkGtU32,
+        Self::CmpkGeU32,
+        Self::CmpkLtU32,
+        Self::CmpkLeU32,
+    ];
+
+    /// Selects the operation from a first instruction word: the SOPK encoding
+    /// bits (mask 0xf000_0000) and then the OP field (bits 23-27).
+    pub const fn from_word(word: u32) -> Option<Self> {
+        if word & 0xf000_0000 != 0xb000_0000 {
+            return None;
+        }
+        SCALAR_IMMEDIATE_COMPARE_OP_BY_OPCODE[((word >> 23) & 0x1f) as usize]
+    }
+
+    /// Lower-case mnemonic.
+    pub const fn mnemonic(self) -> &'static str {
+        match self {
+            Self::CmpkEqI32 => "s_cmpk_eq_i32",
+            Self::CmpkLgI32 => "s_cmpk_lg_i32",
+            Self::CmpkGtI32 => "s_cmpk_gt_i32",
+            Self::CmpkGeI32 => "s_cmpk_ge_i32",
+            Self::CmpkLtI32 => "s_cmpk_lt_i32",
+            Self::CmpkLeI32 => "s_cmpk_le_i32",
+            Self::CmpkEqU32 => "s_cmpk_eq_u32",
+            Self::CmpkLgU32 => "s_cmpk_lg_u32",
+            Self::CmpkGtU32 => "s_cmpk_gt_u32",
+            Self::CmpkGeU32 => "s_cmpk_ge_u32",
+            Self::CmpkLtU32 => "s_cmpk_lt_u32",
+            Self::CmpkLeU32 => "s_cmpk_le_u32",
+        }
+    }
+
+    /// The validated registry row.
+    pub fn semantics(self) -> &'static FormSemantics {
+        &FORMS[match self {
+            Self::CmpkEqI32 => 47,
+            Self::CmpkLgI32 => 48,
+            Self::CmpkGtI32 => 49,
+            Self::CmpkGeI32 => 50,
+            Self::CmpkLtI32 => 51,
+            Self::CmpkLeI32 => 52,
+            Self::CmpkEqU32 => 53,
+            Self::CmpkLgU32 => 54,
+            Self::CmpkGtU32 => 55,
+            Self::CmpkGeU32 => 56,
+            Self::CmpkLtU32 => 57,
+            Self::CmpkLeU32 => 58,
+        }]
+    }
+
+    /// The relation tested, with SDST (S0) on the left.
+    pub const fn relation(self) -> CompareRelation {
+        match self {
+            Self::CmpkEqI32 => CompareRelation::Equal,
+            Self::CmpkLgI32 => CompareRelation::NotEqual,
+            Self::CmpkGtI32 => CompareRelation::Greater,
+            Self::CmpkGeI32 => CompareRelation::GreaterOrEqual,
+            Self::CmpkLtI32 => CompareRelation::Less,
+            Self::CmpkLeI32 => CompareRelation::LessOrEqual,
+            Self::CmpkEqU32 => CompareRelation::Equal,
+            Self::CmpkLgU32 => CompareRelation::NotEqual,
+            Self::CmpkGtU32 => CompareRelation::Greater,
+            Self::CmpkGeU32 => CompareRelation::GreaterOrEqual,
+            Self::CmpkLtU32 => CompareRelation::Less,
+            Self::CmpkLeU32 => CompareRelation::LessOrEqual,
+        }
+    }
+
+    /// The SCC: whether the relation holds for SDST and SIMM16, which signed forms
+    /// sign-extend and unsigned forms zero-extend.
+    pub const fn test(self, dst: u32, simm16: u16) -> bool {
+        match self {
+            Self::CmpkEqI32 => primitive::eq_b32(dst, primitive::sext_simm16(simm16)),
+            Self::CmpkLgI32 => primitive::ne_b32(dst, primitive::sext_simm16(simm16)),
+            Self::CmpkGtI32 => primitive::gt_i32(dst, primitive::sext_simm16(simm16)),
+            Self::CmpkGeI32 => primitive::ge_i32(dst, primitive::sext_simm16(simm16)),
+            Self::CmpkLtI32 => primitive::lt_i32(dst, primitive::sext_simm16(simm16)),
+            Self::CmpkLeI32 => primitive::le_i32(dst, primitive::sext_simm16(simm16)),
+            Self::CmpkEqU32 => primitive::eq_b32(dst, simm16 as u32),
+            Self::CmpkLgU32 => primitive::ne_b32(dst, simm16 as u32),
+            Self::CmpkGtU32 => primitive::gt_u32(dst, simm16 as u32),
+            Self::CmpkGeU32 => primitive::ge_u32(dst, simm16 as u32),
+            Self::CmpkLtU32 => primitive::lt_u32(dst, simm16 as u32),
+            Self::CmpkLeU32 => primitive::le_u32(dst, simm16 as u32),
+        }
+    }
+}
+
+/// SOPK operations declared in the semantic registry (operand rule `sopk_sgpr`).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ScalarImmediateOp {
+    /// `s_movk_i32` (SOPK opcode 0): signed mov, SCC = unchanged.
+    MovkI32,
+    /// `s_cmovk_i32` (SOPK opcode 2): signed cmov plus SCC, SCC = unchanged.
+    CmovkI32,
+    /// `s_addk_i32` (SOPK opcode 15): signed add, SCC = signed_overflow.
+    AddkI32,
+    /// `s_mulk_i32` (SOPK opcode 16): signed mul, SCC = unchanged.
+    MulkI32,
+}
+
+/// ScalarImmediateOp by SOPK OP field value; `None` for undeclared opcodes.
+const SCALAR_IMMEDIATE_OP_BY_OPCODE: [Option<ScalarImmediateOp>; 32] = [
+    Some(ScalarImmediateOp::MovkI32),
+    None,
+    Some(ScalarImmediateOp::CmovkI32),
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    Some(ScalarImmediateOp::AddkI32),
+    Some(ScalarImmediateOp::MulkI32),
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+];
+
+impl ScalarImmediateOp {
+    /// Every operation, in registry order.
+    pub const ALL: [Self; 4] = [
+        Self::MovkI32,
+        Self::CmovkI32,
+        Self::AddkI32,
+        Self::MulkI32,
+    ];
+
+    /// Selects the operation from a first instruction word: the SOPK encoding
+    /// bits (mask 0xf000_0000) and then the OP field (bits 23-27).
+    pub const fn from_word(word: u32) -> Option<Self> {
+        if word & 0xf000_0000 != 0xb000_0000 {
+            return None;
+        }
+        SCALAR_IMMEDIATE_OP_BY_OPCODE[((word >> 23) & 0x1f) as usize]
+    }
+
+    /// Lower-case mnemonic.
+    pub const fn mnemonic(self) -> &'static str {
+        match self {
+            Self::MovkI32 => "s_movk_i32",
+            Self::CmovkI32 => "s_cmovk_i32",
+            Self::AddkI32 => "s_addk_i32",
+            Self::MulkI32 => "s_mulk_i32",
+        }
+    }
+
+    /// The validated registry row.
+    pub fn semantics(self) -> &'static FormSemantics {
+        &FORMS[match self {
+            Self::MovkI32 => 45,
+            Self::CmovkI32 => 46,
+            Self::AddkI32 => 59,
+            Self::MulkI32 => 60,
+        }]
+    }
+
+    /// Whether the operation reads SCC (the conditional move's condition).
+    pub const fn reads_scc(self) -> bool {
+        match self {
+            Self::MovkI32 => false,
+            Self::CmovkI32 => true,
+            Self::AddkI32 => false,
+            Self::MulkI32 => false,
+        }
+    }
+
+    /// Whether the operation writes SCC.
+    pub const fn writes_scc(self) -> bool {
+        match self {
+            Self::MovkI32 => false,
+            Self::CmovkI32 => false,
+            Self::AddkI32 => true,
+            Self::MulkI32 => false,
+        }
+    }
+
+    /// Whether the operation always reads the old SDST (`D = D op imm`).
+    pub const fn reads_dst(self) -> bool {
+        match self {
+            Self::MovkI32 => false,
+            Self::CmovkI32 => false,
+            Self::AddkI32 => true,
+            Self::MulkI32 => true,
+        }
+    }
+
+    /// The new SDST (`None` leaves it unchanged) and, for forms that write it, the
+    /// new SCC (`None` leaves SCC unchanged). `dst` is the old SDST (ignored by
+    /// forms that do not read it) and `scc_in` the SCC read by the conditional move.
+    pub const fn evaluate(self, dst: u32, simm16: u16, scc_in: bool) -> (Option<u32>, Option<bool>) {
+        match self {
+            Self::MovkI32 => (Some(primitive::sext_simm16(simm16)), None),
+            Self::CmovkI32 => (if scc_in { Some(primitive::sext_simm16(simm16)) } else { None }, None),
+            Self::AddkI32 => {
+                let (value, scc) = primitive::add_overflow_i32(dst, primitive::sext_simm16(simm16));
+                (Some(value), Some(scc))
+            }
+            Self::MulkI32 => (Some(primitive::mul_lo_i32(dst, primitive::sext_simm16(simm16))), None),
+        }
+    }
+}
+
 /// VOP2 operations declared in the semantic registry (operand rules `vop2_vgpr`, `vop2_vgpr2`).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum VectorAluOp {
@@ -1366,24 +1664,24 @@ impl VectorAluOp {
     /// The validated registry row.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::MulI32I24 => 56,
-            Self::MulHiI32I24 => 57,
-            Self::MulU32U24 => 58,
-            Self::MulHiU32U24 => 59,
-            Self::MinI32 => 60,
-            Self::MaxI32 => 61,
-            Self::MinU32 => 62,
-            Self::MaxU32 => 63,
-            Self::XnorB32 => 64,
-            Self::AddNcU32 => 65,
-            Self::SubNcU32 => 66,
-            Self::SubrevNcU32 => 67,
-            Self::LshrrevB32 => 68,
-            Self::AshrrevI32 => 69,
-            Self::LshlrevB32 => 70,
-            Self::AndB32 => 71,
-            Self::OrB32 => 72,
-            Self::XorB32 => 73,
+            Self::MulI32I24 => 72,
+            Self::MulHiI32I24 => 73,
+            Self::MulU32U24 => 74,
+            Self::MulHiU32U24 => 75,
+            Self::MinI32 => 76,
+            Self::MaxI32 => 77,
+            Self::MinU32 => 78,
+            Self::MaxU32 => 79,
+            Self::XnorB32 => 80,
+            Self::AddNcU32 => 81,
+            Self::SubNcU32 => 82,
+            Self::SubrevNcU32 => 83,
+            Self::LshrrevB32 => 84,
+            Self::AshrrevI32 => 85,
+            Self::LshlrevB32 => 86,
+            Self::AndB32 => 87,
+            Self::OrB32 => 88,
+            Self::XorB32 => 89,
         }]
     }
 
@@ -1836,22 +2134,22 @@ impl VectorCompareOp {
     /// The validated registry row.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::CmpLtI32 => 74,
-            Self::CmpEqI32 => 75,
-            Self::CmpLeI32 => 76,
-            Self::CmpGtI32 => 77,
-            Self::CmpNeI32 => 78,
-            Self::CmpGeI32 => 79,
-            Self::CmpLtU32 => 80,
-            Self::CmpEqU32 => 81,
-            Self::CmpLeU32 => 82,
-            Self::CmpGtU32 => 83,
-            Self::CmpNeU32 => 84,
-            Self::CmpGeU32 => 85,
-            Self::CmpFI32 => 86,
-            Self::CmpTI32 => 87,
-            Self::CmpFU32 => 88,
-            Self::CmpTU32 => 89,
+            Self::CmpLtI32 => 90,
+            Self::CmpEqI32 => 91,
+            Self::CmpLeI32 => 92,
+            Self::CmpGtI32 => 93,
+            Self::CmpNeI32 => 94,
+            Self::CmpGeI32 => 95,
+            Self::CmpLtU32 => 96,
+            Self::CmpEqU32 => 97,
+            Self::CmpLeU32 => 98,
+            Self::CmpGtU32 => 99,
+            Self::CmpNeU32 => 100,
+            Self::CmpGeU32 => 101,
+            Self::CmpFI32 => 102,
+            Self::CmpTI32 => 103,
+            Self::CmpFU32 => 104,
+            Self::CmpTU32 => 105,
         }]
     }
 
@@ -1987,13 +2285,13 @@ impl VectorAluVop3Op {
     /// The validated registry row of this encoding.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::AddNcU32 => 90,
+            Self::AddNcU32 => 106,
         }]
     }
 }
 
 /// Identity of every registry form and encoding variant, in registry order.
-pub const FORM_IDS: [(&str, EncodingFamily); 91] = [
+pub const FORM_IDS: [(&str, EncodingFamily); 107] = [
     ("S_ADD_U32", EncodingFamily::Sop2),
     ("S_SUB_U32", EncodingFamily::Sop2),
     ("S_ADD_I32", EncodingFamily::Sop2),
@@ -2039,6 +2337,22 @@ pub const FORM_IDS: [(&str, EncodingFamily); 91] = [
     ("S_CMP_GE_U32", EncodingFamily::Sopc),
     ("S_CMP_LT_U32", EncodingFamily::Sopc),
     ("S_CMP_LE_U32", EncodingFamily::Sopc),
+    ("S_MOVK_I32", EncodingFamily::Sopk),
+    ("S_CMOVK_I32", EncodingFamily::Sopk),
+    ("S_CMPK_EQ_I32", EncodingFamily::Sopk),
+    ("S_CMPK_LG_I32", EncodingFamily::Sopk),
+    ("S_CMPK_GT_I32", EncodingFamily::Sopk),
+    ("S_CMPK_GE_I32", EncodingFamily::Sopk),
+    ("S_CMPK_LT_I32", EncodingFamily::Sopk),
+    ("S_CMPK_LE_I32", EncodingFamily::Sopk),
+    ("S_CMPK_EQ_U32", EncodingFamily::Sopk),
+    ("S_CMPK_LG_U32", EncodingFamily::Sopk),
+    ("S_CMPK_GT_U32", EncodingFamily::Sopk),
+    ("S_CMPK_GE_U32", EncodingFamily::Sopk),
+    ("S_CMPK_LT_U32", EncodingFamily::Sopk),
+    ("S_CMPK_LE_U32", EncodingFamily::Sopk),
+    ("S_ADDK_I32", EncodingFamily::Sopk),
+    ("S_MULK_I32", EncodingFamily::Sopk),
     ("S_NOT_B32", EncodingFamily::Sop1),
     ("S_BREV_B32", EncodingFamily::Sop1),
     ("S_BCNT0_I32_B32", EncodingFamily::Sop1),
@@ -2088,7 +2402,7 @@ pub const FORM_IDS: [(&str, EncodingFamily); 91] = [
 ];
 
 /// One validated row per registry form, in registry order.
-pub static FORMS: [FormSemantics; 91] = [
+pub static FORMS: [FormSemantics; 107] = [
     FormSemantics {
         name: "S_ADD_U32",
         family: EncodingFamily::Sop2,
@@ -3032,6 +3346,342 @@ pub static FORMS: [FormSemantics; 91] = [
         wave: Wave::Any,
         operands: OperandRule::SopcScalar,
         spec: &[SpecRef { document: Document::Guide, section: "12.4", page: 0 }, SpecRef { document: Document::Guide, section: "5.3", page: 33 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_MOVK_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 0,
+        operation: Operation::Move,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkSgpr,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMOVK_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 2,
+        operation: Operation::ConditionalMove,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::Scc,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkSgpr,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_EQ_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 3,
+        operation: Operation::Compare,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::Equal),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_LG_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 4,
+        operation: Operation::Compare,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::NotEqual),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_GT_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 5,
+        operation: Operation::Compare,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::Greater),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_GE_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 6,
+        operation: Operation::Compare,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::GreaterOrEqual),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_LT_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 7,
+        operation: Operation::Compare,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::Less),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_LE_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 8,
+        operation: Operation::Compare,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::LessOrEqual),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_EQ_U32",
+        family: EncodingFamily::Sopk,
+        opcode: 9,
+        operation: Operation::Compare,
+        signedness: Signedness::Unsigned,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::Equal),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_LG_U32",
+        family: EncodingFamily::Sopk,
+        opcode: 10,
+        operation: Operation::Compare,
+        signedness: Signedness::Unsigned,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::NotEqual),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_GT_U32",
+        family: EncodingFamily::Sopk,
+        opcode: 11,
+        operation: Operation::Compare,
+        signedness: Signedness::Unsigned,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::Greater),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_GE_U32",
+        family: EncodingFamily::Sopk,
+        opcode: 12,
+        operation: Operation::Compare,
+        signedness: Signedness::Unsigned,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::GreaterOrEqual),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_LT_U32",
+        family: EncodingFamily::Sopk,
+        opcode: 13,
+        operation: Operation::Compare,
+        signedness: Signedness::Unsigned,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::Less),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CMPK_LE_U32",
+        family: EncodingFamily::Sopk,
+        opcode: 14,
+        operation: Operation::Compare,
+        signedness: Signedness::Unsigned,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: Some(CompareRelation::LessOrEqual),
+        scc: SccEffect::Relation,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkCompare,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_ADDK_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 15,
+        operation: Operation::Add,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::SignedOverflow,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkSgpr,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }, SpecRef { document: Document::Guide, section: "5.3", page: 33 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_MULK_I32",
+        family: EncodingFamily::Sopk,
+        opcode: 16,
+        operation: Operation::Multiply,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Any,
+        operands: OperandRule::SopkSgpr,
+        spec: &[SpecRef { document: Document::Guide, section: "12.2", page: 106 }, SpecRef { document: Document::Guide, section: "13.1.2", page: 240 }],
         verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
     },
     FormSemantics {

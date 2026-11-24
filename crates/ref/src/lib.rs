@@ -68,6 +68,8 @@ pub enum Op {
     /// The other SOPC 32-bit integer compares (opcodes 1-5 and 7-11), writing
     /// only SCC: LG, GT, GE, LT, LE, signed for 1-5, unsigned for 7-11.
     ScalarCompare(Comparison, Source, Source),
+    /// SOPK operation on SGPR `SDST` (s0-s105) and the raw SIMM16.
+    ScalarImmediate(ScalarImmediate, u8, u16),
     Branch {
         target: usize,
         condition: BranchCondition,
@@ -279,6 +281,23 @@ pub enum ScalarUnary {
     SignExtendShort,
     /// D = |S0| (0x80000000 stays), SCC = (D != 0).
     Absolute,
+}
+
+/// SOPK operations decoded by the reference interpreter (RDNA 2 ISA guide
+/// 12.2; SCC per Tables 11, 12, 13 and 14).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ScalarImmediate {
+    /// 0 `s_movk_i32`: D = signext(SIMM16).
+    Move,
+    /// 2 `s_cmovk_i32`: if SCC, D = signext(SIMM16); SCC unchanged.
+    ConditionalMove,
+    /// 3-14 `s_cmpk_*`: SCC = (D <relation> K), K = signext(SIMM16) for the
+    /// signed forms 3-8 and SIMM16 zero-extended for the unsigned 9-14.
+    Compare(Comparison),
+    /// 15 `s_addk_i32`: D = D + signext(SIMM16), SCC = signed overflow.
+    Add,
+    /// 16 `s_mulk_i32`: D = low 32 bits of D * signext(SIMM16); SCC unchanged.
+    Multiply,
 }
 
 /// VOP2 operations decoded by the reference interpreter.
@@ -588,6 +607,26 @@ pub fn decode(code: &[u8]) -> Result<Vec<DecodedInstruction>, ReferenceError> {
                     Op::ScalarCompare(comparison, left, right)
                 };
                 (op, left_length.max(right_length))
+            }
+            // SOPK (guide 13.1.2): ENCODING 0b1011 in bits 28-31, OP 23-27,
+            // SDST 16-22 (s0-s105 only), SIMM16 0-15. The format never takes
+            // a literal dword (guide 12.2), so the word is always 4 bytes.
+            [lo, hi, low, high @ 0xb0..=0xb8, ..]
+                if low & 0x7f <= 105 && matches!((high & 0xf) << 1 | low >> 7, 0 | 2..=16) =>
+            {
+                let kind = match (high & 0xf) << 1 | low >> 7 {
+                    0 => ScalarImmediate::Move,
+                    2 => ScalarImmediate::ConditionalMove,
+                    // EQ, LG, GT, GE, LT, LE as VOPC relation offsets (see SOPC).
+                    op @ 3..=14 => ScalarImmediate::Compare(Comparison {
+                        offset: [2, 5, 4, 6, 1, 3][usize::from((op - 3) % 6)],
+                        signed: op <= 8,
+                    }),
+                    15 => ScalarImmediate::Add,
+                    _ => ScalarImmediate::Multiply,
+                };
+                let simm16 = u16::from_le_bytes([*lo, *hi]);
+                (Op::ScalarImmediate(kind, low & 0x7f, simm16), 4)
             }
             // SOP2: OP in bits 23-29, SDST in bits 16-22, SSRC1, SSRC0.
             [left, right, low, high @ 0x80..=0xbf, tail @ ..]
@@ -1157,6 +1196,48 @@ fn execute_wave(program: &[DecodedInstruction], input: &[u32]) -> Result<Vec<u32
             // Guide 12.4: SCC = (S0 <relation> S1); no SGPR is written.
             Op::ScalarCompare(comparison, lhs, rhs) => {
                 scc = Some(comparison.holds(read_scalar(lhs)?, read_scalar(rhs)?));
+            }
+            // Guide 12.2: SDST is also the second source; SIMM16 is
+            // sign-extended except by the unsigned compares.
+            Op::ScalarImmediate(kind, dst, simm16) => {
+                let extended = i32::from(simm16 as i16);
+                if let ScalarImmediate::Compare(comparison) = kind {
+                    let constant = if comparison.signed {
+                        extended as u32
+                    } else {
+                        u32::from(simm16)
+                    };
+                    let value = read_scalar(Source::Register(dst))?;
+                    scc = Some(comparison.holds(value, constant));
+                } else {
+                    if dst < 8 {
+                        return Err(error(offset, "write to a reserved resource SGPR"));
+                    }
+                    let value = match kind {
+                        ScalarImmediate::ConditionalMove
+                            if !scc
+                                .ok_or_else(|| error(offset, "move on uninitialized SCC"))? =>
+                        {
+                            None
+                        }
+                        ScalarImmediate::Add => {
+                            let exact = i64::from(read_scalar(Source::Register(dst))? as i32)
+                                + i64::from(extended);
+                            // SCC = the exact signed sum does not fit in i32.
+                            scc = Some(i32::try_from(exact).is_err());
+                            Some(exact as u32)
+                        }
+                        ScalarImmediate::Multiply => {
+                            let exact = i64::from(read_scalar(Source::Register(dst))? as i32)
+                                * i64::from(extended);
+                            Some(exact.rem_euclid(1 << 32) as u32)
+                        }
+                        _ => Some(extended as u32),
+                    };
+                    if let Some(value) = value {
+                        scalars[usize::from(dst)] = Some(value);
+                    }
+                }
             }
             Op::Scalar(kind, dst, lhs, rhs) => {
                 if dst < 8 {

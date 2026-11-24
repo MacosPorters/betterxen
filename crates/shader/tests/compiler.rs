@@ -309,6 +309,20 @@ fn scalar_compare_results_resolve_every_branch() {
 }
 
 #[test]
+fn scalar_immediate_results_resolve_every_branch() {
+    let code = include_bytes!("../../../fixtures/rdna2/scalar-immediate.bin");
+    let compiled = compile(Architecture::Gfx1030, code).unwrap();
+    assert_eq!(
+        compiled.ir,
+        include_str!("../../../fixtures/golden/scalar-immediate.ir")
+    );
+    assert_eq!(
+        compiled.msl,
+        include_str!("../../../fixtures/golden/scalar-immediate.metal")
+    );
+}
+
+#[test]
 fn scalar_unary_results_reach_the_kernel_as_constants() {
     let code = include_bytes!("../../../fixtures/rdna2/scalar-unary.bin");
     let compiled = compile(Architecture::Gfx1030, code).unwrap();

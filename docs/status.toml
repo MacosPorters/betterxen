@@ -280,6 +280,198 @@ decoded = true
 llvm = "three-way passed"
 
 [[instruction]]
+form = "s_movk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written); D = sext(SIMM16); SCC unchanged"
+representation = "`B0088000`"
+lowering = "resolved scalar state"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmovk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written); if SCC then D = sext(SIMM16), SCC known during translation; SCC unchanged"
+representation = "`B1088000`"
+lowering = "resolved scalar state"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_eq_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S == sext(SIMM16) (signed)"
+representation = "`B1888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lg_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S != sext(SIMM16) (signed)"
+representation = "`B2088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_gt_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S > sext(SIMM16) (signed)"
+representation = "`B2888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_ge_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S >= sext(SIMM16) (signed)"
+representation = "`B3088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lt_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S < sext(SIMM16) (signed)"
+representation = "`B3888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_le_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S <= sext(SIMM16) (signed)"
+representation = "`B4088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_eq_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S == zext(SIMM16) (unsigned)"
+representation = "`B4888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lg_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S != zext(SIMM16) (unsigned)"
+representation = "`B5088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_gt_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S > zext(SIMM16) (unsigned)"
+representation = "`B5888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_ge_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S >= zext(SIMM16) (unsigned)"
+representation = "`B6088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lt_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S < zext(SIMM16) (unsigned)"
+representation = "`B6888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_le_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S <= zext(SIMM16) (unsigned)"
+representation = "`B7088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_addk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written), initialized; D = D + sext(SIMM16); SCC = signed overflow"
+representation = "`B7888000`"
+lowering = "resolved scalar state and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_mulk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written), initialized; D = low 32 bits of D * sext(SIMM16); SCC unchanged"
+representation = "`B8088000`"
+lowering = "resolved scalar state"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
 form = "s_cmp_eq_i32"
 encoding = "SOPC; normal SGPR, inline integer or literal sources with at most one literal; SCC = S0 == S1 (signed)"
 representation = "`BF00C108`"

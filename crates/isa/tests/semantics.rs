@@ -5,8 +5,8 @@ use xenora_isa::semantics::{
     CarryIn, FORM_IDS, FORMS, GENERATED_SCHEMA, MaskEffect, SCHEMA, SccEffect, Signedness, Wave,
 };
 use xenora_isa::{
-    CompareRelation, ScalarAluOp, ScalarCompareOp, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op,
-    VectorCompareOp,
+    CompareRelation, ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp,
+    ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
 };
 
 #[test]
@@ -76,6 +76,64 @@ fn scalar_compare_dispatch_selects_exactly_the_registry_sopc_forms() {
     dispatch_selects_exactly(EncodingFamily::Sopc, |word| {
         ScalarCompareOp::from_word(word).map(|op| op.semantics().name)
     });
+}
+
+#[test]
+fn scalar_immediate_dispatch_selects_exactly_the_registry_sopk_forms() {
+    for op in ScalarImmediateOp::ALL {
+        let row = op.semantics();
+        assert_eq!(row.family, EncodingFamily::Sopk);
+        assert_eq!(row.name.to_ascii_lowercase(), op.mnemonic());
+        assert_eq!(op.reads_scc(), row.carry_in == CarryIn::Scc);
+        assert_eq!(op.writes_scc(), row.scc != SccEffect::Unchanged);
+    }
+    for op in ScalarImmediateCompareOp::ALL {
+        let row = op.semantics();
+        assert_eq!(row.family, EncodingFamily::Sopk);
+        assert_eq!(row.name.to_ascii_lowercase(), op.mnemonic());
+        assert_eq!(row.relation, Some(op.relation()));
+    }
+    // The two enums together are the registry's SOPK forms; the fixed
+    // s_waitcnt_vscnt word (opcode 23) stays hand-written and is in neither.
+    dispatch_selects_exactly(EncodingFamily::Sopk, |word| {
+        ScalarImmediateOp::from_word(word)
+            .map(|op| op.semantics().name)
+            .or_else(|| ScalarImmediateCompareOp::from_word(word).map(|op| op.semantics().name))
+    });
+}
+
+#[test]
+fn scalar_immediate_evaluation_extends_simm16_as_the_form_declares() {
+    // SIMM16 = 0x8000 is -32768 signed and 32768 unsigned.
+    let d = 0xffff_8000;
+    assert_eq!(
+        ScalarImmediateOp::MovkI32.evaluate(0, 0x8000, false),
+        (Some(d), None)
+    );
+    assert_eq!(
+        ScalarImmediateOp::CmovkI32.evaluate(7, 0x8000, true),
+        (Some(d), None)
+    );
+    assert_eq!(
+        ScalarImmediateOp::CmovkI32.evaluate(7, 0x8000, false),
+        (None, None)
+    );
+    assert_eq!(
+        ScalarImmediateOp::AddkI32.evaluate(0x7fff_ffff, 1, false),
+        (Some(0x8000_0000), Some(true))
+    );
+    assert_eq!(
+        ScalarImmediateOp::AddkI32.evaluate(5, 0xffff, false),
+        (Some(4), Some(false))
+    );
+    assert_eq!(
+        ScalarImmediateOp::MulkI32.evaluate(3, 0xffff, true),
+        (Some(0xffff_fffd), None)
+    );
+    assert!(ScalarImmediateCompareOp::CmpkEqI32.test(d, 0x8000));
+    assert!(!ScalarImmediateCompareOp::CmpkEqU32.test(d, 0x8000));
+    assert!(ScalarImmediateCompareOp::CmpkGtU32.test(d, 0xffff));
+    assert!(!ScalarImmediateCompareOp::CmpkGtI32.test(d, 0xffff));
 }
 
 #[test]
