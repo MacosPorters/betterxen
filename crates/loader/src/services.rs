@@ -251,6 +251,21 @@ impl ServicesState {
             .unwrap_or(0)
     }
 
+    /// Forget the last-error value of a guest thread that has ended, so a
+    /// later thread given the same TEB address starts at zero. Returns
+    /// whether a nonzero value was dropped.
+    ///
+    /// Each service call names its own TEB and the values sit behind one
+    /// lock, so calls for different threads may run concurrently. Retire a
+    /// TEB only once no service call for that thread is still running.
+    pub fn retire_thread_last_error(&self, teb: u64) -> bool {
+        self.last_errors
+            .lock()
+            .expect("guest last-error state")
+            .remove(&teb)
+            .is_some()
+    }
+
     fn set_last_error(&self, teb: u64, error: u32) {
         let mut errors = self.last_errors.lock().expect("guest last-error state");
         if error == 0 {
