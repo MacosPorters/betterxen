@@ -257,6 +257,33 @@ impl MetadataCatalog {
             "<wchar.h>",
             "Compares up to count 16-bit Windows code units of two strings",
         );
+        self.add(
+            "ucrtbase.dll",
+            "strtok_s",
+            AbiType::Pointer {
+                is_const: false,
+                pointee: "char".into(),
+            },
+            vec![
+                (
+                    "str",
+                    AbiType::Pointer {
+                        is_const: false,
+                        pointee: "char".into(),
+                    },
+                ),
+                ("delimiters", AbiType::StringAnsi),
+                (
+                    "context",
+                    AbiType::Pointer {
+                        is_const: false,
+                        pointee: "char *".into(),
+                    },
+                ),
+            ],
+            "<string.h>",
+            "Splits writable guest text using a caller-owned continuation pointer",
+        );
         for (character, string, header, tokenize, search, find_any, span, complement) in [
             (
                 "char",
