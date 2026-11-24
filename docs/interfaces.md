@@ -286,7 +286,7 @@ matches UTC and `tm_isdst` is always zero. 32-bit `time` saturates at the
 process-wide. `rand_s` writes that 15-bit value into a guest `unsigned int`;
 it is not a CSPRNG.
 
-### Process-local Winsock UDP loopback
+### Process-local Winsock UDP and TCP loopback
 
 `ws2_32.dll` exposes a process-local IPv4 UDP loopback: `WSAStartup` /
 `WSACleanup`, `socket` (AF_INET / SOCK_DGRAM / IPPROTO_UDP only),
@@ -297,8 +297,22 @@ Datagrams stay in the runtime; nothing reaches the host network stack. Bound
 addresses report `127.0.0.1`. At most 64 sockets, 16 pending datagrams per
 socket and 65,507 bytes per datagram. `recv` / `recvfrom` are non-blocking
 (`WSAEWOULDBLOCK` when empty). `sendto` may auto-bind an ephemeral port.
-`WSAPoll` timeouts are capped at 1 second. TCP, raw sockets, IPv6 and host
-interfaces remain unsupported.
+`WSAPoll` timeouts are capped at 1 second.
+
+TCP streams (`socket` with SOCK_STREAM and protocol 0 or IPPROTO_TCP) connect
+only to a listening guest socket on `127.0.0.1`, also inside the process.
+`listen` clamps the backlog to 1–16 (SOMAXCONN included); a full queue or a
+port with no listener reports `WSAECONNREFUSED`. `connect` completes at once,
+and `accept` is non-blocking (`WSAEWOULDBLOCK` with nothing waiting). Each
+socket buffers up to 64 KiB of unread bytes; `send` then takes what fits and
+reports `WSAEWOULDBLOCK` when nothing fits, without reading the guest bytes it
+does not report. `recv` returns 0 at end of file, after the peer's
+`shutdown(SD_SEND)` or `closesocket`; sending to a closed peer reports
+`WSAECONNRESET`, and `WSAPoll` reports `POLLHUP`. Closing a listener closes
+connections it has not accepted. TCP and UDP ports are separate. `sendto`,
+`recvfrom` and socket options other than `SO_TYPE` are not supported on
+streams, and `shutdown` is not supported on datagram sockets. Raw sockets,
+IPv6, blocking waits on streams and host interfaces remain unsupported.
 
 ### XAsync helpers
 
