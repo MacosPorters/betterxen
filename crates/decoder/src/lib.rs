@@ -15,7 +15,7 @@ use xenora_isa::{
 
 use xenora_isa::meta::EncodingFamily;
 use xenora_isa::semantics::{FORM_IDS, OperandRule};
-pub use xenora_isa::semantics::{VectorBinary, VectorUnary};
+pub use xenora_isa::semantics::{VectorBinary, VectorLowering, VectorUnary, VectorVcc};
 
 /// Metadata forms that [`decode`] turns into an [`Instruction`] for at least one
 /// operand combination: the hand-written forms below followed by every form of
@@ -419,7 +419,10 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
                 let (_, src0, _) = vop2_registers(first, op.assembly_name())?;
                 (VectorSource::Register(src0), 4)
             }
-            _ => vector_src0(first, bytes, op.assembly_name())?,
+            OperandRule::Vop2Vgpr | OperandRule::Vop2Vcc => {
+                vector_src0(first, bytes, op.assembly_name())?
+            }
+            _ => unreachable!("non-VOP2 operand rule for VOP2 instruction"),
         };
         return Ok((
             Instruction::VectorAlu {

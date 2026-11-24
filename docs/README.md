@@ -26,6 +26,7 @@ either path. The [changelog](../CHANGELOG.md) records notable changes.
 - [SOP2 scalar ALU](shaders/scalar-alu.md) — Supported scalar add, subtract and bitwise forms, their SCC rules and sources.
 - [Semantic registry](shaders/semantic-registry.md) — How to add an instruction form: registry fields, validation, generation and the independence rule.
 - [VOP1 vector unary and swap](shaders/vector-unary.md) — Wave32 integer bit operations, register exchange, and operand limits.
+- [VOP2 select and carry](shaders/vector-vcc.md) — Wave32 lane selection, carry and borrow through the vector condition code.
 - [VOPC integer compares](shaders/vector-compare.md) — Wave32 compare forms, the VCC/EXEC contract, runtime `s_cbranch_vccz` and the Metal mapping.
 - [Metal Shading Language generation](shaders/msl.md) and [independent CPU reference](shaders/reference-interpreter.md) — Translation rules and separate CPU execution models.
 

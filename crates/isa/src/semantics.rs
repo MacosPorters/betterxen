@@ -177,13 +177,35 @@ pub enum Signedness {
     Bitwise,
 }
 
-/// Whether the operation reads SCC.
+/// Per-lane VOP2 operation selected by the semantic registry.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VectorLowering {
+    /// Two explicit operands, with no implicit lane input.
+    Binary(VectorBinary),
+    /// Two explicit operands and the lane's VCC bit.
+    Vcc(VectorVcc),
+}
+
+/// VOP2 primitives with an implicit per-lane VCC input.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VectorVcc {
+    /// Choose S1 when the VCC bit is set, otherwise S0.
+    Select,
+    /// Unsigned addition with carry-in and carry-out.
+    AddCarry,
+    /// Unsigned subtraction with borrow-in and borrow-out.
+    SubtractBorrow,
+}
+
+/// Implicit condition or carry input.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CarryIn {
-    /// SCC is not read.
+    /// No implicit condition or carry input.
     None,
     /// SCC as carry-in (add), borrow-in (sub) or the select condition (select).
     Scc,
+    /// Per-lane Wave32 VCC_LO bit.
+    Vcc,
 }
 
 /// What a form writes to SCC.
@@ -270,6 +292,8 @@ pub enum OperandRule {
     /// integer -16..64 or a literal word; VSRC1 is a VGPR. Everything else is
     /// rejected as unsupported.
     Vop2Vgpr,
+    /// VOP2 general SRC0 and VGPR VSRC1 with an implicit VCC_LO input.
+    Vop2Vcc,
     /// VOP2 vector, VGPR sources only: VDST is v0-v255; SRC0 and VSRC1 are VGPRs.
     /// Everything else (SGPR, inline, literal SRC0) is rejected as unsupported.
     Vop2Vgpr2,

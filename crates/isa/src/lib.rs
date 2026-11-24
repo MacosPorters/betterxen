@@ -23,6 +23,18 @@ pub use semantics_gen::{
     SoppControlOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSwapOp, VectorUnaryOp,
 };
 
+impl VectorAluOp {
+    /// Whether this encoding takes a per-lane VCC_LO bit.
+    pub fn reads_vcc(self) -> bool {
+        self.semantics().carry_in == semantics::CarryIn::Vcc
+    }
+
+    /// Whether this encoding replaces the Wave32 VCC_LO mask.
+    pub fn writes_vcc(self) -> bool {
+        self.semantics().vcc == semantics::MaskEffect::LaneMask
+    }
+}
+
 /// SGPR index of `vcc_lo`, the Wave32 vector condition code.
 pub const VCC_LO: u8 = 106;
 
@@ -382,9 +394,20 @@ impl fmt::Display for Instruction {
                 write!(formatter, " vcc_lo, {src0}, v{src1}")
             }
             Self::VectorAlu {
-                dst, src0, src1, ..
+                op,
+                dst,
+                src0,
+                src1,
             } => {
-                write!(formatter, " v{dst}, {src0}, v{src1}")
+                write!(formatter, " v{dst}, ")?;
+                if op.writes_vcc() {
+                    write!(formatter, "vcc_lo, ")?;
+                }
+                write!(formatter, "{src0}, v{src1}")?;
+                if op.reads_vcc() {
+                    write!(formatter, ", vcc_lo")?;
+                }
+                Ok(())
             }
             Self::Branch { target }
             | Self::BranchSccZero { target }

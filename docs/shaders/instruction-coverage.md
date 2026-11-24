@@ -167,16 +167,20 @@ The wider LLVM operand matrix exercises decoding only. ABI means application bin
 | `v_add_nc_u32_e32` | VOP2, Wave32; VGPR, normal SGPR (known during translation), vcc_lo, inline integer or literal SRC0; VGPR VSRC1 and VDST; inactive lanes keep VDST; D = S0 + S1, no carry | `4A160F06` | yes | yes | three-way passed | per-thread typed integer template over the lane's own VGPRs; partial EXEC as a lane merge | implemented | local known-answer test passed | local Apple M5 readback passed; acceptance pending |
 | `v_sub_nc_u32_e32` | VOP2, Wave32; VGPR, normal SGPR (known during translation), vcc_lo, inline integer or literal SRC0; VGPR VSRC1 and VDST; inactive lanes keep VDST; D = S0 - S1, no carry | `4C181308` | yes | yes | three-way passed | per-thread typed integer template over the lane's own VGPRs; partial EXEC as a lane merge | implemented | local known-answer test passed | local Apple M5 readback passed; acceptance pending |
 | `v_subrev_nc_u32_e32` | VOP2, Wave32; VGPR, normal SGPR (known during translation), vcc_lo, inline integer or literal SRC0; VGPR VSRC1 and VDST; inactive lanes keep VDST; D = S1 - S0, no carry | `4E1A170A` | yes | yes | three-way passed | per-thread typed integer template over the lane's own VGPRs; partial EXEC as a lane merge | implemented | local known-answer test passed | local Apple M5 readback passed; acceptance pending |
+| `v_cndmask_b32_e32` | VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; select S1 when the VCC_LO lane bit is set, otherwise S0 | `020402C1` | yes | yes | three-way passed | per-thread integer expression with EXEC masking | implemented | local known-answer test passed | local Apple M5 readback passed; acceptance pending |
+| `v_add_co_ci_u32_e32` | VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; unsigned addition with carry input and output | `50040481` | yes | yes | three-way passed | per-thread integer expression with EXEC masking | implemented | local known-answer test passed | local Apple M5 readback passed; acceptance pending |
+| `v_sub_co_ci_u32_e32` | VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; unsigned S0 minus S1 with borrow input and output | `52060480` | yes | yes | three-way passed | per-thread integer expression with EXEC masking | implemented | local known-answer test passed | local Apple M5 readback passed; acceptance pending |
+| `v_subrev_co_ci_u32_e32` | VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; unsigned S1 minus S0 with borrow input and output | `540606C2` | yes | yes | three-way passed | per-thread integer expression with EXEC masking | implemented | local known-answer test passed | local Apple M5 readback passed; acceptance pending |
 <!-- status:instructions:end -->
 
 ## Automated three-way comparison
 
 LLVM 23.1.6, the production decoder and the independent reference decoder
-matched 650 instructions across ten streams: the eight synthetic fixtures,
+matched 1,088 instructions across 18 streams: 16 synthetic fixtures,
 a high-register sequence and an operand matrix assembled by LLVM.
 The harness checks byte offsets, widths, encoded bytes from LLVM, mnemonic
 and operands, and the typed reference operation against the production
-operation. It covers all 42 compute forms in this document.
+operation. It covers 124 instruction forms.
 
 The matrix checks the 81 inline integer selectors in VOP1, SOP1, SOPC and
 SOP2, forced literals that could otherwise be inline, literal selection in
@@ -186,7 +190,7 @@ operands, and zero and nonzero forward branch displacements. The decoder
 trace exposes MUBUF operands independently of the synthetic execution ABI,
 which still requires the original index and resource bindings.
 
-Five malformed LLVM probes produced diagnostics, and 25 valid encodings
+Five malformed LLVM probes produced diagnostics, and 27 valid encodings
 or disassemblable branch sequences were deliberately rejected by both Xenora
 decoders. Both Xenora decoders also reject all 37 interior truncation offsets
 in the add fixture and every case in the unsupported-encoding list.
