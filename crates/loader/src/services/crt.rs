@@ -45,11 +45,38 @@ fn string_length(
     limit: u64,
     unit: StringUnit,
 ) -> Result<u64, ExitReason> {
+    const BLOCK: u64 = 256;
     let budget = SCAN_BUDGET / unit.width();
-    for offset in 0..limit.min(budget) {
-        if unit.read(memory, address, offset)? == 0 {
-            return Ok(offset);
+    let scan = limit.min(budget);
+    let mut buffer = [0u8; 2 * BLOCK as usize];
+    let mut offset = 0;
+    while offset < scan {
+        let count = BLOCK.min(scan - offset);
+        let bytes = &mut buffer[..(count * unit.width()) as usize];
+        // A block that crosses into unmapped or unreadable memory is scanned
+        // one unit at a time, so a terminator before the boundary still ends
+        // the scan and the fault reports the first inaccessible unit.
+        let block = address
+            .checked_add(offset * unit.width())
+            .filter(|_| address != 0)
+            .is_some_and(|start| memory.read_bytes(start, bytes).is_ok());
+        for index in 0..count {
+            let value = if block {
+                match unit {
+                    StringUnit::Byte => u16::from(bytes[index as usize]),
+                    StringUnit::Wide => {
+                        let at = 2 * index as usize;
+                        u16::from_le_bytes([bytes[at], bytes[at + 1]])
+                    }
+                }
+            } else {
+                unit.read(memory, address, offset + index)?
+            };
+            if value == 0 {
+                return Ok(offset + index);
+            }
         }
+        offset += count;
     }
     if limit <= budget {
         return Ok(limit);
