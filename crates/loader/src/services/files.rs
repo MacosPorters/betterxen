@@ -381,21 +381,43 @@ fn read_guest_path(
     address: u64,
     cwd: &str,
 ) -> Result<Option<String>, MemoryError> {
-    Ok(read_raw_path(memory, address)?
-        .filter(|path| !path.is_empty() && !path.starts_with("\\\\"))
-        .map(|path| {
-            let path = path.to_ascii_lowercase();
-            if let Some(path) = path
-                .strip_prefix("c:\\")
-                .or_else(|| path.strip_prefix('\\'))
-            {
-                path.to_owned()
-            } else if cwd.is_empty() {
-                path
-            } else {
-                format!("{cwd}\\{path}")
-            }
-        }))
+    Ok(read_raw_path(memory, address)?.and_then(|path| resolve_synthetic_path(&path, cwd)))
+}
+
+fn resolve_synthetic_path(path: &str, cwd: &str) -> Option<String> {
+    if path.is_empty() || path.starts_with("\\\\") {
+        return None;
+    }
+    let path = path.to_ascii_lowercase();
+    Some(
+        if let Some(path) = path
+            .strip_prefix("c:\\")
+            .or_else(|| path.strip_prefix('\\'))
+        {
+            path.to_owned()
+        } else if cwd.is_empty() {
+            path
+        } else {
+            format!("{cwd}\\{path}")
+        },
+    )
+}
+
+fn read_ascii_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, MemoryError> {
+    if address == 0 {
+        return Ok(None);
+    }
+    let mut path = String::new();
+    for offset in 0..260 {
+        let byte = memory.read_u8(address.checked_add(offset).ok_or(MemoryError::Overflow)?)?;
+        match byte {
+            0 => return Ok(Some(path)),
+            b'/' => path.push('\\'),
+            byte if byte.is_ascii() => path.push(char::from(byte)),
+            _ => return Ok(None),
+        }
+    }
+    Ok(None)
 }
 
 /// The resolved path when `address` names a drive backed by a host mount.
@@ -503,51 +525,74 @@ fn share_mask(access: u32) -> u32 {
 }
 
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
-    let get_cwd = Arc::clone(state);
-    registry.register(
-        KERNEL32,
-        "GetCurrentDirectoryW",
-        move |args, cpu, memory| {
-            let objects = get_cwd.objects.lock().expect("guest object state");
-            let path = format!("C:\\{}", objects.current_directory);
-            let bytes: Vec<_> = path
-                .encode_utf16()
-                .chain([0])
-                .flat_map(u16::to_le_bytes)
-                .collect();
-            let required = (bytes.len() / 2) as u64;
-            if u64::from(args.rcx as u32) < required {
-                return Ok(required);
-            }
-            if args.rdx == 0 || memory.write_bytes(args.rdx, &bytes).is_err() {
-                return get_cwd.fail(cpu.gs_base, ERROR_NOACCESS, 0);
-            }
-            Ok(required - 1)
-        },
-    );
-    let set_cwd = Arc::clone(state);
-    registry.register(
-        KERNEL32,
-        "SetCurrentDirectoryW",
-        move |args, cpu, memory| {
-            let mut objects = set_cwd.objects.lock().expect("guest object state");
-            let Some(path) = read_guest_path(memory, args.rcx, &objects.current_directory)
-                .map_err(ExitReason::MemoryFault)?
-            else {
-                return set_cwd.fail(cpu.gs_base, INVALID_NAME, 0);
-            };
-            let path = path.trim_end_matches('\\');
-            if !path.is_empty()
-                && (!path.split('\\').all(valid_component) || !objects.directories.contains(path))
-            {
-                return set_cwd.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
-            }
-            objects.current_directory = path.to_owned();
-            Ok(1)
-        },
-    );
-    for symbol in ["GetCurrentDirectoryW", "SetCurrentDirectoryW"] {
-        registry.set_status(KERNEL32, symbol, ServiceStatus::Partial);
+    for (get, set, wide) in [
+        ("GetCurrentDirectoryW", "SetCurrentDirectoryW", true),
+        ("GetCurrentDirectoryA", "SetCurrentDirectoryA", false),
+    ] {
+        let get_cwd = Arc::clone(state);
+        registry.register_with_status(
+            KERNEL32,
+            get,
+            ServiceStatus::Partial,
+            move |args, cpu, memory| {
+                let objects = get_cwd.objects.lock().expect("guest object state");
+                let path = format!("C:\\{}", objects.current_directory);
+                let (bytes, required) = if wide {
+                    let bytes: Vec<_> = path
+                        .encode_utf16()
+                        .chain([0])
+                        .flat_map(u16::to_le_bytes)
+                        .collect();
+                    let required = bytes.len() / 2;
+                    (bytes, required)
+                } else {
+                    if !path.is_ascii() {
+                        return get_cwd.fail(cpu.gs_base, INVALID_NAME, 0);
+                    }
+                    let mut bytes = path.into_bytes();
+                    bytes.push(0);
+                    let required = bytes.len();
+                    (bytes, required)
+                };
+                if (args.rcx as u32 as usize) < required {
+                    return Ok(required as u64);
+                }
+                if args.rdx == 0 || memory.write_bytes(args.rdx, &bytes).is_err() {
+                    return get_cwd.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+                }
+                Ok((required - 1) as u64)
+            },
+        );
+        let set_cwd = Arc::clone(state);
+        registry.register_with_status(
+            KERNEL32,
+            set,
+            ServiceStatus::Partial,
+            move |args, cpu, memory| {
+                let raw = if wide {
+                    read_raw_path(memory, args.rcx)
+                } else {
+                    read_ascii_path(memory, args.rcx)
+                }
+                .map_err(ExitReason::MemoryFault)?;
+                let mut objects = set_cwd.objects.lock().expect("guest object state");
+                let Some(path) = raw
+                    .as_deref()
+                    .and_then(|path| resolve_synthetic_path(path, &objects.current_directory))
+                else {
+                    return set_cwd.fail(cpu.gs_base, INVALID_NAME, 0);
+                };
+                let path = path.trim_end_matches('\\');
+                if !path.is_empty()
+                    && (!path.split('\\').all(valid_component)
+                        || !objects.directories.contains(path))
+                {
+                    return set_cwd.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
+                }
+                objects.current_directory = path.to_owned();
+                Ok(1)
+            },
+        );
     }
 
     let open = Arc::clone(state);

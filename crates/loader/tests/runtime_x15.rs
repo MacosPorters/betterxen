@@ -1633,14 +1633,19 @@ fn test_guest_synthetic_file_io_through_iat() {
         append_import_call(&mut code, 0x2060);
         code.extend_from_slice(&[0x48, 0x83, 0xc4, 0x48, 0xf4]);
         code.resize(0x80, 0);
-        code.extend(name.encode_utf16().chain([0]).flat_map(u16::to_le_bytes));
+        if symbol == "SetCurrentDirectoryA" {
+            code.extend_from_slice(name.as_bytes());
+            code.push(0);
+        } else {
+            code.extend(name.encode_utf16().chain([0]).flat_map(u16::to_le_bytes));
+        }
         if let Some(target) = target {
             code.resize(0x180, 0);
             code.extend(target.encode_utf16().chain([0]).flat_map(u16::to_le_bytes));
         }
         let bytes = TestPeBuilder::new(IMAGE, 0x1000)
             .add_import(
-                if symbol == "SetCurrentDirectoryW" {
+                if matches!(symbol, "SetCurrentDirectoryA" | "SetCurrentDirectoryW") {
                     "kernel32.dll"
                 } else {
                     MODULE
@@ -1678,6 +1683,12 @@ fn test_guest_synthetic_file_io_through_iat() {
     let output = PROCESS_FIXTURE_OUTPUT;
     assert_eq!(namespace("CreateDirectoryW", "C:/work"), 1);
     assert_eq!(namespace("SetCurrentDirectoryW", "C:/work"), 1);
+    let narrow = call("GetCurrentDirectoryA", &[8, output]);
+    assert_eq!(narrow.execution.final_state.get(Register::Rax), 7);
+    assert_eq!(
+        narrow.image.memory.read_u64(output).unwrap().to_le_bytes(),
+        *b"C:\\work\0"
+    );
     assert_eq!(
         call("GetCurrentDirectoryW", &[0, 0])
             .execution
@@ -1701,7 +1712,7 @@ fn test_guest_synthetic_file_io_through_iat() {
         namespace("GetFileAttributesW", "C:/work/relative.dat"),
         0x80
     );
-    assert_eq!(namespace("SetCurrentDirectoryW", "C:/"), 1);
+    assert_eq!(namespace("SetCurrentDirectoryA", "C:/"), 1);
     assert_eq!(namespace("DeleteFileW", "C:/work/relative.dat"), 1);
     assert_eq!(namespace("RemoveDirectoryW", "C:/work"), 1);
     assert_eq!(open("C:/../outside", 0x4000_0000, 2), u64::MAX);
