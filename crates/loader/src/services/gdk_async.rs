@@ -2,26 +2,32 @@
 
 //! Documented XAsync helpers on top of the manual GDK task-queue subset.
 //!
-//! This first cut runs `XAsyncRun` work and completion on the calling thread
-//! before the service returns (immediate dispatch). Status is still tracked so
-//! `XAsyncGetStatus` / `XAsyncCancel` behave for callers that poll after the
-//! run returns. Queue-port scheduling remains future work.
+//! With a null queue in the `XAsyncBlock`, `XAsyncRun` runs work and optional
+//! completion on the calling thread before it returns (immediate dispatch).
+//! With a non-null manual `XTaskQueue` handle, work is submitted to the work
+//! port and completion to the completion port; the caller must
+//! `XTaskQueueDispatch` those ports. `XAsyncGetStatus` with `wait=true` is
+//! unsupported either way.
 
 use super::ServicesState;
 use crate::cpu::ExitReason;
 use crate::imports::{
-    CallbackStart, CallbackStep, CallbackTask, ImportRegistry, ServiceStatus, Win64Args,
+    CallbackStart, CallbackStep, CallbackTask, GuestCallback, ImportRegistry, ServiceStatus,
+    Win64Args,
 };
 use crate::memory::{GuestMemory, MemoryError};
 use crate::runtime::HResult;
 use std::collections::BTreeMap;
 use std::sync::{Arc, Mutex};
+use std::time::Instant;
 
 const MODULE: &str = "xgameruntime.dll";
 const ASYNC_BLOCK_SIZE: u64 = 56;
 const E_PENDING: u64 = 0x8000_000A;
 const E_ABORT: u64 = 0x8000_4004;
 const E_INVALIDARG: u64 = 0x8007_0057;
+const WORK_PORT: u32 = 0;
+const COMPLETION_PORT: u32 = 1;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum Status {
@@ -45,7 +51,10 @@ fn guest_hresult(code: u32) -> u64 {
 struct AsyncRun {
     block: u64,
     completion: u64,
+    /// Non-zero when work was queued; completion is submitted to this handle.
+    queue: u64,
     ops: Arc<Mutex<AsyncOps>>,
+    state: Arc<ServicesState>,
     phase: Phase,
 }
 
@@ -69,14 +78,47 @@ impl CallbackTask for AsyncRun {
                     .expect("async ops")
                     .ops
                     .insert(self.block, Status::Done(status));
-                if self.completion != 0 {
+                if self.completion == 0 {
+                    // Immediate path returns S_OK to XAsyncRun; queued path
+                    // returns TRUE to XTaskQueueDispatch.
+                    let value = if self.queue == 0 {
+                        HResult::OK.guest_return()
+                    } else {
+                        1
+                    };
+                    return Ok(CallbackStep::Return(value));
+                }
+                if self.queue == 0 {
                     self.phase = Phase::Complete;
                     return Ok(CallbackStep::Call {
                         entry: self.completion,
                         args: [self.block, 0, 0, 0],
                     });
                 }
-                Ok(CallbackStep::Return(HResult::OK.guest_return()))
+                // Queue completion onto the completion port; the guest must
+                // dispatch that port separately.
+                let mut queues = self
+                    .state
+                    .gdk_queues
+                    .lock()
+                    .expect("GDK queue handle table");
+                let callback = super::gdk_queue::scheduled(
+                    Instant::now(),
+                    GuestCallback {
+                        entry: self.completion,
+                        context: self.block,
+                        cancelled: false,
+                        task: None,
+                    },
+                );
+                if queues
+                    .submit(self.queue, COMPLETION_PORT, callback)
+                    .is_err()
+                {
+                    return Ok(CallbackStep::Return(0));
+                }
+                self.state.gdk_queue_changed.notify_all();
+                Ok(CallbackStep::Return(1))
             }
             Phase::Complete => Ok(CallbackStep::Return(HResult::OK.guest_return())),
         }
@@ -99,12 +141,14 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         ServiceStatus::Partial,
         move |args, _, memory| {
             let block = args.rcx;
-            if block == 0 || memory.check_write(block, ASYNC_BLOCK_SIZE as usize).is_err() {
+            if block == 0
+                || memory
+                    .check_write(block, ASYNC_BLOCK_SIZE as usize)
+                    .is_err()
+            {
                 return Ok(E_INVALIDARG);
             }
             if args.rdx != 0 {
-                // Waiting would block the guest; the sync subset never leaves
-                // work pending after XAsyncRun returns.
                 return Ok(guest_hresult(50)); // ERROR_NOT_SUPPORTED as HRESULT
             }
             let ops = status.gdk_async.lock().expect("async ops");
@@ -123,7 +167,11 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         ServiceStatus::Partial,
         move |args, _, memory| {
             let block = args.rcx;
-            if block == 0 || memory.check_write(block, ASYNC_BLOCK_SIZE as usize).is_err() {
+            if block == 0
+                || memory
+                    .check_write(block, ASYNC_BLOCK_SIZE as usize)
+                    .is_err()
+            {
                 return Ok(0);
             }
             let mut ops = cancel.gdk_async.lock().expect("async ops");
@@ -141,7 +189,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         move |args, _, memory| {
             if args.rcx == 0
                 || args.rdx == 0
-                || memory.check_write(args.rcx, ASYNC_BLOCK_SIZE as usize).is_err()
+                || memory
+                    .check_write(args.rcx, ASYNC_BLOCK_SIZE as usize)
+                    .is_err()
             {
                 return Ok(E_INVALIDARG);
             }
@@ -158,12 +208,18 @@ fn start_run(
 ) -> Result<CallbackStart, ExitReason> {
     let block = args.rcx;
     let work = args.rdx;
-    if block == 0 || work == 0 || memory.check_write(block, ASYNC_BLOCK_SIZE as usize).is_err() {
+    if block == 0
+        || work == 0
+        || memory
+            .check_write(block, ASYNC_BLOCK_SIZE as usize)
+            .is_err()
+    {
         return Ok(CallbackStart::Return(E_INVALIDARG));
     }
     memory
         .fetch_instruction_byte(work)
         .map_err(ExitReason::MemoryFault)?;
+    let queue = memory.read_u64(block).map_err(fault)?;
     let completion = memory.read_u64(block + 16).map_err(fault)?;
     if completion != 0 {
         memory
@@ -177,14 +233,53 @@ fn start_run(
         }
         ops.ops.insert(block, Status::Pending);
     }
-    Ok(CallbackStart::Call {
-        task: Box::new(AsyncRun {
-            block,
-            completion,
-            ops: Arc::clone(&state.gdk_async),
-            phase: Phase::Work,
-        }),
-        entry: work,
-        args: [block, 0, 0, 0],
-    })
+
+    let task = AsyncRun {
+        block,
+        completion,
+        queue,
+        ops: Arc::clone(&state.gdk_async),
+        state: Arc::clone(state),
+        phase: Phase::Work,
+    };
+
+    if queue == 0 {
+        return Ok(CallbackStart::Call {
+            task: Box::new(task),
+            entry: work,
+            args: [block, 0, 0, 0],
+        });
+    }
+
+    // Queue path: schedule work on the work port and return immediately.
+    let mut queues = state.gdk_queues.lock().expect("GDK queue handle table");
+    if !queues.has_handle(queue) {
+        state
+            .gdk_async
+            .lock()
+            .expect("async ops")
+            .ops
+            .remove(&block);
+        return Ok(CallbackStart::Return(E_INVALIDARG));
+    }
+    let callback = super::gdk_queue::scheduled(
+        Instant::now(),
+        GuestCallback {
+            entry: work,
+            context: block,
+            cancelled: false,
+            task: Some(Arc::new(Mutex::new(Box::new(task)))),
+        },
+    );
+    if let Err(error) = queues.submit(queue, WORK_PORT, callback) {
+        state
+            .gdk_async
+            .lock()
+            .expect("async ops")
+            .ops
+            .remove(&block);
+        return Ok(CallbackStart::Return(guest_hresult(error)));
+    }
+    state.gdk_queue_changed.notify_all();
+    Ok(CallbackStart::Return(HResult::OK.guest_return()))
 }

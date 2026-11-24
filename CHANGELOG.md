@@ -63,7 +63,7 @@ remains unsupported.
 
 - Added C-locale CRT services (`setlocale`, `localeconv`), C-locale `ctype.h` predicates and case mapping, byte and wide string mutators (`strcpy`/`strncpy`/`strcat`/`strncat`/`memchr`/`strstr`/`strspn`/`strcspn`, `wcscpy`/`wcsncpy`/`wcscat`/`wcschr`/`wcsrchr`), and a bounded `sprintf`/`snprintf` subset (`%%`, `%c`, `%s`, `%d`/`%i`, `%u`, `%x`/`%X`, `%p`, optional widths and `l`/`ll`/`z`/`t`). Non-C locales and unsupported conversions fail closed. See `docs/interfaces.md`.
 
-- Added an immediate-dispatch XAsync subset (`XAsyncRun`, `XAsyncGetStatus`, `XAsyncCancel`, `XAsyncGetResultSize`) on `xgameruntime.dll`. Work and completion run on the calling thread before `XAsyncRun` returns; waiting GetStatus is unsupported. Builds on the existing manual `XTaskQueue*` services.
+- Added an XAsync subset (`XAsyncRun`, `XAsyncGetStatus`, `XAsyncCancel`, `XAsyncGetResultSize`) on `xgameruntime.dll`. With a null queue, work and completion run on the calling thread before `XAsyncRun` returns. With a manual `XTaskQueue` handle in the `XAsyncBlock`, work is submitted to the work port and completion to the completion port for `XTaskQueueDispatch`. Waiting GetStatus is unsupported.
 
 - Added in-memory CRT FILE streams (`fopen`/`fclose`/`fread`/`fwrite`/`fseek`/`ftell`/`feof`/`ferror`/`rewind`, `__acrt_iob_func`) and a runtime environment block for `getenv` / `GetEnvironmentVariableA` / `GetEnvironmentVariableW`. Stream names are single path components with no host mapping; the host process environment is not exposed by default.
 

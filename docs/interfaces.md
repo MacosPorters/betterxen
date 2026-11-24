@@ -262,11 +262,12 @@ process environment is not visible unless an entry is installed here.
 ### XAsync helpers
 
 `XAsyncRun`, `XAsyncGetStatus`, `XAsyncCancel` and `XAsyncGetResultSize` are
-registered on `xgameruntime.dll`. The current subset runs the work callback
-and optional completion callback on the calling thread before `XAsyncRun`
-returns (immediate dispatch). `XAsyncGetStatus` with `wait=true` returns
-`ERROR_NOT_SUPPORTED`. Queue-port scheduling of XAsync work remains future
-work; see the existing manual `XTaskQueue*` subset for port dispatch.
+registered on `xgameruntime.dll`. With a null queue in the `XAsyncBlock`, the
+work callback and optional completion callback run on the calling thread
+before `XAsyncRun` returns (immediate dispatch). With a non-null manual
+`XTaskQueue` handle, work is submitted to the work port and completion to the
+completion port; the guest must `XTaskQueueDispatch` those ports.
+`XAsyncGetStatus` with `wait=true` returns `ERROR_NOT_SUPPORTED`.
 
 ### Built-in guest modules
 

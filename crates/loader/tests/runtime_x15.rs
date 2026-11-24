@@ -2676,3 +2676,79 @@ fn guest_xasync_run_completes_on_the_calling_thread() {
     assert_eq!(result.execution.final_state.get(Register::Rax), 0x2222_0001);
     assert_eq!(result.image.memory.read_u8(block + 0x18).unwrap(), 0xa5);
 }
+
+#[test]
+fn guest_xasync_run_schedules_work_and_completion_on_a_manual_queue() {
+    const IMAGE: u64 = 0x140000000;
+    const MODULE: &str = "xgameruntime.dll";
+    let state = Arc::new(ServicesState::new(Arc::new(MockClock::new(0))));
+    let call = |symbol, args: &[u64]| call_service_fixture(&state, MODULE, symbol, args);
+    let output = PROCESS_FIXTURE_STACK_TOP - 0x480;
+    let block = PROCESS_FIXTURE_STACK_TOP - 0x400;
+    let created = call("XTaskQueueCreate", &[0, 0, output]);
+    let queue = created.image.memory.read_u64(output).unwrap();
+
+    let mut code = vec![0x48, 0x83, 0xec, 0x48];
+    // XAsyncBlock: queue at +0, completion at +0x10, rest zeroed.
+    code.extend_from_slice(&[0x48, 0xb8]);
+    code.extend_from_slice(&block.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x31, 0xc9, 0x48, 0x89, 0x08, 0x48, 0x89, 0x48, 0x08]);
+    code.extend_from_slice(&[0x48, 0x89, 0x48, 0x10, 0x48, 0x89, 0x48, 0x18]);
+    code.extend_from_slice(&[
+        0x48, 0x89, 0x48, 0x20, 0x48, 0x89, 0x48, 0x28, 0x48, 0x89, 0x48, 0x30,
+    ]);
+    code.extend_from_slice(&[0x48, 0xb9]);
+    code.extend_from_slice(&queue.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x89, 0x08]); // block.queue = queue
+    code.extend_from_slice(&[0x48, 0xb9]);
+    code.extend_from_slice(&(IMAGE + 0x1110).to_le_bytes());
+    code.extend_from_slice(&[0x48, 0x89, 0x48, 0x10]); // block.callback
+    // XAsyncRun(block, work) — returns before work runs.
+    code.extend_from_slice(&[0x48, 0x89, 0xc1]);
+    code.extend_from_slice(&[0x48, 0xba]);
+    code.extend_from_slice(&(IMAGE + 0x1100).to_le_bytes());
+    append_import_call(&mut code, 0x2060);
+    code.extend_from_slice(&[0x48, 0x89, 0xc3]); // rbx = XAsyncRun result
+    // Dispatch work port, then completion port.
+    code.extend_from_slice(&[0x48, 0xb9]);
+    code.extend_from_slice(&queue.to_le_bytes());
+    code.extend_from_slice(&[0x31, 0xd2, 0x45, 0x31, 0xc0]); // port 0, timeout 0
+    append_import_call(&mut code, 0x21a0); // XTaskQueueDispatch
+    code.extend_from_slice(&[0x48, 0xb9]);
+    code.extend_from_slice(&queue.to_le_bytes());
+    code.extend_from_slice(&[0xba, 0x01, 0x00, 0x00, 0x00, 0x45, 0x31, 0xc0]); // port 1
+    append_import_call(&mut code, 0x21a0);
+    code.extend_from_slice(&[0x48, 0x83, 0xc4, 0x48, 0xf4]);
+    code.resize(0x100, 0);
+    code.extend_from_slice(&[0xb8, 0x01, 0x00, 0x22, 0x22, 0xc3]); // work
+    code.resize(0x110, 0);
+    code.extend_from_slice(&[0xc6, 0x41, 0x18, 0xa5, 0xc3]); // completion
+    let image = TestPeBuilder::new(IMAGE, 0x1000)
+        .add_import(MODULE, "XAsyncRun")
+        .add_import(MODULE, "XTaskQueueDispatch")
+        .code(&code)
+        .build();
+    let mut registry = ImportRegistry::new();
+    register_standard_services(&mut registry, Arc::clone(&state));
+    let result = run_synthetic_startup(
+        &image,
+        StartupLayout {
+            image_base: IMAGE,
+            stack_top: PROCESS_FIXTURE_STACK_TOP,
+            tls_base: 0x300000000,
+        },
+        registry,
+        400,
+    )
+    .unwrap();
+    assert_eq!(result.execution.exit_reason, ExitReason::Halt);
+    assert_eq!(result.execution.final_state.get(Register::Rbx), 0); // XAsyncRun S_OK
+    assert_eq!(result.image.memory.read_u8(block + 0x18).unwrap(), 0xa5);
+    assert_eq!(
+        call("XAsyncGetStatus", &[block, 0])
+            .execution
+            .final_state
+            .get(Register::Rax),
+        0x2222_0001
+    );
+}
