@@ -263,17 +263,34 @@ pub struct CpuDescriptorHandle(pub u64);
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct GpuDescriptorHandle(pub u64);
 
+/// `handle + index × increment`, or `None` when the sum leaves the heap's
+/// 32-bit offset field and would carry into its heap ID.
+const fn offset_handle(handle: u64, index: u32) -> Option<u64> {
+    let offset = (handle as u32 as u64) + index as u64 * DESCRIPTOR_HANDLE_INCREMENT as u64;
+    if offset > u32::MAX as u64 {
+        None
+    } else {
+        Some(handle & !(u32::MAX as u64) | offset)
+    }
+}
+
 impl CpuDescriptorHandle {
-    /// The handle `index` increments past this one.
-    pub const fn offset(self, index: u32) -> Self {
-        Self(self.0 + index as u64 * DESCRIPTOR_HANDLE_INCREMENT as u64)
+    /// The handle `index` increments past this one, if it stays in its heap's range.
+    pub const fn offset(self, index: u32) -> Option<Self> {
+        match offset_handle(self.0, index) {
+            Some(value) => Some(Self(value)),
+            None => None,
+        }
     }
 }
 
 impl GpuDescriptorHandle {
-    /// The handle `index` increments past this one.
-    pub const fn offset(self, index: u32) -> Self {
-        Self(self.0 + index as u64 * DESCRIPTOR_HANDLE_INCREMENT as u64)
+    /// The handle `index` increments past this one, if it stays in its heap's range.
+    pub const fn offset(self, index: u32) -> Option<Self> {
+        match offset_handle(self.0, index) {
+            Some(value) => Some(Self(value)),
+            None => None,
+        }
     }
 }
 
@@ -518,7 +535,7 @@ enum Descriptor {
 /// Per-execution root signature, heap and table bindings.
 #[derive(Default)]
 struct TableBindings {
-    root_signature: Option<RootSignature>,
+    root_signature: Option<(GraphicsHandle, RootSignature)>,
     srv_heap: Option<u32>,
     sampler_heap: Option<u32>,
     tables: [Option<GpuDescriptorHandle>; 2],
@@ -948,7 +965,10 @@ impl GraphicsContext {
             .resources
             .get(&resource)
             .ok_or(GraphicsError::InvalidResourceHandle)?;
-        if offset + stride > res.data.len() && res.guest_backing_addr.is_none() {
+        let end = offset
+            .checked_add(stride)
+            .ok_or(GraphicsError::InvalidDescriptor)?;
+        if end > res.data.len() && res.guest_backing_addr.is_none() {
             return Err(GraphicsError::InvalidDescriptor);
         }
         cmd_list.commands.push(GraphicsCommand::SetVertexBuffer {
@@ -1125,6 +1145,11 @@ impl GraphicsContext {
             return Err(GraphicsError::Unsupported("descriptor heap capacity"));
         }
         let handle = self.allocate_handle();
+        if handle.id >= 1 << 31 {
+            return Err(GraphicsError::Unsupported(
+                "descriptor heap ID space exhausted",
+            ));
+        }
         self.descriptor_heaps.insert(
             handle.id,
             DescriptorHeap {
@@ -1222,6 +1247,14 @@ impl GraphicsContext {
             .resources
             .get(&resource)
             .ok_or(GraphicsError::InvalidResourceHandle)?;
+        if res.desc.dimension != ResourceDimension::Texture2D
+            || res.desc.depth_or_array_size != 1
+            || res.desc.mip_levels != 1
+        {
+            return Err(GraphicsError::Unsupported(
+                "SRV of a resource other than a single-level, single-slice 2D texture",
+            ));
+        }
         if desc.view_dimension != SrvDimension::Texture2D {
             return Err(GraphicsError::Unsupported(
                 "SRV dimension other than Texture2D",
@@ -1502,34 +1535,57 @@ impl GraphicsContext {
                     format,
                 } => index_buffer = Some((*resource, *offset, *format)),
                 GraphicsCommand::SetDescriptorHeaps { heaps } => {
-                    bindings.srv_heap = None;
-                    bindings.sampler_heap = None;
+                    let (mut srv_heap, mut sampler_heap) = (None, None);
                     for &heap in heaps {
                         match self.descriptor_heap(heap)?.heap_type {
-                            DescriptorHeapType::CbvSrvUav => bindings.srv_heap = Some(heap.id),
-                            DescriptorHeapType::Sampler => bindings.sampler_heap = Some(heap.id),
+                            DescriptorHeapType::CbvSrvUav => srv_heap = Some(heap.id),
+                            DescriptorHeapType::Sampler => sampler_heap = Some(heap.id),
                         }
                     }
+                    // Changing the heaps invalidates tables bound in the old
+                    // ones; setting the same heaps again keeps them.
+                    if (srv_heap, sampler_heap) != (bindings.srv_heap, bindings.sampler_heap) {
+                        bindings.tables = [None; 2];
+                    }
+                    bindings.srv_heap = srv_heap;
+                    bindings.sampler_heap = sampler_heap;
                 }
                 GraphicsCommand::SetGraphicsRootSignature { root_signature } => {
-                    bindings.root_signature = Some(
-                        *self
-                            .root_signatures
-                            .get(root_signature)
-                            .ok_or(GraphicsError::InvalidDescriptor)?,
-                    );
-                    bindings.tables = [None; 2];
+                    let layout = *self
+                        .root_signatures
+                        .get(root_signature)
+                        .ok_or(GraphicsError::InvalidDescriptor)?;
+                    // A different root signature invalidates every root
+                    // argument; setting the bound one again keeps them.
+                    if bindings.root_signature.map(|(handle, _)| handle) != Some(*root_signature) {
+                        bindings.tables = [None; 2];
+                    }
+                    bindings.root_signature = Some((*root_signature, layout));
                 }
                 GraphicsCommand::SetGraphicsRootDescriptorTable {
                     root_parameter_index,
                     base,
                 } => {
-                    let slot = bindings
-                        .tables
-                        .get_mut(*root_parameter_index as usize)
-                        .filter(|_| bindings.root_signature.is_some())
+                    let (_, layout) = bindings
+                        .root_signature
                         .ok_or(GraphicsError::InvalidDescriptor)?;
-                    *slot = Some(*base);
+                    let bound_heap = if *root_parameter_index == layout.srv_parameter {
+                        bindings.srv_heap
+                    } else if *root_parameter_index == layout.sampler_parameter {
+                        bindings.sampler_heap
+                    } else {
+                        return Err(GraphicsError::InvalidDescriptor);
+                    };
+                    // The base must name a slot of the bound heap of the
+                    // table's type; its contents are read at the draw.
+                    let (heap_id, index) = Self::decode_descriptor_handle(base.0, true)
+                        .ok_or(GraphicsError::InvalidDescriptor)?;
+                    if bound_heap != Some(heap_id)
+                        || index >= self.descriptor_heaps[&heap_id].slots.len()
+                    {
+                        return Err(GraphicsError::InvalidDescriptor);
+                    }
+                    bindings.tables[*root_parameter_index as usize] = Some(*base);
                 }
                 GraphicsCommand::DrawIndexedInstanced {
                     index_count_per_instance,
@@ -1575,13 +1631,22 @@ impl GraphicsContext {
                 }
                 GraphicsCommand::DrawInstanced {
                     vertex_count_per_instance,
+                    instance_count,
                     start_vertex_location,
-                    ..
+                    start_instance_location,
                 } => {
-                    if *vertex_count_per_instance < 3 {
-                        continue;
-                    }
-                    if let Some(root_signature) = bindings.root_signature {
+                    if let Some((_, root_signature)) = bindings.root_signature {
+                        if *vertex_count_per_instance == 0 || *instance_count == 0 {
+                            continue;
+                        }
+                        if *vertex_count_per_instance != 3
+                            || *instance_count != 1
+                            || *start_instance_location != 0
+                        {
+                            return Err(GraphicsError::Unsupported(
+                                "textured draw other than one instance of three vertices",
+                            ));
+                        }
                         let pixels = self.textured_draw(
                             memory,
                             &bindings,
@@ -1599,6 +1664,9 @@ impl GraphicsContext {
                             target_res.data[..pixels.len()].copy_from_slice(&pixels);
                         }
                         rendered_output = Some(pixels);
+                        continue;
+                    }
+                    if *vertex_count_per_instance < 3 {
                         continue;
                     }
                     draw_count += 1;
@@ -1752,6 +1820,13 @@ impl GraphicsContext {
             .resources
             .get(&resource)
             .ok_or(GraphicsError::InvalidResourceHandle)?;
+        // COMMON promotes to a shader-resource read; any other state must
+        // include PIXEL_SHADER_RESOURCE.
+        if texture.state != ResourceStates::COMMON
+            && texture.state.0 & ResourceStates::PIXEL_SHADER_RESOURCE.0 == 0
+        {
+            return Err(GraphicsError::ResourceLifetimeViolation);
+        }
         let width = texture.desc.width as u32;
         let height = texture.desc.height;
         let mut bytes = vec![0; format.level_size(width, height)];
@@ -1844,6 +1919,10 @@ impl GraphicsContext {
             .any(|value| !value.is_finite())
         {
             return Err(GraphicsError::InvalidDescriptor);
+        }
+        let max = MAX_TEXTURE_DIMENSION;
+        if !(1..=max).contains(&draw.texture.width) || !(1..=max).contains(&draw.texture.height) {
+            return Err(GraphicsError::Unsupported("texture size"));
         }
         let texels = decode_texture(&draw.texture)?;
         let (tex_w, tex_h) = (draw.texture.width as usize, draw.texture.height as usize);

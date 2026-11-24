@@ -84,6 +84,17 @@ const VERTICES: [[f32; 8]; 3] = [
     [-1.0, 3.0, 0.5, 1.0, 0.0, -1.0, 0.0, 1.0],
 ];
 
+/// The same triangle with `uv' = 2·uv − 0.6`: pixel centres sample
+/// u (and v) = −0.35, 0.15, 0.65, 1.15, off texel centres and outside
+/// [0, 1] on both sides. Point sampling with clamping reads texels
+/// 0, 0, 2, 3 along each axis; wrapping or linear filtering would not.
+const CLAMP_VERTICES: [[f32; 8]; 3] = [
+    [-1.0, -1.0, 0.5, 1.0, -0.6, 1.4, 0.0, 1.0],
+    [3.0, -1.0, 0.5, 1.0, 3.4, 1.4, 0.0, 1.0],
+    [-1.0, 3.0, 0.5, 1.0, -0.6, -2.6, 0.0, 1.0],
+];
+const CLAMPED_TEXEL: [usize; 4] = [0, 0, 2, 3];
+
 fn pixel_table(range_type: DescriptorRangeType) -> RootParameter {
     RootParameter::DescriptorTable {
         ranges: vec![DescriptorRange {
@@ -127,11 +138,13 @@ struct Rig {
     srv_heap: GraphicsHandle,
     sampler_heap: GraphicsHandle,
     root_signature: GraphicsHandle,
+    /// Sampler table at root parameter 0, SRV table at 1.
+    swapped_root_signature: GraphicsHandle,
 }
 
 /// SRV heap slots: 0 texture A (4×4), 1 texture B (4×4), 2 the 8×8 BC1
 /// texture, 3 empty.
-/// Sampler heap slots: 0 point/clamp, 1 empty.
+/// Sampler heap slots: 0 and 1 point/clamp, 2 empty.
 fn rig() -> Rig {
     let mut ctx = GraphicsContext::new();
     let device = ctx.create_device().unwrap();
@@ -144,9 +157,11 @@ fn rig() -> Rig {
     let list = ctx
         .create_command_list(device, alloc, CommandListType::Direct)
         .unwrap();
+    // Records 0–2 are VERTICES and 3–5 CLAMP_VERTICES.
     let vertex_bytes: Vec<u8> = VERTICES
         .as_flattened()
         .iter()
+        .chain(CLAMP_VERTICES.as_flattened())
         .flat_map(|value| value.to_le_bytes())
         .collect();
     let vb = ctx
@@ -198,19 +213,40 @@ fn rig() -> Rig {
                 Some(addr),
             )
             .unwrap();
-        ctx.create_shader_resource_view(texture, &srv_desc(*format), srv_start.offset(slot))
-            .unwrap();
+        ctx.create_shader_resource_view(
+            texture,
+            &srv_desc(*format),
+            srv_start.offset(slot).unwrap(),
+        )
+        .unwrap();
     }
     let sampler_heap = ctx
-        .create_descriptor_heap(device, SAMPLER, 2, true)
+        .create_descriptor_heap(device, SAMPLER, 3, true)
         .unwrap();
     let sampler_start = ctx
         .cpu_descriptor_handle_for_heap_start(sampler_heap)
         .unwrap();
-    ctx.create_sampler(&SamplerDesc::point_clamp(), sampler_start)
+    for slot in 0..2 {
+        ctx.create_sampler(
+            &SamplerDesc::point_clamp(),
+            sampler_start.offset(slot).unwrap(),
+        )
         .unwrap();
+    }
     let root_signature = ctx
         .create_root_signature(device, &root_signature_desc())
+        .unwrap();
+    let swapped_root_signature = ctx
+        .create_root_signature(
+            device,
+            &RootSignatureDesc {
+                parameters: vec![
+                    pixel_table(DescriptorRangeType::Sampler),
+                    pixel_table(DescriptorRangeType::Srv),
+                ],
+                static_sampler_count: 0,
+            },
+        )
         .unwrap();
     Rig {
         ctx,
@@ -223,6 +259,7 @@ fn rig() -> Rig {
         srv_heap,
         sampler_heap,
         root_signature,
+        swapped_root_signature,
     }
 }
 
@@ -234,6 +271,10 @@ struct Binding {
     heaps_bound: (bool, bool),
     stride: usize,
     viewport: u32,
+    first_vertex: u32,
+    swapped: bool,
+    /// Vertex count, instance count, start instance.
+    draw: (u32, u32, u32),
 }
 
 const SLOT_0: Binding = Binding {
@@ -242,6 +283,9 @@ const SLOT_0: Binding = Binding {
     heaps_bound: (true, true),
     stride: STRIDE,
     viewport: 4,
+    first_vertex: 0,
+    swapped: false,
+    draw: (3, 1, 0),
 };
 
 /// Slot 2 holds the 8×8 BC1 texture and is drawn into an 8×8 viewport.
@@ -253,8 +297,8 @@ fn srv(slot: u32) -> Binding {
     }
 }
 
-/// Record and run: the binding's viewport, heaps, root signature, the two tables
-/// (SRV at root parameter 0, sampler at 1) and one three-vertex draw.
+/// Record and run: the binding's viewport, heaps, root signature, the two
+/// tables (SRV at root parameter 0 and sampler at 1, or swapped) and one draw.
 fn run(rig: &mut Rig, binding: Binding) -> Result<ExecutionOutcome, GraphicsError> {
     let ctx = &mut rig.ctx;
     ctx.reset_command_list(rig.list, rig.alloc)?;
@@ -269,16 +313,30 @@ fn run(rig: &mut Rig, binding: Binding) -> Result<ExecutionOutcome, GraphicsErro
         heaps.push(rig.sampler_heap);
     }
     ctx.cmd_set_descriptor_heaps(rig.list, &heaps)?;
-    ctx.cmd_set_graphics_root_signature(rig.list, rig.root_signature)?;
+    let (root_signature, srv_parameter, sampler_parameter) = if binding.swapped {
+        (rig.swapped_root_signature, 1, 0)
+    } else {
+        (rig.root_signature, 0, 1)
+    };
+    ctx.cmd_set_graphics_root_signature(rig.list, root_signature)?;
     if let Some(slot) = binding.srv_slot {
         let base = ctx.gpu_descriptor_handle_for_heap_start(rig.srv_heap)?;
-        ctx.cmd_set_graphics_root_descriptor_table(rig.list, 0, base.offset(slot))?;
+        let base = base.offset(slot).unwrap();
+        ctx.cmd_set_graphics_root_descriptor_table(rig.list, srv_parameter, base)?;
     }
     if let Some(slot) = binding.sampler_slot {
         let base = ctx.gpu_descriptor_handle_for_heap_start(rig.sampler_heap)?;
-        ctx.cmd_set_graphics_root_descriptor_table(rig.list, 1, base.offset(slot))?;
+        let base = base.offset(slot).unwrap();
+        ctx.cmd_set_graphics_root_descriptor_table(rig.list, sampler_parameter, base)?;
     }
-    ctx.cmd_draw_instanced(rig.list, 3, 1, 0, 0)?;
+    let (vertices, instances, start_instance) = binding.draw;
+    ctx.cmd_draw_instanced(
+        rig.list,
+        vertices,
+        instances,
+        binding.first_vertex,
+        start_instance,
+    )?;
     ctx.close_command_list(rig.list)?;
     ctx.execute_command_list(rig.queue, rig.list, &rig.memory)
 }
@@ -589,7 +647,7 @@ fn bad_bindings_fail_and_never_draw() {
         (srv(4), "SRV slot past the heap"),
         (
             Binding {
-                sampler_slot: Some(1),
+                sampler_slot: Some(2),
                 ..SLOT_0
             },
             "empty sampler slot",
@@ -699,6 +757,267 @@ fn bad_bindings_fail_and_never_draw() {
     // The same rig draws once its binding is valid.
     run(&mut rig, SLOT_0).expect("valid binding draws");
     assert_eq!(calls.load(Ordering::SeqCst), 1);
+}
+
+/// Off-centre and out-of-range coordinates: point sampling with clamping
+/// gives pixel `(x, y)` texel `(CLAMPED_TEXEL[x], CLAMPED_TEXEL[y])`. The
+/// draw starts at vertex record 3.
+#[test]
+fn point_clamp_sampling_off_centre_and_outside_unit_range() {
+    let mut rig = rig();
+    let outcome = run(
+        &mut rig,
+        Binding {
+            first_vertex: 3,
+            ..SLOT_0
+        },
+    )
+    .expect("textured draw");
+    let a = texture_a();
+    let expected: Vec<u8> = (0..16)
+        .flat_map(|i| {
+            let at = (CLAMPED_TEXEL[i / 4] * 4 + CLAMPED_TEXEL[i % 4]) * 4;
+            a[at..at + 4].to_vec()
+        })
+        .collect();
+    assert_eq!(outcome.pixels, expected);
+    assert_ne!(outcome.pixels, a);
+}
+
+/// The root signature's parameter order decides which table is which, and
+/// a nonzero sampler slot resolves.
+#[test]
+fn swapped_root_parameters_and_second_sampler_slot() {
+    let mut rig = rig();
+    let outcome = run(
+        &mut rig,
+        Binding {
+            swapped: true,
+            sampler_slot: Some(1),
+            ..srv(1)
+        },
+    )
+    .expect("textured draw");
+    assert_eq!(outcome.pixels, texture_b());
+    // Binding the SRV table at the sampler's parameter fails.
+    let mut wrong = self::rig();
+    let ctx = &mut wrong.ctx;
+    ctx.reset_command_list(wrong.list, wrong.alloc).unwrap();
+    ctx.cmd_set_descriptor_heaps(wrong.list, &[wrong.srv_heap, wrong.sampler_heap])
+        .unwrap();
+    ctx.cmd_set_graphics_root_signature(wrong.list, wrong.swapped_root_signature)
+        .unwrap();
+    let base = ctx
+        .gpu_descriptor_handle_for_heap_start(wrong.srv_heap)
+        .unwrap();
+    ctx.cmd_set_graphics_root_descriptor_table(wrong.list, 0, base)
+        .unwrap();
+    ctx.close_command_list(wrong.list).unwrap();
+    assert_eq!(
+        ctx.execute_command_list(wrong.queue, wrong.list, &wrong.memory),
+        Err(GraphicsError::InvalidDescriptor)
+    );
+}
+
+#[derive(Clone)]
+enum Step {
+    Heaps(Vec<GraphicsHandle>),
+    Root(GraphicsHandle),
+    Tables,
+    Draw,
+}
+
+fn record(rig: &mut Rig, steps: &[Step]) -> Result<ExecutionOutcome, GraphicsError> {
+    let ctx = &mut rig.ctx;
+    ctx.reset_command_list(rig.list, rig.alloc)?;
+    ctx.cmd_set_viewport(rig.list, 4, 4)?;
+    ctx.cmd_set_vertex_buffer(rig.list, rig.vb, 0, STRIDE)?;
+    for step in steps {
+        match step {
+            Step::Heaps(heaps) => ctx.cmd_set_descriptor_heaps(rig.list, heaps)?,
+            Step::Root(root) => ctx.cmd_set_graphics_root_signature(rig.list, *root)?,
+            Step::Tables => {
+                let srv = ctx.gpu_descriptor_handle_for_heap_start(rig.srv_heap)?;
+                let sampler = ctx.gpu_descriptor_handle_for_heap_start(rig.sampler_heap)?;
+                ctx.cmd_set_graphics_root_descriptor_table(rig.list, 0, srv)?;
+                ctx.cmd_set_graphics_root_descriptor_table(rig.list, 1, sampler)?;
+            }
+            Step::Draw => ctx.cmd_draw_instanced(rig.list, 3, 1, 0, 0)?,
+        }
+    }
+    ctx.close_command_list(rig.list)?;
+    ctx.execute_command_list(rig.queue, rig.list, &rig.memory)
+}
+
+/// Changing heaps or the root signature invalidates bound tables; setting
+/// the same heaps or the same root signature again keeps them.
+#[test]
+fn heap_and_root_signature_changes_invalidate_tables() {
+    let mut rig = rig();
+    let other_srv_heap = rig
+        .ctx
+        .create_descriptor_heap(rig.device, CBV_SRV_UAV, 4, true)
+        .unwrap();
+    let same_layout = rig
+        .ctx
+        .create_root_signature(rig.device, &root_signature_desc())
+        .unwrap();
+    let heaps = Step::Heaps(vec![rig.srv_heap, rig.sampler_heap]);
+    let other = Step::Heaps(vec![other_srv_heap, rig.sampler_heap]);
+    let root = Step::Root(rig.root_signature);
+    let bound = [heaps.clone(), root.clone(), Step::Tables];
+    for (extra, expected, case) in [
+        (vec![], Ok(()), "plain"),
+        (vec![heaps.clone()], Ok(()), "same heaps again"),
+        (vec![root.clone()], Ok(()), "same root signature again"),
+        (
+            vec![other, heaps.clone()],
+            Err(GraphicsError::InvalidDescriptor),
+            "heaps changed and restored",
+        ),
+        (
+            vec![Step::Root(same_layout)],
+            Err(GraphicsError::InvalidDescriptor),
+            "another root signature with the same layout",
+        ),
+    ] {
+        let mut steps = bound.to_vec();
+        steps.extend(extra);
+        steps.push(Step::Draw);
+        let result = record(&mut rig, &steps);
+        match expected {
+            Ok(()) => assert_eq!(result.expect(case).pixels, texture_a(), "{case}"),
+            Err(error) => assert_eq!(result, Err(error), "{case}"),
+        }
+    }
+}
+
+/// Zero vertices or instances draw nothing; any other shape than one
+/// instance of three vertices is unsupported. Neither reaches the backend.
+#[test]
+fn textured_draw_shapes() {
+    let mut rig = rig();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let counter = calls.clone();
+    rig.ctx.set_metal_textured_backend(move |_| {
+        counter.fetch_add(1, Ordering::SeqCst);
+        Ok(vec![0; 64])
+    });
+    for draw in [(3, 0, 0), (0, 1, 0)] {
+        let outcome = run(&mut rig, Binding { draw, ..SLOT_0 }).unwrap();
+        assert_eq!(outcome.draw_count, 0, "{draw:?}");
+    }
+    for draw in [(6, 1, 0), (3, 2, 0), (3, 1, 1)] {
+        let result = run(&mut rig, Binding { draw, ..SLOT_0 });
+        assert!(
+            matches!(result, Err(GraphicsError::Unsupported(_))),
+            "{draw:?}: {result:?}"
+        );
+    }
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+/// Vertex and texture reads stay inside their resources even when the
+/// guest backing maps more bytes.
+#[test]
+fn reads_stay_inside_resources() {
+    let mut rig = rig();
+    rig.vb = rig
+        .ctx
+        .create_committed_resource(
+            rig.device,
+            ResourceDesc {
+                dimension: ResourceDimension::Buffer,
+                width: 2 * STRIDE as u64,
+                height: 1,
+                depth_or_array_size: 1,
+                mip_levels: 1,
+                format_rgba8: false,
+            },
+            ResourceStates::VERTEX_AND_CONSTANT_BUFFER,
+            Some(VB_ADDR),
+        )
+        .unwrap();
+    assert_eq!(run(&mut rig, SLOT_0), Err(GraphicsError::IndexOutOfRange));
+}
+
+/// Array textures cannot be viewed, and a texture in a state that excludes
+/// pixel-shader reads cannot be sampled.
+#[test]
+fn texture_shape_and_state_are_checked() {
+    let mut rig = rig();
+    let ctx = &mut rig.ctx;
+    let dest = ctx
+        .cpu_descriptor_handle_for_heap_start(rig.srv_heap)
+        .unwrap()
+        .offset(3)
+        .unwrap();
+    let array = ctx
+        .create_committed_resource(
+            rig.device,
+            ResourceDesc {
+                dimension: ResourceDimension::Texture2D,
+                width: 4,
+                height: 4,
+                depth_or_array_size: 2,
+                mip_levels: 1,
+                format_rgba8: true,
+            },
+            ResourceStates::COMMON,
+            None,
+        )
+        .unwrap();
+    assert!(matches!(
+        ctx.create_shader_resource_view(array, &srv_desc(DXGI_FORMAT_R8G8B8A8_UNORM), dest),
+        Err(GraphicsError::Unsupported(_))
+    ));
+    for (state, ok) in [
+        (ResourceStates::COPY_DEST, false),
+        (ResourceStates::RENDER_TARGET, false),
+        (ResourceStates::PIXEL_SHADER_RESOURCE, true),
+    ] {
+        let ctx = &mut rig.ctx;
+        let texture = ctx
+            .create_committed_texture2d(
+                rig.device,
+                4,
+                4,
+                DXGI_FORMAT_R8G8B8A8_UNORM,
+                state,
+                Some(TEX_ADDR),
+            )
+            .unwrap();
+        ctx.create_shader_resource_view(texture, &srv_desc(DXGI_FORMAT_R8G8B8A8_UNORM), dest)
+            .unwrap();
+        let result = run(&mut rig, srv(3));
+        if ok {
+            assert_eq!(result.unwrap().pixels, texture_a(), "{state:?}");
+        } else {
+            assert_eq!(
+                result,
+                Err(GraphicsError::ResourceLifetimeViolation),
+                "{state:?}"
+            );
+        }
+    }
+}
+
+/// Handle arithmetic cannot carry into the heap ID.
+#[test]
+fn descriptor_handle_offsets_stay_in_their_heap() {
+    let rig = rig();
+    let start = rig
+        .ctx
+        .cpu_descriptor_handle_for_heap_start(rig.srv_heap)
+        .unwrap();
+    assert_eq!(start.offset(1 << 27), None);
+    let last = start.offset((1 << 27) - 1).unwrap();
+    assert_eq!(last.0 >> 32, start.0 >> 32);
+    let gpu = rig
+        .ctx
+        .gpu_descriptor_handle_for_heap_start(rig.srv_heap)
+        .unwrap();
+    assert_eq!(gpu.offset(1 << 27), None);
 }
 
 #[test]
@@ -836,6 +1155,15 @@ fn native_metal_textured_draw_matches_references() {
             "{name}: native vs software"
         );
     }
+    // Off-centre and out-of-range coordinates clamp on Metal as in software.
+    let clamped = Binding {
+        first_vertex: 3,
+        ..SLOT_0
+    };
+    let native = run(&mut rig, clamped).expect("native clamped draw");
+    let reference = run(&mut software, clamped).expect("software clamped draw");
+    assert_eq!(native.pixels, reference.pixels, "clamped: native vs software");
+    assert_ne!(native.pixels, texture_a());
     println!(
         "device={} guest-bound textures: RGBA8 slots 0 and 1 (16 of 16 pixels) and BC1 slot 2 (64 of 64) match",
         gpu.device_name()
