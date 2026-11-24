@@ -152,6 +152,10 @@ fn test_catalog_describes_windows_wide_string_signatures() {
 
     let catalog = MetadataCatalog::builtin();
     let wide = AbiType::StringWide;
+    let wide_pointer = AbiType::Pointer {
+        is_const: false,
+        pointee: "wchar_t".into(),
+    };
     for (symbol, return_type, parameters) in [
         ("wcslen", AbiType::U64, vec![wide.clone()]),
         ("wcsnlen", AbiType::U64, vec![wide.clone(), AbiType::U64]),
@@ -159,7 +163,31 @@ fn test_catalog_describes_windows_wide_string_signatures() {
         (
             "wcsncmp",
             AbiType::I32,
-            vec![wide.clone(), wide, AbiType::U64],
+            vec![wide.clone(), wide.clone(), AbiType::U64],
+        ),
+        (
+            "wcsstr",
+            wide_pointer.clone(),
+            vec![wide.clone(), wide.clone()],
+        ),
+        (
+            "wcspbrk",
+            wide_pointer.clone(),
+            vec![wide.clone(), wide.clone()],
+        ),
+        ("wcsspn", AbiType::U64, vec![wide.clone(), wide.clone()]),
+        ("wcscspn", AbiType::U64, vec![wide.clone(), wide.clone()]),
+        (
+            "wcstok",
+            wide_pointer.clone(),
+            vec![
+                wide_pointer,
+                wide,
+                AbiType::Pointer {
+                    is_const: false,
+                    pointee: "wchar_t *".into(),
+                },
+            ],
         ),
     ] {
         let signature = catalog.lookup("ucrtbase.dll", symbol).unwrap();
