@@ -1162,7 +1162,10 @@ fn native_metal_textured_draw_matches_references() {
     };
     let native = run(&mut rig, clamped).expect("native clamped draw");
     let reference = run(&mut software, clamped).expect("software clamped draw");
-    assert_eq!(native.pixels, reference.pixels, "clamped: native vs software");
+    assert_eq!(
+        native.pixels, reference.pixels,
+        "clamped: native vs software"
+    );
     assert_ne!(native.pixels, texture_a());
     println!(
         "device={} guest-bound textures: RGBA8 slots 0 and 1 (16 of 16 pixels) and BC1 slot 2 (64 of 64) match",
