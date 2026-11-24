@@ -8,11 +8,8 @@ Xenora is an open-source project written primarily in Rust that builds and verif
 
 Xenora is still experimental. Verified work is restricted to independently authored synthetic programs and shaders; authentic Xbox executable loading, system-service compatibility and commercial game execution remain unsupported. See the [current limitations](#current-limitations).
 
-### At a glance
-
-- **Native graphics:** translated gfx1030 vertex and pixel stages and native passes (indexed draws, blend, depth) run on Apple Silicon GPUs — verified, see [Blend pass](#blend-pass) and [Verified Apple M5 results](#verified-apple-m5-results).
-- **Guest execution:** bounded x86-64 execution, original PE32+ loading, synthetic services and guest-driven GPU dispatch — verified milestones X1–X9.
-- **Not supported:** authentic Xbox executable loading and commercial game execution; see the [milestone table](#development-milestones).
+> [!CAUTION]
+> **Xenora strictly opposes piracy.** Xenora is an independent, clean-room, general-purpose emulation research project that neither distributes copyrighted game files nor supports unauthorized content, DRM circumvention, or leaked materials. Use only legally obtained software. Xenora is not affiliated with Microsoft, Rockstar Games, Take-Two Interactive, or any other publisher or platform holder.
 
 [![Native Rust checks](https://github.com/ranveersoni98/Xenora/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ranveersoni98/Xenora/actions/workflows/ci.yml)
 
@@ -57,8 +54,6 @@ The latest verified milestones include **translated gfx1030 vertex and pixel sha
 **Roadmap note:** X10–X25 are proposed engineering milestones, not completed implementations or a guaranteed sequence. Actual priorities will change as compatibility testing reveals new blockers. Successfully completing one milestone does not guarantee that a particular game will run.
 
 All existing verification refers to independently authored synthetic programs and shaders. Commercial-game compatibility remains unverified.
-
-See the [X9 acceptance matrix](docs/testing/x9-acceptance.md) for specific tests, results and unsupported behavior.
 
 ## Native graphics translation
 
