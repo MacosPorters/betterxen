@@ -79,6 +79,12 @@ class GenerateX86(unittest.TestCase):
         _, forms = generate_x86.load(REGISTRY)
         self.assertEqual({form["op"] for form in forms if form.get("lock")}, {"cmpxchg", "xadd"})
 
+    def test_string_forms_are_movs_and_stos_without_operands(self):
+        _, forms = generate_x86.load(REGISTRY)
+        self.assertEqual({form["op"] for form in forms if form["enc"] == "string"}, {"movs", "stos"})
+        self.rejects(self.form('op = "movs"\nopcode = 0xD7\nenc = "string"\nsize = "b"\nimm = "ib"'), "not valid for string")
+        self.rejects(self.form('op = "movs"\nopcode = 0xD7\nenc = "string"\nsize = "b"\nlock = true'), "LOCK needs a memory destination")
+
     def test_unknown_vocabulary_is_rejected(self):
         self.rejects(self.form('op = "frob"\nopcode = 0xD7\nenc = "none"\nsize = "n"'), "unknown op")
         self.rejects(self.form('op = "nop"\nopcode = 0xD7\nenc = "none"\nsize = "z"'), "unknown size")

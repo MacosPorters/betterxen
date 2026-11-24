@@ -977,7 +977,9 @@ fn every_declared_form_is_executed_by_a_fixture() {
         .unwrap_or_else(|error| panic!("{line}: {error:?}"));
         seen.insert(usize::from(insn.form));
     }
-    // Control flow and exits are covered by the tests below.
+    // Control flow and exits are covered by the tests below. String
+    // instructions and the direction flag need their own memory layout and
+    // are covered form by form in `tests/cpu_rep.rs`.
     let separate = [
         Op::Ldmxcsr,
         Op::Jcc,
@@ -986,6 +988,10 @@ fn every_declared_form_is_executed_by_a_fixture() {
         Op::Ret,
         Op::Hlt,
         Op::Syscall,
+        Op::Movs,
+        Op::Stos,
+        Op::Cld,
+        Op::Std,
     ];
     let mut missing: BTreeMap<&str, Vec<String>> = BTreeMap::new();
     for (index, form) in FORMS.iter().enumerate() {
@@ -1208,7 +1214,8 @@ fn undeclared_and_ambiguous_encodings_are_rejected() {
         &[0xF0, 0x01, 0x0E],       // lock add [rsi], ecx
         &[0xF2, 0x90],             // repne nop
         &[0xF3, 0xC3],             // rep ret
-        &[0xF3, 0xA4],             // rep movsb
+        &[0xF2, 0xA4],             // repne movsb
+        &[0xF3, 0xA6],             // repe cmpsb
         &[0x67, 0x8B, 0x06],       // address-size override
         &[0x64, 0x2E, 0x8B, 0x06], // CS after FS
         &[0x66, 0x50],             // push ax

@@ -59,6 +59,18 @@ These rules hold for both engines and are what a guest scheduler has to preserve
 
 The SDM cases for these forms in `tests/cpu_known_answers.rs` were written before this implementation, by another contributor. `tests/x86_atomic.rs` adds the LOCK rules, both compare outcomes at every width, unaligned operands and faults. None of it has been compared with x86 hardware, and nothing here establishes multi-thread behaviour.
 
+## String instructions
+
+MOVS and STOS exist for 8-, 16-, 32- and 64-bit elements, alone and with REP (F3), together with the direction flag and CLD and STD. `CpuState::df` holds the flag. It is not one of the six status flags the registry tracks.
+
+- **One element per step.** A REP form moves one element, decrements RCX and, while RCX is not zero, leaves RIP on the instruction. Each element is a step of its own in both engines and counts against the step budget, so a repeat cannot outrun the budget and can stop part-way and resume. A zero count touches no memory and no register. Without REP, RCX is not read. Step counts therefore count elements, not instructions, for a REP form.
+- **Direction.** RSI and RDI move up by the element size when the flag is clear and down when it is set. Each element is read whole and then written, so overlapping ranges behave as that order dictates.
+- **Faults.** An element completes or changes nothing. A fault keeps the elements already done, leaves RSI, RDI and RCX at the element that faulted, and leaves RIP on the instruction.
+- **Segments.** An FS or GS override applies to the MOVS source. The destination, and STOS as a whole, take no override.
+- **Lowering.** The DBT runs these forms on the shared semantics, one helper call per element, and a string instruction ends its translated block. There is no bulk-copy path, so large copies are slow.
+
+The SDM cases for these forms in `tests/cpu_known_answers.rs` were written before this implementation, by another contributor. `tests/cpu_rep.rs` adds a byte-array model over every form, direction and count, the step accounting, faults and the segment rule. None of it has been compared with x86 hardware.
+
 ## Guest CPUID
 
 CPUID (`0F A2`) returns a fixed table that never reads the host. It describes a synthetic processor: the vendor string is `Xenora guest`, not Intel's or AMD's, and leaf 1 reports no family, model or stepping.
@@ -83,4 +95,4 @@ A feature bit is set only when every instruction of that feature is implemented.
 
 ## Rejected on purpose
 
-LOCK except as described above, F2 or F3 where it is neither PAUSE nor part of a declared form, F2 combined with F3, address-size overrides, an ignored segment override after FS or GS, 16-bit stack and branch forms, 16-bit BSWAP and MOVSXD, bit tests of memory by a register index, RCL, RCR, SHLD, SHRD, string instructions, MMX, the RCP and RSQRT approximations, SSE3 and later, VEX, CMPXCHG8B, CMPXCHG16B and fences. The DBT also refuses raw SYSCALL.
+LOCK except as described above, F2 or F3 where it is neither PAUSE nor part of a declared form, F2 combined with F3, address-size overrides, an ignored segment override after FS or GS, 16-bit stack and branch forms, 16-bit BSWAP and MOVSXD, bit tests of memory by a register index, RCL, RCR, SHLD, SHRD, LODS, CMPS, SCAS, REPE and REPNE, MMX, the RCP and RSQRT approximations, SSE3 and later, VEX, CMPXCHG8B, CMPXCHG16B and fences. The DBT also refuses raw SYSCALL.
