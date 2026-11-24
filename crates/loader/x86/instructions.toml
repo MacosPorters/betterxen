@@ -10,6 +10,9 @@
 # decodable; a form counts as implemented only once its operation has semantics
 # and independent tests. Forms not listed here are rejected.
 #
+# lock = true accepts the LOCK prefix (F0) when the ModRM operand is memory.
+# Every other use of LOCK is rejected, as the architecture's #UD.
+#
 # prefix is a mandatory prefix: "66", "f3" or "f2". SSE forms use size x (XMM)
 # and give the ModRM operand width in src: x = 16 bytes, q = 8, d = 4, w = 2.
 # A 16-byte memory operand must be aligned unless unaligned = true.
@@ -48,6 +51,8 @@ movsx = { ref = "sdm MOVSX/MOVSXD" }
 movsxd = { ref = "sdm MOVSX/MOVSXD" }
 lea = { ref = "sdm LEA" }
 xchg = { ref = "sdm XCHG" }
+xadd = { writes = "cf zf sf of pf af", ref = "sdm XADD" }
+cmpxchg = { writes = "cf zf sf of pf af", ref = "sdm CMPXCHG" }
 bswap = { ref = "sdm BSWAP" }
 cwde = { ref = "sdm CBW/CWDE/CDQE" }
 cdq = { ref = "sdm CWD/CDQ/CQO" }
@@ -85,6 +90,7 @@ syscall = { terminator = true, ref = "sdm SYSCALL" }
 clc = { writes = "cf", ref = "sdm CLC" }
 stc = { writes = "cf", ref = "sdm STC" }
 cmc = { reads = "cf", writes = "cf", ref = "sdm CMC" }
+cpuid = { ref = "sdm CPUID" }
 
 # SSE and SSE2 moves and packed integer operations. None reads or writes RFLAGS.
 movaps = { ref = "sdm MOVAPS" }
@@ -563,6 +569,13 @@ enc = "none"
 size = "n"
 
 [[form]]
+op = "cpuid"
+map = "0f"
+opcode = 0xA2
+enc = "none"
+size = "n"
+
+[[form]]
 op = "movzx"
 map = "0f"
 opcode = 0xB6
@@ -673,6 +686,38 @@ opcode = 0xBB
 enc = "rm_reg"
 size = "v"
 register_only = true
+
+[[form]]
+op = "cmpxchg"
+map = "0f"
+opcode = 0xB0
+enc = "rm_reg"
+size = "b"
+lock = true
+
+[[form]]
+op = "cmpxchg"
+map = "0f"
+opcode = 0xB1
+enc = "rm_reg"
+size = "v"
+lock = true
+
+[[form]]
+op = "xadd"
+map = "0f"
+opcode = 0xC0
+enc = "rm_reg"
+size = "b"
+lock = true
+
+[[form]]
+op = "xadd"
+map = "0f"
+opcode = 0xC1
+enc = "rm_reg"
+size = "v"
+lock = true
 
 # Groups whose digits select an operation: [opcode, size, immediate, encoding].
 [[group]]

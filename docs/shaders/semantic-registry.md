@@ -127,7 +127,7 @@ error.
 | `shift_count_bits` | Shifts only: the low bits of the count source used as the count: S1, or S0 for a vector form with `source_order = "reversed"`. Scalar forms mask it in the generated evaluation, vector forms in their MSL template; the XML must list the count source as unsigned | `5` (log2 of `width`); required for shifts, rejected elsewhere |
 | `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (SOPC and SOPK compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
 | `vcc`, `exec` | Implicit effect on VCC and EXEC | `unchanged`; `vcc` is `lane_mask` exactly for the VOPC compares (VCC_LO bit n = EXEC[n] & test, fully written; VCC_HI unknown afterwards, see [vector-compare.md](vector-compare.md)); `exec` must be `unchanged` (explicit destinations are covered by the operand rule) |
-| `wave` | Wave sizes the form is valid in | `wave32` exactly for the VOPC compares (their one entry point is the Wave32 compute fixture ABI, vector-compare.md section 2), `any` for everything else; the decoder has no wave-size input, so no other form may claim `wave32` |
+| `wave` | Wave sizes the form is valid in | `wave32` for VOPC compares and VOP1 integer forms in the Wave32 compute fixture ABI, `any` for other registry forms |
 | `operands` | Name of an `[operand_rules]` entry for the same family | e.g. `sop2_sgpr` |
 | `spec` | References `{ document, section, page }` | at least one `guide` reference with a page above 0 |
 | `verify` | Evidence the form needs before it counts as verified | `reference`, `independent`, `metal`, `llvm_encoding` |
