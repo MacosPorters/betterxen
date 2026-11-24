@@ -217,10 +217,77 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strncat", |args, _, memory| {
         append_string(memory, args.rcx, args.rdx, args.r8)
     });
-    for symbol in ["memchr", "strcpy", "strncpy", "strcat", "strncat"] {
+    registry.register(UCRT, "strstr", |args, _, memory| {
+        if args.rcx == 0 || args.rdx == 0 {
+            return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+        }
+        let needle = read_c_bytes(memory, args.rdx)?;
+        if needle.is_empty() {
+            return Ok(args.rcx);
+        }
+        let haystack = read_c_bytes(memory, args.rcx)?;
+        Ok(haystack
+            .windows(needle.len())
+            .position(|window| window == needle)
+            .map_or(0, |index| args.rcx + index as u64))
+    });
+    registry.register(UCRT, "strspn", |args, _, memory| {
+        span_length(memory, args.rcx, args.rdx, true)
+    });
+    registry.register(UCRT, "strcspn", |args, _, memory| {
+        span_length(memory, args.rcx, args.rdx, false)
+    });
+    for symbol in [
+        "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "strspn", "strcspn",
+    ] {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
     }
+}
+
+fn read_c_bytes(memory: &GuestMemory, address: u64) -> Result<Vec<u8>, ExitReason> {
+    let mut bytes = Vec::new();
+    for index in 0..SCAN_BUDGET {
+        let byte = memory
+            .read_u8(address + index)
+            .map_err(ExitReason::MemoryFault)?;
+        if byte == 0 {
+            return Ok(bytes);
+        }
+        bytes.push(byte);
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn span_length(
+    memory: &GuestMemory,
+    address: u64,
+    set: u64,
+    accept: bool,
+) -> Result<u64, ExitReason> {
+    if address == 0 || set == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    let mut present = [false; 256];
+    for index in 0..SCAN_BUDGET {
+        let byte = memory.read_u8(set + index).map_err(ExitReason::MemoryFault)?;
+        if byte == 0 {
+            break;
+        }
+        present[byte as usize] = true;
+        if index + 1 == SCAN_BUDGET {
+            return Err(ExitReason::IllegalInstruction(0xFE));
+        }
+    }
+    for index in 0..SCAN_BUDGET {
+        let byte = memory
+            .read_u8(address + index)
+            .map_err(ExitReason::MemoryFault)?;
+        if byte == 0 || present[byte as usize] != accept {
+            return Ok(index);
+        }
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
 }
 
 fn copy_string(

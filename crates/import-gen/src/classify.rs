@@ -216,17 +216,15 @@ impl SymbolDb {
             for symbol in [
                 "strlen", "strnlen", "strcmp", "strncmp", "wcslen", "wcsnlen", "wcscmp", "wcsncmp",
                 "memset", "memcpy", "memmove", "memcmp", "memchr", "strcpy", "strncpy", "strcat",
-                "strncat", "isalnum", "isalpha", "isdigit", "islower", "isspace", "isxdigit",
-                "isupper", "isprint", "iscntrl", "ispunct", "tolower", "toupper",
+                "strncat", "strstr", "strspn", "strcspn", "isalnum", "isalpha", "isdigit",
+                "islower", "isspace", "isxdigit", "isupper", "isprint", "iscntrl", "ispunct",
+                "tolower", "toupper",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
         for (sym, libc) in &[
-            ("strcspn", "strcspn"),
             ("strpbrk", "strpbrk"),
-            ("strspn", "strspn"),
-            ("strstr", "strstr"),
             ("strtok", "strtok"),
             ("wcscat", "wcscat"),
             ("wcscpy", "wcscpy"),
