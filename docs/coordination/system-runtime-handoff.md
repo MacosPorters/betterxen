@@ -1,6 +1,6 @@
 # System-runtime agent handoff
 
-**PR review checkpoint:** 2026-11-24T23:40Z (UTC) — no new human feedback on #312 or #316 since 20:01Z
+**PR review checkpoint:** 2026-11-25T00:30Z (UTC) — no new human feedback on #312 or #316 since 20:01Z
 **Owner identity on commits:** Adeeb Rahman `<therealabeeb@icloud.com>` (GitHub: `soggyramennoodle`)  
 **Do not add** `Co-authored-by: Cursor` or any AI attribution trailers (`AGENTS.md`).
 
@@ -148,6 +148,14 @@ done
 GitHub PR subscribe MCP returned 403 earlier; the local loop is the reliable path.
 
 ---
+
+## Latest session (2026-11-24/25)
+
+- Pushed both branches after merging main `3b47c21`: #312 at `7bb4798`, #316 at `324eab0`. Both MERGEABLE, all CI checks green (the advisory `check` job once failed on a GitHub GraphQL outage; re-triggered by editing the PR body, since we lack rerun rights).
+- #312 description rewritten to `.github/PULL_REQUEST_TEMPLATE.md` (the `description` check enforces it).
+- Added after push, local only: `6229447` MoveFileExW (replace / write-through / copy-allowed) on host and synthetic drives.
+- Auto-fix cannot be enabled by the agent (no push rights to upstream); the user can enable it from the PR bar.
+- #392 is claimed by zachdoxsee; #206 still awaits maintainer scope confirmation. Do not take either.
 
 ## Next actions (priority order)
 
