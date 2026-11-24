@@ -6,6 +6,8 @@
 
 #![allow(dead_code)]
 
+pub mod robustness;
+
 use std::sync::Arc;
 use xenora_loader::cpu::{CpuState, ExitReason, Register};
 use xenora_loader::dbt::DbtEngine;
