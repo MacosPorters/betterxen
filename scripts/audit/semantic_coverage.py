@@ -180,10 +180,22 @@ def read_declarations(registry, identified):
 
     declared = set()
     # An encoding variant declares its base form in another encoding family.
+    raw_variants = registry.get("encoding_variant", [])
+    if not isinstance(raw_variants, list) or not all(
+        isinstance(variant, dict)
+        and {"family", "of", "opcode", "operands"} <= set(variant)
+        and all(isinstance(variant[key], str) for key in ("family", "of", "operands"))
+        and type(variant["opcode"]) is int
+        for variant in raw_variants
+    ):
+        raise ValueError(
+            f"{REGISTRY}: every encoding_variant needs string family, of and operands"
+            " and an integer opcode"
+        )
     variants = [
         {"family": variant["family"], "name": variant["of"], "opcode": variant["opcode"],
          "operands": variant["operands"]}
-        for variant in registry.get("encoding_variant", [])
+        for variant in raw_variants
     ]
     for form in registry["form"] + variants:
         key = (form["family"], form["name"])

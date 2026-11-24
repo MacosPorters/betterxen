@@ -1,9 +1,12 @@
+use std::collections::BTreeMap;
 use std::ffi::c_void;
 use std::fmt;
 use std::mem::size_of_val;
 use std::ptr::{NonNull, copy_nonoverlapping};
+use std::sync::{Mutex, MutexGuard, PoisonError};
 use std::time::Instant;
 
+use objc2::Message;
 use objc2::rc::{Retained, autoreleasepool};
 use objc2::runtime::{NSObjectProtocol, ProtocolObject};
 use objc2::sel;
@@ -13,8 +16,8 @@ use objc2_metal::{
     MTLCompileOptions, MTLComputeCommandEncoder, MTLComputePipelineState,
     MTLCreateSystemDefaultDevice, MTLDevice, MTLFunction, MTLGPUFamily, MTLLibrary,
     MTLMathFloatingPointFunctions, MTLMathMode, MTLOrigin, MTLPixelFormat, MTLRegion,
-    MTLResourceOptions, MTLShaderValidation, MTLSize, MTLStorageMode, MTLTexture,
-    MTLTextureDescriptor, MTLTextureUsage,
+    MTLResourceOptions, MTLSamplerState, MTLShaderValidation, MTLSharedEvent, MTLSize,
+    MTLStorageMode, MTLTexture, MTLTextureDescriptor, MTLTextureUsage,
 };
 use xenora_texture::{
     Bc1Upload, BcAlphaFormat, BcAlphaUpload, BcChannelFormat, BcChannelUpload, TiledBc1,
@@ -33,6 +36,7 @@ const MAX_THREADS_PER_GROUP: usize = 64;
 const MAX_GROUPS: usize = 64;
 const MAX_GRID_WORDS: usize = MAX_GROUPS * MAX_THREADS_PER_GROUP;
 const MAX_SOURCE_BYTES: usize = 64 * 1024;
+const MAX_IN_FLIGHT: usize = 16;
 
 const BC_READBACK: &str = r"
 #include <metal_stdlib>
@@ -65,7 +69,7 @@ enum ComputeInput<'a> {
     Texture(&'a ProtocolObject<dyn MTLTexture>, usize),
     SampledTexture {
         texture: &'a ProtocolObject<dyn MTLTexture>,
-        sampler: &'a ProtocolObject<dyn objc2_metal::MTLSamplerState>,
+        sampler: &'a ProtocolObject<dyn MTLSamplerState>,
         coords: &'a [u32],
     },
 }
@@ -147,7 +151,18 @@ pub struct RunProfile {
     pub library_seconds: f64,
     pub pipeline_seconds: f64,
     pub gpu_seconds: f64,
+    /// Host wall time from the start of setup until wait observes completion.
     pub host_seconds: f64,
+    /// Host time to allocate the input and output shared buffers.
+    pub alloc_seconds: f64,
+    /// Host time to create the command buffer and encode the dispatch.
+    pub encode_seconds: f64,
+    /// Host time spent in `commit`.
+    pub commit_seconds: f64,
+    /// Host time spent in `waitUntilCompleted`.
+    pub wait_seconds: f64,
+    /// Host time to copy the output words back; not part of `host_seconds`.
+    pub readback_seconds: f64,
     pub output: Vec<u32>,
 }
 
@@ -155,10 +170,161 @@ pub struct RunProfile {
 pub struct NativeCompute {
     device: Retained<ProtocolObject<dyn MTLDevice>>,
     queue: Retained<ProtocolObject<dyn MTLCommandQueue>>,
+    submissions: Mutex<SubmissionTable>,
+}
+
+/// A submitted dispatch whose result can be collected by its issuing context.
+#[must_use]
+pub struct Submission<'a> {
+    context: &'a NativeCompute,
+    id: u64,
+}
+
+impl Drop for Submission<'_> {
+    fn drop(&mut self) {
+        let mut table = self.context.submissions();
+        if let Some(entry) = table.entries.get_mut(&self.id) {
+            if entry.resources.is_some() {
+                entry.abandoned = true;
+            } else {
+                table.entries.remove(&self.id);
+            }
+        }
+    }
+}
+
+#[doc(hidden)]
+pub struct SubmissionGate {
+    event: Retained<ProtocolObject<dyn MTLSharedEvent>>,
+}
+
+impl SubmissionGate {
+    pub fn open(&self) {
+        self.event.setSignaledValue(1);
+    }
+}
+
+impl Drop for SubmissionGate {
+    fn drop(&mut self) {
+        self.open();
+    }
+}
+
+#[derive(Default)]
+struct SubmissionTable {
+    next_id: u64,
+    entries: BTreeMap<u64, SubmissionEntry>,
+}
+
+impl SubmissionTable {
+    fn in_flight(&self) -> usize {
+        self.entries
+            .values()
+            .filter(|entry| entry.resources.is_some())
+            .count()
+    }
+
+    fn check_capacity(&self) -> Result<(), MetalError> {
+        if self.in_flight() >= MAX_IN_FLIGHT {
+            return Err(MetalError::new(
+                "in-flight limit",
+                format!("at most {MAX_IN_FLIGHT} compute submissions may be in flight"),
+            ));
+        }
+        Ok(())
+    }
+}
+
+struct SubmissionEntry {
+    resources: Option<InFlightResources>,
+    result: Result<RunProfile, MetalError>,
+    host_start: Instant,
+    abandoned: bool,
+    waiting: bool,
+}
+
+/// Owns every resource referenced by the unretained command buffer until
+/// Metal reports Completed or Error.
+struct InFlightResources {
+    command: Retained<ProtocolObject<dyn MTLCommandBuffer>>,
+    _pipeline: Retained<ProtocolObject<dyn MTLComputePipelineState>>,
+    _input: Option<Retained<ProtocolObject<dyn MTLBuffer>>>,
+    output: Retained<ProtocolObject<dyn MTLBuffer>>,
+    _texture: Option<Retained<ProtocolObject<dyn MTLTexture>>>,
+    _sampler: Option<Retained<ProtocolObject<dyn MTLSamplerState>>>,
+    gate: Option<Retained<ProtocolObject<dyn MTLSharedEvent>>>,
+    word_count: usize,
+}
+
+// SAFETY: Metal permits command buffers to move between threads with exclusive
+// access. The table mutex and waiting flag keep sweeps off a command during its
+// wait. Readback uses private shared storage after GPU completion. Retained
+// textures and input buffers are only kept alive by the table.
+unsafe impl Send for InFlightResources {}
+
+impl SubmissionEntry {
+    fn retire(&mut self, status: MTLCommandBufferStatus) {
+        if !is_terminal(status) {
+            return;
+        }
+        let Some(resources) = self.resources.take() else {
+            return;
+        };
+        if let Err(error) = check_command_status(&resources.command, status) {
+            self.result = Err(error);
+            return;
+        }
+        if let Ok(profile) = &mut self.result {
+            profile.gpu_seconds = resources.command.GPUEndTime() - resources.command.GPUStartTime();
+            profile.host_seconds = self.host_start.elapsed().as_secs_f64();
+            let readback_start = Instant::now();
+            let byte_len = resources.word_count * size_of::<u32>();
+            // SAFETY: The initialized shared output is distinct from the host
+            // vector and the GPU has finished writing to it. Both ranges hold
+            // byte_len bytes and all u32 bit patterns are valid.
+            unsafe {
+                copy_nonoverlapping(
+                    resources.output.contents().cast::<u8>().as_ptr(),
+                    profile.output.as_mut_ptr().cast::<u8>(),
+                    byte_len,
+                );
+            }
+            profile.readback_seconds = readback_start.elapsed().as_secs_f64();
+        }
+    }
+}
+
+impl Drop for NativeCompute {
+    fn drop(&mut self) {
+        // Tokens can be abandoned (or forgotten) while their work is pending.
+        // Open all remaining gates before draining the queue.
+        let table = self
+            .submissions
+            .get_mut()
+            .unwrap_or_else(PoisonError::into_inner);
+        for resources in table
+            .entries
+            .values()
+            .filter_map(|entry| entry.resources.as_ref())
+        {
+            if let Some(gate) = &resources.gate {
+                gate.setSignaledValue(1);
+            }
+        }
+        for (_, entry) in std::mem::take(&mut table.entries) {
+            if let Some(resources) = entry.resources {
+                resources.command.waitUntilCompleted();
+                if !is_terminal(resources.command.status()) {
+                    // Preserve the resources if Metal unexpectedly returns before completion.
+                    std::mem::forget(resources);
+                }
+            }
+        }
+    }
 }
 
 impl NativeCompute {
-    /// Open the default Apple GPU and create a retained-resource command queue.
+    /// Open the default Apple GPU and create a command queue.
     ///
     /// # Errors
     ///
@@ -178,8 +344,45 @@ impl NativeCompute {
             let queue = device
                 .newCommandQueue()
                 .ok_or_else(|| MetalError::new("newCommandQueue", "queue creation failed"))?;
-            Ok(Self { device, queue })
+            Ok(Self {
+                device,
+                queue,
+                submissions: Mutex::default(),
+            })
         })
+    }
+
+    fn submissions(&self) -> MutexGuard<'_, SubmissionTable> {
+        self.submissions
+            .lock()
+            .unwrap_or_else(PoisonError::into_inner)
+    }
+
+    fn retire_completed(&self) {
+        self.submissions().entries.retain(|_, entry| {
+            if !entry.waiting
+                && let Some(resources) = &entry.resources
+            {
+                entry.retire(resources.command.status());
+            }
+            !entry.abandoned || entry.resources.is_some()
+        });
+    }
+
+    fn begin_submission(&self) -> Instant {
+        let host_start = Instant::now();
+        self.retire_completed();
+        host_start
+    }
+
+    #[doc(hidden)]
+    pub fn in_flight(&self) -> usize {
+        self.submissions().in_flight()
+    }
+
+    #[doc(hidden)]
+    pub fn tracked(&self) -> usize {
+        self.submissions().entries.len()
     }
 
     /// Report the selected device's registered name.
@@ -561,6 +764,122 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         self.run_profiled_words(source, entry, input, None)
     }
 
+    /// Submit trusted MSL with read-only words at buffer 0 and output words at buffer 1.
+    ///
+    /// The trusted-kernel requirements of [`Self::run_words`] apply.
+    /// Use [`Self::wait`] to collect the result.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for invalid input or source, compilation or dispatch
+    /// setup failure, or a full in-flight table.
+    pub fn submit_words(
+        &self,
+        source: &str,
+        entry: &str,
+        input: &[u32],
+    ) -> Result<Submission<'_>, MetalError> {
+        autoreleasepool(|_| {
+            let host_start = self.begin_submission();
+            validate_words(source, entry, input)?;
+            self.submit_sized(
+                source,
+                entry,
+                ComputeInput::Words(input),
+                None,
+                None,
+                host_start,
+            )
+        })
+    }
+
+    #[doc(hidden)]
+    pub fn submit_words_gated(
+        &self,
+        source: &str,
+        entry: &str,
+        input: &[u32],
+    ) -> Result<(Submission<'_>, SubmissionGate), MetalError> {
+        autoreleasepool(|_| {
+            let host_start = self.begin_submission();
+            validate_words(source, entry, input)?;
+            let event = self
+                .device
+                .newSharedEvent()
+                .ok_or_else(|| MetalError::new("newSharedEvent", "gate creation failed"))?;
+            let submission = self.submit_sized(
+                source,
+                entry,
+                ComputeInput::Words(input),
+                None,
+                Some(&event),
+                host_start,
+            )?;
+            Ok((submission, SubmissionGate { event }))
+        })
+    }
+
+    /// Wait for this context's submission and return its readback and timings.
+    ///
+    /// # Errors
+    ///
+    /// Returns an error for a token from another context, an unknown submission,
+    /// or a Metal completion failure.
+    pub fn wait(&self, submission: Submission<'_>) -> Result<RunProfile, MetalError> {
+        if !std::ptr::eq(self, submission.context) {
+            return Err(MetalError::new(
+                "submission",
+                "token belongs to another context",
+            ));
+        }
+        autoreleasepool(|_| {
+            let id = submission.id;
+            std::mem::forget(submission);
+            let result = self.take_result(id);
+            self.retire_completed();
+            result
+        })
+    }
+
+    fn take_result(&self, id: u64) -> Result<RunProfile, MetalError> {
+        let unknown = || MetalError::new("submission", "unknown submission id");
+        let command = {
+            let mut table = self.submissions();
+            let entry = table.entries.get_mut(&id).ok_or_else(unknown)?;
+            entry.resources.as_ref().map(|resources| {
+                entry.waiting = true;
+                resources.command.clone()
+            })
+        };
+        let wait_seconds = command.map_or(0.0, |command| {
+            // Keep the table available to other submitters while Metal waits.
+            let start = Instant::now();
+            command.waitUntilCompleted();
+            start.elapsed().as_secs_f64()
+        });
+
+        let mut table = self.submissions();
+        let entry = table.entries.get_mut(&id).ok_or_else(unknown)?;
+        entry.waiting = false;
+        let host_seconds = if let Some(resources) = &entry.resources {
+            let status = resources.command.status();
+            if !is_terminal(status) {
+                entry.abandoned = true;
+                check_command_status(&resources.command, status)?;
+            }
+            entry.retire(status);
+            None
+        } else {
+            Some(entry.host_start.elapsed().as_secs_f64())
+        };
+        let mut profile = table.entries.remove(&id).ok_or_else(unknown)?.result?;
+        profile.wait_seconds = wait_seconds;
+        if let Some(host_seconds) = host_seconds {
+            profile.host_seconds = host_seconds;
+        }
+        Ok(profile)
+    }
+
     /// Run trusted MSL with an explicit one-dimensional threadgroup width.
     ///
     /// The grid still contains one invocation per input word. The requested width
@@ -608,13 +927,7 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         input: &[u32],
         group_width: Option<usize>,
     ) -> Result<RunProfile, MetalError> {
-        if !(1..=MAX_GRID_WORDS).contains(&input.len()) {
-            return Err(MetalError::new(
-                "dispatch bounds",
-                format!("expected 1..={MAX_GRID_WORDS} words, got {}", input.len()),
-            ));
-        }
-        validate_source(source, &[entry])?;
+        validate_words(source, entry, input)?;
         autoreleasepool(|_| self.run_sized(source, entry, ComputeInput::Words(input), group_width))
     }
 
@@ -636,7 +949,20 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         input: ComputeInput<'_>,
         group_width: Option<usize>,
     ) -> Result<RunProfile, MetalError> {
-        let host_start = Instant::now();
+        let host_start = self.begin_submission();
+        self.wait(self.submit_sized(source, entry, input, group_width, None, host_start)?)
+    }
+
+    fn submit_sized(
+        &self,
+        source: &str,
+        entry: &str,
+        input: ComputeInput<'_>,
+        group_width: Option<usize>,
+        gate: Option<&ProtocolObject<dyn MTLSharedEvent>>,
+        host_start: Instant,
+    ) -> Result<Submission<'_>, MetalError> {
+        self.submissions().check_capacity()?;
         let options = compile_options()?;
         let library_start = Instant::now();
         let library = self.compile_library(source, &options)?;
@@ -672,17 +998,29 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
                 "fixture exceeds device buffer limit",
             ));
         }
+        let alloc_start = Instant::now();
         let input_buffer = match input {
             ComputeInput::Words(words) => Some(self.new_buffer(words)?),
             ComputeInput::SampledTexture { coords, .. } => Some(self.new_buffer(coords)?),
             ComputeInput::Texture(..) => None,
         };
-        let mut words = vec![0xA5A5_A5A5; input.len()];
+        let words = vec![0xA5A5_A5A5; input.len()];
         let output_buffer = self.new_buffer(&words)?;
+        let alloc_seconds = alloc_start.elapsed().as_secs_f64();
+        let mut table = self.submissions();
+        table.check_capacity()?;
+        let id = table.next_id;
+        table.next_id = id
+            .checked_add(1)
+            .ok_or_else(|| MetalError::new("submission", "submission ids exhausted"))?;
+        let encode_start = Instant::now();
         let command = self
             .queue
-            .commandBuffer()
+            .commandBufferWithUnretainedReferences()
             .ok_or_else(|| MetalError::new("commandBuffer", "command buffer creation failed"))?;
+        if let Some(gate) = gate {
+            command.encodeWaitForEvent_value(gate.as_ref(), 1);
+        }
         let encoder = command.computeCommandEncoder().ok_or_else(|| {
             MetalError::new("computeCommandEncoder", "compute encoder creation failed")
         })?;
@@ -710,27 +1048,49 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         }
         encoder.dispatchThreads_threadsPerThreadgroup(size(input.len()), size(width));
         encoder.endEncoding();
-        complete_command(&command)?;
-        let gpu_seconds = command.GPUEndTime() - command.GPUStartTime();
-        let host_seconds = host_start.elapsed().as_secs_f64();
-        // SAFETY: Metal copied the initialized words into distinct shared storage.
-        // The GPU finished before the CPU touches that storage. Both ranges are
-        // valid for byte_len bytes and don't overlap. A byte copy requires no
-        // additional alignment and all u32 bit patterns are valid.
-        unsafe {
-            copy_nonoverlapping(
-                output_buffer.contents().cast::<u8>().as_ptr(),
-                words.as_mut_ptr().cast::<u8>(),
-                byte_len,
-            );
-        }
-        Ok(RunProfile {
-            library_seconds,
-            pipeline_seconds,
-            gpu_seconds,
-            host_seconds,
-            output: words,
-        })
+        let encode_seconds = encode_start.elapsed().as_secs_f64();
+        let (texture, sampler) = match input {
+            ComputeInput::Texture(texture, _) => (Some(texture.retain()), None),
+            ComputeInput::SampledTexture {
+                texture, sampler, ..
+            } => (Some(texture.retain()), Some(sampler.retain())),
+            ComputeInput::Words(_) => (None, None),
+        };
+        let resources = InFlightResources {
+            command,
+            _pipeline: pipeline,
+            _input: input_buffer,
+            output: output_buffer,
+            _texture: texture,
+            _sampler: sampler,
+            gate: gate.map(Message::retain),
+            word_count: input.len(),
+        };
+        let commit_start = Instant::now();
+        resources.command.commit();
+        let commit_seconds = commit_start.elapsed().as_secs_f64();
+        table.entries.insert(
+            id,
+            SubmissionEntry {
+                resources: Some(resources),
+                result: Ok(RunProfile {
+                    library_seconds,
+                    pipeline_seconds,
+                    gpu_seconds: 0.0,
+                    host_seconds: 0.0,
+                    alloc_seconds,
+                    encode_seconds,
+                    commit_seconds,
+                    wait_seconds: 0.0,
+                    readback_seconds: 0.0,
+                    output: words,
+                }),
+                host_start,
+                abandoned: false,
+                waiting: false,
+            },
+        );
+        Ok(Submission { context: self, id })
     }
 
     fn compile_library(
@@ -790,6 +1150,16 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
     }
 }
 
+fn validate_words(source: &str, entry: &str, input: &[u32]) -> Result<(), MetalError> {
+    if !(1..=MAX_GRID_WORDS).contains(&input.len()) {
+        return Err(MetalError::new(
+            "dispatch bounds",
+            format!("expected 1..={MAX_GRID_WORDS} words, got {}", input.len()),
+        ));
+    }
+    validate_source(source, &[entry])
+}
+
 fn validate_source(source: &str, entries: &[&str]) -> Result<(), MetalError> {
     if source.is_empty()
         || source.len() > MAX_SOURCE_BYTES
@@ -829,11 +1199,29 @@ fn find_function(
 
 fn complete_command(command: &ProtocolObject<dyn MTLCommandBuffer>) -> Result<(), MetalError> {
     command.commit();
-    command.waitUntilCompleted();
+    wait_command(command)
+}
 
-    if command.status() != MTLCommandBufferStatus::Completed {
+/// Block until a committed command buffer finishes and check its status.
+fn wait_command(command: &ProtocolObject<dyn MTLCommandBuffer>) -> Result<(), MetalError> {
+    command.waitUntilCompleted();
+    check_command_status(command, command.status())
+}
+
+fn is_terminal(status: MTLCommandBufferStatus) -> bool {
+    matches!(
+        status,
+        MTLCommandBufferStatus::Completed | MTLCommandBufferStatus::Error
+    )
+}
+
+fn check_command_status(
+    command: &ProtocolObject<dyn MTLCommandBuffer>,
+    status: MTLCommandBufferStatus,
+) -> Result<(), MetalError> {
+    if status != MTLCommandBufferStatus::Completed {
         let error = command.error().map_or_else(
-            || format!("unexpected command status {:?}", command.status()),
+            || format!("unexpected command status {status:?}"),
             |error| error.localizedDescription().to_string(),
         );
         return Err(MetalError::new("waitUntilCompleted", error));

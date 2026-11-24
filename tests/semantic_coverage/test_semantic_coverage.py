@@ -68,6 +68,11 @@ class SemanticCoverageTests(unittest.TestCase):
         # S_ADD_U32 is declared in the registry but absent from the compiled tables.
         self.assertEqual(self.counts()["Decoder-supported"], 1)
 
+    def test_a_variant_without_its_form_is_an_error_not_a_traceback(self):
+        self.registry["encoding_variant"] = [{"family": "VOP3", "opcode": 1, "operands": "x"}]
+        with self.assertRaisesRegex(ValueError, "every encoding_variant needs"):
+            coverage.read_declarations(self.registry, self.identified)
+
     def test_generated_table_parser(self):
         source = (
             "pub const FORM_IDS: [(&str, EncodingFamily); 1] = [\n"

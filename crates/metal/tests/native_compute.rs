@@ -16,6 +16,8 @@ mod indexed;
 mod indexed_cases;
 #[path = "native/offscreen.rs"]
 mod offscreen;
+#[path = "native/submission.rs"]
+mod submission;
 #[path = "native/texture.rs"]
 mod texture;
 #[path = "native/texture_bc_alpha.rs"]

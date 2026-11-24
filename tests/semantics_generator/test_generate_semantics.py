@@ -937,6 +937,31 @@ class Validate(unittest.TestCase):
                 reg["encoding_variant"][0][key] = []
                 self.rejects(reg, f"[{key!r}] must be strings")
 
+    def test_a_variant_of_an_incomplete_form_reports_the_form_not_a_traceback(self):
+        reg = variants()
+        base = next(f for f in reg["form"] if f["name"] == reg["encoding_variant"][0]["of"])
+        del base["width"]
+        errors = self.errors(reg)
+        self.assertTrue(any("missing ['width']" in error for error in errors), errors)
+        self.assertTrue(any("is incomplete" in error for error in errors), errors)
+
+    def test_a_variant_of_an_incomplete_first_duplicate_is_a_diagnostic(self):
+        reg = variants()
+        base = next(f for f in reg["form"] if f["name"] == reg["encoding_variant"][0]["of"])
+        incomplete = copy.deepcopy(base)
+        del incomplete["width"]
+        reg["form"].insert(reg["form"].index(base), incomplete)
+        errors = self.errors(reg)
+        self.assertTrue(any("missing ['width']" in error for error in errors), errors)
+
+    def test_a_non_array_or_non_table_variant_is_a_diagnostic(self):
+        reg = variants()
+        reg["encoding_variant"] = 1
+        self.rejects(reg, "encoding_variant must be an array of tables")
+        reg = variants()
+        reg["encoding_variant"].append(1)
+        self.rejects(reg, "must be a table, got 1")
+
     def test_renders_variant_dispatch_and_rows(self):
         text = gen.render(variants(), snapshot())
         self.assertIn("pub enum VectorAluVop3Op {", text)
@@ -1230,6 +1255,18 @@ class LoadRegistry(unittest.TestCase):
             gen.load_registry(root)
         self.assertIn(fragment, str(raised.exception))
 
+    def test_a_standalone_registry_needs_no_family_directory(self):
+        (self.dir / "rdna2").rmdir()
+        root = self.write('[[form]]\nname = "S_ADD_U32"\nfamily = "SOP2"\n', {})
+        self.assertEqual(gen.load_registry(root)["form"][0]["name"], "S_ADD_U32")
+        root.write_text("schema = 1\ninclude = []\n", encoding="utf-8")
+        self.assertEqual(gen.load_registry(root)["form"], [])
+
+    def test_a_malformed_variant_list_is_a_registry_error(self):
+        self.fails(self.write("encoding_variant = 1\n", {}), "encoding_variant must be an array")
+        root = self.write('include = ["rdna2/vop3.toml"]\n', {"vop3.toml": "encoding_variant = 1\n"})
+        self.fails(root, "vop3.toml: encoding_variant must be an array")
+
     def test_the_real_split_registry_equals_one_concatenated_file(self):
         registry = gen.load_registry()
         self.assertNotIn("include", registry)
@@ -1240,6 +1277,23 @@ class LoadRegistry(unittest.TestCase):
         declared = set(runs) | {variant["family"] for variant in registry.get("encoding_variant", [])}
         for name, rule in registry["operand_rules"].items():
             self.assertIn(rule["family"], declared, name)
+        # The whole merged result equals the files concatenated by hand: every
+        # form, rule and variant, in order, with nothing dropped or reordered.
+        import tomllib
+
+        with open(gen.REGISTRY, "rb") as handle:
+            expected = tomllib.load(handle)
+        includes = expected.pop("include")
+        expected.setdefault("operand_rules", {})
+        expected.setdefault("form", [])
+        for include in includes:
+            with open(gen.REGISTRY.parent / include, "rb") as handle:
+                part = tomllib.load(handle)
+            expected["operand_rules"].update(part.get("operand_rules", {}))
+            expected["form"] += part.get("form", [])
+            if "encoding_variant" in part:
+                expected.setdefault("encoding_variant", []).extend(part["encoding_variant"])
+        self.assertEqual(registry, expected)
 
     def test_merges_family_files_in_include_order(self):
         root = self.write('include = ["rdna2/vop2.toml", "rdna2/sop2.toml"]\n', {

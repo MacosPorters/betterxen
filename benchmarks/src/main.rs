@@ -14,11 +14,12 @@ use std::path::PathBuf;
 use std::process::Command;
 use std::time::{SystemTime, UNIX_EPOCH};
 
-use xenora_metal::NativeCompute;
+use xenora_metal::{NativeCompute, RunProfile};
 use xenora_shader::{Architecture, ENTRY_POINT, compile};
 
 const WARMUP_REPS: usize = 2;
 const DEFAULT_REPS: usize = 7;
+const BATCH: usize = 8;
 
 #[derive(Debug, Clone)]
 struct Fixture {
@@ -83,8 +84,64 @@ struct SizeResult {
     pipeline: Stats,
     gpu: Stats,
     host: Stats,
+    /// Host submission stages inside `host`, plus readback after it.
+    submit: SubmitStats,
     /// Fraction of samples whose GPU timestamp delta was zero.
     gpu_zero_fraction: f64,
+}
+
+/// Host-side split of one dispatch's submission path.
+///
+/// `other` is `host` minus library, pipeline and the four stages below it,
+/// per sample: compile options, function lookup, bounds and validation checks.
+#[derive(Debug, Clone, Default)]
+struct SubmitStats {
+    alloc: Stats,
+    encode: Stats,
+    commit: Stats,
+    wait: Stats,
+    readback: Stats,
+    other: Stats,
+}
+
+#[derive(Debug, Clone, Default)]
+struct SubmitSamples {
+    alloc: Vec<f64>,
+    encode: Vec<f64>,
+    commit: Vec<f64>,
+    wait: Vec<f64>,
+    readback: Vec<f64>,
+    other: Vec<f64>,
+}
+
+impl SubmitSamples {
+    fn push(&mut self, profile: &RunProfile) {
+        self.alloc.push(profile.alloc_seconds);
+        self.encode.push(profile.encode_seconds);
+        self.commit.push(profile.commit_seconds);
+        self.wait.push(profile.wait_seconds);
+        self.readback.push(profile.readback_seconds);
+        self.other.push(
+            profile.host_seconds
+                - profile.library_seconds
+                - profile.pipeline_seconds
+                - profile.alloc_seconds
+                - profile.encode_seconds
+                - profile.commit_seconds
+                - profile.wait_seconds,
+        );
+    }
+
+    fn stats(self) -> SubmitStats {
+        SubmitStats {
+            alloc: Stats::from_samples(self.alloc),
+            encode: Stats::from_samples(self.encode),
+            commit: Stats::from_samples(self.commit),
+            wait: Stats::from_samples(self.wait),
+            readback: Stats::from_samples(self.readback),
+            other: Stats::from_samples(self.other),
+        }
+    }
 }
 
 #[derive(Debug, Clone)]
@@ -95,6 +152,14 @@ struct FixtureResult {
     status: String,
     reason: String,
     sizes: Vec<SizeResult>,
+    batch: Option<BatchResult>,
+}
+
+#[derive(Debug, Clone)]
+struct BatchResult {
+    words: usize,
+    sync: Stats,
+    pipelined: Stats,
 }
 
 fn main() -> Result<(), Box<dyn Error>> {
@@ -180,6 +245,7 @@ fn run_fixture(metal: &NativeCompute, fixture: &Fixture, reps: usize) -> Fixture
         status: "not-implemented".to_string(),
         reason: String::new(),
         sizes: Vec::new(),
+        batch: None,
     };
 
     let code = match fs::read(&fixture.path) {
@@ -242,6 +308,7 @@ fn run_fixture(metal: &NativeCompute, fixture: &Fixture, reps: usize) -> Fixture
         let mut pipeline_samples = Vec::with_capacity(reps);
         let mut gpu_samples = Vec::with_capacity(reps);
         let mut host_samples = Vec::with_capacity(reps);
+        let mut submit_samples = SubmitSamples::default();
         let mut gpu_zero = 0usize;
 
         let mut mismatch = None;
@@ -275,6 +342,7 @@ fn run_fixture(metal: &NativeCompute, fixture: &Fixture, reps: usize) -> Fixture
             pipeline_samples.push(profile.pipeline_seconds);
             gpu_samples.push(profile.gpu_seconds);
             host_samples.push(profile.host_seconds);
+            submit_samples.push(&profile);
             if profile.gpu_seconds <= 0.0 {
                 gpu_zero += 1;
             }
@@ -294,6 +362,7 @@ fn run_fixture(metal: &NativeCompute, fixture: &Fixture, reps: usize) -> Fixture
             pipeline: Stats::from_samples(pipeline_samples),
             gpu: Stats::from_samples(gpu_samples),
             host: Stats::from_samples(host_samples),
+            submit: submit_samples.stats(),
             gpu_zero_fraction: if measured == 0 {
                 0.0
             } else {
@@ -302,9 +371,81 @@ fn run_fixture(metal: &NativeCompute, fixture: &Fixture, reps: usize) -> Fixture
         });
     }
 
+    let batch_words = fixture
+        .sizes
+        .iter()
+        .copied()
+        .min_by_key(|words| words.abs_diff(1024))
+        .unwrap_or(1024);
+    match measure_batch(metal, &code, fixture, batch_words, reps) {
+        Ok(batch) => result.batch = Some(batch),
+        Err(reason) => {
+            result.status = "excluded".to_string();
+            result.reason = reason;
+            return result;
+        }
+    }
     result.sizes = sizes;
     result.status = "benchmarked".to_string();
     result
+}
+
+fn measure_batch(
+    metal: &NativeCompute,
+    code: &[u8],
+    fixture: &Fixture,
+    words: usize,
+    reps: usize,
+) -> Result<BatchResult, String> {
+    let input = expand(&fixture.input, words);
+    let expected = expand(&fixture.expected, words);
+    let mut sync = Vec::with_capacity(reps);
+    let mut pipelined = Vec::with_capacity(reps);
+    for rep in 0..(WARMUP_REPS + reps) {
+        for (samples, variant) in [(&mut sync, "sync"), (&mut pipelined, "pipelined")] {
+            let mut tokens = Vec::with_capacity(BATCH);
+            let mut outputs = Vec::with_capacity(BATCH);
+            let start = std::time::Instant::now();
+            for _ in 0..BATCH {
+                let compiled = compile(Architecture::Gfx1030, code).map_err(|error| {
+                    format!("{variant} batch compile failed at {words} words: {error}")
+                })?;
+                if variant == "sync" {
+                    let profile = metal
+                        .run_words_profiled(&compiled.msl, ENTRY_POINT, &input)
+                        .map_err(|error| {
+                            format!("{variant} batch run failed at {words} words: {error}")
+                        })?;
+                    outputs.push(profile.output);
+                } else {
+                    let token = metal
+                        .submit_words(&compiled.msl, ENTRY_POINT, &input)
+                        .map_err(|error| {
+                            format!("{variant} batch submit failed at {words} words: {error}")
+                        })?;
+                    tokens.push(token);
+                }
+            }
+            for token in tokens {
+                let profile = metal.wait(token).map_err(|error| {
+                    format!("{variant} batch wait failed at {words} words: {error}")
+                })?;
+                outputs.push(profile.output);
+            }
+            let per_dispatch = start.elapsed().as_secs_f64() / BATCH as f64;
+            if outputs.iter().any(|output| *output != expected) {
+                return Err(format!("{variant} batch GPU mismatch at {words} words"));
+            }
+            if rep >= WARMUP_REPS {
+                samples.push(per_dispatch);
+            }
+        }
+    }
+    Ok(BatchResult {
+        words,
+        sync: Stats::from_samples(sync),
+        pipelined: Stats::from_samples(pipelined),
+    })
 }
 
 fn expand(base: &[u32], words: usize) -> Vec<u32> {
@@ -612,13 +753,19 @@ fn results_json(results: &[FixtureResult]) -> String {
         for (size_index, size) in result.sizes.iter().enumerate() {
             let _ = writeln!(
                 out,
-                "        {{ \"words\": {}, \"compile\": {}, \"library\": {}, \"pipeline\": {}, \"gpu\": {}, \"host\": {}, \"gpu_zero_fraction\": {:.4} }}{}",
+                "        {{ \"words\": {}, \"compile\": {}, \"library\": {}, \"pipeline\": {}, \"gpu\": {}, \"host\": {}, \"alloc\": {}, \"encode\": {}, \"commit\": {}, \"wait\": {}, \"readback\": {}, \"host_other\": {}, \"gpu_zero_fraction\": {:.4} }}{}",
                 size.words,
                 stats_json(&size.compile),
                 stats_json(&size.library),
                 stats_json(&size.pipeline),
                 stats_json(&size.gpu),
                 stats_json(&size.host),
+                stats_json(&size.submit.alloc),
+                stats_json(&size.submit.encode),
+                stats_json(&size.submit.commit),
+                stats_json(&size.submit.wait),
+                stats_json(&size.submit.readback),
+                stats_json(&size.submit.other),
                 size.gpu_zero_fraction,
                 if size_index + 1 == result.sizes.len() {
                     ""
@@ -627,9 +774,19 @@ fn results_json(results: &[FixtureResult]) -> String {
                 }
             );
         }
+        out.push_str("      ]");
+        if let Some(batch) = &result.batch {
+            let _ = write!(
+                out,
+                ",\n      \"batch\": {{ \"dispatches\": {BATCH}, \"words\": {}, \"sync\": {}, \"pipelined\": {} }}",
+                batch.words,
+                stats_json(&batch.sync),
+                stats_json(&batch.pipelined)
+            );
+        }
         let _ = writeln!(
             out,
-            "      ]\n    }}{}",
+            "\n    }}{}",
             if index + 1 == results.len() { "" } else { "," }
         );
     }
@@ -644,7 +801,7 @@ fn report_markdown(metadata: &Metadata, results: &[FixtureResult]) -> String {
     let _ = writeln!(
         out,
         "Generated by `xenora-bench`. Every timed fixture passed its correctness test in this run. \
-         Timings are single command-buffer samples; see `docs/testing/benchmarks.md` for the protocol."
+         See `docs/testing/benchmarks.md` for the single-dispatch protocol."
     );
     let _ = writeln!(out);
     let _ = writeln!(out, "## Environment");
@@ -736,6 +893,71 @@ fn report_markdown(metadata: &Metadata, results: &[FixtureResult]) -> String {
                 size.host.median * 1e6,
                 (size.gpu.q3 - size.gpu.q1) * 1e6,
                 size.gpu_zero_fraction * 100.0
+            );
+        }
+    }
+
+    let _ = writeln!(out);
+    let _ = writeln!(out, "## Submission split");
+    let _ = writeln!(out);
+    let _ = writeln!(
+        out,
+        "Medians in microseconds of the host stages inside `host`: `alloc` creates the input and \
+         output shared buffers, `encode` creates the command buffer and encodes the dispatch, \
+         `commit` and `wait` time `commit` and `waitUntilCompleted`, and `other` is the per-sample \
+         remainder of `host` after library, pipeline and these four stages. `readback` copies \
+         the output after `host` ends."
+    );
+    let _ = writeln!(out);
+    let _ = writeln!(
+        out,
+        "| Fixture | Words | host | alloc | encode | commit | wait | other | readback |"
+    );
+    let _ = writeln!(
+        out,
+        "| --- | --- | --- | --- | --- | --- | --- | --- | --- |"
+    );
+    for result in results.iter().filter(|r| r.status == "benchmarked") {
+        for size in &result.sizes {
+            let stages = &size.submit;
+            let _ = writeln!(
+                out,
+                "| {} | {} | {:.2} | {:.2} | {:.2} | {:.2} | {:.2} | {:.2} | {:.2} |",
+                result.name,
+                size.words,
+                size.host.median * 1e6,
+                stages.alloc.median * 1e6,
+                stages.encode.median * 1e6,
+                stages.commit.median * 1e6,
+                stages.wait.median * 1e6,
+                stages.other.median * 1e6,
+                stages.readback.median * 1e6
+            );
+        }
+    }
+    let _ = writeln!(out);
+    let _ = writeln!(out, "## Batched submission");
+    let _ = writeln!(out);
+    let _ = writeln!(
+        out,
+        "Median host microseconds per dispatch in batches of {BATCH}, including recompilation."
+    );
+    let _ = writeln!(out);
+    let _ = writeln!(
+        out,
+        "| Fixture | Words | Sync (µs) | Pipelined (µs) | Sync / pipelined |"
+    );
+    let _ = writeln!(out, "| --- | --- | --- | --- | --- |");
+    for result in results {
+        if let Some(batch) = &result.batch {
+            let _ = writeln!(
+                out,
+                "| {} | {} | {:.2} | {:.2} | {:.2}× |",
+                result.name,
+                batch.words,
+                batch.sync.median * 1e6,
+                batch.pipelined.median * 1e6,
+                batch.sync.median / batch.pipelined.median
             );
         }
     }

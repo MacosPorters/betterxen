@@ -25,6 +25,8 @@ unsupported = [
   "src_float_inline", "src_special", "src_literal", "modifiers", "src2",
 ]
 
+# VOP3 opcode of a VOP2 form = VOP2 opcode + 0x100 (guide 12.7.1), e.g. 37 + 256
+# = 293; each opcode below is still checked against the pinned XML.
 [[encoding_variant]]
 of = "V_ADD_NC_U32"
 family = "VOP3"

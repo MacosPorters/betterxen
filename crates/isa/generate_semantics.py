@@ -389,14 +389,22 @@ def load_registry(path=REGISTRY):
             )
     if len(set(includes)) != len(includes):
         raise RegistryError(f"{path.name}: a family file is included twice")
+    for key, kind, name in (("operand_rules", dict, "a table"), ("form", list, "an array"),
+                            ("encoding_variant", list, "an array")):
+        if not isinstance(registry.get(key, kind()), kind):
+            raise RegistryError(f"{path.name}: {key} must be {name}")
     rules = registry.setdefault("operand_rules", {})
     forms = registry.setdefault("form", [])
-    if (path.parent / path.stem).is_symlink():
-        raise RegistryError(f"{path.name}: the family directory {path.stem}/ is a link")
-    try:
-        directory = (path.parent / path.stem).resolve(strict=True)
-    except (OSError, RuntimeError) as error:
-        raise RegistryError(f"{path.name}: the family directory {path.stem}/ cannot be read: {error}")
+    # A standalone registry (no includes) needs no family directory.
+    if includes:
+        if (path.parent / path.stem).is_symlink():
+            raise RegistryError(f"{path.name}: the family directory {path.stem}/ is a link")
+        try:
+            directory = (path.parent / path.stem).resolve(strict=True)
+        except (OSError, RuntimeError) as error:
+            raise RegistryError(
+                f"{path.name}: the family directory {path.stem}/ cannot be read: {error}"
+            )
     identities = set()
     for include in includes:
         part_path = path.parent / include
@@ -416,6 +424,10 @@ def load_registry(path=REGISTRY):
         unknown = sorted(set(part) - FAMILY_FILE_KEYS)
         if unknown:
             raise RegistryError(f"{include}: keys {unknown} belong in the root file")
+        for key, kind, name in (("operand_rules", dict, "a table"), ("form", list, "an array"),
+                                ("encoding_variant", list, "an array")):
+            if not isinstance(part.get(key, kind()), kind):
+                raise RegistryError(f"{include}: {key} must be {name}")
         for name, rule in part.get("operand_rules", {}).items():
             if name in rules:
                 raise RegistryError(f"{include}: operand rule {name} is declared twice")
@@ -767,9 +779,10 @@ def _well_formed(rule):
     )
 
 
-def variant_row(registry, variant):
+def variant_row(registry, variant, base=None):
     """The base form re-encoded: its declaration with the variant's identity."""
-    base = next(form for form in registry["form"] if form.get("name") == variant["of"])
+    if base is None:
+        base = next(form for form in registry["form"] if form.get("name") == variant["of"])
     return dict(
         base, family=variant["family"], opcode=variant["opcode"], operands=variant["operands"],
         spec=variant["spec"], verify=variant["verify"],
@@ -779,7 +792,14 @@ def variant_row(registry, variant):
 def _check_variants(registry, rules, documents, snapshot, seen, errors):
     forms = {form.get("name"): form for form in registry.get("form", [])}
     identities = {(form.get("name"), form.get("family")) for form in registry.get("form", [])}
-    for index, variant in enumerate(registry.get("encoding_variant", [])):
+    variants = registry.get("encoding_variant", [])
+    if not isinstance(variants, list):
+        errors.append("encoding_variant must be an array of tables")
+        return
+    for index, variant in enumerate(variants):
+        if not isinstance(variant, dict):
+            errors.append(f"encoding variant #{index}: must be a table, got {variant!r}")
+            continue
         label = f"{variant.get('of', f'variant #{index}')!s} ({variant.get('family')!s})"
         missing = sorted(VARIANT_KEYS - set(variant))
         extra = sorted(set(variant) - VARIANT_KEYS)
@@ -830,7 +850,14 @@ def _check_variants(registry, rules, documents, snapshot, seen, errors):
             errors.append(f"{label}: invalid verification requirements {verify}")
         # The XML check runs on the re-encoded declaration, so the variant's
         # operands must agree with the base form's widths, signedness and effects.
-        _check_xml(variant_row(registry, variant), rule, snapshot, errors)
+        # An incomplete base form has its own diagnostic; checking its re-encoding
+        # would only fail on the missing fields.
+        if FORM_KEYS - set(base):
+            errors.append(f"{label}: not checked, its form {variant['of']} is incomplete")
+            continue
+        # The same base row as the completeness check above (with duplicate
+        # declarations, the dict keeps the last one).
+        _check_xml(variant_row(registry, variant, base), rule, snapshot, errors)
         # Every explicit operand, destination included, has the base encoding's
         # data format, in the same order (VSRC1 of VOP2 is SRC1 of VOP3).
         base_xml = snapshot["variants"].get((base["name"], _family_encoding(base["family"])))
