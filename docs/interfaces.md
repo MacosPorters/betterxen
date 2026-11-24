@@ -225,6 +225,32 @@ original sharing reservation until the last duplicate closes. Access can
 be reduced per handle. DOS wildcard edge cases, persistence, and
 asynchronous I/O remain outside this subset.
 
+### Host-backed guest drives
+
+`ServicesState::mount` exposes a host directory to the guest as a drive
+letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Nothing
+on the host is reachable without a mount, and mounts are read-only unless
+created writable. The root directory is opened once, and every guest path is
+resolved from that descriptor one component at a time with `openat` and
+`O_NOFOLLOW`. Names match the host listing ignoring ASCII case; two host
+entries that differ only by case are refused as ambiguous. `.` and `..`
+components, device names and Windows-invalid characters are invalid names.
+Symbolic links, devices and non-UTF-8 names are hidden from the guest, so a
+path cannot leave the root. New files and directories keep the guest's
+spelling.
+
+CreateFileW, ReadFile, WriteFile, GetFileSizeEx, SetFilePointerEx,
+SetEndOfFile, GetFileAttributesW, FindFirstFileW and FindNextFileW work on
+mounted drives with the same handle types, rights, sharing modes and file
+positions as the synthetic drive. CreateDirectoryW, RemoveDirectoryW and
+DeleteFileW also work on writable mounts. Files on read-only mounts report
+`FILE_ATTRIBUTE_READONLY`. MoveFileW returns `ERROR_NOT_SUPPORTED` on mounts.
+Host errors map to specific Win32 codes (for example `ENOENT` to
+`ERROR_FILE_NOT_FOUND`, `ENOTEMPTY` to `ERROR_DIR_NOT_EMPTY`, `ENOSPC` to
+`ERROR_DISK_FULL`); unrecognized errors report `ERROR_GEN_FAILURE`.
+Drive-relative paths such as `D:file` return `ERROR_PATH_NOT_FOUND`. Times,
+alternate names and asynchronous I/O are not reported.
+
 ### Event and semaphore signaling
 
 The synthetic runtime supports unnamed manual-reset and auto-reset events

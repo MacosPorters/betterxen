@@ -15,6 +15,7 @@ mod events;
 mod files;
 mod gdk_queue;
 mod heap;
+pub mod host_files;
 mod modules;
 mod platform_fixture;
 mod synch;
@@ -190,6 +191,8 @@ pub struct ServicesState {
     /// Characteristics the guest is told it runs on. These are simulated and
     /// independent of the host; see [`sysinfo::HostCapabilities`] for the host.
     pub guest_profile: sysinfo::GuestSystemProfile,
+    /// Host directories exposed as guest drives; see [`ServicesState::mount`].
+    mounts: Vec<host_files::HostMount>,
     objects: Mutex<ObjectState>,
     last_errors: Mutex<BTreeMap<u64, u32>>,
     synch: Mutex<synch::Synch>,
@@ -214,6 +217,7 @@ impl ServicesState {
             process_id: 0x4100, // Synthetic process ID
             thread_id: 0x4104,  // Synthetic main thread ID
             guest_profile: sysinfo::GuestSystemProfile::default(),
+            mounts: Vec::new(),
             objects: Mutex::new(ObjectState::default()),
             last_errors: Mutex::default(),
             synch: Mutex::default(),
@@ -228,6 +232,20 @@ impl ServicesState {
             graphics: Arc::new(Mutex::new(crate::graphics::GraphicsContext::new())),
         }
     }
+    /// Expose a host directory to the guest. Each drive letter can be mounted
+    /// once. Nothing on the host is reachable unless it is mounted here.
+    pub fn mount(&mut self, mount: host_files::HostMount) -> Result<(), host_files::HostMount> {
+        if self
+            .mounts
+            .iter()
+            .any(|existing| existing.drive() == mount.drive())
+        {
+            return Err(mount);
+        }
+        self.mounts.push(mount);
+        Ok(())
+    }
+
     fn uptime_millis(&self) -> u64 {
         let ticks = self
             .clock

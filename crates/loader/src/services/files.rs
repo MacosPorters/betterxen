@@ -1,14 +1,17 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Bounded synthetic C: drive with no host filesystem mapping.
+//! Bounded synthetic C: drive with no host filesystem mapping, plus drives
+//! backed by explicitly configured host directories (see `host_files`).
 
 use super::{
     ERROR_ACCESS_DENIED, ERROR_INVALID_HANDLE, ERROR_INVALID_PARAMETER, ERROR_NOACCESS,
-    ERROR_NOT_ENOUGH_MEMORY, ERROR_NOT_SUPPORTED, GuestObject, KERNEL32, ServicesState,
+    ERROR_NOT_ENOUGH_MEMORY, ERROR_NOT_SUPPORTED, GuestObject, KERNEL32, ServicesState, host_files,
 };
 use crate::cpu::ExitReason;
 use crate::imports::{ImportRegistry, ServiceStatus};
 use crate::memory::{GuestMemory, MemoryError};
+use std::fs::File;
+use std::os::unix::fs::FileExt;
 use std::sync::Arc;
 use std::sync::atomic::{AtomicU64, Ordering};
 
@@ -38,9 +41,271 @@ pub(super) struct OpenFile {
     open_access: u32,
     pub(super) access: u32,
     share: u32,
+    /// Set for files on a host mount; `path` is then the handle-table key.
+    host: Option<Arc<File>>,
 }
 
-fn read_guest_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, MemoryError> {
+impl OpenFile {
+    fn host_len(&self) -> Option<Result<u64, u32>> {
+        let file = self.host.as_ref()?;
+        Some(
+            file.metadata()
+                .map(|metadata| metadata.len())
+                .map_err(|error| host_files::win32_error(&error)),
+        )
+    }
+}
+
+fn check_sharing(objects: &super::ObjectState, path: &str, access: u32, share: u32) -> bool {
+    !objects.handles.values().any(|object| {
+        matches!(object, GuestObject::File(file)
+            if file.path == path
+                && (share_mask(access) & !file.share != 0
+                    || share_mask(file.open_access) & !share != 0))
+    })
+}
+
+fn create_host_file(
+    state: &ServicesState,
+    teb: u64,
+    resolved: Result<host_files::Resolved<'_>, u32>,
+    access: u32,
+    share: u32,
+    disposition: u32,
+) -> Result<u64, ExitReason> {
+    let resolved = match resolved {
+        Ok(resolved) => resolved,
+        Err(error) => return state.fail(teb, error, INVALID_HANDLE),
+    };
+    let Some(name) = resolved.components.last().cloned() else {
+        return state.fail(teb, ERROR_ACCESS_DENIED, INVALID_HANDLE);
+    };
+    let (parent, entry) = match resolved.lookup() {
+        Ok(found) => found,
+        Err(error) => return state.fail(teb, error, INVALID_HANDLE),
+    };
+    let exists = match &entry {
+        Some(entry) if entry.kind == host_files::Kind::Directory => {
+            return state.fail(teb, ERROR_ACCESS_DENIED, INVALID_HANDLE);
+        }
+        Some(_) => true,
+        None => false,
+    };
+    if exists && disposition == 1 {
+        return state.fail(teb, FILE_EXISTS, INVALID_HANDLE);
+    }
+    if !exists && matches!(disposition, 3 | 5) {
+        return state.fail(teb, FILE_NOT_FOUND, INVALID_HANDLE);
+    }
+    let modifies = access & WRITE != 0 || !exists || matches!(disposition, 2 | 5);
+    if modifies && !resolved.mount.writable() {
+        return state.fail(teb, ERROR_ACCESS_DENIED, INVALID_HANDLE);
+    }
+    let key = resolved.key();
+    let mut objects = state.objects.lock().expect("guest object state");
+    if !check_sharing(&objects, &key, access, share) {
+        return state.fail(teb, SHARING_VIOLATION, INVALID_HANDLE);
+    }
+    let Some(handle) = objects.next_handle() else {
+        return state.fail(teb, ERROR_NOT_ENOUGH_MEMORY, INVALID_HANDLE);
+    };
+    let request = host_files::OpenRequest {
+        read: access & READ != 0 || access & WRITE == 0,
+        write: access & WRITE != 0,
+        create: !exists,
+        truncate: exists && matches!(disposition, 2 | 5),
+    };
+    let host_name = entry.map_or(name, |entry| entry.name);
+    let file = match host_files::open_file(&parent, &host_name, &request) {
+        Ok(file) => file,
+        Err(error) => return state.fail(teb, host_files::win32_error(&error), INVALID_HANDLE),
+    };
+    if matches!(disposition, 2 | 4) {
+        state.fail(teb, if exists { ALREADY_EXISTS } else { 0 }, 0)?;
+    }
+    objects.insert_handle(
+        handle,
+        GuestObject::File(OpenFile {
+            path: key,
+            position: Arc::new(AtomicU64::new(0)),
+            open_access: access,
+            access,
+            share,
+            host: Some(Arc::new(file)),
+        }),
+    );
+    Ok(handle)
+}
+
+/// Open a search handle over `entries` and return the first through `output`.
+fn open_search(
+    state: &ServicesState,
+    teb: u64,
+    memory: &mut GuestMemory,
+    output: u64,
+    entries: Vec<SearchEntry>,
+) -> Result<u64, ExitReason> {
+    let Some(first) = entries.first() else {
+        return state.fail(teb, FILE_NOT_FOUND, INVALID_HANDLE);
+    };
+    let mut objects = state.objects.lock().expect("guest object state");
+    if objects
+        .handles
+        .values()
+        .filter(|object| matches!(object, GuestObject::Search(_)))
+        .count()
+        >= 32
+    {
+        return state.fail(teb, ERROR_NOT_ENOUGH_MEMORY, INVALID_HANDLE);
+    }
+    let Some(handle) = objects.next_handle() else {
+        return state.fail(teb, ERROR_NOT_ENOUGH_MEMORY, INVALID_HANDLE);
+    };
+    if write_find_data(memory, output, first).is_err() {
+        return state.fail(teb, ERROR_NOACCESS, INVALID_HANDLE);
+    }
+    objects.insert_handle(handle, GuestObject::Search(Search { entries, next: 1 }));
+    Ok(handle)
+}
+
+#[derive(Clone, Copy)]
+enum HostChange {
+    CreateDirectory,
+    RemoveDirectory,
+    DeleteFile,
+}
+
+fn change_host_namespace(
+    state: &ServicesState,
+    teb: u64,
+    resolved: Result<host_files::Resolved<'_>, u32>,
+    change: HostChange,
+) -> Result<u64, ExitReason> {
+    const ERROR_DIRECTORY: u32 = 267;
+    let resolved = match resolved {
+        Ok(resolved) => resolved,
+        Err(error) => return state.fail(teb, error, 0),
+    };
+    let Some(name) = resolved.components.last().cloned() else {
+        return state.fail(teb, ERROR_ACCESS_DENIED, 0);
+    };
+    if !resolved.mount.writable() {
+        return state.fail(teb, ERROR_ACCESS_DENIED, 0);
+    }
+    let (parent, entry) = match resolved.lookup() {
+        Ok(found) => found,
+        Err(error) => return state.fail(teb, error, 0),
+    };
+    use host_files::Kind::{Directory, File};
+    let result = match (change, entry) {
+        (HostChange::CreateDirectory, Some(_)) => return state.fail(teb, ALREADY_EXISTS, 0),
+        (HostChange::CreateDirectory, None) => host_files::create_directory(&parent, &name),
+        (_, None) => return state.fail(teb, FILE_NOT_FOUND, 0),
+        (HostChange::RemoveDirectory, Some(entry)) if entry.kind == File => {
+            return state.fail(teb, ERROR_DIRECTORY, 0);
+        }
+        (HostChange::RemoveDirectory, Some(entry)) => {
+            host_files::remove(&parent, &entry.name, true)
+        }
+        (HostChange::DeleteFile, Some(entry)) if entry.kind == Directory => {
+            return state.fail(teb, ERROR_ACCESS_DENIED, 0);
+        }
+        (HostChange::DeleteFile, Some(entry)) => {
+            let key = resolved.key();
+            let objects = state.objects.lock().expect("guest object state");
+            if objects
+                .handles
+                .values()
+                .any(|object| matches!(object, GuestObject::File(file) if file.path == key))
+            {
+                return state.fail(teb, SHARING_VIOLATION, 0);
+            }
+            host_files::remove(&parent, &entry.name, false)
+        }
+    };
+    match result {
+        Ok(()) => Ok(1),
+        Err(error) => state.fail(teb, host_files::win32_error(&error), 0),
+    }
+}
+
+fn host_attributes(entry: &host_files::Entry, writable: bool) -> u32 {
+    match (entry.kind, writable) {
+        (host_files::Kind::Directory, _) => 0x10, // FILE_ATTRIBUTE_DIRECTORY
+        (host_files::Kind::File, true) => 0x80,   // FILE_ATTRIBUTE_NORMAL
+        (host_files::Kind::File, false) => 0x01,  // FILE_ATTRIBUTE_READONLY
+    }
+}
+
+/// FindFirstFileW on a host mount: a sorted snapshot of matching names.
+fn find_host_entries(state: &ServicesState, raw: &str) -> Option<Result<Vec<SearchEntry>, u32>> {
+    let (directory, pattern) = raw.rsplit_once('\\')?;
+    let directory = if directory.len() == 2 {
+        format!("{directory}\\")
+    } else {
+        directory.to_owned()
+    };
+    let resolved = host_files::resolve(&state.mounts, &directory, valid_component)?;
+    Some((|| {
+        let resolved = resolved?;
+        let pattern = pattern.to_ascii_lowercase();
+        if !valid_component(&pattern.replace(['*', '?'], "x")) {
+            return Err(INVALID_NAME);
+        }
+        let pattern = if pattern == "*.*" {
+            "*".to_owned()
+        } else {
+            pattern
+        };
+        let directory = resolved.directory()?;
+        let writable = resolved.mount.writable();
+        let mut entries: Vec<_> = host_files::list(&directory)
+            .map_err(|error| host_files::win32_error(&error))?
+            .into_iter()
+            .filter(|entry| wildcard_match(&pattern, &entry.name.to_ascii_lowercase()))
+            .map(|entry| SearchEntry {
+                attributes: host_attributes(&entry, writable),
+                size: entry.size,
+                name: entry.name,
+            })
+            .collect();
+        entries.sort_by_key(|entry| entry.name.to_ascii_lowercase());
+        Ok(entries)
+    })())
+}
+
+/// Read or write a host file at `position`, transferring as much as the file
+/// allows. Reads stop early only at the end of the file.
+fn host_transfer(
+    file: &File,
+    position: u64,
+    buffer: &mut [u8],
+    writing: bool,
+) -> Result<usize, u32> {
+    let result = if writing {
+        file.write_all_at(buffer, position).map(|()| buffer.len())
+    } else {
+        let mut done = 0;
+        loop {
+            match file.read_at(&mut buffer[done..], position + done as u64) {
+                Ok(0) => break Ok(done),
+                Ok(read) => {
+                    done += read;
+                    if done == buffer.len() {
+                        break Ok(done);
+                    }
+                }
+                Err(error) if error.kind() == std::io::ErrorKind::Interrupted => {}
+                Err(error) => break Err(error),
+            }
+        }
+    };
+    result.map_err(|error| host_files::win32_error(&error))
+}
+
+/// A NUL-terminated UTF-16 path of at most 259 units, with `/` read as `\`
+/// and its case preserved.
+fn read_raw_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, MemoryError> {
     if address == 0 {
         return Ok(None);
     }
@@ -54,13 +319,31 @@ fn read_guest_path(memory: &GuestMemory, address: u64) -> Result<Option<String>,
             let Ok(path) = String::from_utf16(&units) else {
                 return Ok(None);
             };
-            let path = path.replace('/', "\\").to_ascii_lowercase();
-            let name = path.strip_prefix("c:\\").unwrap_or(&path);
-            return Ok(Some(name.to_owned()));
+            return Ok(Some(path.replace('/', "\\")));
         }
         units.push(unit);
     }
     Ok(None)
+}
+
+/// A path on the synthetic C: drive, folded to lowercase.
+fn read_guest_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, MemoryError> {
+    Ok(read_raw_path(memory, address)?.map(|path| {
+        let path = path.to_ascii_lowercase();
+        path.strip_prefix("c:\\").unwrap_or(&path).to_owned()
+    }))
+}
+
+/// The resolved path when `address` names a drive backed by a host mount.
+fn host_path<'a>(
+    state: &'a ServicesState,
+    memory: &GuestMemory,
+    address: u64,
+) -> Result<Option<Result<host_files::Resolved<'a>, u32>>, ExitReason> {
+    let Some(raw) = read_raw_path(memory, address).map_err(ExitReason::MemoryFault)? else {
+        return Ok(None);
+    };
+    Ok(host_files::resolve(&state.mounts, &raw, valid_component))
 }
 
 fn guest_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, MemoryError> {
@@ -173,6 +456,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if matches!(disposition, 2 | 5) && access & WRITE == 0 {
             return open.fail(cpu.gs_base, ERROR_ACCESS_DENIED, INVALID_HANDLE);
         }
+        if let Some(resolved) = host_path(&open, memory, args.rcx)? {
+            return create_host_file(&open, cpu.gs_base, resolved, access, share, disposition);
+        }
         let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
             return open.fail(cpu.gs_base, INVALID_NAME, INVALID_HANDLE);
         };
@@ -191,14 +477,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if !exists && matches!(disposition, 3 | 5) {
             return open.fail(cpu.gs_base, FILE_NOT_FOUND, INVALID_HANDLE);
         }
-        for object in objects.handles.values() {
-            if let GuestObject::File(file) = object
-                && file.path == path
-                && (share_mask(access) & !file.share != 0
-                    || share_mask(file.open_access) & !share != 0)
-            {
-                return open.fail(cpu.gs_base, SHARING_VIOLATION, INVALID_HANDLE);
-            }
+        if !check_sharing(&objects, &path, access, share) {
+            return open.fail(cpu.gs_base, SHARING_VIOLATION, INVALID_HANDLE);
         }
         let Some(handle) = objects.next_handle() else {
             return open.fail(cpu.gs_base, ERROR_NOT_ENOUGH_MEMORY, INVALID_HANDLE);
@@ -222,6 +502,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 open_access: access,
                 access,
                 share,
+                host: None,
             }),
         );
         Ok(handle)
@@ -231,6 +512,14 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
     registry.register(KERNEL32, "CreateDirectoryW", move |args, cpu, memory| {
         if args.rdx != 0 {
             return create.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
+        }
+        if let Some(resolved) = host_path(&create, memory, args.rcx)? {
+            return change_host_namespace(
+                &create,
+                cpu.gs_base,
+                resolved,
+                HostChange::CreateDirectory,
+            );
         }
         let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
             return create.fail(cpu.gs_base, INVALID_NAME, 0);
@@ -252,6 +541,14 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
 
     let remove = Arc::clone(state);
     registry.register(KERNEL32, "RemoveDirectoryW", move |args, cpu, memory| {
+        if let Some(resolved) = host_path(&remove, memory, args.rcx)? {
+            return change_host_namespace(
+                &remove,
+                cpu.gs_base,
+                resolved,
+                HostChange::RemoveDirectory,
+            );
+        }
         let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
             return remove.fail(cpu.gs_base, INVALID_NAME, 0);
         };
@@ -270,6 +567,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
 
     let delete = Arc::clone(state);
     registry.register(KERNEL32, "DeleteFileW", move |args, cpu, memory| {
+        if let Some(resolved) = host_path(&delete, memory, args.rcx)? {
+            return change_host_namespace(&delete, cpu.gs_base, resolved, HostChange::DeleteFile);
+        }
         let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
             return delete.fail(cpu.gs_base, INVALID_NAME, 0);
         };
@@ -297,6 +597,19 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
     let attributes = Arc::clone(state);
     registry.register(KERNEL32, "GetFileAttributesW", move |args, cpu, memory| {
         const INVALID_ATTRIBUTES: u64 = u32::MAX as u64;
+        if let Some(resolved) = host_path(&attributes, memory, args.rcx)? {
+            let found = resolved.and_then(|resolved| {
+                let writable = resolved.mount.writable();
+                let (_, entry) = resolved.lookup()?;
+                entry
+                    .map(|entry| host_attributes(&entry, writable))
+                    .ok_or(FILE_NOT_FOUND)
+            });
+            return match found {
+                Ok(value) => Ok(u64::from(value)),
+                Err(error) => attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES),
+            };
+        }
         let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
             return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
         };
@@ -318,6 +631,11 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
 
     let rename = Arc::clone(state);
     registry.register(KERNEL32, "MoveFileW", move |args, cpu, memory| {
+        if host_path(&rename, memory, args.rcx)?.is_some()
+            || host_path(&rename, memory, args.rdx)?.is_some()
+        {
+            return rename.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
+        }
         let Some(source) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
             return rename.fail(cpu.gs_base, INVALID_NAME, 0);
         };
@@ -354,6 +672,14 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
 
     let find = Arc::clone(state);
     registry.register(KERNEL32, "FindFirstFileW", move |args, cpu, memory| {
+        let raw = read_raw_path(memory, args.rcx).map_err(ExitReason::MemoryFault)?;
+        if let Some(found) = raw.as_deref().and_then(|raw| find_host_entries(&find, raw)) {
+            let entries = match found {
+                Ok(entries) => entries,
+                Err(error) => return find.fail(cpu.gs_base, error, INVALID_HANDLE),
+            };
+            return open_search(&find, cpu.gs_base, memory, args.rdx, entries);
+        }
         let Some(path) = read_guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
             return find.fail(cpu.gs_base, INVALID_NAME, INVALID_HANDLE);
         };
@@ -366,7 +692,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             return find.fail(cpu.gs_base, INVALID_NAME, INVALID_HANDLE);
         }
         let pattern = if pattern == "*.*" { "*" } else { pattern };
-        let mut objects = find.objects.lock().expect("guest object state");
+        let objects = find.objects.lock().expect("guest object state");
         if !directory.is_empty() && !objects.directories.contains(directory) {
             return find.fail(cpu.gs_base, PATH_NOT_FOUND, INVALID_HANDLE);
         }
@@ -393,26 +719,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             }
         }
         entries.sort_by(|a, b| a.name.cmp(&b.name));
-        let Some(first) = entries.first() else {
-            return find.fail(cpu.gs_base, FILE_NOT_FOUND, INVALID_HANDLE);
-        };
-        if objects
-            .handles
-            .values()
-            .filter(|object| matches!(object, GuestObject::Search(_)))
-            .count()
-            >= 32
-        {
-            return find.fail(cpu.gs_base, ERROR_NOT_ENOUGH_MEMORY, INVALID_HANDLE);
-        }
-        let Some(handle) = objects.next_handle() else {
-            return find.fail(cpu.gs_base, ERROR_NOT_ENOUGH_MEMORY, INVALID_HANDLE);
-        };
-        if write_find_data(memory, args.rdx, first).is_err() {
-            return find.fail(cpu.gs_base, ERROR_NOACCESS, INVALID_HANDLE);
-        }
-        objects.insert_handle(handle, GuestObject::Search(Search { entries, next: 1 }));
-        Ok(handle)
+        drop(objects);
+        open_search(&find, cpu.gs_base, memory, args.rdx, entries)
     });
 
     let find_next = Arc::clone(state);
@@ -447,12 +755,16 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         let Some(GuestObject::File(file)) = objects.handles.get(&args.rcx) else {
             return size.fail(cpu.gs_base, ERROR_INVALID_HANDLE, 0);
         };
-        let bytes = objects
-            .files
-            .get(&file.path)
-            .expect("open file exists")
-            .len();
-        if args.rdx == 0 || memory.write_u64(args.rdx, bytes as u64).is_err() {
+        let bytes = match file.host_len() {
+            Some(Ok(bytes)) => bytes,
+            Some(Err(error)) => return size.fail(cpu.gs_base, error, 0),
+            None => objects
+                .files
+                .get(&file.path)
+                .expect("open file exists")
+                .len() as u64,
+        };
+        if args.rdx == 0 || memory.write_u64(args.rdx, bytes).is_err() {
             return size.fail(cpu.gs_base, ERROR_NOACCESS, 0);
         }
         Ok(1)
@@ -471,7 +783,11 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         let origin = match args.r9 as u32 {
             0 => None,
             1 => Some(file.position.load(Ordering::Relaxed)),
-            2 => Some(files.get(&file.path).expect("open file exists").len() as u64),
+            2 => match file.host_len() {
+                Some(Ok(bytes)) => Some(bytes),
+                Some(Err(error)) => return seek.fail(cpu.gs_base, error, 0),
+                None => Some(files.get(&file.path).expect("open file exists").len() as u64),
+            },
             _ => return seek.fail(cpu.gs_base, ERROR_INVALID_PARAMETER, 0),
         };
         let position = match origin {
@@ -505,6 +821,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             return truncate.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
         }
         let position = file.position.load(Ordering::Relaxed);
+        if let Some(host) = &file.host {
+            return match host.set_len(position) {
+                Ok(()) => Ok(1),
+                Err(error) => truncate.fail(cpu.gs_base, host_files::win32_error(&error), 0),
+            };
+        }
         if position > MAX_BYTES as u64 {
             return truncate.fail(cpu.gs_base, DISK_FULL, 0);
         }
@@ -547,6 +869,40 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             }
             if args.r9 == 0 || memory.check_write(args.r9, 4).is_err() {
                 return state.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+            }
+            if let Some(host) = file.host.clone() {
+                let position = file.position.load(Ordering::Relaxed);
+                if position.checked_add(count as u64).is_none() {
+                    return state.fail(cpu.gs_base, ERROR_INVALID_PARAMETER, 0);
+                }
+                let mut buffer = vec![0; count];
+                if writing
+                    && count != 0
+                    && (args.rdx == 0 || memory.read_bytes(args.rdx, &mut buffer).is_err())
+                {
+                    return state.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+                }
+                if !writing
+                    && count != 0
+                    && (args.rdx == 0 || memory.check_write(args.rdx, count).is_err())
+                {
+                    return state.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+                }
+                let transferred = match host_transfer(&host, position, &mut buffer, writing) {
+                    Ok(transferred) => transferred,
+                    Err(error) => return state.fail(cpu.gs_base, error, 0),
+                };
+                if !writing && transferred != 0 {
+                    memory
+                        .write_bytes(args.rdx, &buffer[..transferred])
+                        .map_err(ExitReason::MemoryFault)?;
+                }
+                memory
+                    .write_u32(args.r9, transferred as u32)
+                    .map_err(ExitReason::MemoryFault)?;
+                file.position
+                    .store(position + transferred as u64, Ordering::Relaxed);
+                return Ok(1);
             }
 
             let used = if writing {
