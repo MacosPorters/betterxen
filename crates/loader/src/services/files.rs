@@ -14,7 +14,7 @@ use std::collections::BTreeSet;
 use std::fs::File;
 use std::os::unix::fs::FileExt;
 use std::sync::Arc;
-use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::atomic::{AtomicU8, AtomicU64, Ordering};
 
 const FILE_API: &str = "api-ms-win-core-file-l1-1-0.dll";
 const INVALID_HANDLE: u64 = u64::MAX;
@@ -50,6 +50,7 @@ pub(super) struct OpenFile {
     path: String,
     // The object table serializes all operations on this open instance.
     position: Arc<AtomicU64>,
+    suppressed_times: Arc<AtomicU8>,
     open_access: u32,
     pub(super) access: u32,
     share: u32,
@@ -64,6 +65,10 @@ pub(super) struct HostFile {
 }
 
 impl OpenFile {
+    fn updates_time(&self, index: usize) -> bool {
+        self.suppressed_times.load(Ordering::Relaxed) & (1 << index) == 0
+    }
+
     fn host_len(&self) -> Option<Result<u64, u32>> {
         let file = &self.host.as_ref()?.file;
         Some(
@@ -191,6 +196,7 @@ fn create_host_file(
         GuestObject::File(OpenFile {
             path: key,
             position: Arc::new(AtomicU64::new(0)),
+            suppressed_times: Arc::default(),
             open_access: access,
             access,
             share,
@@ -923,6 +929,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 GuestObject::File(OpenFile {
                     path,
                     position: Arc::new(AtomicU64::new(0)),
+                    suppressed_times: Arc::default(),
                     open_access: access,
                     access,
                     share,
@@ -1290,19 +1297,20 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if values == [0; 3] {
             return Ok(1);
         }
-        if values[1..].contains(&u64::MAX) {
-            return times.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
-        }
         let Some(host) = &file.host else {
             let synthetic = files.get_mut(&file.path).expect("open file exists");
-            for (slot, value) in synthetic.times.iter_mut().zip(values) {
-                if value != 0 {
-                    *slot = value;
+            for (index, (slot, value)) in synthetic.times.iter_mut().zip(values).enumerate() {
+                match value {
+                    0 => {}
+                    u64::MAX if index != 0 => {
+                        file.suppressed_times.fetch_or(1 << index, Ordering::Relaxed);
+                    }
+                    _ => *slot = value,
                 }
             }
             return Ok(1);
         };
-        if values[0] != 0 {
+        if values[0] != 0 || values[1..].contains(&u64::MAX) {
             return times.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
         }
         match host_files::set_open_file_times(&host.file, values[1], values[2]) {
@@ -1418,7 +1426,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         } else {
             data.resize(length, 0);
         }
-        synthetic.times[2] = truncate.clock.now_filetime();
+        if file.updates_time(2) {
+            synthetic.times[2] = truncate.clock.now_filetime();
+        }
         Ok(1)
     });
 
@@ -1533,8 +1543,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             memory
                 .write_u32(args.r9, transferred as u32)
                 .map_err(ExitReason::MemoryFault)?;
-            if transferred != 0 {
-                synthetic.times[if writing { 2 } else { 1 }] = state.clock.now_filetime();
+            let time_index = if writing { 2 } else { 1 };
+            if transferred != 0 && file.updates_time(time_index) {
+                synthetic.times[time_index] = state.clock.now_filetime();
             }
             file.position
                 .store(position + transferred as u64, Ordering::Relaxed);

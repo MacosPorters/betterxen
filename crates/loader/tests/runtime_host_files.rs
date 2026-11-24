@@ -161,6 +161,34 @@ fn symlink(target: &Path, link: &Path) {
 }
 
 #[test]
+fn synthetic_timestamp_suppression_is_scoped_to_the_open_file() {
+    let clock = Arc::new(MockClock::new(100));
+    let mut guest = Guest::with_state(IMPORTS, &[], ServicesState::new(clock.clone()));
+    let name = r"C:\Time.dat";
+    let access = GENERIC_READ | GENERIC_WRITE;
+    let pinned = open(&mut guest, name, access, 3, CREATE_NEW);
+    let normal = open(&mut guest, name, access, 3, OPEN_EXISTING);
+    assert_ne!(pinned, INVALID);
+    assert_ne!(normal, INVALID);
+    guest.memory.write_u64(COUNT, u64::MAX).unwrap();
+    assert_eq!(guest.call("SetFileTime", &[pinned, 0, COUNT, COUNT]), 1);
+    clock.advance(10);
+    assert!(write(&mut guest, pinned, b"x"));
+    assert_eq!(guest.call("SetFilePointerEx", &[pinned, 0, 0, 0]), 1);
+    assert_eq!(read(&mut guest, pinned, 1).unwrap(), b"x");
+    assert_eq!(guest.call("GetFileTime", &[pinned, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(guest.u64_at(BUFFER), 100);
+    assert_eq!(guest.u64_at(BUFFER + 8), 100);
+
+    clock.advance(10);
+    assert_eq!(read(&mut guest, normal, 1).unwrap(), b"x");
+    assert!(write(&mut guest, normal, b"y"));
+    assert_eq!(guest.call("GetFileTime", &[pinned, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(guest.u64_at(BUFFER), 120);
+    assert_eq!(guest.u64_at(BUFFER + 8), 120);
+}
+
+#[test]
 fn synthetic_file_times_follow_the_file_until_deletion() {
     let clock = Arc::new(MockClock::new(100));
     let state = ServicesState::new(clock.clone());

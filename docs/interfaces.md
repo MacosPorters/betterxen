@@ -363,7 +363,9 @@ file with read access and accepts null pointers for omitted values.
 The partial `SetFileTime` service updates access and modification times on
 writable mounted files. On synthetic files it also accepts creation-time
 updates. Null inputs and zero FILETIMEs leave fields unchanged. Host
-creation-time updates and automatic timestamp suppression are unsupported.
+creation-time updates and host timestamp suppression are unsupported.
+Synthetic handles accept all-ones access and write times to suppress
+automatic updates for that open file.
 Synthetic files update access time after a nonempty read and modification
 time after a nonempty write or truncation.
 The ANSI form accepts ASCII paths.
