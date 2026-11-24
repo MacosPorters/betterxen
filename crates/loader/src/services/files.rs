@@ -34,6 +34,12 @@ const MAX_DIRECTORIES: usize = 256;
 const MAX_BYTES: usize = 16 * 1024 * 1024;
 const MAX_TRANSFER: usize = 1024 * 1024;
 
+#[derive(Default)]
+pub(super) struct SyntheticFile {
+    data: Vec<u8>,
+    times: [u64; 3],
+}
+
 #[derive(Clone)]
 pub(super) struct OpenFile {
     path: String,
@@ -308,7 +314,7 @@ fn file_metadata(state: &ServicesState, raw: &str) -> Result<(u32, u64, [u64; 3]
         return Ok((0x10, 0, [0; 3])); // FILE_ATTRIBUTE_DIRECTORY
     }
     if let Some(file) = objects.files.get(&path) {
-        return Ok((0x80, file.len() as u64, [0; 3])); // FILE_ATTRIBUTE_NORMAL
+        return Ok((0x80, file.data.len() as u64, file.times)); // FILE_ATTRIBUTE_NORMAL
     }
     let parent = parent(&path);
     Err(if parent.is_empty() || objects.directories.contains(parent) {
@@ -656,7 +662,7 @@ fn temp_file_name(
         if objects.files.contains_key(&key) || objects.directories.contains(&key) {
             return Ok(false);
         }
-        objects.files.insert(key, Vec::new());
+        objects.files.insert(key, SyntheticFile::default());
         Ok(true)
     });
     match result {
@@ -898,9 +904,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 if objects.files.len() >= MAX_FILES {
                     return open.fail(cpu.gs_base, DISK_FULL, INVALID_HANDLE);
                 }
-                objects.files.insert(path.clone(), Vec::new());
+                objects.files.insert(path.clone(), SyntheticFile::default());
             } else if matches!(disposition, 2 | 5) {
-                *objects.files.get_mut(&path).expect("existing file") = Vec::new();
+                objects.files.get_mut(&path).expect("existing file").data.clear();
             }
             if matches!(disposition, 2 | 4) {
                 open.fail(cpu.gs_base, if exists { ALREADY_EXISTS } else { 0 }, 0)?;
@@ -1141,21 +1147,22 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         let candidates = objects
             .directories
             .iter()
-            .map(|path| (path, 0x10, 0))
+            .map(|path| (path, 0x10, 0, [0; 3]))
             .chain(
                 objects
                     .files
                     .iter()
-                    .map(|(path, data)| (path, 0x80, data.len() as u64)),
+                    .map(|(path, file)| (path, 0x80, file.data.len() as u64, file.times)),
             );
         let mut entries = Vec::new();
-        for (path, attributes, size) in candidates.filter(|(path, _, _)| parent(path) == directory)
+        for (path, attributes, size, times) in
+            candidates.filter(|(path, _, _, _)| parent(path) == directory)
         {
             let name = path.rsplit('\\').next().expect("candidate name");
             if wildcard_match(pattern, name) {
                 entries.push(SearchEntry {
                     name: name.to_owned(),
-                    times: [0; 3],
+                    times,
                     attributes,
                     size,
                 });
@@ -1203,7 +1210,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             let bytes = match file.host_len() {
                 Some(Ok(bytes)) => bytes,
                 Some(Err(error)) => return size.fail(cpu.gs_base, error, failure),
-                None => objects.files.get(&file.path).expect("open file exists").len() as u64,
+                None => objects.files.get(&file.path).expect("open file exists").data.len() as u64,
             };
             if extended {
                 if args.rdx == 0 || memory.write_u64(args.rdx, bytes).is_err() {
@@ -1244,7 +1251,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 Err(error) => return times.fail(cpu.gs_base, host_files::win32_error(&error), 0),
             }
         } else {
-            [0; 3]
+            objects.files.get(&file.path).expect("open file exists").times
         };
         for (address, value) in addresses.into_iter().zip(values) {
             if address != 0 {
@@ -1256,8 +1263,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
 
     let times = Arc::clone(state);
     registry.register(KERNEL32, "SetFileTime", move |args, cpu, memory| {
-        let objects = times.objects.lock().expect("guest object state");
-        let Some(GuestObject::File(file)) = objects.handles.get(&args.rcx) else {
+        let mut objects = times.objects.lock().expect("guest object state");
+        let super::ObjectState { handles, files, .. } = &mut *objects;
+        let Some(GuestObject::File(file)) = handles.get(&args.rcx) else {
             return times.fail(cpu.gs_base, ERROR_INVALID_HANDLE, 0);
         };
         if file.access & WRITE == 0 {
@@ -1275,10 +1283,19 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if values == [0; 3] {
             return Ok(1);
         }
-        let Some(host) = &file.host else {
+        if values[1..].contains(&u64::MAX) {
             return times.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
+        }
+        let Some(host) = &file.host else {
+            let synthetic = files.get_mut(&file.path).expect("open file exists");
+            for (slot, value) in synthetic.times.iter_mut().zip(values) {
+                if value != 0 {
+                    *slot = value;
+                }
+            }
+            return Ok(1);
         };
-        if values[0] != 0 || values[1..].contains(&u64::MAX) {
+        if values[0] != 0 {
             return times.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
         }
         match host_files::set_open_file_times(&host.file, values[1], values[2]) {
@@ -1331,7 +1348,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             2 => match file.host_len() {
                 Some(Ok(bytes)) => Some(bytes),
                 Some(Err(error)) => return seek.fail(cpu.gs_base, error, 0),
-                None => Some(files.get(&file.path).expect("open file exists").len() as u64),
+                None => Some(files.get(&file.path).expect("open file exists").data.len() as u64),
             },
             _ => return seek.fail(cpu.gs_base, ERROR_INVALID_PARAMETER, 0),
         };
@@ -1378,8 +1395,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if position > MAX_BYTES as u64 {
             return truncate.fail(cpu.gs_base, DISK_FULL, 0);
         }
-        let used = files.values().map(Vec::len).sum::<usize>();
-        let data = files.get_mut(&file.path).expect("open file exists");
+        let used = files.values().map(|file| file.data.len()).sum::<usize>();
+        let data = &mut files.get_mut(&file.path).expect("open file exists").data;
         let length = position as usize;
         let growth = length.saturating_sub(data.len());
         if growth > MAX_BYTES - used {
@@ -1457,11 +1474,11 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             }
 
             let used = if writing {
-                files.values().map(Vec::len).sum::<usize>()
+                files.values().map(|file| file.data.len()).sum::<usize>()
             } else {
                 0
             };
-            let data = files.get_mut(&file.path).expect("open file exists");
+            let data = &mut files.get_mut(&file.path).expect("open file exists").data;
             let position = file.position.load(Ordering::Relaxed);
             let transferred = if writing {
                 if count == 0 {

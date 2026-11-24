@@ -161,6 +161,48 @@ fn symlink(target: &Path, link: &Path) {
 }
 
 #[test]
+fn synthetic_file_times_follow_the_file_until_deletion() {
+    let mut guest = guest_with(vec![]);
+    let source = r"C:\Before.dat";
+    let target = r"C:\After.dat";
+    let handle = open(&mut guest, source, GENERIC_READ | GENERIC_WRITE, 0, CREATE_NEW);
+    assert_ne!(handle, INVALID);
+    let created = 133_444_736_001_234_567;
+    let modified = 133_444_736_012_345_678;
+    guest.memory.write_u64(COUNT, created).unwrap();
+    guest.memory.write_u64(COUNT + 8, modified).unwrap();
+    assert_eq!(guest.call("SetFileTime", &[handle, COUNT, 0, COUNT + 8]), 1);
+    assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, BUFFER + 8, BUFFER + 16]), 1);
+    assert_eq!(guest.u64_at(BUFFER), created);
+    assert_eq!(guest.u64_at(BUFFER + 8), 0);
+    assert_eq!(guest.u64_at(BUFFER + 16), modified);
+    assert_eq!(guest.call("CloseHandle", &[handle]), 1);
+
+    put_path(&mut guest, OTHER_PATH, target);
+    assert_eq!(guest.call("MoveFileW", &[PATH, OTHER_PATH]), 1);
+    let handle = open(&mut guest, target, GENERIC_WRITE, 0, CREATE_ALWAYS);
+    assert_ne!(handle, INVALID);
+    assert_eq!(guest.call("CloseHandle", &[handle]), 1);
+    assert_eq!(guest.call("GetFileAttributesExW", &[PATH, 0, BUFFER]), 1);
+    assert_eq!(guest.u64_at(BUFFER + 4), created);
+    assert_eq!(guest.u64_at(BUFFER + 20), modified);
+
+    let search = guest.call("FindFirstFileW", &[PATH, FIND_DATA]);
+    assert_ne!(search, INVALID);
+    assert_eq!(guest.u64_at(FIND_DATA + 4), created);
+    assert_eq!(guest.u64_at(FIND_DATA + 20), modified);
+    assert_eq!(guest.call("FindClose", &[search]), 1);
+    assert_eq!(guest.call("DeleteFileW", &[PATH]), 1);
+
+    let handle = open(&mut guest, target, GENERIC_READ, 0, CREATE_NEW);
+    assert_ne!(handle, INVALID);
+    assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, 0, BUFFER + 8]), 1);
+    assert_eq!(guest.u64_at(BUFFER), 0);
+    assert_eq!(guest.u64_at(BUFFER + 8), 0);
+    assert_eq!(guest.call("CloseHandle", &[handle]), 1);
+}
+
+#[test]
 fn guest_sets_mounted_write_time_by_handle() {
     let tree = Tree::new("set-filetime");
     let root = tree.path("root");

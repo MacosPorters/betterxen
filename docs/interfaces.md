@@ -357,13 +357,14 @@ read-only unless created writable.
 The partial `GetFileAttributesExA/W` services return attributes and 64-bit
 sizes for `GetFileExInfoStandard`. Host-mounted entries carry access and
 modification timestamps and creation time where the host supplies it.
-Synthetic entry timestamps are zero. Directory enumeration uses the same
+Synthetic file timestamps start at zero and can be set explicitly. Directory enumeration uses the same
 timestamp representation. `GetFileTime` reads these values from an open
 file with read access and accepts null pointers for omitted values.
-The partial `SetFileTime` service updates access and modification times
-on writable mounted files. Null inputs and zero FILETIMEs leave fields
-unchanged. Creation-time updates, auto-update suppression, and synthetic
-timestamp changes are unsupported.
+The partial `SetFileTime` service updates access and modification times on
+writable mounted files. On synthetic files it also accepts creation-time
+updates. Null inputs and zero FILETIMEs leave fields unchanged. Host
+creation-time updates and automatic timestamp suppression are unsupported.
+Synthetic file I/O does not advance timestamps automatically.
 The ANSI form accepts ASCII paths.
 
 The partial `FlushFileBuffers` service requires a writable file handle.

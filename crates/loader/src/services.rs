@@ -159,7 +159,7 @@ struct ObjectState {
     priority: i32,
     last_handle: u64,
     handles: BTreeMap<u64, GuestObject>,
-    files: BTreeMap<String, Vec<u8>>,
+    files: BTreeMap<String, files::SyntheticFile>,
     directories: BTreeSet<String>,
     current_directory: String,
 }
