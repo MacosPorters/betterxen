@@ -2738,7 +2738,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("mov_moffs64_load", 0),
     ("mov_moffs8_store", 0),
     ("movddup_movsldup_movshdup", 0),
-    ("movdqa_movaps_aligned_store_and_load", 3),
     ("mpsadbw", 0),
     ("pabs_min_is_unchanged", 0),
     ("packusdw", 0),

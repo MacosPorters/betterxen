@@ -637,7 +637,8 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
                 ..none
             })
         }
-        "mov" | "movabs" => {
+        // MOVNTI stores like MOV; the non-temporal hint changes no result.
+        "mov" | "movabs" | "movnti" => {
             let value = read(m, places[1], bits);
             write(m, places[0], value);
             Outcome::Done(none)
@@ -1237,6 +1238,8 @@ fn undeclared_and_ambiguous_encodings_are_rejected() {
         &[0x8D, 0xC0],             // lea with a register operand
         &[0x0F, 0xAE, 0x2E],       // 0F AE /5 with a memory operand
         &[0x0F, 0xAE, 0x36],       // 0F AE /6 with a memory operand
+        &[0x0F, 0xC3, 0xC1],       // movnti with a register destination
+        &[0x66, 0x0F, 0xC3, 0x06], // 66 with movnti
         &[0x0F, 0xA3, 0x06],       // bt [rsi], eax
         &[0xC6, 0xC8, 0x01],       // C6 /1
         &[0xFF, 0xF8],             // FF /7

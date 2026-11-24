@@ -108,6 +108,7 @@ movups = { ref = "sdm MOVUPS" }
 movdqa = { ref = "sdm MOVDQA" }
 movdqu = { ref = "sdm MOVDQU" }
 movntdq = { ref = "sdm MOVNTDQ" }
+movnti = { ref = "sdm MOVNTI" }
 movntps = { ref = "sdm MOVNTPS/MOVNTPD" }
 movss = { ref = "sdm MOVSS" }
 movsd = { ref = "sdm MOVSD (scalar double)" }
@@ -951,6 +952,14 @@ opcode = 0xE7
 enc = "rm_xmm"
 size = "x"
 src = "x"
+memory_only = true
+
+[[form]]
+op = "movnti"
+map = "0f"
+opcode = 0xC3
+enc = "rm_reg"
+size = "y"
 memory_only = true
 
 [[form]]

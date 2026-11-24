@@ -373,6 +373,8 @@ pub fn execute(
             Encoding::OpRegImm => write_reg(cpu, insn.reg, size, insn.imm),
             _ => write_rm(cpu, memory, insn, insn.imm & mask(size))?,
         },
+        // A non-temporal store is an ordinary store: there is no cache to bypass.
+        Op::Movnti => write_rm(cpu, memory, insn, read_reg(cpu, insn.reg, size))?,
         Op::Movzx => {
             let value = read_rm(cpu, memory, insn)?;
             write_reg(cpu, insn.reg, size, value);
