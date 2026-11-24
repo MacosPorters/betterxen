@@ -159,6 +159,37 @@ fn symlink(target: &Path, link: &Path) {
 }
 
 #[test]
+fn mounted_metadata_reports_windows_filetimes() {
+    use std::time::{Duration, UNIX_EPOCH};
+
+    let tree = Tree::new("filetimes");
+    let root = tree.path("root");
+    std::fs::create_dir_all(&root).unwrap();
+    let file = std::fs::File::create(root.join("Times.dat")).unwrap();
+    let accessed = UNIX_EPOCH + Duration::new(1_700_000_000, 123_456_700);
+    let modified = UNIX_EPOCH + Duration::new(1_700_000_001, 234_567_800);
+    file.set_times(std::fs::FileTimes::new().set_accessed(accessed).set_modified(modified))
+        .unwrap();
+    let mount = HostMount::new('D', &root, false).unwrap();
+    let mut guest = guest_with(vec![mount]);
+    put_path(&mut guest, PATH, r"D:\Times.dat");
+
+    assert_eq!(guest.call("GetFileAttributesExW", &[PATH, 0, BUFFER]), 1);
+    let created = guest.u64_at(BUFFER + 4);
+    #[cfg(target_os = "macos")]
+    assert_ne!(created, 0);
+    assert_eq!(guest.u64_at(BUFFER + 12), 133_444_736_001_234_567);
+    assert_eq!(guest.u64_at(BUFFER + 20), 133_444_736_012_345_678);
+
+    let search = guest.call("FindFirstFileW", &[PATH, FIND_DATA]);
+    assert_ne!(search, INVALID);
+    assert_eq!(guest.u64_at(FIND_DATA + 4), created);
+    assert_eq!(guest.u64_at(FIND_DATA + 12), guest.u64_at(BUFFER + 12));
+    assert_eq!(guest.u64_at(FIND_DATA + 20), guest.u64_at(BUFFER + 20));
+    assert_eq!(guest.call("FindClose", &[search]), 1);
+}
+
+#[test]
 fn legacy_file_size_splits_large_lengths_and_distinguishes_failure() {
     let tree = Tree::new("legacy-size");
     let root = tree.path("root");

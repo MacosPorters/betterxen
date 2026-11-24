@@ -169,6 +169,7 @@ pub(super) struct Entry {
     pub(super) name: String,
     pub(super) kind: Kind,
     pub(super) size: u64,
+    pub(super) times: [u64; 3],
     pub(super) id: FileId,
 }
 
@@ -185,6 +186,27 @@ fn classify(status: &libc::stat) -> Option<(Kind, u64, FileId)> {
         inode: status.st_ino,
     };
     Some((kind, status.st_size as u64, id))
+}
+
+fn file_times(status: &libc::stat) -> [u64; 3] {
+    fn filetime(seconds: i64, nanoseconds: i64) -> u64 {
+        let ticks = (i128::from(seconds) + 11_644_473_600) * 10_000_000
+            + i128::from(nanoseconds) / 100;
+        u64::try_from(ticks).unwrap_or(0)
+    }
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    let created = if status.st_birthtime == 0 && status.st_birthtime_nsec == 0 {
+        0
+    } else {
+        filetime(status.st_birthtime, status.st_birthtime_nsec)
+    };
+    #[cfg(target_os = "linux")]
+    let created = 0;
+    [
+        created,
+        filetime(status.st_atime, status.st_atime_nsec),
+        filetime(status.st_mtime, status.st_mtime_nsec),
+    ]
 }
 
 fn status(fd: BorrowedFd<'_>) -> io::Result<libc::stat> {
@@ -318,7 +340,8 @@ pub(super) fn list(directory: &OwnedFd) -> io::Result<Vec<Entry>> {
             break Err(error);
         }
         // SAFETY: fstatat succeeded and initialized `status`.
-        let Some((kind, size, id)) = classify(&unsafe { status.assume_init() }) else {
+        let status = unsafe { status.assume_init() };
+        let Some((kind, size, id)) = classify(&status) else {
             continue;
         };
         if entries.len() >= MAX_DIRECTORY_ENTRIES {
@@ -328,6 +351,7 @@ pub(super) fn list(directory: &OwnedFd) -> io::Result<Vec<Entry>> {
             name: name.to_owned(),
             kind,
             size,
+            times: file_times(&status),
             id,
         });
     };
@@ -390,11 +414,15 @@ impl Resolved<'_> {
     pub(super) fn lookup(&self) -> Result<(OwnedFd, Option<Entry>), u32> {
         let parent = self.parent()?;
         let Some(name) = self.components.last() else {
-            let id = verify(&parent, Kind::Directory, None).map_err(|error| win32_error(&error))?;
+            let status = status(parent.as_fd()).map_err(|error| win32_error(&error))?;
+            let Some((Kind::Directory, _, id)) = classify(&status) else {
+                return Err(win32_error(&refused()));
+            };
             let root = Entry {
                 name: String::new(),
                 kind: Kind::Directory,
                 size: 0,
+                times: file_times(&status),
                 id,
             };
             return Ok((parent, Some(root)));

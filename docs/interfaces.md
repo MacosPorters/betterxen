@@ -355,7 +355,10 @@ a mount, nothing on the host is reachable through these services. Mounts are
 read-only unless created writable.
 
 The partial `GetFileAttributesExA/W` services return attributes and 64-bit
-sizes for `GetFileExInfoStandard`. The three timestamp fields are zero.
+sizes for `GetFileExInfoStandard`. Host-mounted entries carry access and
+modification timestamps and creation time where the host supplies it.
+Synthetic entry timestamps are zero. Directory enumeration uses the same
+timestamp representation.
 The ANSI form accepts ASCII paths.
 
 The partial `FlushFileBuffers` service requires a writable file handle.

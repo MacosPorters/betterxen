@@ -294,21 +294,21 @@ fn host_attributes(entry: &host_files::Entry, writable: bool) -> u32 {
     }
 }
 
-fn file_metadata(state: &ServicesState, raw: &str) -> Result<(u32, u64), u32> {
+fn file_metadata(state: &ServicesState, raw: &str) -> Result<(u32, u64, [u64; 3]), u32> {
     if let Some(resolved) = host_files::resolve(&state.mounts, raw, valid_component) {
         let resolved = resolved?;
         let (_, entry) = resolved.lookup()?;
         let entry = entry.ok_or(FILE_NOT_FOUND)?;
-        return Ok((host_attributes(&entry, resolved.mount.writable()), entry.size));
+        return Ok((host_attributes(&entry, resolved.mount.writable()), entry.size, entry.times));
     }
 
     let objects = state.objects.lock().expect("guest object state");
     let path = resolve_file_path(raw, &objects.current_directory).ok_or(INVALID_NAME)?;
     if objects.directories.contains(&path) {
-        return Ok((0x10, 0)); // FILE_ATTRIBUTE_DIRECTORY
+        return Ok((0x10, 0, [0; 3])); // FILE_ATTRIBUTE_DIRECTORY
     }
     if let Some(file) = objects.files.get(&path) {
-        return Ok((0x80, file.len() as u64)); // FILE_ATTRIBUTE_NORMAL
+        return Ok((0x80, file.len() as u64, [0; 3])); // FILE_ATTRIBUTE_NORMAL
     }
     let parent = parent(&path);
     Err(if parent.is_empty() || objects.directories.contains(parent) {
@@ -347,6 +347,7 @@ fn find_host_entries(state: &ServicesState, raw: &str) -> Option<Result<Vec<Sear
             .map(|entry| SearchEntry {
                 attributes: host_attributes(&entry, writable),
                 size: entry.size,
+                times: entry.times,
                 name: entry.name,
             })
             .collect();
@@ -477,6 +478,7 @@ fn resolve_file_path(raw: &str, cwd: &str) -> Option<String> {
 }
 
 struct SearchEntry {
+    times: [u64; 3],
     name: String,
     attributes: u32,
     size: u64,
@@ -485,6 +487,12 @@ struct SearchEntry {
 pub(super) struct Search {
     entries: Vec<SearchEntry>,
     next: usize,
+}
+
+fn write_file_times(bytes: &mut [u8], times: [u64; 3]) {
+    for (slot, time) in bytes.as_chunks_mut::<8>().0.iter_mut().zip(times) {
+        slot.copy_from_slice(&time.to_le_bytes());
+    }
 }
 
 fn write_find_data(
@@ -499,6 +507,7 @@ fn write_find_data(
     // two reserved DWORDs, WCHAR[260], then WCHAR[14].
     let mut bytes = [0u8; 592];
     bytes[..4].copy_from_slice(&entry.attributes.to_le_bytes());
+    write_file_times(&mut bytes[4..28], entry.times);
     bytes[28..32].copy_from_slice(&((entry.size >> 32) as u32).to_le_bytes());
     bytes[32..36].copy_from_slice(&(entry.size as u32).to_le_bytes());
     for (slot, unit) in bytes[44..564]
@@ -1035,7 +1044,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             let Some(raw) = raw else {
                 return attributes.fail(cpu.gs_base, INVALID_NAME, failure);
             };
-            let (flags, size) = match file_metadata(&attributes, &raw) {
+            let (flags, size, times) = match file_metadata(&attributes, &raw) {
                 Ok(metadata) => metadata,
                 Err(error) => return attributes.fail(cpu.gs_base, error, failure),
             };
@@ -1046,6 +1055,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             // WIN32_FILE_ATTRIBUTE_DATA: flags, three FILETIMEs, then size high and low.
             let mut data = [0; 36];
             data[..4].copy_from_slice(&flags.to_le_bytes());
+            write_file_times(&mut data[4..28], times);
             data[28..32].copy_from_slice(&((size >> 32) as u32).to_le_bytes());
             data[32..36].copy_from_slice(&(size as u32).to_le_bytes());
             if args.r8 == 0 || memory.write_bytes(args.r8, &data).is_err() {
@@ -1145,6 +1155,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if wildcard_match(pattern, name) {
                 entries.push(SearchEntry {
                     name: name.to_owned(),
+                    times: [0; 3],
                     attributes,
                     size,
                 });
