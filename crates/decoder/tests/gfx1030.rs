@@ -5,7 +5,7 @@ use std::process::{Command, Stdio};
 use xenora_decoder::{
     Architecture, CompareRelation, DecodeError, DecodeErrorKind, DecodedInstruction, Instruction,
     ScalarAluOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op,
-    VectorCompareVop3Op, VectorSource, VectorUnaryOp, decode, decode_at,
+    VectorCompareOp, VectorCompareVop3Op, VectorSource, VectorUnaryOp, decode, decode_at,
 };
 use xenora_isa::semantics::Signedness;
 use xenora_ref::{
@@ -424,6 +424,44 @@ fn reference_scalar(scalar: ScalarSource) -> Source {
     }
 }
 
+fn reference_comparison(op: VectorCompareOp) -> Comparison {
+    Comparison {
+        offset: match op.relation() {
+            CompareRelation::Less => 1,
+            CompareRelation::Equal => 2,
+            CompareRelation::LessOrEqual => 3,
+            CompareRelation::Greater => 4,
+            CompareRelation::NotEqual => 5,
+            CompareRelation::GreaterOrEqual => 6,
+            CompareRelation::False => 0,
+            CompareRelation::True => 7,
+        },
+        signed: op.signed(),
+    }
+}
+
+fn reference_vector_integer(op: VectorAluOp) -> VectorInteger {
+    match op {
+        VectorAluOp::CndmaskB32 => VectorInteger::Select,
+        VectorAluOp::AddCoCiU32 => VectorInteger::AddCarry,
+        VectorAluOp::SubCoCiU32 => VectorInteger::SubtractBorrow { reversed: false },
+        VectorAluOp::SubrevCoCiU32 => VectorInteger::SubtractBorrow { reversed: true },
+        VectorAluOp::MulI32I24 => VectorInteger::Multiply24 { signed: true },
+        VectorAluOp::MulHiI32I24 => VectorInteger::MultiplyHigh24 { signed: true },
+        VectorAluOp::MulU32U24 => VectorInteger::Multiply24 { signed: false },
+        VectorAluOp::MulHiU32U24 => VectorInteger::MultiplyHigh24 { signed: false },
+        VectorAluOp::MinI32 => VectorInteger::Minimum { signed: true },
+        VectorAluOp::MaxI32 => VectorInteger::Maximum { signed: true },
+        VectorAluOp::MinU32 => VectorInteger::Minimum { signed: false },
+        VectorAluOp::MaxU32 => VectorInteger::Maximum { signed: false },
+        VectorAluOp::XnorB32 => VectorInteger::Xnor,
+        VectorAluOp::AddNcU32 => VectorInteger::Add,
+        VectorAluOp::SubNcU32 => VectorInteger::Subtract,
+        VectorAluOp::SubrevNcU32 => VectorInteger::SubtractReverse,
+        _ => panic!("{op:?} decodes only with a VGPR SRC0 (operand rule vop2_vgpr2)"),
+    }
+}
+
 fn reference_op(instruction: Instruction) -> Op {
     match instruction {
         Instruction::BufferLoadDword {
@@ -512,14 +550,23 @@ fn reference_op(instruction: Instruction) -> Op {
             reference_scalar(src0),
             reference_scalar(src1),
         ),
-        // The reference fixture exercises only the VOP3 add.
         Instruction::VectorAluVop3 {
             op: VectorAluVop3Op::AddNcU32,
             dst,
             src0,
             src1,
         } => Op::Add(dst, src0, src1),
-        Instruction::VectorAluVop3 { op, .. } => panic!("no reference VOP3 mapping for {op:?}"),
+        Instruction::VectorAluVop3 {
+            op,
+            dst,
+            src0,
+            src1,
+        } => Op::VectorInteger(
+            reference_vector_integer(op.base()),
+            dst,
+            CompareSource::Vector(src0),
+            src1,
+        ),
         Instruction::ScalarUnary { op, dst, src } => {
             let src = reference_scalar(src);
             let unary = match op {
@@ -628,19 +675,7 @@ fn reference_op(instruction: Instruction) -> Op {
         }
 
         Instruction::VectorCompare { op, src0, src1 } => {
-            let comparison = Comparison {
-                offset: match op.relation() {
-                    CompareRelation::Less => 1,
-                    CompareRelation::Equal => 2,
-                    CompareRelation::LessOrEqual => 3,
-                    CompareRelation::Greater => 4,
-                    CompareRelation::NotEqual => 5,
-                    CompareRelation::GreaterOrEqual => 6,
-                    CompareRelation::False => 0,
-                    CompareRelation::True => 7,
-                },
-                signed: op.signed(),
-            };
+            let comparison = reference_comparison(op);
             let src0 = match src0 {
                 VectorSource::Register(reg) => CompareSource::Vector(reg),
                 VectorSource::Scalar(reg) => CompareSource::Scalar(reg),
@@ -653,30 +688,24 @@ fn reference_op(instruction: Instruction) -> Op {
                 width => panic!("unexpected VOPC operand width {width}"),
             }
         }
-        Instruction::VectorCompareVop3 { .. } => {
-            panic!("VOPC reference fixture matrix received a VOP3A compare")
-        }
+        Instruction::VectorCompareVop3 {
+            op,
+            sdst,
+            src0,
+            src1,
+        } => Op::CompareVop3(
+            sdst,
+            reference_comparison(op.base()),
+            CompareSource::Vector(src0),
+            src1,
+        ),
         Instruction::VectorAlu {
             op,
             dst,
             src0,
             src1,
         } => Op::VectorInteger(
-            match op {
-                VectorAluOp::MulI32I24 => VectorInteger::Multiply24 { signed: true },
-                VectorAluOp::MulHiI32I24 => VectorInteger::MultiplyHigh24 { signed: true },
-                VectorAluOp::MulU32U24 => VectorInteger::Multiply24 { signed: false },
-                VectorAluOp::MulHiU32U24 => VectorInteger::MultiplyHigh24 { signed: false },
-                VectorAluOp::MinI32 => VectorInteger::Minimum { signed: true },
-                VectorAluOp::MaxI32 => VectorInteger::Maximum { signed: true },
-                VectorAluOp::MinU32 => VectorInteger::Minimum { signed: false },
-                VectorAluOp::MaxU32 => VectorInteger::Maximum { signed: false },
-                VectorAluOp::XnorB32 => VectorInteger::Xnor,
-                VectorAluOp::AddNcU32 => VectorInteger::Add,
-                VectorAluOp::SubNcU32 => VectorInteger::Subtract,
-                VectorAluOp::SubrevNcU32 => VectorInteger::SubtractReverse,
-                _ => panic!("{op:?} decodes only with a VGPR SRC0 (operand rule vop2_vgpr2)"),
-            },
+            reference_vector_integer(op),
             dst,
             match src0 {
                 VectorSource::Register(reg) => CompareSource::Vector(reg),
@@ -712,16 +741,19 @@ fn compares_fixture_instructions_against_llvm() {
         include_bytes!("../../../fixtures/rdna2/scalar-arith.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-immediate.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-integer.bin"),
+        include_bytes!("../../../fixtures/rdna2/vector-vcc.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare-ft.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-unary.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare-16.bin"),
+        include_bytes!("../../../fixtures/rdna2/vop3-integer.bin"),
+        include_bytes!("../../../fixtures/rdna2/vop3-compare.bin"),
         high_registers,
         &matrix,
     ] {
         count += compare_against_llvm(fixture, &mut forms);
     }
-    assert_eq!(forms.len(), 138, "forms compared: {forms:?}");
+    assert_eq!(forms.len(), 169, "forms compared: {forms:?}");
     eprintln!(
         "{count} three-way instruction comparisons across {} forms",
         forms.len()
@@ -1018,7 +1050,7 @@ fn normalize_llvm_assembly(assembly: &str, next_offset: usize) -> String {
             let target = next_offset + displacement * 4;
             format!("{mnemonic} -> 0x{target:04x}")
         }
-        // VOPC and the registry VOP2 forms print SRC0 (the second operand) as bits.
+        // VOPC and registry VOP2 forms print SRC0 as bits.
         mnemonic
             if mnemonic.starts_with("v_cmp_")
                 || VectorAluOp::ALL
@@ -1026,10 +1058,11 @@ fn normalize_llvm_assembly(assembly: &str, next_offset: usize) -> String {
                     .any(|op| op.assembly_name() == mnemonic) =>
         {
             let mut parts: Vec<String> = operands.split(", ").map(str::to_owned).collect();
-            parts[1] = match literal_bits(&parts[1]) {
+            let src = if parts.len() == 5 { 2 } else { 1 };
+            parts[src] = match literal_bits(&parts[src]) {
                 Some(bits) => format!("0x{bits:x}"),
-                None => parts[1].parse::<i32>().map_or_else(
-                    |_| parts[1].clone(),
+                None => parts[src].parse::<i32>().map_or_else(
+                    |_| parts[src].clone(),
                     |value| format!("0x{:x}", value as u32),
                 ),
             };

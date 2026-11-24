@@ -784,6 +784,27 @@ mod review {
     const SCALAR_ARITH_FIXTURE: &[u8] = include_bytes!("../../fixtures/rdna2/scalar-arith.bin");
     // Hand-derived in fixtures/rdna2/scalar-arith.s from the guide's 12.1 pseudocode.
     const SCALAR_ARITH_KEY: u32 = 0x8115_7dfe;
+    #[test]
+    fn vector_vcc_chain_returns_the_zero_input_mask() {
+        let code = include_bytes!("../../fixtures/rdna2/vector-vcc.bin");
+        let input: Vec<_> = [0, 1, u32::MAX, 5, 0, 7]
+            .into_iter()
+            .cycle()
+            .take(67)
+            .collect();
+        let expected: Vec<_> = input
+            .chunks(32)
+            .flat_map(|wave| {
+                let mask = wave
+                    .iter()
+                    .enumerate()
+                    .fold(0, |mask, (lane, &x)| mask | (u32::from(x == 0) << lane));
+                std::iter::repeat_n(mask, wave.len())
+            })
+            .collect();
+        verify(code, &input, Some(&expected));
+    }
+
     const VECTOR_INTEGER_FIXTURE: &[u8] = include_bytes!("../../fixtures/rdna2/vector-integer.bin");
 
     /// fixtures/rdna2/vector-integer.s for one lane input `x`, written from the

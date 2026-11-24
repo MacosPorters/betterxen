@@ -791,11 +791,20 @@ class Validate(unittest.TestCase):
         text = gen.render(vectors(), snapshot())
         self.assertIn("pub enum VectorAluOp {", text)
         self.assertIn("if word & 0x8000_0000 != 0x0000_0000 {", text)
-        self.assertIn("Self::MulI32I24 => VectorBinary::Mul24Signed,", text)
-        self.assertIn("Self::SubrevNcU32 => VectorBinary::Sub,", text)
+        self.assertIn("Self::MulI32I24 => VectorLowering::Binary(VectorBinary::Mul24Signed),", text)
+        self.assertIn("Self::SubrevNcU32 => VectorLowering::Binary(VectorBinary::Sub),", text)
         self.assertIn("Self::SubrevNcU32 => true,", text.split("fn swaps_sources", 1)[1])
         self.assertIn('Self::AddU32 => "v_min_i32_e32",', text)
         self.assertIn("swap_sources: true,", text)
+
+    def test_vop2_vcc_requires_the_xml_input_and_output(self):
+        reg = gen.load_registry()
+        snap = gen.load_snapshot()
+        operands = snap["variants"][("V_ADD_CO_CI_U32", "ENC_VOP2")]["operands"]
+        operands[:] = [op for op in operands if not (op[2] == "OPR_VCC" and op[4])]
+        self.rejects(reg, "V_ADD_CO_CI_U32: carry_in vcc requires one implicit XML VCC input", snap)
+        form(reg, "V_CNDMASK_B32")["vcc"] = "lane_mask"
+        self.rejects(reg, "V_CNDMASK_B32: vcc lane_mask contradicts rule vop2_vcc", snap)
 
     def test_accepts_compares(self):
         self.assertEqual(self.errors(compares()), [])
@@ -1179,7 +1188,7 @@ class Validate(unittest.TestCase):
 
     def test_rejects_unknown_signedness_carry_in_exec_and_wave(self):
         for key, value in (
-            ("signedness", "float"), ("carry_in", "vcc"), ("exec", "written"), ("wave", "wave64"),
+            ("signedness", "float"), ("carry_in", "exec"), ("exec", "written"), ("wave", "wave64"),
         ):
             with self.subTest(key=key):
                 reg = registry()
