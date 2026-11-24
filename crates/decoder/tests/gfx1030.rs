@@ -375,13 +375,14 @@ fn reference_op(instruction: Instruction) -> Op {
             reference_scalar(src0),
             reference_scalar(src1),
         ),
-        // The reference's VOP3 add; it is the only VOP3 variant so far.
+        // The reference fixture exercises only the VOP3 add.
         Instruction::VectorAluVop3 {
             op: VectorAluVop3Op::AddNcU32,
             dst,
             src0,
             src1,
         } => Op::Add(dst, src0, src1),
+        Instruction::VectorAluVop3 { op, .. } => panic!("no reference VOP3 mapping for {op:?}"),
         Instruction::ScalarMoveB32 { dst, src } => Op::ScalarMove(dst, reference_scalar(src)),
         Instruction::ScalarUnary { op, dst, src } => Op::ScalarUnary(
             match op {
@@ -1039,4 +1040,120 @@ fn decode_at_resolves_branch_targets_from_the_stream_offset() {
             },
         })
     );
+}
+
+// llvm-mc -triple=amdgcn -mcpu=gfx1030 -show-encoding
+const VOP3_INTEGER_ENCODINGS: [(VectorAluVop3Op, u32); 11] = [
+    // v_mul_i32_i24_e64 v255, v0, v127        ; encoding: [0xff,0x00,0x09,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MulI32I24, 0xd50900ff),
+    // v_mul_hi_i32_i24_e64 v255, v0, v127     ; encoding: [0xff,0x00,0x0a,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MulHiI32I24, 0xd50a00ff),
+    // v_mul_u32_u24_e64 v255, v0, v127        ; encoding: [0xff,0x00,0x0b,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MulU32U24, 0xd50b00ff),
+    // v_mul_hi_u32_u24_e64 v255, v0, v127     ; encoding: [0xff,0x00,0x0c,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MulHiU32U24, 0xd50c00ff),
+    // v_min_i32_e64 v255, v0, v127            ; encoding: [0xff,0x00,0x11,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MinI32, 0xd51100ff),
+    // v_max_i32_e64 v255, v0, v127            ; encoding: [0xff,0x00,0x12,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MaxI32, 0xd51200ff),
+    // v_min_u32_e64 v255, v0, v127            ; encoding: [0xff,0x00,0x13,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MinU32, 0xd51300ff),
+    // v_max_u32_e64 v255, v0, v127            ; encoding: [0xff,0x00,0x14,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::MaxU32, 0xd51400ff),
+    // v_xnor_b32_e64 v255, v0, v127           ; encoding: [0xff,0x00,0x1e,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::XnorB32, 0xd51e00ff),
+    // v_sub_nc_u32_e64 v255, v0, v127         ; encoding: [0xff,0x00,0x26,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::SubNcU32, 0xd52600ff),
+    // v_subrev_nc_u32_e64 v255, v0, v127      ; encoding: [0xff,0x00,0x27,0xd5,0x00,0xff,0x02,0x02]
+    (VectorAluVop3Op::SubrevNcU32, 0xd52700ff),
+];
+const VOP3_INTEGER_SOURCE_WORD: u32 = 0x0202_ff00;
+
+#[test]
+fn decodes_registry_vop3_integer_encodings() {
+    for (op, first) in VOP3_INTEGER_ENCODINGS {
+        let bytes = [first.to_le_bytes(), VOP3_INTEGER_SOURCE_WORD.to_le_bytes()].concat();
+        let decoded = decode(Architecture::Gfx1030, &bytes).unwrap();
+        assert_eq!(decoded.len(), 1);
+        assert_eq!(decoded[0].byte_len, 8);
+        assert_eq!(
+            decoded[0].instruction,
+            Instruction::VectorAluVop3 {
+                op,
+                dst: 255,
+                src0: 0,
+                src1: 127,
+            }
+        );
+    }
+}
+
+#[test]
+fn decodes_vop3_integer_fixture() {
+    use VectorAluVop3Op::*;
+
+    let code = include_bytes!("../../../fixtures/rdna2/vop3-integer.bin");
+    let decoded = decode(Architecture::Gfx1030, code).unwrap();
+    let expected = [
+        (MulI32I24, 2, 1, 1),
+        (MulHiI32I24, 3, 2, 1),
+        (MulU32U24, 4, 2, 1),
+        (MulHiU32U24, 255, 4, 1),
+        (MinI32, 6, 1, 2),
+        (MaxI32, 7, 1, 4),
+        (MinU32, 8, 3, 1),
+        (MaxU32, 9, 255, 2),
+        (XnorB32, 10, 1, 255),
+        (SubNcU32, 11, 6, 10),
+        (SubrevNcU32, 1, 1, 9),
+    ];
+    let actual: Vec<_> = decoded
+        .iter()
+        .filter_map(|decoded| match decoded.instruction {
+            Instruction::VectorAluVop3 {
+                op,
+                dst,
+                src0,
+                src1,
+            } => Some((decoded.offset, decoded.byte_len, op, dst, src0, src1)),
+            _ => None,
+        })
+        .collect();
+    let expected: Vec<_> = expected
+        .into_iter()
+        .enumerate()
+        .map(|(index, (op, dst, src0, src1))| (12 + 8 * index, 8, op, dst, src0, src1))
+        .collect();
+    assert_eq!(actual, expected);
+}
+
+#[test]
+fn rejects_registry_vop3_integer_modifiers_and_other_sources() {
+    for (op, first) in VOP3_INTEGER_ENCODINGS {
+        let second = VOP3_INTEGER_SOURCE_WORD;
+        let reject = |first: u32, second: u32| {
+            let bytes = [first.to_le_bytes(), second.to_le_bytes()].concat();
+            let error = decode(Architecture::Gfx1030, &bytes)
+                .expect_err(&format!("{op:?} accepted {first:#010x} {second:#010x}"));
+            assert_eq!(error.offset, 0);
+            assert!(matches!(
+                error.kind,
+                DecodeErrorKind::UnsupportedForm { mnemonic, .. }
+                    if mnemonic == op.assembly_name()
+            ));
+        };
+
+        // First word: ABS[10:8], OP_SEL[14:11], CLAMP[15].
+        for bit in 8..=15 {
+            reject(first | (1 << bit), second);
+        }
+        // Second word: OMOD[28:27], NEG[31:29].
+        for bit in 27..=31 {
+            reject(first, second | (1 << bit));
+        }
+
+        reject(first, second & !0x1ff); // SRC0 = s0
+        reject(first, (second & !(0x1ff << 9)) | (128 << 9)); // SRC1 = inline zero
+        reject(first, second | (1 << 18)); // SRC2 = inline one
+    }
 }

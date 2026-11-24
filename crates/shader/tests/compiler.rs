@@ -351,6 +351,20 @@ fn vector_integer_forms_lower_to_per_lane_templates() {
 }
 
 #[test]
+fn vop3_integer_forms_lower_to_per_lane_templates() {
+    let code = include_bytes!("../../../fixtures/rdna2/vop3-integer.bin");
+    let compiled = compile(Architecture::Gfx1030, code).unwrap();
+    assert_eq!(
+        compiled.ir,
+        include_str!("../../../fixtures/golden/vop3-integer.ir")
+    );
+    assert_eq!(
+        compiled.msl,
+        include_str!("../../../fixtures/golden/vop3-integer.metal")
+    );
+}
+
+#[test]
 fn vector_f_and_t_compares_lower_to_operand_free_wave_masks() {
     let code = include_bytes!("../../../fixtures/rdna2/vector-compare-ft.bin");
     let result = compile(Architecture::Gfx1030, code).unwrap();
