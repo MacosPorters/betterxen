@@ -1639,7 +1639,14 @@ fn test_guest_synthetic_file_io_through_iat() {
             code.extend(target.encode_utf16().chain([0]).flat_map(u16::to_le_bytes));
         }
         let bytes = TestPeBuilder::new(IMAGE, 0x1000)
-            .add_import(MODULE, symbol)
+            .add_import(
+                if symbol == "SetCurrentDirectoryW" {
+                    "kernel32.dll"
+                } else {
+                    MODULE
+                },
+                symbol,
+            )
             .code(&code)
             .build();
         let mut imports = ImportRegistry::new();
@@ -1669,6 +1676,34 @@ fn test_guest_synthetic_file_io_through_iat() {
     let namespace = |symbol, path| path_call(symbol, path, 0, 0, None);
     let call = |symbol, args: &[u64]| call_service_fixture(&state, "kernel32.dll", symbol, args);
     let output = PROCESS_FIXTURE_OUTPUT;
+    assert_eq!(namespace("CreateDirectoryW", "C:/work"), 1);
+    assert_eq!(namespace("SetCurrentDirectoryW", "C:/work"), 1);
+    assert_eq!(
+        call("GetCurrentDirectoryW", &[0, 0])
+            .execution
+            .final_state
+            .get(Register::Rax),
+        8
+    );
+    let cwd = call("GetCurrentDirectoryW", &[8, output]);
+    assert_eq!(cwd.execution.final_state.get(Register::Rax), 7);
+    assert_eq!(
+        (0..8)
+            .map(|i| cwd.image.memory.read_u16(output + i * 2).unwrap())
+            .collect::<Vec<_>>(),
+        "C:\\work".encode_utf16().chain([0]).collect::<Vec<_>>()
+    );
+    assert_eq!(namespace("RemoveDirectoryW", "C:/work"), 0);
+    let relative = open("relative.dat", 0x4000_0000, 2);
+    assert_ne!(relative, u64::MAX);
+    call("CloseHandle", &[relative]);
+    assert_eq!(
+        namespace("GetFileAttributesW", "C:/work/relative.dat"),
+        0x80
+    );
+    assert_eq!(namespace("SetCurrentDirectoryW", "C:/"), 1);
+    assert_eq!(namespace("DeleteFileW", "C:/work/relative.dat"), 1);
+    assert_eq!(namespace("RemoveDirectoryW", "C:/work"), 1);
     assert_eq!(open("C:/../outside", 0x4000_0000, 2), u64::MAX);
     let writer = open("C:/Sample.dat", 0x4000_0000, 2);
     assert_ne!(writer, u64::MAX);

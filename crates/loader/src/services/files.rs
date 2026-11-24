@@ -376,11 +376,26 @@ fn read_raw_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, M
 }
 
 /// A path on the synthetic C: drive, folded to lowercase.
-fn read_guest_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, MemoryError> {
-    Ok(read_raw_path(memory, address)?.map(|path| {
-        let path = path.to_ascii_lowercase();
-        path.strip_prefix("c:\\").unwrap_or(&path).to_owned()
-    }))
+fn read_guest_path(
+    memory: &GuestMemory,
+    address: u64,
+    cwd: &str,
+) -> Result<Option<String>, MemoryError> {
+    Ok(read_raw_path(memory, address)?
+        .filter(|path| !path.is_empty() && !path.starts_with("\\\\"))
+        .map(|path| {
+            let path = path.to_ascii_lowercase();
+            if let Some(path) = path
+                .strip_prefix("c:\\")
+                .or_else(|| path.strip_prefix('\\'))
+            {
+                path.to_owned()
+            } else if cwd.is_empty() {
+                path
+            } else {
+                format!("{cwd}\\{path}")
+            }
+        }))
 }
 
 /// The resolved path when `address` names a drive backed by a host mount.
@@ -395,8 +410,12 @@ fn host_path<'a>(
     Ok(host_files::resolve(&state.mounts, &raw, valid_component))
 }
 
-fn guest_path(memory: &GuestMemory, address: u64) -> Result<Option<String>, MemoryError> {
-    Ok(read_guest_path(memory, address)?.filter(|name| name.split('\\').all(valid_component)))
+fn guest_path(
+    memory: &GuestMemory,
+    address: u64,
+    cwd: &str,
+) -> Result<Option<String>, MemoryError> {
+    Ok(read_guest_path(memory, address, cwd)?.filter(|name| name.split('\\').all(valid_component)))
 }
 
 struct SearchEntry {
@@ -484,6 +503,53 @@ fn share_mask(access: u32) -> u32 {
 }
 
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
+    let get_cwd = Arc::clone(state);
+    registry.register(
+        KERNEL32,
+        "GetCurrentDirectoryW",
+        move |args, cpu, memory| {
+            let objects = get_cwd.objects.lock().expect("guest object state");
+            let path = format!("C:\\{}", objects.current_directory);
+            let bytes: Vec<_> = path
+                .encode_utf16()
+                .chain([0])
+                .flat_map(u16::to_le_bytes)
+                .collect();
+            let required = (bytes.len() / 2) as u64;
+            if u64::from(args.rcx as u32) < required {
+                return Ok(required);
+            }
+            if args.rdx == 0 || memory.write_bytes(args.rdx, &bytes).is_err() {
+                return get_cwd.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+            }
+            Ok(required - 1)
+        },
+    );
+    let set_cwd = Arc::clone(state);
+    registry.register(
+        KERNEL32,
+        "SetCurrentDirectoryW",
+        move |args, cpu, memory| {
+            let mut objects = set_cwd.objects.lock().expect("guest object state");
+            let Some(path) = read_guest_path(memory, args.rcx, &objects.current_directory)
+                .map_err(ExitReason::MemoryFault)?
+            else {
+                return set_cwd.fail(cpu.gs_base, INVALID_NAME, 0);
+            };
+            let path = path.trim_end_matches('\\');
+            if !path.is_empty()
+                && (!path.split('\\').all(valid_component) || !objects.directories.contains(path))
+            {
+                return set_cwd.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
+            }
+            objects.current_directory = path.to_owned();
+            Ok(1)
+        },
+    );
+    for symbol in ["GetCurrentDirectoryW", "SetCurrentDirectoryW"] {
+        registry.set_status(KERNEL32, symbol, ServiceStatus::Partial);
+    }
+
     let open = Arc::clone(state);
     registry.register(KERNEL32, "CreateFileW", move |args, cpu, memory| {
         let access = args.rdx as u32;
@@ -508,10 +574,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if let Some(resolved) = host_path(&open, memory, args.rcx)? {
             return create_host_file(&open, cpu.gs_base, resolved, access, share, disposition);
         }
-        let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
+        let mut objects = open.objects.lock().expect("guest object state");
+        let Some(path) = guest_path(memory, args.rcx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
             return open.fail(cpu.gs_base, INVALID_NAME, INVALID_HANDLE);
         };
-        let mut objects = open.objects.lock().expect("guest object state");
         let parent = parent(&path);
         if !parent.is_empty() && !objects.directories.contains(parent) {
             return open.fail(cpu.gs_base, PATH_NOT_FOUND, INVALID_HANDLE);
@@ -570,10 +638,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 HostChange::CreateDirectory,
             );
         }
-        let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
+        let mut objects = create.objects.lock().expect("guest object state");
+        let Some(path) = guest_path(memory, args.rcx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
             return create.fail(cpu.gs_base, INVALID_NAME, 0);
         };
-        let mut objects = create.objects.lock().expect("guest object state");
         let parent = parent(&path);
         if !parent.is_empty() && !objects.directories.contains(parent) {
             return create.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
@@ -598,10 +668,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 HostChange::RemoveDirectory,
             );
         }
-        let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
+        let mut objects = remove.objects.lock().expect("guest object state");
+        let Some(path) = guest_path(memory, args.rcx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
             return remove.fail(cpu.gs_base, INVALID_NAME, 0);
         };
-        let mut objects = remove.objects.lock().expect("guest object state");
         if !objects.directories.contains(&path) {
             return remove.fail(cpu.gs_base, PATH_NOT_FOUND, 0);
         }
@@ -609,6 +681,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             || objects.files.keys().any(|key| parent(key) == path)
         {
             return remove.fail(cpu.gs_base, DIRECTORY_NOT_EMPTY, 0);
+        }
+        if objects.current_directory == path {
+            return remove.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
         }
         objects.directories.remove(&path);
         Ok(1)
@@ -619,10 +694,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if let Some(resolved) = host_path(&delete, memory, args.rcx)? {
             return change_host_namespace(&delete, cpu.gs_base, resolved, HostChange::DeleteFile);
         }
-        let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
+        let mut objects = delete.objects.lock().expect("guest object state");
+        let Some(path) = guest_path(memory, args.rcx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
             return delete.fail(cpu.gs_base, INVALID_NAME, 0);
         };
-        let mut objects = delete.objects.lock().expect("guest object state");
         if objects.directories.contains(&path) {
             return delete.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
         }
@@ -659,10 +736,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 Err(error) => attributes.fail(cpu.gs_base, error, INVALID_ATTRIBUTES),
             };
         }
-        let Some(path) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
+        let objects = attributes.objects.lock().expect("guest object state");
+        let Some(path) = guest_path(memory, args.rcx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
             return attributes.fail(cpu.gs_base, INVALID_NAME, INVALID_ATTRIBUTES);
         };
-        let objects = attributes.objects.lock().expect("guest object state");
         if objects.directories.contains(&path) {
             return Ok(0x10); // FILE_ATTRIBUTE_DIRECTORY
         }
@@ -685,13 +764,17 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         {
             return rename.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
         }
-        let Some(source) = guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
-            return rename.fail(cpu.gs_base, INVALID_NAME, 0);
-        };
-        let Some(target) = guest_path(memory, args.rdx).map_err(ExitReason::MemoryFault)? else {
-            return rename.fail(cpu.gs_base, INVALID_NAME, 0);
-        };
         let mut objects = rename.objects.lock().expect("guest object state");
+        let Some(source) = guest_path(memory, args.rcx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
+            return rename.fail(cpu.gs_base, INVALID_NAME, 0);
+        };
+        let Some(target) = guest_path(memory, args.rdx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
+            return rename.fail(cpu.gs_base, INVALID_NAME, 0);
+        };
         if [parent(&source), parent(&target)]
             .into_iter()
             .any(|path| !path.is_empty() && !objects.directories.contains(path))
@@ -729,7 +812,10 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             };
             return open_search(&find, cpu.gs_base, memory, args.rdx, entries);
         }
-        let Some(path) = read_guest_path(memory, args.rcx).map_err(ExitReason::MemoryFault)? else {
+        let objects = find.objects.lock().expect("guest object state");
+        let Some(path) = read_guest_path(memory, args.rcx, &objects.current_directory)
+            .map_err(ExitReason::MemoryFault)?
+        else {
             return find.fail(cpu.gs_base, INVALID_NAME, INVALID_HANDLE);
         };
         let directory = parent(&path);
@@ -741,7 +827,6 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             return find.fail(cpu.gs_base, INVALID_NAME, INVALID_HANDLE);
         }
         let pattern = if pattern == "*.*" { "*" } else { pattern };
-        let objects = find.objects.lock().expect("guest object state");
         if !directory.is_empty() && !objects.directories.contains(directory) {
             return find.fail(cpu.gs_base, PATH_NOT_FOUND, INVALID_HANDLE);
         }
