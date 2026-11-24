@@ -1,0 +1,20 @@
+[package]
+name = "xenora-audio-dsp"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.100"
+license = "GPL-3.0-or-later"
+description = "Bounded PCM mixer and native macOS audio output experiment"
+publish = false
+
+[workspace]
+
+[features]
+xenora = ["dep:xenora-loader", "dep:xenora-ffi"]
+
+[dependencies]
+xenora-loader = { path = "../../crates/loader", optional = true }
+xenora-ffi = { path = "../../crates/ffi", optional = true }
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
