@@ -1,0 +1,18 @@
+0000: t0 = load.u32 input[index]
+000c: t1 = const.u32 0x00000000
+000c: t2 = wave.mask v_cmp_eq_u32_e32 t1, t0 exec=0xffffffff
+0010: t3 = const.u32 0xffffffff
+0010: t4 = vcc.Select t3, t0, t2
+0014: t5 = const.u32 0x00000001
+0014: t6 = vcc.AddCarry.flag t5, t4, t2
+0014: t7 = wave.carry t6 exec=0xffffffff
+0014: t8 = vcc.AddCarry t5, t4, t2
+0018: t9 = const.u32 0x00000000
+0018: t10 = vcc.SubtractBorrow.flag t9, t8, t7
+0018: t11 = wave.carry t10 exec=0xffffffff
+0018: t12 = vcc.SubtractBorrow t9, t8, t7
+001c: t13 = const.u32 0xfffffffe
+001c: t14 = vcc.SubtractBorrow.flag t12, t13, t11
+001c: t15 = wave.carry t14 exec=0xffffffff
+001c: t16 = vcc.SubtractBorrow t12, t13, t11
+0024: store.u32 output[index], t15

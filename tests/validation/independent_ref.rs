@@ -100,6 +100,7 @@ enum Insn {
     VXor(u8, u8, u8),
     /// VOP2 integer opcode 9-12, 17-20, 30 or 37-39: VDST, SRC0, VSRC1.
     VInt(u32, u8, CmpSrc, u8),
+    VIntVcc(u32, u8, CmpSrc, u8),
     /// VOP1 integer opcode 55-59: VDST, SRC0.
     VUnary(u32, u8, CmpSrc),
     /// `v_swap_b32 vD, vS` (VOP1 opcode 101).
@@ -233,6 +234,26 @@ fn run_wave(program: &[(usize, Insn)], wave: &[u32]) -> Result<Vec<u32>, String>
                     None
                 })
             }
+            Insn::VIntVcc(opcode, dst, src0, src1) => {
+                if let Some(error) = first_error(&lanes) {
+                    return Err(error);
+                }
+                vector_vcc(
+                    &mut lanes,
+                    &sgpr,
+                    execution_mask,
+                    (opcode, dst, src0, src1),
+                    offset,
+                )
+                .map(|mask| {
+                    if opcode != 1 {
+                        sgpr[106] = Some(mask);
+                        sgpr[107] = None;
+                        vcc_lane_derived = execution_mask != 0;
+                    }
+                    None
+                })
+            }
             Insn::SUnary(opcode, dst, src) => {
                 if dst < 8 {
                     Err(format!("{offset:#x}: write to a resource SGPR"))
@@ -327,6 +348,60 @@ fn run_wave(program: &[(usize, Insn)], wave: &[u32]) -> Result<Vec<u32>, String>
         }
     }
     Err(first_error(&lanes).unwrap_or_else(|| "stream ended without s_endpgm".to_string()))
+}
+
+/// Guide 12.7 vector select and carry/borrow, with the Wave32 mask from 3.9.
+fn vector_vcc(
+    lanes: &mut [Lane],
+    sgpr: &[Option<u32>; 128],
+    exec: u32,
+    (opcode, dst, src0, src1): (u32, u8, CmpSrc, u8),
+    offset: usize,
+) -> Result<u32, String> {
+    if exec == 0 {
+        return Ok(0);
+    }
+    let incoming = sgpr[106].ok_or_else(|| format!("{offset:#x}: uninitialized vcc_lo"))?;
+    let mut mask = 0;
+    for (index, lane) in lanes.iter_mut().enumerate() {
+        if exec != u32::MAX && lane.vgpr[usize::from(dst)].is_none() {
+            return Err(format!("{offset:#x}: partial EXEC on uninitialized VGPR"));
+        }
+        let a = match src0 {
+            CmpSrc::Sgpr(reg) => sgpr[usize::from(reg)]
+                .ok_or_else(|| format!("{offset:#x}: uninitialized s{reg}"))?,
+            CmpSrc::Vcc => incoming,
+            CmpSrc::Imm(value) => value,
+            CmpSrc::Vgpr(reg) => read_vgpr(lane, reg, offset)?,
+        };
+        let b = read_vgpr(lane, src1, offset)?;
+        let lane_bit = 2_u32.pow(index as u32);
+        if exec & lane_bit == 0 {
+            continue;
+        }
+        check_destination(dst, lane.pending_read, offset)?;
+        let bit = incoming / lane_bit % 2;
+        let (value, flag) = match opcode {
+            1 => (if bit == 1 { b } else { a }, false),
+            40 => {
+                let (sum, overflow) = a.overflowing_add(b);
+                let (value, carry) = sum.overflowing_add(bit);
+                (value, overflow || carry)
+            }
+            41 | 42 => {
+                let (lhs, rhs) = if opcode == 42 { (b, a) } else { (a, b) };
+                let (difference, underflow) = lhs.overflowing_sub(rhs);
+                let (value, borrow) = difference.overflowing_sub(bit);
+                (value, underflow || borrow)
+            }
+            _ => unreachable!("not a VCC-reading VOP2 opcode"),
+        };
+        lane.vgpr[usize::from(dst)] = Some(value);
+        if flag {
+            mask |= lane_bit;
+        }
+    }
+    Ok(mask)
 }
 
 /// One SOPK instruction, per the operation text of guide 12.2. SDST names
@@ -1300,6 +1375,13 @@ fn decode_one(code: &[u8], offset: usize) -> Result<(Insn, usize), String> {
     }
     // VOP2 integer forms: bit 31 = 0, OP 30:25, VDST 24:17, VSRC1 16:9, SRC0 8:0.
     let vop2_op = (first >> 25) & 0x3f;
+    if first >> 31 == 0 && matches!(vop2_op, 1 | 40..=42) {
+        let (src0, len) = vector_src0(code, offset, first, "VOP2")?;
+        return Ok((
+            Insn::VIntVcc(vop2_op, (first >> 17) as u8, src0, (first >> 9) as u8),
+            len,
+        ));
+    }
     if first >> 31 == 0 && matches!(vop2_op, 9..=12 | 17..=20 | 30 | 37..=39) {
         let (src0, len) = vector_src0(code, offset, first, "VOP2")?;
         let insn = Insn::VInt(vop2_op, (first >> 17) as u8, src0, (first >> 9) as u8);

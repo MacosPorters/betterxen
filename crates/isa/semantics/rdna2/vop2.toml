@@ -348,3 +348,85 @@ wave = "any"
 operands = "vop2_vgpr2"
 spec = [{ document = "guide", section = "12.7", page = 133 }]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[operand_rules.vop2_vcc]
+family = "VOP2"
+dst = { field = "VDST", class = "vgpr", min = 0, max = 255 }
+src = [
+  { field = "SRC0", class = "vector_source" },
+  { field = "VSRC1", class = "vgpr" },
+]
+# vector_source = VGPR, normal SGPR s0-s105, vcc_lo, inline integer -16..64, or a literal word.
+max_literals = 1
+unsupported = [
+  "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline", "src_special",
+]
+
+[[form]]
+name = "V_CNDMASK_B32"
+family = "VOP2"
+opcode = 1
+variant = "CndmaskB32"
+operation = "cselect"
+signedness = "bitwise"
+carry_in = "vcc"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "wave32"
+operands = "vop2_vcc"
+spec = [{ document = "guide", section = "12.7", page = 131 }, { document = "guide", section = "3.9", page = 20 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_ADD_CO_CI_U32"
+family = "VOP2"
+opcode = 40
+variant = "AddCoCiU32"
+operation = "add"
+signedness = "unsigned"
+carry_in = "vcc"
+width = 32
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vop2_vcc"
+spec = [{ document = "guide", section = "12.7", page = 134 }, { document = "guide", section = "3.9", page = 20 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_SUB_CO_CI_U32"
+family = "VOP2"
+opcode = 41
+variant = "SubCoCiU32"
+operation = "sub"
+signedness = "unsigned"
+carry_in = "vcc"
+width = 32
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vop2_vcc"
+spec = [{ document = "guide", section = "12.7", page = 134 }, { document = "guide", section = "3.9", page = 20 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_SUBREV_CO_CI_U32"
+family = "VOP2"
+opcode = 42
+variant = "SubrevCoCiU32"
+operation = "sub"
+signedness = "unsigned"
+carry_in = "vcc"
+width = 32
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vop2_vcc"
+source_order = "reversed"
+spec = [{ document = "guide", section = "12.7", page = 134 }, { document = "guide", section = "3.9", page = 20 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]

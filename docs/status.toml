@@ -1982,6 +1982,54 @@ recognized = true
 decoded = true
 llvm = "three-way passed"
 
+[[instruction]]
+form = "v_cndmask_b32_e32"
+encoding = "VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; select S1 when the VCC_LO lane bit is set, otherwise S0"
+representation = "`020402C1`"
+lowering = "per-thread integer expression with EXEC masking"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_add_co_ci_u32_e32"
+encoding = "VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; unsigned addition with carry input and output"
+representation = "`50040481`"
+lowering = "per-thread integer expression with EXEC masking"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_sub_co_ci_u32_e32"
+encoding = "VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; unsigned S0 minus S1 with borrow input and output"
+representation = "`52060480`"
+lowering = "per-thread integer expression with EXEC masking"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_subrev_co_ci_u32_e32"
+encoding = "VOP2, Wave32; VCC_LO lane input; general SRC0, VGPR VSRC1 and VDST; unsigned S1 minus S0 with borrow input and output"
+representation = "`540606C2`"
+lowering = "per-thread integer expression with EXEC masking"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
 [guest_milestones]
 X1 = "accepted"
 X2 = "accepted"

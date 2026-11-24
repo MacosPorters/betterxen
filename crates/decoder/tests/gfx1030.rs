@@ -565,6 +565,10 @@ fn reference_op(instruction: Instruction) -> Op {
             src1,
         } => Op::VectorInteger(
             match op {
+                VectorAluOp::CndmaskB32 => VectorInteger::Select,
+                VectorAluOp::AddCoCiU32 => VectorInteger::AddCarry,
+                VectorAluOp::SubCoCiU32 => VectorInteger::SubtractBorrow { reversed: false },
+                VectorAluOp::SubrevCoCiU32 => VectorInteger::SubtractBorrow { reversed: true },
                 VectorAluOp::MulI32I24 => VectorInteger::Multiply24 { signed: true },
                 VectorAluOp::MulHiI32I24 => VectorInteger::MultiplyHigh24 { signed: true },
                 VectorAluOp::MulU32U24 => VectorInteger::Multiply24 { signed: false },
@@ -615,6 +619,7 @@ fn compares_fixture_instructions_against_llvm() {
         include_bytes!("../../../fixtures/rdna2/scalar-arith.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-immediate.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-integer.bin"),
+        include_bytes!("../../../fixtures/rdna2/vector-vcc.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare-ft.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-unary.bin"),
@@ -624,7 +629,7 @@ fn compares_fixture_instructions_against_llvm() {
     ] {
         count += compare_against_llvm(fixture, &mut forms);
     }
-    assert_eq!(forms.len(), 146, "forms compared: {forms:?}");
+    assert_eq!(forms.len(), 150, "forms compared: {forms:?}");
     eprintln!(
         "{count} three-way instruction comparisons across {} forms",
         forms.len()
@@ -921,7 +926,7 @@ fn normalize_llvm_assembly(assembly: &str, next_offset: usize) -> String {
             let target = next_offset + displacement * 4;
             format!("{mnemonic} -> 0x{target:04x}")
         }
-        // VOPC and the registry VOP2 forms print SRC0 (the second operand) as bits.
+        // VOPC and registry VOP2 forms print SRC0 as bits.
         mnemonic
             if mnemonic.starts_with("v_cmp_")
                 || VectorAluOp::ALL
@@ -929,10 +934,11 @@ fn normalize_llvm_assembly(assembly: &str, next_offset: usize) -> String {
                     .any(|op| op.assembly_name() == mnemonic) =>
         {
             let mut parts: Vec<String> = operands.split(", ").map(str::to_owned).collect();
-            parts[1] = match literal_bits(&parts[1]) {
+            let src = if parts.len() == 5 { 2 } else { 1 };
+            parts[src] = match literal_bits(&parts[src]) {
                 Some(bits) => format!("0x{bits:x}"),
-                None => parts[1].parse::<i32>().map_or_else(
-                    |_| parts[1].clone(),
+                None => parts[src].parse::<i32>().map_or_else(
+                    |_| parts[src].clone(),
                     |value| format!("0x{:x}", value as u32),
                 ),
             };
