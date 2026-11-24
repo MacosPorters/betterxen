@@ -13,8 +13,8 @@
 //! assembled with `clang -target x86_64-apple-macos` and read with `objdump`.
 
 use xenora_loader::cpu::{
-    CPUID_CMOV, CPUID_LONG_MODE, CPUID_LZCNT, CPUID_POPCNT, CpuState, ExitReason, Interpreter,
-    RFlags, cpuid,
+    CPUID_CMOV, CPUID_LAHF_SAHF, CPUID_LONG_MODE, CPUID_LZCNT, CPUID_POPCNT, CpuState, ExitReason,
+    Interpreter, RFlags, cpuid,
 };
 use xenora_loader::dbt::DbtEngine;
 use xenora_loader::memory::{GuestMemory, MemoryPermissions};
@@ -79,9 +79,9 @@ fn every_leaf_returns_its_documented_values() {
         (1, 0xFFFF_FFFF, [0, 0, 0x0080_0000, 0x0000_8000]),
         // Highest extended leaf.
         (0x8000_0000, 0, [0x8000_0001, 0, 0, 0]),
-        // LZCNT is ECX bit 5 and long mode is EDX bit 29.
-        (0x8000_0001, 0, [0, 0, 0x0000_0020, 0x2000_0000]),
-        (0x8000_0001, 7, [0, 0, 0x0000_0020, 0x2000_0000]),
+        // LAHF/SAHF is ECX bit 0, LZCNT ECX bit 5 and long mode EDX bit 29.
+        (0x8000_0001, 0, [0, 0, 0x0000_0021, 0x2000_0000]),
+        (0x8000_0001, 7, [0, 0, 0x0000_0021, 0x2000_0000]),
         // Everything else, above or between the highest leaves, is zeros.
         (2, 0, [0; 4]),
         (4, 0, [0; 4]),
@@ -129,8 +129,14 @@ fn every_leaf_returns_its_documented_values() {
         .collect();
     assert_eq!(vendor, b"Xenora guest");
     assert_eq!(
-        (CPUID_POPCNT, CPUID_CMOV, CPUID_LZCNT, CPUID_LONG_MODE),
-        (1 << 23, 1 << 15, 1 << 5, 1 << 29)
+        (
+            CPUID_POPCNT,
+            CPUID_CMOV,
+            CPUID_LAHF_SAHF,
+            CPUID_LZCNT,
+            CPUID_LONG_MODE
+        ),
+        (1 << 23, 1 << 15, 1, 1 << 5, 1 << 29)
     );
 }
 
@@ -189,6 +195,10 @@ fn reported_features_have_all_their_instructions_in_the_fixtures() {
             decodable(&format!("{name} {high}, {}", memory(bits)));
         }
     }
+    // LAHF and SAHF have one form each and no operands.
+    assert_ne!(cpuid(0x8000_0001, 0)[ECX] & CPUID_LAHF_SAHF, 0);
+    decodable("lahf");
+    decodable("sahf");
     // Long mode: 64-bit operands and the registers only it has.
     assert_ne!(cpuid(0x8000_0001, 0)[EDX] & CPUID_LONG_MODE, 0);
     decodable("add r9, r12");
@@ -232,7 +242,6 @@ fn unreported_features_each_have_an_instruction_that_is_refused() {
         ("RDSEED", 7, EBX, 18, &[0x0F, 0xC7, 0xF8]),     // rdseed eax
         ("ADX", 7, EBX, 19, &[0x66, 0x0F, 0x38, 0xF6, 0xC1]), // adcx eax, ecx
         ("SHA", 7, EBX, 29, &[0x0F, 0x38, 0xC9, 0xC1]),  // sha1msg1 xmm0, xmm1
-        ("LAHF/SAHF", 0x8000_0001, ECX, 0, &[0x9F]),     // lahf
         ("PREFETCHW", 0x8000_0001, ECX, 8, &[0x0F, 0x0D, 0x0E]), // prefetchw [rsi]
         ("SYSCALL/SYSRET", 0x8000_0001, EDX, 11, &[0x48, 0x0F, 0x07]), // sysretq
         ("RDTSCP", 0x8000_0001, EDX, 27, &[0x0F, 0x01, 0xF9]), // rdtscp

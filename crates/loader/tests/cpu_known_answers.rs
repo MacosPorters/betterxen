@@ -598,6 +598,15 @@ const FLAG_MOVES: &str = r"
   SDM 2A LAHF
 lahf: rax=8877665544332211 f=CPASO => rax=8877665544339711 f=*
 lahf_zero: rax=8877665544332211 f=Z => rax=8877665544334211 f=*
+lahf_carry_only: rax=ffffffffffffffff f=C => rax=ffffffffffff03ff f=*
+lahf_parity_only: rax=ffffffffffffffff f=P => rax=ffffffffffff06ff f=*
+lahf_adjust_only: rax=ffffffffffffffff f=A => rax=ffffffffffff12ff f=*
+lahf_sign_only: rax=ffffffffffffffff f=S => rax=ffffffffffff82ff f=*
+lahf_does_not_store_of: rax=ffffffffffffffff f=O => rax=ffffffffffff02ff f=*
+@ rex.w lahf
+  489f
+  SDM 2A LAHF; 2A 2.2.1.2
+lahf_rex_w_changes_nothing: rax=ffffffffffffffff f=CO => rax=ffffffffffff03ff f=*
 @ sahf; lahf
   9e 9f
   SDM 2B SAHF
@@ -606,6 +615,12 @@ sahf_ignores_bits_1_3_5: rax=ff00 f=O => rax=d700 f=CPAZSO
   9e
   SDM 2B SAHF
 sahf_clear_keeps_of: rax=2800 f=OC => f=cpazsO
+sahf_carry_only: rax=100 f=O => f=CpazsO
+sahf_parity_only: rax=400 f=O => f=cPazsO
+sahf_adjust_only: rax=1000 f=O => f=cpAzsO
+sahf_zero_only: rax=4000 f=O => f=cpaZsO
+sahf_sign_only: rax=8000 f=O => f=cpazSO
+sahf_reads_only_ah: rax=ffffffffffff00ff f=CPAZS => f=cpazso
 @ stc
   f9
   SDM 2B STC
@@ -2722,8 +2737,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("insertps_zero_mask", 0),
     ("jecxz_tests_low_32_bits", 1),
     ("jrcxz_tests_all_64_bits", 1),
-    ("lahf", 0),
-    ("lahf_zero", 0),
     ("lea64_addr32_truncates_effective_address", 0),
     ("lock_btc_memory", 0),
     ("lodsd_zero_extends", 1),
@@ -2772,8 +2785,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("roundps_uses_mxcsr_rc", 0),
     ("roundsd_suppress_precision", 0),
     ("roundss_imm_modes", 0),
-    ("sahf_clear_keeps_of", 0),
-    ("sahf_ignores_bits_1_3_5", 0),
     ("shld16_by16_takes_source", 0),
     ("shld32_by1_sign_change", 0),
     ("shld32_by4", 0),

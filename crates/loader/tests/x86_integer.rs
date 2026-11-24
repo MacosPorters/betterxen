@@ -328,6 +328,11 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
         bits,
         high: false,
     };
+    let ah = Place::Reg {
+        index: RAX,
+        bits: 8,
+        high: true,
+    };
 
     if let Some(code) = name.strip_prefix("cmov") {
         let value = read(
@@ -739,18 +744,39 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             m.flags.cf = !m.flags.cf;
             Outcome::Done(none)
         }
+        // AH bits 7 to 0 are SF, ZF, 0, AF, 0, PF, 1 and CF; OF has no bit.
+        "lahf" => {
+            let f = m.flags;
+            let bits = [f.cf, true, f.pf, false, f.af, false, f.zf, f.sf];
+            let value = (0..8)
+                .filter(|&index| bits[index])
+                .map(|index| 1u128 << index)
+                .sum();
+            write(m, ah, value);
+            Outcome::Done(none)
+        }
+        "sahf" => {
+            let value = read(m, ah, 8);
+            m.flags.cf = bit(value, 0);
+            m.flags.pf = bit(value, 2);
+            m.flags.af = bit(value, 4);
+            m.flags.zf = bit(value, 6);
+            m.flags.sf = bit(value, 7);
+            Outcome::Done(none)
+        }
         // The fences order memory accesses and compute nothing.
         "nop" | "pause" | "lfence" | "mfence" | "sfence" => Outcome::Done(none),
         "cpuid" => {
             // Xenora's guest CPUID contract, restated: the vendor "Xenora guest"
-            // and the four features whose every instruction exists, CMOV and
-            // POPCNT in leaf 1, LZCNT and long mode in leaf 0x8000_0001.
+            // and the five features whose every instruction exists, CMOV and
+            // POPCNT in leaf 1, LAHF/SAHF, LZCNT and long mode in leaf
+            // 0x8000_0001.
             let word = |text: &[u8; 4]| u32::from_le_bytes(*text);
             let values = match m.gpr[RAX] as u32 {
                 0 => [1, word(b"Xeno"), word(b"uest"), word(b"ra g")],
                 1 => [0, 0, 1 << 23, 1 << 15],
                 0x8000_0000 => [0x8000_0001, 0, 0, 0],
-                0x8000_0001 => [0, 0, 1 << 5, 1 << 29],
+                0x8000_0001 => [0, 0, 1 | 1 << 5, 1 << 29],
                 _ => [0; 4],
             };
             // EAX, EBX, ECX and EDX, each zero-extended.

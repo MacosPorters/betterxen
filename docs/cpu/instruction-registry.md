@@ -89,12 +89,12 @@ CPUID (`0F A2`) returns a fixed table that never reads the host. It describes a 
 | 0 | 1, the highest basic leaf | `Xeno` | `uest` | `ra g` |
 | 1 | 0 | 0 | POPCNT (bit 23) | CMOV (bit 15) |
 | 0x8000_0000 | 0x8000_0001, the highest extended leaf | 0 | 0 | 0 |
-| 0x8000_0001 | 0 | 0 | LZCNT (bit 5) | long mode (bit 29) |
+| 0x8000_0001 | 0 | 0 | LAHF/SAHF (bit 0), LZCNT (bit 5) | long mode (bit 29) |
 | any other | 0 | 0 | 0 | 0 |
 
 A feature bit is set only when every instruction of that feature is implemented. That is stricter than "some of it works", and it has consequences:
 
-- SSE and SSE2 are not reported, although most of their instructions exist, because parts are still rejected: RSQRTPS and MASKMOVDQU, for example. BMI1 is not reported although TZCNT exists, because ANDN does not. The x87 FPU, MMX, FXSAVE, CMPXCHG8B, the time-stamp counter, LAHF and SYSRET are absent too.
+- SSE and SSE2 are not reported, although most of their instructions exist, because parts are still rejected: RSQRTPS and MASKMOVDQU, for example. BMI1 is not reported although TZCNT exists, because ANDN does not. The x87 FPU, MMX, FXSAVE, CMPXCHG8B, the time-stamp counter and SYSRET are absent too.
 - The table is therefore truthful about Xenora, not plausible as hardware: every real 64-bit processor reports the FPU and SSE2. A guest that tests a bit before using a feature avoids it; a guest that assumes SSE2 because it runs in 64-bit mode still gets every form that exists and an illegal-instruction exit for one that does not.
 - A leaf that is not listed returns zeros, whatever the subleaf. Intel processors answer a leaf above the highest basic one with that leaf's data instead; software is expected to read the highest leaf first.
 

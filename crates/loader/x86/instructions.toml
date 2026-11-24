@@ -95,6 +95,10 @@ syscall = { terminator = true, ref = "sdm SYSCALL" }
 clc = { writes = "cf", ref = "sdm CLC" }
 stc = { writes = "cf", ref = "sdm STC" }
 cmc = { reads = "cf", writes = "cf", ref = "sdm CMC" }
+# AH holds SF, ZF, AF, PF and CF; valid in 64-bit mode when CPUID
+# 8000_0001h ECX bit 0 is set.
+lahf = { reads = "cf zf sf pf af", ref = "sdm LAHF" }
+sahf = { writes = "cf zf sf pf af", ref = "sdm SAHF" }
 cpuid = { ref = "sdm CPUID" }
 cld = { ref = "sdm CLD" }
 std = { ref = "sdm STD" }
@@ -509,6 +513,18 @@ op = "cdq"
 opcode = 0x99
 enc = "none"
 size = "v"
+
+[[form]]
+op = "sahf"
+opcode = 0x9E
+enc = "none"
+size = "n"
+
+[[form]]
+op = "lahf"
+opcode = 0x9F
+enc = "none"
+size = "n"
 
 [[form]]
 op = "mov"

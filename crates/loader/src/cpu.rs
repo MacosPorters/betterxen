@@ -130,6 +130,8 @@ impl CpuState {
 pub const CPUID_CMOV: u32 = 1 << 15;
 /// CPUID leaf 1, ECX: POPCNT.
 pub const CPUID_POPCNT: u32 = 1 << 23;
+/// CPUID leaf 0x8000_0001, ECX: LAHF and SAHF in 64-bit mode.
+pub const CPUID_LAHF_SAHF: u32 = 1;
 /// CPUID leaf 0x8000_0001, ECX: LZCNT.
 pub const CPUID_LZCNT: u32 = 1 << 5;
 /// CPUID leaf 0x8000_0001, EDX: 64-bit mode.
@@ -150,7 +152,7 @@ pub fn cpuid(leaf: u32, _subleaf: u32) -> [u32; 4] {
         1 => [0, 0, CPUID_POPCNT, CPUID_CMOV],
         // Highest extended leaf.
         0x8000_0000 => [0x8000_0001, 0, 0, 0],
-        0x8000_0001 => [0, 0, CPUID_LZCNT, CPUID_LONG_MODE],
+        0x8000_0001 => [0, 0, CPUID_LAHF_SAHF | CPUID_LZCNT, CPUID_LONG_MODE],
         _ => [0; 4],
     }
 }

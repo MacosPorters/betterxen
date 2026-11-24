@@ -651,6 +651,28 @@ pub fn execute(
         Op::Clc => cpu.flags.cf = false,
         Op::Stc => cpu.flags.cf = true,
         Op::Cmc => cpu.flags.cf = !cpu.flags.cf,
+        // AH = SF:ZF:0:AF:0:PF:1:CF (Intel SDM Vol. 2A, LAHF).
+        Op::Lahf => {
+            let f = cpu.flags;
+            let ah = u64::from(f.sf) << 7
+                | u64::from(f.zf) << 6
+                | u64::from(f.af) << 4
+                | u64::from(f.pf) << 2
+                | 1 << 1
+                | u64::from(f.cf);
+            cpu.gpr[RAX] = cpu.gpr[RAX] & !0xFF00 | ah << 8;
+        }
+        // SF, ZF, AF, PF and CF from AH bits 7, 6, 4, 2 and 0; OF is
+        // unchanged (Intel SDM Vol. 2B, SAHF).
+        Op::Sahf => {
+            let ah = (cpu.gpr[RAX] >> 8) as u8;
+            let flags = &mut cpu.flags;
+            flags.sf = ah & 0x80 != 0;
+            flags.zf = ah & 0x40 != 0;
+            flags.af = ah & 0x10 != 0;
+            flags.pf = ah & 0x04 != 0;
+            flags.cf = ah & 0x01 != 0;
+        }
         Op::Hlt => {
             cpu.rip = next;
             return Ok(Some(ExitReason::Halt));
