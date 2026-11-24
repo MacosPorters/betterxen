@@ -127,7 +127,9 @@ impl DbtEngine {
             if block_limit > 1
                 && matches!(
                     block,
-                    Err(ExitReason::IllegalInstruction(_) | ExitReason::MemoryFault(_))
+                    Err(ExitReason::IllegalInstruction(_)
+                        | ExitReason::MemoryFault(_)
+                        | ExitReason::GeneralProtection)
                 )
             {
                 block = self.get_or_compile_block(cpu.rip, memory, 1);

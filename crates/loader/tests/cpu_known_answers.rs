@@ -2613,11 +2613,23 @@ dpps_mask: x1=d:3f800000,40000000,40400000,40800000 x2=d:3f800000,3f800000,3f800
 movddup_movsldup_movshdup: x2=d:7f800001,2,3,4 => x1=d:7f800001,2,7f800001,2 x3=d:7f800001,7f800001,3,3 x4=d:2,2,4,4 f=*
 ";
 
-const DEFECT_OVERLONG_INSTRUCTION: &str = r"
+const INSTRUCTION_LENGTH: &str = r"
 @ .byte 0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x01,0xd8
   !666666666666666666666666666601d8
   SDM 3A 7.15 Interrupt 13 (instruction length over 15 bytes)
 sixteen_byte_redundant_operand_size_prefixes: => ! GP
+@ .byte 0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x05,0x34,0x12
+  666666666666666666666666053412
+  SDM 2A 2.2.1 (15-byte limit); 2A ADD
+fifteen_bytes_ending_in_the_immediate_execute: rax=ffffffffffff0001 => rax=ffffffffffff1235 f=cPazso
+@ .byte 0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x05,0x34,0x12
+  !66666666666666666666666666053412
+  SDM 3A 7.15 Interrupt 13 (instruction length over 15 bytes)
+sixteenth_byte_in_the_immediate_is_gp: rax=1 => ! GP
+@ mov eax, 1; .byte 0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x66,0x05,0x34,0x12
+  b801000000 !66666666666666666666666666053412
+  SDM 3A 7.15 Interrupt 13 (instruction length over 15 bytes)
+overlong_after_an_instruction_retires_it_first: rax=ffffffffffffffff => rax=1 ! GP
 ";
 
 const PAGE_CROSSING: &str = r"
@@ -2688,7 +2700,7 @@ const GROUPS: &[(&str, &str)] = &[
     ("fp_packed_and_sticky", FP_PACKED_AND_STICKY),
     ("fp_mxcsr_and_unmasked", FP_MXCSR_AND_UNMASKED),
     ("fp_beyond_sse2", FP_BEYOND_SSE2),
-    ("defect_overlong_instruction", DEFECT_OVERLONG_INSTRUCTION),
+    ("instruction_length", INSTRUCTION_LENGTH),
     ("exact_unmasked_overflow", EXACT_UNMASKED_OVERFLOW),
     ("page_crossing", PAGE_CROSSING),
 ];
@@ -3529,9 +3541,8 @@ fn fp_beyond_sse2() {
 }
 
 #[test]
-#[ignore = "known defect (#155): an instruction over 15 bytes is illegal, not #GP"]
-fn defect_overlong_instruction() {
-    check_group(DEFECT_OVERLONG_INSTRUCTION);
+fn instruction_length() {
+    check_group(INSTRUCTION_LENGTH);
 }
 
 #[test]

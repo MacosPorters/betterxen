@@ -470,6 +470,8 @@ impl From<DecodeError<MemoryError>> for ExitReason {
         match error {
             DecodeError::Fetch(fault) => Self::MemoryFault(fault),
             DecodeError::Unsupported(byte) => Self::IllegalInstruction(byte),
+            // Intel SDM Vol. 3A, 7.15: exceeding the 15-byte limit is #GP(0).
+            DecodeError::TooLong => Self::GeneralProtection,
         }
     }
 }
