@@ -1429,5 +1429,71 @@ class CommandLine(unittest.TestCase):
         self.assertEqual(result.stdout.strip(), f"registry valid: {len(gen.load_registry()['form'])} forms")
 
 
+class SopkForms(unittest.TestCase):
+    """SOPK immediate forms, checked against the real registry and XML snapshot."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.snapshot = gen.load_snapshot()
+
+    def registry(self):
+        return gen.load_registry()
+
+    def rejects(self, reg, fragment):
+        errors = gen.validate(reg, self.snapshot)
+        self.assertTrue(
+            any(fragment in error for error in errors),
+            f"expected an error containing {fragment!r}, got {errors}",
+        )
+
+    def test_the_registry_declares_the_sixteen_sopk_forms(self):
+        names = {item["name"] for item in self.registry()["form"] if item["family"] == "SOPK"}
+        self.assertEqual(len(names), 16)
+        self.assertTrue({"S_MOVK_I32", "S_CMOVK_I32", "S_ADDK_I32", "S_MULK_I32"} <= names)
+
+    def test_rejects_a_compare_with_the_wrong_sopk_opcode(self):
+        reg = self.registry()
+        form(reg, "S_CMPK_GT_U32")["opcode"] = 10
+        self.rejects(reg, "S_CMPK_GT_U32: relation gt/unsigned has SOPK opcode 11")
+
+    def test_rejects_an_unsigned_compare_declared_signed(self):
+        reg = self.registry()
+        form(reg, "S_CMPK_GT_U32")["signedness"] = "signed"
+        self.rejects(reg, "SIMM16 is 16 bits FMT_NUM_U16")
+
+    def test_rejects_addk_without_the_overflow_flag(self):
+        reg = self.registry()
+        form(reg, "S_ADDK_I32")["scc"] = "unchanged"
+        self.rejects(reg, "S_ADDK_I32: scc unchanged contradicts add/signed")
+
+    def test_rejects_cmovk_that_does_not_read_scc(self):
+        reg = self.registry()
+        form(reg, "S_CMOVK_I32")["carry_in"] = "none"
+        self.rejects(reg, "S_CMOVK_I32: carry_in none contradicts the XML SCC input")
+
+    def test_rejects_a_conditional_move_that_does_not_read_scc(self):
+        # S_MOVK_I32 has no SCC input, so as a cmov it would see SCC = 0 and
+        # never write D.
+        reg = self.registry()
+        form(reg, "S_MOVK_I32")["operation"] = "cmov"
+        self.rejects(reg, "S_MOVK_I32: operation cmov reads SCC (requires carry_in scc)")
+
+    def test_rejects_a_two_source_operation_on_a_sopk_rule(self):
+        reg = self.registry()
+        form(reg, "S_MULK_I32")["operation"] = "and"
+        form(reg, "S_MULK_I32")["signedness"] = "bitwise"
+        self.rejects(reg, "S_MULK_I32: no primitive implements and/bitwise")
+
+    def test_rejects_a_move_on_the_compare_rule(self):
+        reg = self.registry()
+        form(reg, "S_MOVK_I32")["operands"] = "sopk_compare"
+        self.rejects(reg, "S_MOVK_I32: operation mov does not fit rule sopk_compare")
+
+    def test_generated_compare_extends_signed_and_unsigned_immediates_differently(self):
+        text = gen.render(self.registry(), self.snapshot)
+        self.assertIn("Self::CmpkGtI32 => primitive::gt_i32(dst, primitive::sext_simm16(simm16)),", text)
+        self.assertIn("Self::CmpkGtU32 => primitive::gt_u32(dst, simm16 as u32),", text)
+
+
 if __name__ == "__main__":
     unittest.main()

@@ -53,7 +53,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_waitcnt vmcnt(0)"
-encoding = "SOPP, exact immediate `0x3f70`; other counters disabled by their maximum values"
+encoding = "SOPP, exact immediate `0x3f70`; other counters disabled by their maximum values (semantic registry)"
 representation = "4 B"
 lowering = "verified load wait"
 reference = "implemented"
@@ -113,7 +113,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_endpgm"
-encoding = "SOPP, zero immediate"
+encoding = "SOPP, zero immediate (semantic registry)"
 representation = "4 B"
 lowering = "verified termination"
 reference = "implemented"
@@ -275,6 +275,198 @@ lowering = "resolved SCC"
 reference = "implemented"
 cpu = "fixture verified"
 gpu = "fixture verified"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_movk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written); D = sext(SIMM16); SCC unchanged"
+representation = "`B0088000`"
+lowering = "resolved scalar state"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmovk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written); if SCC then D = sext(SIMM16), SCC known during translation; SCC unchanged"
+representation = "`B1088000`"
+lowering = "resolved scalar state"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_eq_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S == sext(SIMM16) (signed)"
+representation = "`B1888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lg_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S != sext(SIMM16) (signed)"
+representation = "`B2088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_gt_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S > sext(SIMM16) (signed)"
+representation = "`B2888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_ge_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S >= sext(SIMM16) (signed)"
+representation = "`B3088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lt_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S < sext(SIMM16) (signed)"
+representation = "`B3888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_le_i32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S <= sext(SIMM16) (signed)"
+representation = "`B4088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_eq_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S == zext(SIMM16) (unsigned)"
+representation = "`B4888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lg_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S != zext(SIMM16) (unsigned)"
+representation = "`B5088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_gt_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S > zext(SIMM16) (unsigned)"
+representation = "`B5888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_ge_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S >= zext(SIMM16) (unsigned)"
+representation = "`B6088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_lt_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S < zext(SIMM16) (unsigned)"
+representation = "`B6888000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_cmpk_le_u32"
+encoding = "SOPK; initialized normal SGPR s0-s105; SCC = S <= zext(SIMM16) (unsigned)"
+representation = "`B7088000`"
+lowering = "resolved SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_addk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written), initialized; D = D + sext(SIMM16); SCC = signed overflow"
+representation = "`B7888000`"
+lowering = "resolved scalar state and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_mulk_i32"
+encoding = "SOPK, normal SGPR destination s8-s105 (s0-s7 hold resource descriptors and are never written), initialized; D = low 32 bits of D * sext(SIMM16); SCC unchanged"
+representation = "`B8088000`"
+lowering = "resolved scalar state"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
 recognized = true
 decoded = true
 llvm = "three-way passed"
@@ -999,8 +1191,344 @@ decoded = true
 llvm = "three-way passed"
 
 [[instruction]]
+form = "v_cmp_lt_i16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; signed low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 < S1), fully written"
+representation = "`7D120702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_eq_i16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; signed low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 == S1), fully written"
+representation = "`7D140702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_le_i16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; signed low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 <= S1), fully written"
+representation = "`7D160702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_gt_i16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; signed low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 > S1), fully written"
+representation = "`7D180702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_ne_i16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; signed low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 != S1), fully written"
+representation = "`7D1A0702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_ge_i16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; signed low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 >= S1), fully written"
+representation = "`7D1C0702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_lt_u16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; unsigned low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 < S1), fully written"
+representation = "`7D520702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_eq_u16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; unsigned low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 == S1), fully written"
+representation = "`7D540702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_le_u16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; unsigned low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 <= S1), fully written"
+representation = "`7D560702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_gt_u16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; unsigned low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 > S1), fully written"
+representation = "`7D580702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_ne_u16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; unsigned low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 != S1), fully written"
+representation = "`7D5A0702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_ge_u16_e32"
+encoding = "VOPC, Wave32; VGPR, known SGPR, VCC_LO or inline integer SRC0; VGPR VSRC1; unsigned low 16 bits; VCC_LO[n] = EXEC_LO[n] & (S0 >= S1), fully written"
+representation = "`7D5C0702`"
+lowering = "per-thread Wave32 mask with low-half operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_cmp_f_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (false), fully written"
+representation = "`7D400902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_lt_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 < S1), fully written"
+representation = "`7D420902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_eq_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 == S1), fully written"
+representation = "`7D440902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_le_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 <= S1), fully written"
+representation = "`7D460902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_gt_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 > S1), fully written"
+representation = "`7D480902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_ne_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 != S1), fully written"
+representation = "`7D4A0902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_ge_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 >= S1), fully written"
+representation = "`7D4C0902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_t_i64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; signed 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (true), fully written"
+representation = "`7D4E0902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_f_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (false), fully written"
+representation = "`7DC00902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_lt_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 < S1), fully written"
+representation = "`7DC20902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_eq_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 == S1), fully written"
+representation = "`7DC40902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_le_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 <= S1), fully written"
+representation = "`7DC60902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_gt_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 > S1), fully written"
+representation = "`7DC80902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_ne_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 != S1), fully written"
+representation = "`7DCA0902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_ge_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (S0 >= S1), fully written"
+representation = "`7DCC0902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
+form = "v_cmp_t_u64_e32"
+encoding = "VOPC, Wave32; VGPR pair, known even SGPR pair or sign-extended inline integer SRC0; VGPR pair VSRC1; unsigned 64-bit operands; VCC_LO[n] = EXEC_LO[n] & (true), fully written"
+representation = "`7DCE0902`"
+lowering = "per-thread Wave32 mask with 64-bit operands"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "assembled fixture matched"
+
+[[instruction]]
 form = "s_cbranch_scc0"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF840002`"
 lowering = "resolved conditional branch"
 reference = "implemented"
@@ -1012,7 +1540,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_branch"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF820001`"
 lowering = "resolved branch"
 reference = "implemented"
@@ -1120,7 +1648,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_cbranch_execz"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF880001`"
 lowering = "resolved Wave32 EXEC_LO zero check"
 reference = "implemented"
@@ -1132,9 +1660,81 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_cbranch_vccz"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF860001`"
 lowering = "resolved Wave32 VCC_LO zero check, or a wave-uniform join select after a vector compare"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_not_b32_e32"
+encoding = "VOP1, Wave32; VGPR VDST with VGPR, normal SGPR, vcc_lo, inline integer or literal SRC0; bitwise complement"
+representation = "`7E046F01`"
+lowering = "per-thread unary integer operation with a lane merge under partial EXEC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_bfrev_b32_e32"
+encoding = "VOP1, Wave32; VGPR VDST with VGPR, normal SGPR, vcc_lo, inline integer or literal SRC0; reverse bit order"
+representation = "`7E067101`"
+lowering = "per-thread unary integer operation with a lane merge under partial EXEC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_ffbh_u32_e32"
+encoding = "VOP1, Wave32; VGPR VDST with VGPR, normal SGPR, vcc_lo, inline integer or literal SRC0; count leading zeros, or -1 for zero"
+representation = "`7E087302`"
+lowering = "per-thread unary integer operation with a lane merge under partial EXEC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_ffbl_b32_e32"
+encoding = "VOP1, Wave32; VGPR VDST with VGPR, normal SGPR, vcc_lo, inline integer or literal SRC0; count trailing zeros, or -1 for zero"
+representation = "`7E0A7501`"
+lowering = "per-thread unary integer operation with a lane merge under partial EXEC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_ffbh_i32_e32"
+encoding = "VOP1, Wave32; VGPR VDST with VGPR, normal SGPR, vcc_lo, inline integer or literal SRC0; count leading sign bits, or -1 if all bits match"
+representation = "`7E0C7702`"
+lowering = "per-thread unary integer operation with a lane merge under partial EXEC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "v_swap_b32"
+encoding = "VOP1, Wave32; VGPR VDST and SRC0; exchange the old values of VDST and SRC0"
+representation = "`7E02CB02`"
+lowering = "per-thread exchange of both register values with lane merges under partial EXEC"
 reference = "implemented"
 cpu = "local known-answer test passed"
 gpu = "local Apple M5 readback passed; acceptance pending"

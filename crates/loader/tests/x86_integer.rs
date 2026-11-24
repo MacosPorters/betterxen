@@ -305,6 +305,8 @@ enum Outcome {
 }
 
 fn reference(m: &mut Machine, text: &str) -> Outcome {
+    // LOCK changes no result on a machine that runs one instruction at a time.
+    let text = text.strip_prefix("lock ").unwrap_or(text);
     let (name, rest) = text.split_once(' ').unwrap_or((text, ""));
     let places: Vec<Place> = if rest.is_empty() || name == "lea" || name == "nop" {
         Vec::new()
@@ -659,6 +661,28 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             write(m, places[1], a);
             Outcome::Done(none)
         }
+        "xadd" => {
+            // TEMP := SRC + DEST; SRC := DEST; DEST := TEMP.
+            let (a, b) = (read(m, places[0], bits), read(m, places[1], bits));
+            let sum = arithmetic(m, a, b, false, false, bits);
+            write(m, places[1], a);
+            write(m, places[0], sum);
+            Outcome::Done(none)
+        }
+        "cmpxchg" => {
+            // The accumulator is compared with DEST as CMP would. On a match
+            // DEST := SRC; otherwise accumulator := DEST and DEST := DEST.
+            let accumulator = read(m, rax(bits), bits);
+            let (destination, source) = (read(m, places[0], bits), read(m, places[1], bits));
+            arithmetic(m, accumulator, destination, true, false, bits);
+            if accumulator == destination {
+                write(m, places[0], source);
+            } else {
+                write(m, rax(bits), destination);
+                write(m, places[0], destination);
+            }
+            Outcome::Done(none)
+        }
         "bswap" => {
             let value = read(m, places[0], bits);
             let bytes = bits / 8;
@@ -705,6 +729,24 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             Outcome::Done(none)
         }
         "nop" | "pause" => Outcome::Done(none),
+        "cpuid" => {
+            // Xenora's guest CPUID contract, restated: the vendor "Xenora guest"
+            // and the four features whose every instruction exists, CMOV and
+            // POPCNT in leaf 1, LZCNT and long mode in leaf 0x8000_0001.
+            let word = |text: &[u8; 4]| u32::from_le_bytes(*text);
+            let values = match m.gpr[RAX] as u32 {
+                0 => [1, word(b"Xeno"), word(b"uest"), word(b"ra g")],
+                1 => [0, 0, 1 << 23, 1 << 15],
+                0x8000_0000 => [0x8000_0001, 0, 0, 0],
+                0x8000_0001 => [0, 0, 1 << 5, 1 << 29],
+                _ => [0; 4],
+            };
+            // EAX, EBX, ECX and EDX, each zero-extended.
+            for (index, value) in [0, 3, 1, 2].into_iter().zip(values) {
+                m.gpr[index] = u64::from(value);
+            }
+            Outcome::Done(none)
+        }
         "push" => {
             m.pushed = read(m, places[0], 64) as u64;
             m.gpr[4] -= 8;
@@ -935,7 +977,9 @@ fn every_declared_form_is_executed_by_a_fixture() {
         .unwrap_or_else(|error| panic!("{line}: {error:?}"));
         seen.insert(usize::from(insn.form));
     }
-    // Control flow and exits are covered by the tests below.
+    // Control flow and exits are covered by the tests below. String
+    // instructions and the direction flag need their own memory layout and
+    // are covered form by form in `tests/cpu_rep.rs`.
     let separate = [
         Op::Ldmxcsr,
         Op::Jcc,
@@ -944,6 +988,10 @@ fn every_declared_form_is_executed_by_a_fixture() {
         Op::Ret,
         Op::Hlt,
         Op::Syscall,
+        Op::Movs,
+        Op::Stos,
+        Op::Cld,
+        Op::Std,
     ];
     let mut missing: BTreeMap<&str, Vec<String>> = BTreeMap::new();
     for (index, form) in FORMS.iter().enumerate() {
@@ -1166,7 +1214,8 @@ fn undeclared_and_ambiguous_encodings_are_rejected() {
         &[0xF0, 0x01, 0x0E],       // lock add [rsi], ecx
         &[0xF2, 0x90],             // repne nop
         &[0xF3, 0xC3],             // rep ret
-        &[0xF3, 0xA4],             // rep movsb
+        &[0xF2, 0xA4],             // repne movsb
+        &[0xF3, 0xA6],             // repe cmpsb
         &[0x67, 0x8B, 0x06],       // address-size override
         &[0x64, 0x2E, 0x8B, 0x06], // CS after FS
         &[0x66, 0x50],             // push ax
@@ -1295,6 +1344,107 @@ fn division_accepts_exactly_the_representable_quotients() {
                 assert_eq!(state.gpr, machine.gpr);
             }
         }
+    }
+}
+
+/// The bit scans and the bit test keep the destination and the flags where
+/// the architecture puts them.
+///
+/// The expectations come from the Intel SDM Volume 2B, "BSF", "BSR" and "BT":
+/// BSF writes the index of the lowest set bit of the source and BSR the index
+/// of the highest set bit, and both set the zero flag when the source is
+/// zero, in which case the destination is undefined and keeps its value. BT
+/// sets the carry flag from the tested bit, leaves the other flags alone and
+/// masks the bit index to the operand width.
+///
+/// The encodings are `bsf rbx, r9` (49 0F BC D9), `bsr rbx, r9` (49 0F BD
+/// D9), `bt rbx, r9` (4C 0F A3 CB), `bsf ebx, r9d` (41 0F BC D9),
+/// `bsr ebx, r9d` (41 0F BD D9), `bt ebx, r9d` (44 0F A3 CB), `bsf bx, r9w`
+/// (66 41 0F BC D9) and `bt bx, r9w` (66 44 0F A3 CB), as produced by LLVM
+/// 23.1.6 `llvm-mc -show-encoding`.
+#[test]
+fn bit_scans_and_bit_tests_follow_the_architecture() {
+    const BSF64: &[u8] = &[0x49, 0x0F, 0xBC, 0xD9]; // bsf rbx, r9
+    const BSR64: &[u8] = &[0x49, 0x0F, 0xBD, 0xD9]; // bsr rbx, r9
+    const BT64: &[u8] = &[0x4C, 0x0F, 0xA3, 0xCB]; // bt rbx, r9
+    const BSF32: &[u8] = &[0x41, 0x0F, 0xBC, 0xD9]; // bsf ebx, r9d
+    const BSR32: &[u8] = &[0x41, 0x0F, 0xBD, 0xD9]; // bsr ebx, r9d
+    const BT32: &[u8] = &[0x44, 0x0F, 0xA3, 0xCB]; // bt ebx, r9d
+    const BSF16: &[u8] = &[0x66, 0x41, 0x0F, 0xBC, 0xD9]; // bsf bx, r9w
+    const BT16: &[u8] = &[0x66, 0x44, 0x0F, 0xA3, 0xCB]; // bt bx, r9w
+
+    /// A machine with R9 and RBX set and every other register zero.
+    fn machine(source: u64, destination: u64) -> Machine {
+        let mut gpr = [0; 16];
+        gpr[3] = destination;
+        gpr[9] = source;
+        Machine {
+            gpr,
+            flags: Flags::default(),
+            operand: 0,
+            pushed: 0,
+            top: STACK_TOP,
+        }
+    }
+
+    // The lowest set bit of the source is the index BSF writes.
+    let (state, _, _) = run_both(&machine(0x0000_0000_0000_0028, 0xFFFF), BSF64, 1);
+    assert_eq!(state.gpr[3], 3);
+    assert!(!state.flags.zf);
+
+    // The highest set bit of the source is the index BSR writes.
+    let (state, _, _) = run_both(&machine(0x8000_0000_0000_0028, 0xFFFF), BSR64, 1);
+    assert_eq!(state.gpr[3], 63);
+    assert!(!state.flags.zf);
+
+    // A zero source sets the zero flag and leaves the destination alone.
+    let (state, _, _) = run_both(&machine(0, 0xFFFF_FFFF_FFFF_FFFF), BSF64, 1);
+    assert_eq!(state.gpr[3], 0xFFFF_FFFF_FFFF_FFFF);
+    assert!(state.flags.zf);
+    let (state, _, _) = run_both(&machine(0, 0xFFFF_FFFF_FFFF_FFFF), BSR64, 1);
+    assert_eq!(state.gpr[3], 0xFFFF_FFFF_FFFF_FFFF);
+    assert!(state.flags.zf);
+
+    // A 32-bit destination holds a 32-bit index and clears the half above it.
+    let (state, _, _) = run_both(&machine(0x0000_0028, 0xFFFF_FFFF_FFFF_FFFF), BSF32, 1);
+    assert_eq!(state.gpr[3], 3);
+    let (state, _, _) = run_both(&machine(0x8000_0000, 0xFFFF_FFFF_FFFF_FFFF), BSR32, 1);
+    assert_eq!(state.gpr[3], 31);
+
+    // A 16-bit destination keeps the bits above it.
+    let (state, _, _) = run_both(&machine(0x0100, 0xFFFF_FFFF_FFFF_FFFF), BSF16, 1);
+    assert_eq!(state.gpr[3], 0xFFFF_FFFF_FFFF_0008);
+
+    // BT reports the tested bit in the carry flag and leaves the bit string
+    // alone.
+    let (state, _, _) = run_both(&machine(1, 0b1010), BT64, 1);
+    assert!(state.flags.cf);
+    assert_eq!(state.gpr[3], 0b1010);
+    let (state, _, _) = run_both(&machine(0, 0b1010), BT64, 1);
+    assert!(!state.flags.cf);
+    assert_eq!(state.gpr[3], 0b1010);
+
+    // The bit index is masked to the operand width, so 64 selects bit 0 of a
+    // 64-bit bit string and 32 selects bit 0 of a 32-bit one.
+    let (state, _, _) = run_both(&machine(64, 0b1), BT64, 1);
+    assert!(state.flags.cf);
+    let (state, _, _) = run_both(&machine(32, 0b1), BT32, 1);
+    assert!(state.flags.cf);
+    let (state, _, _) = run_both(&machine(16, 0b1), BT16, 1);
+    assert!(state.flags.cf);
+
+    // The bit scans and the register form of the bit test are lowered to
+    // ARM64 instead of falling back to the shared semantics.
+    for code in [BSF64, BSR64, BT64, BSF32, BSR32, BT32, BSF16, BT16] {
+        let insn = decode(ENTRY, |address| {
+            code.get((address - ENTRY) as usize).copied().ok_or(())
+        })
+        .expect("decode");
+        assert!(is_native(&insn), "{code:02X?} is not native");
+        let mut engine = DbtEngine::new(64 * 1024).unwrap();
+        let (mut cpu, mut memory) = load(&machine(0x28, 0), code);
+        engine.run(&mut cpu, &mut memory, 1);
+        assert_eq!(engine.metrics.interpreter_fallbacks, 0, "{code:02X?}");
     }
 }
 

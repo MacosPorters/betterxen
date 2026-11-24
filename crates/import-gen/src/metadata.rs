@@ -30,6 +30,8 @@ pub enum AbiType {
     U64,
     F32,
     F64,
+    /// Opaque Win64 object handle.
+    Handle,
     /// Raw guest pointer (virtual address).
     Pointer {
         is_const: bool,
@@ -193,6 +195,14 @@ impl MetadataCatalog {
         );
         self.add(
             "ucrtbase.dll",
+            "strnlen",
+            AbiType::U64,
+            vec![("str", AbiType::StringAnsi), ("count", AbiType::U64)],
+            "<string.h>",
+            "Calculates a byte string length up to the supplied bound",
+        );
+        self.add(
+            "ucrtbase.dll",
             "strcmp",
             AbiType::I32,
             vec![("str1", AbiType::StringAnsi), ("str2", AbiType::StringAnsi)],
@@ -210,6 +220,42 @@ impl MetadataCatalog {
             ],
             "<string.h>",
             "Compares up to count characters of two strings",
+        );
+        self.add(
+            "ucrtbase.dll",
+            "wcslen",
+            AbiType::U64,
+            vec![("str", AbiType::StringWide)],
+            "<wchar.h>",
+            "Counts 16-bit Windows code units before the terminator",
+        );
+        self.add(
+            "ucrtbase.dll",
+            "wcsnlen",
+            AbiType::U64,
+            vec![("str", AbiType::StringWide), ("count", AbiType::U64)],
+            "<wchar.h>",
+            "Counts 16-bit Windows code units up to the supplied bound",
+        );
+        self.add(
+            "ucrtbase.dll",
+            "wcscmp",
+            AbiType::I32,
+            vec![("str1", AbiType::StringWide), ("str2", AbiType::StringWide)],
+            "<wchar.h>",
+            "Compares two strings of 16-bit Windows code units",
+        );
+        self.add(
+            "ucrtbase.dll",
+            "wcsncmp",
+            AbiType::I32,
+            vec![
+                ("str1", AbiType::StringWide),
+                ("str2", AbiType::StringWide),
+                ("count", AbiType::U64),
+            ],
+            "<wchar.h>",
+            "Compares up to count 16-bit Windows code units of two strings",
         );
         self.add(
             "ucrtbase.dll",
@@ -258,6 +304,33 @@ impl MetadataCatalog {
             ],
             "<string.h>",
             "Copies memory between non-overlapping guest regions",
+        );
+        self.add(
+            "ucrtbase.dll",
+            "memmove",
+            AbiType::Pointer {
+                is_const: false,
+                pointee: "void".into(),
+            },
+            vec![
+                (
+                    "dest",
+                    AbiType::Pointer {
+                        is_const: false,
+                        pointee: "void".into(),
+                    },
+                ),
+                (
+                    "src",
+                    AbiType::Pointer {
+                        is_const: true,
+                        pointee: "void".into(),
+                    },
+                ),
+                ("count", AbiType::U64),
+            ],
+            "<string.h>",
+            "Copies memory between guest ranges that may overlap",
         );
         self.add(
             "ucrtbase.dll",
@@ -319,6 +392,49 @@ impl MetadataCatalog {
             "<errhandlingapi.h>",
             "Sets the last-error code for the calling thread",
         );
+        self.add(
+            "kernel32.dll",
+            "GetThreadId",
+            AbiType::U32,
+            vec![("Thread", AbiType::Handle)],
+            "<processthreadsapi.h>",
+            "Retrieves the identifier of the specified thread",
+        );
+        self.add(
+            "kernel32.dll",
+            "DuplicateHandle",
+            AbiType::Bool,
+            vec![
+                ("hSourceProcessHandle", AbiType::Handle),
+                ("hSourceHandle", AbiType::Handle),
+                ("hTargetProcessHandle", AbiType::Handle),
+                (
+                    "lpTargetHandle",
+                    AbiType::Pointer {
+                        is_const: false,
+                        pointee: "HANDLE".into(),
+                    },
+                ),
+                ("dwDesiredAccess", AbiType::U32),
+                ("bInheritHandle", AbiType::Bool),
+                ("dwOptions", AbiType::U32),
+            ],
+            "<handleapi.h>",
+            "Creates another handle to the same object",
+        );
+        for (name, return_type) in [
+            ("GetTickCount", AbiType::U32),
+            ("GetTickCount64", AbiType::U64),
+        ] {
+            self.add(
+                "kernel32.dll",
+                name,
+                return_type,
+                vec![],
+                "<sysinfoapi.h>",
+                "Returns elapsed system uptime in milliseconds",
+            );
+        }
         self.add(
             "kernel32.dll",
             "QueryPerformanceCounter",

@@ -28,6 +28,9 @@ enum {
     XENORA_BUFFER_TOO_SMALL = 7,
     XENORA_EXECUTION_FAILED = 8,
     XENORA_INVALID_STATE = 9,
+    XENORA_FILE_NOT_FOUND = 10,
+    XENORA_ACCESS_DENIED = 11,
+    XENORA_IO_ERROR = 12,
 };
 
 /* Frame-loop states reported by xenora_session_frame_loop_status. */
@@ -55,6 +58,13 @@ typedef struct {
     uint8_t connected;
     uint16_t reserved;
 } xenora_input_state;
+
+/* Extended controller snapshot. Trigger values span 0 to 65535. */
+typedef struct {
+    xenora_input_state state;
+    uint16_t left_trigger;
+    uint16_t right_trigger;
+} xenora_controller_input;
 
 #define XENORA_INPUT_NONE     0u
 #define XENORA_INPUT_RIGHT    (1u << 0)
@@ -113,6 +123,7 @@ xenora_status xenora_session_run_trusted_fixture(
 xenora_status xenora_session_start_frame_loop(xenora_session session, uint32_t frame_count);
 xenora_status xenora_session_start_interactive_loop(xenora_session session, uint32_t frame_count);
 xenora_status xenora_session_send_input(xenora_session session, const xenora_input_state *input);
+xenora_status xenora_session_send_controller_input(xenora_session session, const xenora_controller_input *input);
 xenora_status xenora_session_queue_input(xenora_session session, const xenora_input_state *input);
 xenora_status xenora_session_pause_frame_loop(xenora_session session);
 xenora_status xenora_session_resume_frame_loop(xenora_session session);
@@ -244,6 +255,7 @@ xenora_status xenora_session_audio_init(
 
 /*
  * Submit PCM audio bytes into the session audio queue.
+ * byte_count must contain a whole number of interleaved sample frames.
  */
 xenora_status xenora_session_audio_submit(
     xenora_session session,
@@ -253,6 +265,7 @@ xenora_status xenora_session_audio_submit(
 
 /*
  * Read PCM audio bytes from the session audio queue.
+ * Only whole frames are returned. Any remaining output bytes are untouched.
  */
 xenora_status xenora_session_audio_read(
     xenora_session session,
@@ -262,7 +275,18 @@ xenora_status xenora_session_audio_read(
 );
 
 /*
- * Query current audio queue status: queued bytes, underruns, total submitted.
+ * Fill one playback block with whole frames, padding a shortfall with silence.
+ * out_source_bytes reports how much PCM was supplied before padding.
+ */
+xenora_status xenora_session_audio_render(
+    xenora_session session,
+    uint8_t *out_pcm,
+    uint64_t byte_count,
+    uint64_t *out_source_bytes
+);
+
+/*
+ * Query queued bytes, render calls that ran short, and total bytes submitted.
  */
 xenora_status xenora_session_audio_status(
     xenora_session session,
@@ -300,6 +324,8 @@ xenora_status xenora_session_vfs_set_root(
 
 /*
  * Open a file within the virtual filesystem sandboxed root.
+ * Missing files return XENORA_FILE_NOT_FOUND. Host permission failures return
+ * XENORA_ACCESS_DENIED. Other host I/O failures return XENORA_IO_ERROR.
  */
 xenora_status xenora_session_vfs_open(
     xenora_session session,

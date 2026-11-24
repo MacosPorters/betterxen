@@ -3,7 +3,7 @@
 //! CSV parser for the `missing_imports.csv` produced by `xenora probe`.
 //!
 //! Format: `"module","symbol_or_ordinal","iat_rva"`
-//! The first line is a header and is skipped.
+//! An optional `import_kind` column distinguishes numeric ordinals from names.
 
 #[derive(Clone, Debug, PartialEq, Eq, PartialOrd, Ord)]
 pub struct ImportRecord {
@@ -11,6 +11,7 @@ pub struct ImportRecord {
     pub module: String,
     /// Symbol name or `Ordinal#N`
     pub symbol: String,
+    pub ordinal: Option<u16>,
     /// IAT RVA (informational only, not used for generation)
     pub iat_rva: u64,
 }
@@ -20,10 +21,14 @@ pub struct ImportRecord {
 pub fn parse_csv(path: &str) -> Result<Vec<ImportRecord>, String> {
     let content = std::fs::read_to_string(path).map_err(|e| format!("cannot read {path}: {e}"))?;
     let mut records = Vec::new();
+    let mut kind_column = None;
     for (line_no, line) in content.lines().enumerate() {
         // Skip header (with or without quotes)
         let trimmed = line.trim();
         if line_no == 0 && (trimmed.starts_with("module") || trimmed.starts_with("\"module\"")) {
+            kind_column = split_csv_line(trimmed)
+                .iter()
+                .position(|column| unquote(column) == "import_kind");
             continue;
         }
         let line = line.trim();
@@ -36,6 +41,19 @@ pub fn parse_csv(path: &str) -> Result<Vec<ImportRecord>, String> {
         }
         let module = unquote(cols[0]).to_string();
         let symbol = unquote(cols[1]).to_string();
+        let ordinal = match kind_column {
+            None => None,
+            Some(index) => match cols.get(index).map(|field| unquote(field)) {
+                Some("name") => None,
+                Some("ordinal") => Some(
+                    symbol
+                        .strip_prefix("Ordinal#")
+                        .and_then(|value| value.parse().ok())
+                        .ok_or_else(|| format!("{path}:{}: invalid ordinal", line_no + 1))?,
+                ),
+                _ => return Err(format!("{path}:{}: invalid import_kind", line_no + 1)),
+            },
+        };
         let iat_rva = if cols.len() >= 3 {
             u64::from_str_radix(unquote(cols[2]).trim_start_matches("0x"), 16).unwrap_or(0)
         } else {
@@ -45,6 +63,7 @@ pub fn parse_csv(path: &str) -> Result<Vec<ImportRecord>, String> {
             records.push(ImportRecord {
                 module,
                 symbol,
+                ordinal,
                 iat_rva,
             });
         }

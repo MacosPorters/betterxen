@@ -238,7 +238,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let call = Call::new(args, cpu, memory);
         let a0 = call.u64(0)?;
         let a1 = call.bool32(1)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: bool = handlers::set_process_priority_boost(&mut context, a0, a1)?;
         Ok(result.place(cpu))
     });
@@ -247,14 +247,14 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let call = Call::new(args, cpu, memory);
         let a0 = call.u64(0)?;
         let a1 = call.out::<4>(1)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: bool = handlers::get_process_priority_boost(&mut context, a0, a1)?;
         Ok(result.place(cpu))
     });
     let s = state.clone();
     registry.register_with_status("kernel32.dll", "GetCurrentProcess", ServiceStatus::Implemented, move |args, cpu, memory| {
         let _ = args;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u64 = handlers::get_current_process(&mut context)?;
         Ok(result.place(cpu))
     });
@@ -262,28 +262,28 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("kernel32.dll", "GetProcessId", ServiceStatus::Partial, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.u64(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u32 = handlers::get_process_id(&mut context, a0)?;
         Ok(result.place(cpu))
     });
     let s = state.clone();
     registry.register_with_status("kernel32.dll", "GetCurrentThread", ServiceStatus::Implemented, move |args, cpu, memory| {
         let _ = args;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u64 = handlers::get_current_thread(&mut context)?;
         Ok(result.place(cpu))
     });
     let s = state.clone();
     registry.register_with_status("kernel32.dll", "GetCurrentProcessId", ServiceStatus::Implemented, move |args, cpu, memory| {
         let _ = args;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u32 = handlers::get_current_process_id(&mut context)?;
         Ok(result.place(cpu))
     });
     let s = state.clone();
     registry.register_with_status("kernel32.dll", "GetCurrentThreadId", ServiceStatus::Implemented, move |args, cpu, memory| {
         let _ = args;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u32 = handlers::get_current_thread_id(&mut context)?;
         Ok(result.place(cpu))
     });
@@ -293,7 +293,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let a0 = call.u32(0)?;
         let a1 = call.bool32(1)?;
         let a2 = call.u32(2)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u64 = handlers::open_thread(&mut context, a0, a1, a2)?;
         Ok(result.place(cpu))
     });
@@ -301,7 +301,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("kernel32.dll", "GetThreadPriority", ServiceStatus::Partial, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.u64(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: i32 = handlers::get_thread_priority(&mut context, a0)?;
         Ok(result.place(cpu))
     });
@@ -310,7 +310,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let call = Call::new(args, cpu, memory);
         let a0 = call.u64(0)?;
         let a1 = call.i32(1)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: bool = handlers::set_thread_priority(&mut context, a0, a1)?;
         Ok(result.place(cpu))
     });
@@ -318,7 +318,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("kernel32.dll", "CloseHandle", ServiceStatus::Partial, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.u64(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: bool = handlers::close_handle(&mut context, a0)?;
         Ok(result.place(cpu))
     });
@@ -326,14 +326,14 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("kernel32.dll", "GetSystemTimeAsFileTime", ServiceStatus::Implemented, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.out::<8>(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let () = handlers::get_system_time_as_file_time(&mut context, a0)?;
         Ok(0)
     });
     let s = state.clone();
     registry.register_with_status("kernel32.dll", "GetLastError", ServiceStatus::Partial, move |args, cpu, memory| {
         let _ = args;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u32 = handlers::get_last_error(&mut context)?;
         Ok(result.place(cpu))
     });
@@ -341,7 +341,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("kernel32.dll", "SetLastError", ServiceStatus::Partial, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.u32(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let () = handlers::set_last_error(&mut context, a0)?;
         Ok(0)
     });
@@ -352,7 +352,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let a1 = call.u64(1)?;
         let a2 = call.u32(2)?;
         let a3 = call.u32(3)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: u64 = handlers::virtual_alloc(&mut context, a0, a1, a2, a3)?;
         Ok(result.place(cpu))
     });
@@ -362,7 +362,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let a0 = call.u64(0)?;
         let a1 = call.u64(1)?;
         let a2 = call.u32(2)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: bool = handlers::virtual_free(&mut context, a0, a1, a2)?;
         Ok(result.place(cpu))
     });
@@ -370,7 +370,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("ucrtbase.dll", "sqrt", ServiceStatus::Partial, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.f64(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: crate::runtime::Float64 = handlers::sqrt(&mut context, a0)?;
         Ok(result.place(cpu))
     });
@@ -378,7 +378,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("ucrtbase.dll", "sqrtf", ServiceStatus::Partial, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.f32(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: crate::runtime::Float32 = handlers::sqrtf(&mut context, a0)?;
         Ok(result.place(cpu))
     });
@@ -386,7 +386,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("ucrtbase.dll", "fabs", ServiceStatus::Implemented, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.f64(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: crate::runtime::Float64 = handlers::fabs(&mut context, a0)?;
         Ok(result.place(cpu))
     });
@@ -394,7 +394,7 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     registry.register_with_status("ucrtbase.dll", "fabsf", ServiceStatus::Implemented, move |args, cpu, memory| {
         let call = Call::new(args, cpu, memory);
         let a0 = call.f32(0)?;
-        let mut context = ServiceContext { state: &s, memory };
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: crate::runtime::Float32 = handlers::fabsf(&mut context, a0)?;
         Ok(result.place(cpu))
     });

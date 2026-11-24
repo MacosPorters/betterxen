@@ -10,11 +10,14 @@ use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
 use xenora_loader::startup::{StartupEvent, StartupLayout, run_synthetic_startup_with_observer};
-use xenora_loader::{ExitReason, ImportRegistry, Register};
+use xenora_loader::{
+    ExitReason, ImportRegistry, Register, ServicesState, SystemClock, register_standard_services,
+};
 use xenora_metal::NativeCompute;
 use xenora_shader::{Architecture, PIXEL_ENTRY_POINT, VERTEX_ENTRY_POINT, compile_graphics};
 
 const FIXTURE: &[u8] = include_bytes!("../../../fixtures/pe/trusted-runner.exe");
+const SERVICES_FIXTURE: &[u8] = include_bytes!("../../../fixtures/pe/runtime-services.exe");
 const WALL_LIMIT: Duration = Duration::from_secs(15);
 const DEFAULT_STEPS: usize = 100;
 const MAX_STEPS: usize = 10_000;
@@ -132,11 +135,11 @@ fn launch_worker(options: &Options) -> Result<ExitCode, Box<dyn Error>> {
     }
 }
 
-fn verify_fixture(path: &Path) -> Result<(), Box<dyn Error>> {
+fn verify_fixture(path: &Path) -> Result<&'static [u8], Box<dyn Error>> {
     let valid_metadata =
         |metadata: fs::Metadata| metadata.is_file() && metadata.len() == FIXTURE.len() as u64;
     let rejection =
-        "execution denied: input must match the original trusted PE fixture byte for byte";
+        "execution denied: input must match an embedded trusted PE fixture byte for byte";
     // Check size before opening and again on the descriptor. Bound the read
     // even if another process changes the file after the metadata checks.
     if !valid_metadata(fs::metadata(path)?) {
@@ -149,10 +152,10 @@ fn verify_fixture(path: &Path) -> Result<(), Box<dyn Error>> {
     let mut bytes = Vec::with_capacity(FIXTURE.len() + 1);
     file.take(FIXTURE.len() as u64 + 1)
         .read_to_end(&mut bytes)?;
-    if bytes != FIXTURE {
-        return Err(rejection.into());
-    }
-    Ok(())
+    [FIXTURE, SERVICES_FIXTURE]
+        .into_iter()
+        .find(|fixture| *fixture == bytes)
+        .ok_or_else(|| rejection.into())
 }
 
 fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
@@ -164,10 +167,15 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
             // its own deadline if it is invoked directly.
             std::process::exit(124);
         })?;
-    verify_fixture(&options.path)?;
+    let fixture = verify_fixture(&options.path)?;
+    let (name, ticket, bound_imports) = if fixture == SERVICES_FIXTURE {
+        ("runtime-services", 23, 3)
+    } else {
+        ("trusted-runner", TICKET, 1)
+    };
     if options.trace {
         println!(
-            "trace fixture=trusted-runner policy=exact-bytes entry_step_limit={} wall_limit_ms=15000",
+            "trace fixture={name} policy=exact-bytes entry_step_limit={} wall_limit_ms=15000",
             options.max_steps
         );
     }
@@ -175,6 +183,10 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
     let capture = Arc::new(Mutex::new(None));
     let draw_capture = Arc::clone(&capture);
     let mut imports = ImportRegistry::new();
+    register_standard_services(
+        &mut imports,
+        Arc::new(ServicesState::new(Arc::new(SystemClock))),
+    );
     let trace = options.trace;
     imports.register("xenora.dll", "fixture_draw", move |args, _, memory| {
         let ticket_address = args.get(0, memory).map_err(ExitReason::MemoryFault)?;
@@ -188,15 +200,15 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
             || memory
                 .read_u64(ticket_address)
                 .map_err(ExitReason::MemoryFault)?
-                != TICKET
+                != ticket
         {
             *result = Some(Err(
-                "draw ticket did not match the TLS-initialized guest word".into(),
+                "guest draw ticket differed from the expected value".into()
             ));
             return Err(ExitReason::IllegalInstruction(0xff));
         }
         if trace {
-            println!("trace import=xenora.dll!fixture_draw tls_ticket={TICKET}");
+            println!("trace import=xenora.dll!fixture_draw tls_ticket={ticket}");
         }
         let frame = draw().map_err(|error| error.to_string());
         let drawn = frame.is_ok();
@@ -211,7 +223,7 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
     let started = Instant::now();
     // Use only the embedded snapshot. The file is solely an exact-byte gate.
     let startup = run_synthetic_startup_with_observer(
-        FIXTURE,
+        fixture,
         StartupLayout {
             image_base: IMAGE_BASE,
             stack_top: 0x200010000,
@@ -245,7 +257,7 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
         return Err(exit.into());
     }
     if startup.relocations.applied_dir64 != 4
-        || startup.bound_imports != 1
+        || startup.bound_imports != bound_imports
         || startup.tls_callbacks != 1
         || rax != DRAW_RESULT
     {

@@ -22,6 +22,7 @@ pub mod runtime_table;
 pub mod services;
 pub mod softfloat;
 pub mod startup;
+pub mod tasks;
 pub mod tls;
 pub mod triage;
 pub mod x86_decode;

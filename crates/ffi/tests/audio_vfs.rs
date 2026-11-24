@@ -180,11 +180,9 @@ fn virtual_filesystem_sandboxing_and_traversal_rejection() {
         "../../etc/passwd",
         "/etc/passwd",
         "sub/../../secret",
-        "asset.bin\0extra",
         "",
     ] {
-        let bad_c = std::ffi::CString::new(*bad)
-            .unwrap_or_else(|_| std::ffi::CString::new("fallback_bad").unwrap());
+        let bad_c = std::ffi::CString::new(*bad).unwrap();
         assert_eq!(
             unsafe { xenora_session_vfs_open(sess, bad_c.as_ptr(), 0, &mut file) },
             XENORA_INVALID_ARGUMENT,
@@ -192,6 +190,13 @@ fn virtual_filesystem_sandboxing_and_traversal_rejection() {
             bad
         );
     }
+
+    let missing = std::ffi::CString::new("missing-xenora-test-asset.bin").unwrap();
+    assert_eq!(
+        unsafe { xenora_session_vfs_open(sess, missing.as_ptr(), 0, &mut file) },
+        XENORA_FILE_NOT_FOUND
+    );
+    assert_eq!(file, XENORA_NO_FILE);
 
     // Open existing valid asset
     let good = std::ffi::CString::new("asset.bin").unwrap();

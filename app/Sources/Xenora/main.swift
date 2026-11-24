@@ -5,6 +5,9 @@
 // by native Metal) and shows the verified read-back frame. No other executable can run.
 
 import AppKit
+import AVFoundation
+import AudioToolbox
+import CoreAudio
 import CXenora
 import Foundation
 import SwiftUI
@@ -113,12 +116,13 @@ struct AudioVfsFrame {
     let samples: UInt32
     let totalAudioBytes: UInt64
     let rgba: [UInt8]
+    let pcm: [UInt8]
 
-    static func run() -> AudioVfsFrame {
+    static func run(captureAudio: Bool = false) -> AudioVfsFrame {
         var session: xenora_session = 0
         var status = xenora_session_create(XENORA_ABI_VERSION, &session)
         guard status == XENORA_OK else {
-            return AudioVfsFrame(status: status, width: 0, height: 0, samples: 0, totalAudioBytes: 0, rgba: [])
+            return AudioVfsFrame(status: status, width: 0, height: 0, samples: 0, totalAudioBytes: 0, rgba: [], pcm: [])
         }
         defer { _ = xenora_session_destroy(session) }
         var rgba = [UInt8](repeating: 0, count: 16)
@@ -133,13 +137,25 @@ struct AudioVfsFrame {
         var underruns: UInt32 = 0
         var total: UInt64 = 0
         _ = xenora_session_audio_status(session, &queued, &underruns, &total)
+        var pcm: [UInt8] = []
+        if captureAudio && status == XENORA_OK && queued > 0 && queued <= 256 * 1024 {
+            pcm = [UInt8](repeating: 0, count: Int(queued))
+            var read: UInt64 = 0
+            let readStatus = pcm.withUnsafeMutableBufferPointer { buffer in
+                xenora_session_audio_read(session, buffer.baseAddress, UInt64(buffer.count), &read)
+            }
+            if readStatus != XENORA_OK || read != UInt64(queued) {
+                pcm.removeAll()
+            }
+        }
         return AudioVfsFrame(
             status: status,
             width: Int(width),
             height: Int(height),
             samples: samples,
             totalAudioBytes: total,
-            rgba: status == XENORA_OK ? rgba : []
+            rgba: status == XENORA_OK ? rgba : [],
+            pcm: pcm
         )
     }
 
@@ -156,6 +172,233 @@ struct AudioVfsFrame {
         let pixels = rgba.map(String.init).joined(separator: ",")
         return "status=\(status) frame=\(width)x\(height) samples=\(samples) audio_total=\(totalAudioBytes) pixels=[\(pixels)]"
     }
+}
+
+private enum FixturePlaybackError: Error {
+    case invalidPCM
+    case noDefaultOutput(OSStatus)
+    case deviceDiscovery(OSStatus)
+    case unavailableOutput(AudioDeviceID)
+    case outputUnitUnavailable
+    case outputRouting(OSStatus)
+    case unexpectedOutput(AudioDeviceID)
+    case queueFailure(Int32)
+    case queueShortfall(UInt64)
+    case timedOut
+}
+
+private struct FixturePlayback {
+    let frames: Int
+    let buffers: Int
+    let refills: Int
+    let underruns: UInt32
+    let outputDevice: AudioDeviceID
+    let outputSampleRate: Double
+    let outputChannels: AVAudioChannelCount
+    let presentationLatency: TimeInterval
+    let completionElapsed: TimeInterval
+}
+
+private func defaultAudioOutput() throws -> AudioDeviceID {
+    var address = AudioObjectPropertyAddress(
+        mSelector: kAudioHardwarePropertyDefaultOutputDevice,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMain
+    )
+    var device = AudioDeviceID(kAudioObjectUnknown)
+    var size = UInt32(MemoryLayout<AudioDeviceID>.size)
+    let status = AudioObjectGetPropertyData(
+        AudioObjectID(kAudioObjectSystemObject), &address, 0, nil, &size, &device
+    )
+    guard status == noErr, device != kAudioObjectUnknown else {
+        throw FixturePlaybackError.noDefaultOutput(status)
+    }
+    return device
+}
+
+private func audioOutputDevices() throws -> [AudioDeviceID] {
+    let system = AudioObjectID(kAudioObjectSystemObject)
+    var address = AudioObjectPropertyAddress(
+        mSelector: kAudioHardwarePropertyDevices,
+        mScope: kAudioObjectPropertyScopeGlobal,
+        mElement: kAudioObjectPropertyElementMain
+    )
+    let stride = UInt32(MemoryLayout<AudioDeviceID>.stride)
+    var size: UInt32 = 0
+    let sizeStatus = AudioObjectGetPropertyDataSize(system, &address, 0, nil, &size)
+    guard sizeStatus == noErr, size.isMultiple(of: stride) else {
+        throw FixturePlaybackError.deviceDiscovery(sizeStatus)
+    }
+    if size == 0 { return [] }
+    var devices = [AudioDeviceID](repeating: kAudioObjectUnknown, count: Int(size / stride))
+    let readStatus = devices.withUnsafeMutableBytes { bytes in
+        AudioObjectGetPropertyData(system, &address, 0, nil, &size, bytes.baseAddress!)
+    }
+    guard readStatus == noErr, size.isMultiple(of: stride), Int(size / stride) <= devices.count else {
+        throw FixturePlaybackError.deviceDiscovery(readStatus)
+    }
+    return devices.prefix(Int(size / stride)).filter { device in
+        var streams = AudioObjectPropertyAddress(
+            mSelector: kAudioDevicePropertyStreams,
+            mScope: kAudioDevicePropertyScopeOutput,
+            mElement: kAudioObjectPropertyElementMain
+        )
+        var bytes: UInt32 = 0
+        return device != kAudioObjectUnknown
+            && AudioObjectGetPropertyDataSize(device, &streams, 0, nil, &bytes) == noErr
+            && bytes > 0
+    }.sorted()
+}
+
+private func playFixturePCM(
+    _ pcm: [UInt8], requestedOutput: AudioDeviceID? = nil, streamingFixture: Bool = false
+) throws -> FixturePlayback {
+    // The embedded audio/VFS fixture submits mono 48 kHz S16LE frames.
+    guard !pcm.isEmpty, pcm.count.isMultiple(of: 2),
+          let format = AVAudioFormat(standardFormatWithSampleRate: 48_000, channels: 1) else {
+        throw FixturePlaybackError.invalidPCM
+    }
+    let sourceFrames = pcm.count / 2
+    let frames = sourceFrames * (streamingFixture ? 32 : 1)
+    let framesPerBuffer = streamingFixture ? 1024 : 128
+    let bufferWindow = 3
+    var streamSession: xenora_session = 0
+    let producer = DispatchQueue(label: "xenora.fixture.pcm")
+    if streamingFixture {
+        let createStatus = xenora_session_create(XENORA_ABI_VERSION, &streamSession)
+        guard createStatus == XENORA_OK else { throw FixturePlaybackError.queueFailure(createStatus) }
+    }
+    let session = streamSession
+    defer {
+        if session != 0 {
+            producer.sync {}
+            _ = xenora_session_destroy(session)
+        }
+    }
+    if session != 0 {
+        let initStatus = xenora_session_audio_init(session, 48_000, 1, UInt32(XENORA_AUDIO_FORMAT_PCM_S16LE))
+        guard initStatus == XENORA_OK else { throw FixturePlaybackError.queueFailure(initStatus) }
+    }
+    let engine = AVAudioEngine()
+    guard let outputUnit = engine.outputNode.audioUnit else {
+        throw FixturePlaybackError.outputUnitUnavailable
+    }
+    if var device = requestedOutput {
+        guard try audioOutputDevices().contains(device) else {
+            throw FixturePlaybackError.unavailableOutput(device)
+        }
+        let status = AudioUnitSetProperty(
+            outputUnit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
+            &device, UInt32(MemoryLayout<AudioDeviceID>.size)
+        )
+        guard status == noErr else { throw FixturePlaybackError.outputRouting(status) }
+    }
+    let player = AVAudioPlayerNode()
+    let played = DispatchSemaphore(value: 0)
+    engine.attach(player)
+    engine.connect(player, to: engine.mainMixerNode, format: format)
+    defer {
+        player.stop()
+        engine.stop()
+        engine.detach(player)
+    }
+    try engine.start()
+    var outputDevice = AudioDeviceID(kAudioObjectUnknown)
+    var outputIDSize = UInt32(MemoryLayout<AudioDeviceID>.size)
+    let routeStatus = AudioUnitGetProperty(
+        outputUnit, kAudioOutputUnitProperty_CurrentDevice, kAudioUnitScope_Global, 0,
+        &outputDevice, &outputIDSize
+    )
+    guard routeStatus == noErr else { throw FixturePlaybackError.outputRouting(routeStatus) }
+    guard outputDevice != kAudioObjectUnknown, requestedOutput.map({ $0 == outputDevice }) ?? true else {
+        throw FixturePlaybackError.unexpectedOutput(outputDevice)
+    }
+    let output = engine.outputNode.outputFormat(forBus: 0)
+    let presentationLatency = engine.outputNode.presentationLatency
+    var nextFrame = 0
+    var bufferCount = 0
+    func renderBlock(first: Int, count: Int) throws -> [UInt8] {
+        let firstByte = first * 2
+        let byteCount = count * 2
+        if session == 0 {
+            return Array(pcm[firstByte..<(firstByte + byteCount)])
+        }
+        let submitted = DispatchSemaphore(value: 0)
+        producer.async {
+            let block = (0..<byteCount).map { pcm[(firstByte + $0) % pcm.count] }
+            block.withUnsafeBufferPointer { bytes in
+                _ = xenora_session_audio_submit(session, bytes.baseAddress, UInt64(bytes.count))
+            }
+            submitted.signal()
+        }
+        guard submitted.wait(timeout: .now() + .seconds(1)) == .success else {
+            throw FixturePlaybackError.timedOut
+        }
+        var block = [UInt8](repeating: 0, count: byteCount)
+        var supplied: UInt64 = 0
+        let status = block.withUnsafeMutableBufferPointer { bytes in
+            xenora_session_audio_render(session, bytes.baseAddress, UInt64(bytes.count), &supplied)
+        }
+        guard status == XENORA_OK else { throw FixturePlaybackError.queueFailure(status) }
+        guard supplied == UInt64(byteCount) else { throw FixturePlaybackError.queueShortfall(supplied) }
+        return block
+    }
+
+    func scheduleNextBuffer() throws {
+        let first = nextFrame
+        let count = min(framesPerBuffer, frames - first)
+        let pcmBlock = try renderBlock(first: first, count: count)
+        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: AVAudioFrameCount(count)),
+              let samples = buffer.floatChannelData?[0] else {
+            throw FixturePlaybackError.invalidPCM
+        }
+        buffer.frameLength = AVAudioFrameCount(count)
+        for offset in 0..<count {
+            let byte = offset * 2
+            let low = UInt16(pcmBlock[byte])
+            let high = UInt16(pcmBlock[byte + 1]) << 8
+            samples[offset] = Float(Int16(bitPattern: low | high)) / 32_768
+        }
+        player.scheduleBuffer(buffer, completionCallbackType: .dataPlayedBack) { _ in
+            played.signal()
+        }
+        bufferCount += 1
+        nextFrame += count
+    }
+    while nextFrame < frames && bufferCount < bufferWindow {
+        try scheduleNextBuffer()
+    }
+    let prequeued = bufferCount
+    let start = DispatchTime.now()
+    player.play()
+    let deadline = start + .seconds(3)
+    var completedBuffers = 0
+    while completedBuffers < bufferCount {
+        guard played.wait(timeout: deadline) == .success else {
+            throw FixturePlaybackError.timedOut
+        }
+        completedBuffers += 1
+        if nextFrame < frames {
+            try scheduleNextBuffer()
+        }
+    }
+    let elapsed = Double(DispatchTime.now().uptimeNanoseconds - start.uptimeNanoseconds) / 1e9
+    var underruns: UInt32 = 0
+    if session != 0 {
+        var queued: UInt32 = 0
+        var total: UInt64 = 0
+        let status = xenora_session_audio_status(session, &queued, &underruns, &total)
+        guard status == XENORA_OK else { throw FixturePlaybackError.queueFailure(status) }
+        guard queued == 0, total == UInt64(frames * 2) else {
+            throw FixturePlaybackError.invalidPCM
+        }
+    }
+    return FixturePlayback(
+        frames: frames, buffers: completedBuffers, refills: bufferCount - prequeued,
+        underruns: underruns, outputDevice: outputDevice,
+        outputSampleRate: output.sampleRate, outputChannels: output.channelCount,
+        presentationLatency: presentationLatency, completionElapsed: elapsed
+    )
 }
 
 /// Owns the latest fixture run. A class with @Published avoids SwiftUI macros,
@@ -204,6 +447,7 @@ final class FrameLoopModel: ObservableObject {
     @Published var image: CGImage?
     @Published var errorMessage: String?
     @Published var isInteractive: Bool = false
+    @Published private(set) var controller: DetectedController?
 
     private var session: xenora_session = 0
     private var pollTask: Task<Void, Never>?
@@ -283,6 +527,7 @@ final class FrameLoopModel: ObservableObject {
             return
         }
         isInteractive = true
+        controller = nil
         state = UInt32(XENORA_LOOP_RUNNING)
         completed = 0
         frameId = XENORA_NO_FRAME
@@ -291,18 +536,39 @@ final class FrameLoopModel: ObservableObject {
     }
 
     func sendInput(buttons: UInt32) {
+        sendInput(buttons: buttons, x: 0, y: 0, connected: true)
+    }
+
+    private func sendInput(
+        buttons: UInt32, x: Int16, y: Int16, connected: Bool,
+        leftTrigger: Float = 0, rightTrigger: Float = 0
+    ) {
         guard session != 0 else { return }
-        var input = xenora_input_state(
+        let state = xenora_input_state(
             buttons: buttons,
-            stick_x: 0,
-            stick_y: 0,
+            stick_x: x,
+            stick_y: y,
             mouse_dx: 0,
             mouse_dy: 0,
             mouse_buttons: 0,
-            connected: 1,
+            connected: connected ? 1 : 0,
             reserved: 0
         )
-        _ = xenora_session_send_input(session, &input)
+        var input = xenora_controller_input(
+            state: state, left_trigger: UInt16((leftTrigger * 65535).rounded()),
+            right_trigger: UInt16((rightTrigger * 65535).rounded())
+        )
+        _ = xenora_session_send_controller_input(session, &input)
+    }
+
+    private func updateGameController() {
+        let next = pollGameController()
+        guard next != controller else { return }
+        controller = next
+        let snapshot = next?.snapshot
+        sendInput(buttons: snapshot?.buttons ?? 0, x: snapshot?.x ?? 0, y: snapshot?.y ?? 0,
+                  connected: next != nil, leftTrigger: snapshot?.leftTrigger ?? 0,
+                  rightTrigger: snapshot?.rightTrigger ?? 0)
     }
 
     func pause() {
@@ -326,6 +592,9 @@ final class FrameLoopModel: ObservableObject {
             while !Task.isCancelled {
                 try? await Task.sleep(nanoseconds: 16_000_000)
                 guard let self = self, self.session != 0 else { break }
+                if self.isInteractive {
+                    self.updateGameController()
+                }
                 var st: UInt32 = 0
                 var comp: UInt32 = 0
                 var fId: UInt32 = 0
@@ -530,6 +799,11 @@ struct ContentView: View {
                         .disabled(!loop.isRunning && !loop.isPaused)
                 }
                 if loop.isInteractive && (loop.isRunning || loop.isPaused) {
+                    if let controller = loop.controller {
+                        Text("Controller: \(controller.name)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                     HStack {
                         Button("◀ Left") { loop.sendInput(buttons: UInt32(XENORA_INPUT_LEFT)) }
                         Button("▶ Right") { loop.sendInput(buttons: UInt32(XENORA_INPUT_RIGHT)) }
@@ -587,6 +861,71 @@ if CommandLine.arguments.contains("--smoke-resources") {
 }
 
 // `--smoke-audio-vfs` tests VFS asset loading, PCM audio streaming, and Metal texture presentation.
+if CommandLine.arguments.contains("--smoke-controller") {
+    let simulated = ControllerSnapshot(buttons: 1, x: 0.1, y: -1, leftTrigger: 1.2, rightTrigger: .nan)
+    let physical = pollGameController()
+    print("smoke-controller: simulatedAxis=\(simulated.x),\(simulated.y) triggers=\(simulated.leftTrigger),\(simulated.rightTrigger) detected=\(physical?.name ?? "none")")
+    exit(simulated.buttons == 1 && simulated.x == 0 && simulated.y == -32767
+         && simulated.leftTrigger == 1 && simulated.rightTrigger == 0 ? 0 : 1)
+}
+
+if CommandLine.arguments.contains("--smoke-audio-mix") {
+    do {
+        let result = try measureAudioMixFixture()
+        print("smoke-audio-mix: frames=\(result.frames) mean=\(result.mean) toneAmplitude=\(result.toneAmplitude)")
+        exit(result.frames == 4_800 && abs(result.mean - 0.125) < 0.005
+             && abs(result.toneAmplitude - 0.25) < 0.005 ? 0 : 1)
+    } catch {
+        print("smoke-audio-mix: \(error)")
+        exit(1)
+    }
+}
+
+if CommandLine.arguments.contains("--list-audio-outputs") {
+    do {
+        let devices = try audioOutputDevices()
+        let defaultDevice = try? defaultAudioOutput()
+        print("audio-outputs: count=\(devices.count)")
+        for device in devices {
+            print("audio-output: id=\(device) default=\(device == defaultDevice)")
+        }
+        exit(0)
+    } catch {
+        print("audio-outputs: \(error)")
+        exit(1)
+    }
+}
+
+let nativeAudioStreamSmoke = CommandLine.arguments.contains("--smoke-native-audio-stream")
+if CommandLine.arguments.contains("--smoke-native-audio") || nativeAudioStreamSmoke {
+    var requestedOutput: AudioDeviceID?
+    if let index = CommandLine.arguments.firstIndex(of: "--audio-output") {
+        let values = CommandLine.arguments
+        guard index + 1 < values.count, let device = AudioDeviceID(values[index + 1]), device != 0 else {
+            print("smoke-native-audio: --audio-output requires a device ID")
+            exit(2)
+        }
+        requestedOutput = device
+    }
+    let frame = AudioVfsFrame.run(captureAudio: true)
+    guard frame.status == XENORA_OK, frame.samples == 256, frame.pcm.count == 512 else {
+        print("smoke-native-audio: fixture PCM unavailable")
+        exit(1)
+    }
+    do {
+        let played = try playFixturePCM(
+            frame.pcm, requestedOutput: requestedOutput, streamingFixture: nativeAudioStreamSmoke
+        )
+        print("smoke-native-audio: playedBackFrames=\(played.frames) playedBackBuffers=\(played.buffers) refills=\(played.refills) queueUnderruns=\(played.underruns) outputDevice=\(played.outputDevice) outputRate=\(played.outputSampleRate) outputChannels=\(played.outputChannels) presentationLatencyMs=\(played.presentationLatency * 1000) completionElapsedMs=\(played.completionElapsed * 1000)")
+        let expected = nativeAudioStreamSmoke ? (8192, 8, 5) : (256, 2, 0)
+        exit((played.frames, played.buffers, played.refills) == expected
+             && played.underruns == 0 && played.outputSampleRate > 0 && played.outputChannels > 0 ? 0 : 1)
+    } catch {
+        print("smoke-native-audio: \(error)")
+        exit(1)
+    }
+}
+
 if CommandLine.arguments.contains("--smoke-audio-vfs") {
     let frame = AudioVfsFrame.run()
     print("smoke-audio-vfs: \(frame.summary)")

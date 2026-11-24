@@ -306,6 +306,26 @@ impl Arm64Assembler {
         );
     }
 
+    /// RBIT Xd, Xn: reverse the bit order of the source.
+    pub fn rbit_64(&mut self, xd: u8, xn: u8) {
+        self.emit(0xdac0_0000 | ((u32::from(xn) & 0x1f) << 5) | (u32::from(xd) & 0x1f));
+    }
+
+    /// CLZ Xd, Xn: count the leading zero bits of the source.
+    pub fn clz_64(&mut self, xd: u8, xn: u8) {
+        self.emit(0xdac0_1000 | ((u32::from(xn) & 0x1f) << 5) | (u32::from(xd) & 0x1f));
+    }
+
+    /// LSLV Xd, Xn, Xm: shift the source left by the amount in Xm.
+    pub fn lslv_64(&mut self, xd: u8, xn: u8, xm: u8) {
+        self.emit(
+            0x9ac2_2000
+                | ((u32::from(xm) & 0x1f) << 16)
+                | ((u32::from(xn) & 0x1f) << 5)
+                | (u32::from(xd) & 0x1f),
+        );
+    }
+
     /// LDR Qt, [Xn, #offset] (offset a multiple of 16)
     pub fn ldr_q_uoff(&mut self, qt: u8, xn: u8, offset: u32) {
         self.emit(

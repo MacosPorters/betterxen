@@ -5,8 +5,8 @@ use xenora_isa::semantics::{
     CarryIn, FORM_IDS, FORMS, GENERATED_SCHEMA, MaskEffect, SCHEMA, SccEffect, Signedness, Wave,
 };
 use xenora_isa::{
-    CompareRelation, ScalarAluOp, ScalarCompareOp, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op,
-    VectorCompareOp,
+    CompareRelation, ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp,
+    ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
 };
 
 #[test]
@@ -79,6 +79,64 @@ fn scalar_compare_dispatch_selects_exactly_the_registry_sopc_forms() {
 }
 
 #[test]
+fn scalar_immediate_dispatch_selects_exactly_the_registry_sopk_forms() {
+    for op in ScalarImmediateOp::ALL {
+        let row = op.semantics();
+        assert_eq!(row.family, EncodingFamily::Sopk);
+        assert_eq!(row.name.to_ascii_lowercase(), op.mnemonic());
+        assert_eq!(op.reads_scc(), row.carry_in == CarryIn::Scc);
+        assert_eq!(op.writes_scc(), row.scc != SccEffect::Unchanged);
+    }
+    for op in ScalarImmediateCompareOp::ALL {
+        let row = op.semantics();
+        assert_eq!(row.family, EncodingFamily::Sopk);
+        assert_eq!(row.name.to_ascii_lowercase(), op.mnemonic());
+        assert_eq!(row.relation, Some(op.relation()));
+    }
+    // The two enums together are the registry's SOPK forms; the fixed
+    // s_waitcnt_vscnt word (opcode 23) stays hand-written and is in neither.
+    dispatch_selects_exactly(EncodingFamily::Sopk, |word| {
+        ScalarImmediateOp::from_word(word)
+            .map(|op| op.semantics().name)
+            .or_else(|| ScalarImmediateCompareOp::from_word(word).map(|op| op.semantics().name))
+    });
+}
+
+#[test]
+fn scalar_immediate_evaluation_extends_simm16_as_the_form_declares() {
+    // SIMM16 = 0x8000 is -32768 signed and 32768 unsigned.
+    let d = 0xffff_8000;
+    assert_eq!(
+        ScalarImmediateOp::MovkI32.evaluate(0, 0x8000, false),
+        (Some(d), None)
+    );
+    assert_eq!(
+        ScalarImmediateOp::CmovkI32.evaluate(7, 0x8000, true),
+        (Some(d), None)
+    );
+    assert_eq!(
+        ScalarImmediateOp::CmovkI32.evaluate(7, 0x8000, false),
+        (None, None)
+    );
+    assert_eq!(
+        ScalarImmediateOp::AddkI32.evaluate(0x7fff_ffff, 1, false),
+        (Some(0x8000_0000), Some(true))
+    );
+    assert_eq!(
+        ScalarImmediateOp::AddkI32.evaluate(5, 0xffff, false),
+        (Some(4), Some(false))
+    );
+    assert_eq!(
+        ScalarImmediateOp::MulkI32.evaluate(3, 0xffff, true),
+        (Some(0xffff_fffd), None)
+    );
+    assert!(ScalarImmediateCompareOp::CmpkEqI32.test(d, 0x8000));
+    assert!(!ScalarImmediateCompareOp::CmpkEqU32.test(d, 0x8000));
+    assert!(ScalarImmediateCompareOp::CmpkGtU32.test(d, 0xffff));
+    assert!(!ScalarImmediateCompareOp::CmpkGtI32.test(d, 0xffff));
+}
+
+#[test]
 fn scalar_unary_dispatch_selects_exactly_the_registry_sop1_forms() {
     for op in ScalarUnaryOp::ALL {
         let row = op.semantics();
@@ -86,7 +144,6 @@ fn scalar_unary_dispatch_selects_exactly_the_registry_sop1_forms() {
         assert_eq!(row.name.to_ascii_lowercase(), op.mnemonic());
         assert_eq!(op.writes_scc(), row.scc != SccEffect::Unchanged);
     }
-    // s_mov_b32 (opcode 3) stays hand-written, so it must not be dispatched here.
     dispatch_selects_exactly(EncodingFamily::Sop1, |word| {
         ScalarUnaryOp::from_word(word).map(|op| op.semantics().name)
     });
@@ -111,7 +168,16 @@ fn vector_alu_dispatch_selects_exactly_the_registry_vop2_forms() {
 
 #[test]
 fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
-    const OPERANDS: [u32; 6] = [0, 1, 0x7fff_ffff, 0x8000_0000, 0xffff_fffe, 0xffff_ffff];
+    const OPERANDS16: [u64; 6] = [
+        0xaaaa_0000,
+        0x5555_0001,
+        0xdead_7fff,
+        0x8000,
+        0xfffe,
+        0xffff,
+    ];
+    const OPERANDS32: [u64; 6] = [0, 1, 0x7fff_ffff, 0x8000_0000, 0xffff_fffe, 0xffff_ffff];
+    const OPERANDS64: [u64; 6] = [0, 1, u64::MAX >> 1, 1 << 63, u64::MAX - 1, u64::MAX];
     for op in VectorCompareOp::ALL {
         let row = op.semantics();
         assert_eq!(row.family, EncodingFamily::Vopc);
@@ -130,9 +196,22 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
         );
         // The per-lane test is the declared relation over the declared
         // signedness, with SRC0 on the left.
-        for src0 in OPERANDS {
-            for src1 in OPERANDS {
-                let ordering = if op.signed() {
+        let operands = match row.width {
+            16 => OPERANDS16,
+            64 => OPERANDS64,
+            _ => OPERANDS32,
+        };
+        for src0 in operands {
+            for src1 in operands {
+                let ordering = if row.width == 16 {
+                    if op.signed() {
+                        (src0 as i16).cmp(&(src1 as i16))
+                    } else {
+                        (src0 as u16).cmp(&(src1 as u16))
+                    }
+                } else if op.signed() && row.width == 64 {
+                    (src0 as i64).cmp(&(src1 as i64))
+                } else if op.signed() {
                     (src0 as i32).cmp(&(src1 as i32))
                 } else {
                     src0.cmp(&src1)
@@ -148,7 +227,7 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
                     CompareRelation::True => true,
                 };
                 assert_eq!(
-                    op.test(src0, src1),
+                    op.test_bits(src0, src1),
                     expected,
                     "{} {src0:#x} {src1:#x}",
                     row.name
@@ -156,7 +235,7 @@ fn vector_compare_dispatch_selects_exactly_the_registry_vopc_forms() {
             }
         }
     }
-    // v_cmpx and the 16-, 64-bit and float compares must not be dispatched.
+    // v_cmpx and the float compares must not be dispatched.
     dispatch_selects_exactly(EncodingFamily::Vopc, |word| {
         VectorCompareOp::from_word(word).map(|op| op.semantics().name)
     });

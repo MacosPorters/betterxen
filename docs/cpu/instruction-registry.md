@@ -45,6 +45,54 @@ XMM registers live in `CpuState::xmm`, lane 0 in the low bits, and MXCSR in `Cpu
 
 None of it has been compared with x86 hardware.
 
+## Locked instructions
+
+XADD and CMPXCHG exist for 8-, 16-, 32- and 64-bit register and memory destinations. The LOCK prefix (F0) is accepted on exactly the forms the registry marks `lock = true`, and only when the destination is memory. Today those are the memory forms of XADD and CMPXCHG. LOCK anywhere else is an illegal instruction, as the Intel SDM (Vol. 2, "LOCK") specifies for a register destination or an instruction that cannot be locked. LOCK on the other instructions the SDM allows (ADD, ADC, AND, BTC, BTR, BTS, DEC, INC, NEG, NOT, OR, SBB, SUB, XOR and XCHG), CMPXCHG8B and CMPXCHG16B are not implemented and stay rejected.
+
+These rules hold for both engines and are what a guest scheduler has to preserve:
+
+- **Ordering.** Each engine runs one guest instruction at a time on one host thread, and an instruction either completes or changes nothing. A locked instruction is therefore indivisible and totally ordered with every other guest access, and LOCK changes no result: the locked and unlocked encodings leave identical state. A scheduler that switches guest threads only between instructions keeps this. One that runs guest threads on several host threads does not, and must first make each locked instruction atomic against every access to its operand, with x86's ordering rather than ARM64's weaker one. Nothing here provides or tests that.
+- **Alignment.** A locked operand may have any alignment and may span two mapped regions.
+- **Compare failure.** CMPXCHG compares the accumulator with the destination as CMP would and sets all six status flags from it. On a match it stores the source and leaves the accumulator alone. On a mismatch it loads the destination into the accumulator and stores the destination's old value back, so the destination is written either way and a mismatch on memory that cannot be written still faults. With a 32-bit register destination both stores clear the upper half of that register, following the SDM's operation text.
+- **Faults.** If any byte of the operand cannot be read or written, the instruction faults before memory, registers or flags change.
+- **Lowering.** The DBT runs these forms on the shared semantics. They are not lowered to ARM64 atomic instructions, which could only be judged against concurrent guest threads.
+
+The SDM cases for these forms in `tests/cpu_known_answers.rs` were written before this implementation, by another contributor. `tests/x86_atomic.rs` adds the LOCK rules, both compare outcomes at every width, unaligned operands and faults. None of it has been compared with x86 hardware, and nothing here establishes multi-thread behaviour.
+
+## String instructions
+
+MOVS and STOS exist for 8-, 16-, 32- and 64-bit elements, alone and with REP (F3), together with the direction flag and CLD and STD. `CpuState::df` holds the flag. It is not one of the six status flags the registry tracks.
+
+- **One element per step.** A REP form moves one element, decrements RCX and, while RCX is not zero, leaves RIP on the instruction. Each element is a step of its own in both engines and counts against the step budget, so a repeat cannot outrun the budget and can stop part-way and resume. A zero count touches no memory and no register. Without REP, RCX is not read. Step counts therefore count elements, not instructions, for a REP form.
+- **Direction.** RSI and RDI move up by the element size when the flag is clear and down when it is set. Each element is read whole and then written, so overlapping ranges behave as that order dictates.
+- **Faults.** An element completes or changes nothing. A fault keeps the elements already done, leaves RSI, RDI and RCX at the element that faulted, and leaves RIP on the instruction.
+- **Segments.** An FS or GS override applies to the MOVS source. The destination, and STOS as a whole, take no override.
+- **Lowering.** The DBT runs these forms on the shared semantics, one helper call per element, and a string instruction ends its translated block. There is no bulk-copy path, so large copies are slow.
+
+The SDM cases for these forms in `tests/cpu_known_answers.rs` were written before this implementation, by another contributor. `tests/cpu_rep.rs` adds a byte-array model over every form, direction and count, the step accounting, faults and the segment rule. None of it has been compared with x86 hardware.
+
+## Guest CPUID
+
+CPUID (`0F A2`) returns a fixed table that never reads the host. It describes a synthetic processor: the vendor string is `Xenora guest`, not Intel's or AMD's, and leaf 1 reports no family, model or stepping.
+
+| Leaf (EAX) | EAX | EBX | ECX | EDX |
+| --- | --- | --- | --- | --- |
+| 0 | 1, the highest basic leaf | `Xeno` | `uest` | `ra g` |
+| 1 | 0 | 0 | POPCNT (bit 23) | CMOV (bit 15) |
+| 0x8000_0000 | 0x8000_0001, the highest extended leaf | 0 | 0 | 0 |
+| 0x8000_0001 | 0 | 0 | LZCNT (bit 5) | long mode (bit 29) |
+| any other | 0 | 0 | 0 | 0 |
+
+A feature bit is set only when every instruction of that feature is implemented. That is stricter than "some of it works", and it has consequences:
+
+- SSE and SSE2 are not reported, although most of their instructions exist, because parts are still rejected: RSQRTPS and MFENCE, for example. BMI1 is not reported although TZCNT exists, because ANDN does not. The x87 FPU, MMX, FXSAVE, CMPXCHG8B, the time-stamp counter, LAHF and SYSRET are absent too.
+- The table is therefore truthful about Xenora, not plausible as hardware: every real 64-bit processor reports the FPU and SSE2. A guest that tests a bit before using a feature avoids it; a guest that assumes SSE2 because it runs in 64-bit mode still gets every form that exists and an illegal-instruction exit for one that does not.
+- A leaf that is not listed returns zeros, whatever the subleaf. Intel processors answer a leaf above the highest basic one with that leaf's data instead; software is expected to read the highest leaf first.
+
+`xenora_loader::cpu::cpuid` is the one copy of the table. A runtime service that reports processor features should read it rather than keep its own list.
+
+`tests/cpu_features.rs` pins every leaf in both engines. For each reported feature it requires the feature's whole instruction set among the fixtures that `tests/x86_integer.rs` executes. For each feature software commonly tests that is not reported, it holds one instruction of that feature that both engines must refuse. To report a new feature: implement all of its instructions, remove its witness, add its instruction list to the reported set, then set the bit. The pairing of instructions with feature bits follows the Intel SDM; nothing was compared with a processor.
+
 ## Rejected on purpose
 
-LOCK, F2 or F3 where it is neither PAUSE nor part of a declared form, F2 combined with F3, address-size overrides, an ignored segment override after FS or GS, 16-bit stack and branch forms, 16-bit BSWAP and MOVSXD, bit tests of memory by a register index, RCL, RCR, SHLD, SHRD, string instructions, MMX, the RCP and RSQRT approximations, SSE3 and later, VEX, atomics and fences. The DBT also refuses raw SYSCALL.
+LOCK except as described above, F2 or F3 where it is neither PAUSE nor part of a declared form, F2 combined with F3, address-size overrides, an ignored segment override after FS or GS, 16-bit stack and branch forms, 16-bit BSWAP and MOVSXD, bit tests of memory by a register index, RCL, RCR, SHLD, SHRD, LODS, CMPS, SCAS, REPE and REPNE, MMX, the RCP and RSQRT approximations, SSE3 and later, VEX, CMPXCHG8B, CMPXCHG16B and fences. The DBT also refuses raw SYSCALL.

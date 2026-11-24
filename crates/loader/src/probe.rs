@@ -11,7 +11,9 @@
 //! startup blockers.
 
 use crate::dbt::{is_native, is_translatable};
-use crate::import_table::{ImportTableError, parse_imports};
+use crate::import_table::{
+    ImportEntry, ImportName, ImportTableError, parse_delay_imports, parse_imports,
+};
 use crate::imports::{ImportRegistry, ServiceStatus};
 use crate::memory::MemoryPermissions;
 use crate::pe::{IMAGE_FILE_MACHINE_AMD64, PE32_PLUS_MAGIC, ParsedPe, PeError, PeSection};
@@ -596,12 +598,14 @@ pub struct TlsCensus {
 pub struct ImportedSymbol {
     pub dll: String,
     pub symbol: String,
+    pub import_name: ImportName,
     pub iat_rva: u32,
     pub category: &'static str,
     /// The standard synthetic registry has a handler for this exact key.
     pub is_supported: bool,
     pub service_status: Option<ServiceStatus>,
     pub canonical_module: Option<String>,
+    pub canonical_symbol: Option<String>,
 }
 
 impl ImportedSymbol {
@@ -676,6 +680,11 @@ pub struct ProbeReport {
     pub imports: Vec<ImportedSymbol>,
     /// Why the import table could not be read to its end.
     pub import_error: Option<ImportTableError>,
+    /// Delay-loaded imports before the first malformed entry, if any. Binding
+    /// does not resolve them, so `imports` and its totals leave them out.
+    pub delayed_imports: Vec<ImportedSymbol>,
+    /// Why the delay-load import tables could not be read to their end.
+    pub delay_import_error: Option<ImportTableError>,
     pub instruction_records: Vec<InstructionRecord>,
     pub first_unsupported_dbt_insn: Option<InstructionRecord>,
 }
@@ -820,6 +829,30 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
     } else {
         0
     };
+    // The delay import descriptor is data directory 13. It exists only when
+    // NumberOfRvaAndSizes covers it.
+    let (delay_dir_rva, delay_dir_size) = if size_of_optional_header >= 224
+        && u32::from_le_bytes(
+            bytes[opt_offset + 108..opt_offset + 112]
+                .try_into()
+                .unwrap(),
+        ) > 13
+    {
+        (
+            u32::from_le_bytes(
+                bytes[opt_offset + 216..opt_offset + 220]
+                    .try_into()
+                    .unwrap(),
+            ),
+            u32::from_le_bytes(
+                bytes[opt_offset + 220..opt_offset + 224]
+                    .try_into()
+                    .unwrap(),
+            ),
+        )
+    } else {
+        (0, 0)
+    };
 
     let section_table_offset = opt_offset + size_of_optional_header;
     let section_header_size = 40;
@@ -958,33 +991,40 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
         &mut registry,
         Arc::new(ServicesState::new(Arc::new(MockClock::new(0)))),
     );
+    // Binding accepts only bytes backed by section data; match it exactly.
+    let backed_offset = |rva: u32| {
+        sections.iter().find_map(|section| {
+            let offset = rva.checked_sub(section.virtual_address)?;
+            (offset < section.raw_data_size)
+                .then(|| (section.raw_data_ptr as usize).checked_add(offset as usize))?
+        })
+    };
     let (entries, import_error) = if import_dir_rva == 0 {
         (Vec::new(), None)
     } else {
-        // Binding accepts only bytes backed by section data; match it exactly.
-        parse_imports(bytes, import_dir_rva, |rva| {
-            sections.iter().find_map(|section| {
-                let offset = rva.checked_sub(section.virtual_address)?;
-                (offset < section.raw_data_size)
-                    .then(|| (section.raw_data_ptr as usize).checked_add(offset as usize))?
-            })
-        })
+        parse_imports(bytes, import_dir_rva, backed_offset)
     };
-    let imports: Vec<ImportedSymbol> = entries
-        .into_iter()
-        .map(|entry| {
-            let binding = registry.resolve(&entry.module, &entry.name);
-            ImportedSymbol {
-                category: ProbeReport::categorize_dll(&entry.module),
-                dll: entry.module,
-                symbol: entry.name.to_string(),
-                iat_rva: entry.iat_rva,
-                is_supported: binding.is_some(),
-                service_status: binding.map(|service| service.status),
-                canonical_module: binding.map(|service| service.module.clone()),
-            }
-        })
-        .collect();
+    let (delayed_entries, delay_import_error) = if delay_dir_rva == 0 {
+        (Vec::new(), None)
+    } else {
+        parse_delay_imports(bytes, delay_dir_rva, delay_dir_size, backed_offset)
+    };
+    let describe = |entry: ImportEntry| {
+        let binding = registry.resolve(&entry.module, &entry.name);
+        ImportedSymbol {
+            category: ProbeReport::categorize_dll(&entry.module),
+            dll: entry.module,
+            symbol: entry.name.to_string(),
+            import_name: entry.name,
+            iat_rva: entry.iat_rva,
+            is_supported: binding.is_some(),
+            service_status: binding.map(|service| service.status),
+            canonical_module: binding.map(|service| service.module.clone()),
+            canonical_symbol: binding.map(|service| service.symbol.clone()),
+        }
+    };
+    let imports: Vec<ImportedSymbol> = entries.into_iter().map(&describe).collect();
+    let delayed_imports: Vec<ImportedSymbol> = delayed_entries.into_iter().map(&describe).collect();
 
     // 4. Control-Flow-Aware Static Disassembly
     //
@@ -1120,6 +1160,8 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
         tls,
         imports,
         import_error,
+        delayed_imports,
+        delay_import_error,
         instruction_records,
         first_unsupported_dbt_insn,
     })
@@ -1138,9 +1180,9 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
 
     // 1. imports.csv
     let mut imports_csv = String::from(
-        "module,symbol_or_ordinal,iat_rva,category,registered_binding,implementation_status,is_alias,canonical_module,startup_priority,startup_cluster,trusted_runner_binding\n",
+        "module,symbol_or_ordinal,iat_rva,import_table,category,registered_binding,implementation_status,is_alias,canonical_module,startup_priority,startup_cluster,trusted_runner_binding,import_kind\n",
     );
-    let mut missing_csv = String::from("module,symbol_or_ordinal,iat_rva\n");
+    let mut missing_csv = String::from("module,symbol_or_ordinal,iat_rva,import_kind\n");
     let mut modules = BTreeSet::new();
     let mut unique_symbols = BTreeSet::new();
     let mut distinct_imports = BTreeSet::new();
@@ -1149,18 +1191,17 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
     let mut clusters = BTreeMap::<(u8, &str), (usize, usize)>::new();
     let mut aliases = 0;
     // The runner admits exactly these bytes and installs a private draw handler.
-    let trusted_fixture = bytes == include_bytes!("../../../fixtures/pe/trusted-runner.exe");
+    let trusted_fixture = bytes == include_bytes!("../../../fixtures/pe/trusted-runner.exe")
+        || bytes == include_bytes!("../../../fixtures/pe/runtime-services.exe");
     let mut trusted_runner_slots = 0;
     let mut missing = 0;
     for imp in &report.imports {
         let module_key = imp.dll.to_ascii_lowercase();
         modules.insert(module_key.clone());
-        distinct_imports.insert((module_key, &imp.symbol));
-        let ordinal_scope = imp
-            .symbol
-            .starts_with("Ordinal#")
-            .then_some(imp.dll.as_str());
-        unique_symbols.insert((ordinal_scope, &imp.symbol));
+        let is_ordinal = matches!(imp.import_name, ImportName::Ordinal(_));
+        let import_kind = if is_ordinal { "ordinal" } else { "name" };
+        unique_symbols.insert((is_ordinal.then_some(module_key.clone()), &imp.import_name));
+        distinct_imports.insert((module_key, &imp.import_name));
         let module = imp.dll.replace('"', "\"\"");
         let symbol = imp.symbol.replace('"', "\"\"");
         let key = format!("\"{module}\",\"{symbol}\",0x{:08x}", imp.iat_rva);
@@ -1171,8 +1212,8 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
         let status = imp.coverage_label();
         let canonical = imp.canonical_module.as_deref().unwrap_or("");
         let is_alias = imp.canonical_module.is_some() && !imp.dll.eq_ignore_ascii_case(canonical);
-        if imp.is_supported {
-            canonical_bindings.insert((canonical, &imp.symbol));
+        if let Some(symbol) = &imp.canonical_symbol {
+            canonical_bindings.insert((canonical, symbol));
         }
         aliases += usize::from(is_alias);
         *counts.entry(status).or_default() += 1;
@@ -1183,14 +1224,42 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
         let canonical = canonical.replace('"', "\"\"");
         let _ = writeln!(
             imports_csv,
-            "{key},{},{},{status},{is_alias},\"{canonical}\",{priority},{cluster},{trusted_binding}",
+            "{key},ordinary,{},{},{status},{is_alias},\"{canonical}\",{priority},{cluster},{trusted_binding},{import_kind}",
             imp.category, imp.is_supported
         );
         if !imp.is_supported {
-            let _ = writeln!(missing_csv, "{key}");
+            let _ = writeln!(missing_csv, "{key},{import_kind}");
             missing += 1;
         }
     }
+    // Delay-loaded imports follow the ordinary rows. Binding does not resolve
+    // them, so they stay out of every ordinary total, the startup clusters and
+    // `missing_imports.csv`.
+    let mut delayed_modules = BTreeSet::new();
+    for imp in &report.delayed_imports {
+        delayed_modules.insert(imp.dll.to_ascii_lowercase());
+        let is_ordinal = matches!(imp.import_name, ImportName::Ordinal(_));
+        let import_kind = if is_ordinal { "ordinal" } else { "name" };
+        let module = imp.dll.replace('"', "\"\"");
+        let symbol = imp.symbol.replace('"', "\"\"");
+        let canonical = imp.canonical_module.as_deref().unwrap_or("");
+        let is_alias = imp.canonical_module.is_some() && !imp.dll.eq_ignore_ascii_case(canonical);
+        let canonical = canonical.replace('"', "\"\"");
+        let (priority, cluster) = imp.startup_priority();
+        let _ = writeln!(
+            imports_csv,
+            "\"{module}\",\"{symbol}\",0x{:08x},delayed,{},{},{},{is_alias},\"{canonical}\",{priority},{cluster},false,{import_kind}",
+            imp.iat_rva,
+            imp.category,
+            imp.is_supported,
+            imp.coverage_label()
+        );
+    }
+    let delayed_slots = report.delayed_imports.len();
+    let delayed_dlls = delayed_modules.len();
+    let delay_error = report
+        .delay_import_error
+        .map_or_else(|| "none".to_string(), |error| error.to_string());
     fs::write(out.join("imports.csv"), imports_csv)?;
     fs::write(out.join("missing_imports.csv"), missing_csv)?;
 
@@ -1247,6 +1316,9 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
   "stub_slots": {stubs},
   "recognized_unsupported_slots": {unsupported},
   "missing_handler_slots": {unknown},
+  "delayed_imports": {delayed_slots},
+  "delayed_imported_dlls_count": {delayed_dlls},
+  "delay_import_error": "{delay_error}",
   "total_relocations": {},
   "dir64_relocations": {},
   "tls_callbacks_count": {},
@@ -1378,6 +1450,16 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
             "- **Import table is malformed**: {error}. Only the imports before it are listed, and binding refuses the image.\n"
         );
     }
+    let _ = writeln!(
+        md,
+        "- **Delay-Loaded Import Slots**: `{delayed_slots}` across `{delayed_dlls}` DLLs. They are marked `delayed` in `imports.csv` and are not part of the counts above or of `missing_imports.csv`: binding does not resolve them, and the PE format leaves them to the image's delay-load helper.\n"
+    );
+    if let Some(error) = &report.delay_import_error {
+        let _ = writeln!(
+            md,
+            "- **Delay-load import table is malformed**: {error}. Only the delay-loaded imports before it are listed.\n"
+        );
+    }
     if trusted_runner_slots > 0 {
         let _ = writeln!(
             md,
@@ -1422,6 +1504,12 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
         distinct_imports.len(),
         unique_symbols.len()
     );
+    if delayed_slots > 0 {
+        let _ = writeln!(
+            matrix,
+            "\nThe delay-load import tables contain {delayed_slots} more slots across {delayed_dlls} DLLs. They are not counted in this document."
+        );
+    }
     let _ = writeln!(
         matrix,
         "\nRegistered slots include {implemented} implemented, {partial} partial, and {stubs} stubs. They reference {} canonical registered services through {aliases} alias slots. The {missing} unresolved slots include {unsupported} explicitly tracked unsupported APIs and {unknown} other missing handlers.",

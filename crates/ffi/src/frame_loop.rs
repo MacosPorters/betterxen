@@ -50,6 +50,34 @@ pub struct InputState {
     pub reserved: u16,
 }
 
+#[derive(Default, Copy, Clone)]
+#[repr(C)]
+pub struct ControllerInput {
+    pub state: InputState,
+    pub left_trigger: u16,
+    pub right_trigger: u16,
+}
+
+impl ControllerInput {
+    fn guest_bytes(self) -> [u8; 20] {
+        let mut bytes = [0; 20];
+        bytes[..4].copy_from_slice(&self.state.buttons.to_le_bytes());
+        for (slot, value) in bytes[4..12].as_chunks_mut::<2>().0.iter_mut().zip([
+            self.state.stick_x,
+            self.state.stick_y,
+            self.state.mouse_dx,
+            self.state.mouse_dy,
+        ]) {
+            *slot = value.to_le_bytes();
+        }
+        bytes[12] = self.state.mouse_buttons;
+        bytes[13] = self.state.connected;
+        bytes[16..18].copy_from_slice(&self.left_trigger.to_le_bytes());
+        bytes[18..20].copy_from_slice(&self.right_trigger.to_le_bytes());
+        bytes
+    }
+}
+
 #[derive(Default)]
 struct State {
     status: u32,
@@ -58,7 +86,7 @@ struct State {
     interactive: bool,
     limit: u32,
     completed: u32,
-    input: InputState,
+    input: ControllerInput,
     input_queue: std::collections::VecDeque<InputState>,
     recorded_frames: Vec<(u32, Vec<u8>)>,
     /// Every `frame_submit` call the guest made, including the one answered with 0.
@@ -131,6 +159,13 @@ impl FrameLoop {
     }
 
     pub fn send_input(&self, input: InputState) {
+        self.send_controller_input(ControllerInput {
+            state: input,
+            ..ControllerInput::default()
+        });
+    }
+
+    pub fn send_controller_input(&self, input: ControllerInput) {
         let mut state = self.lock();
         state.input = input;
     }
@@ -187,7 +222,7 @@ impl FrameLoop {
             let shared_poll = Arc::clone(self);
             imports.register("xenora.dll", "input_poll", move |_args, _, _memory| {
                 let mut state = shared_poll.lock();
-                let input = state.input_queue.pop_front().unwrap_or(state.input);
+                let input = state.input_queue.pop_front().unwrap_or(state.input.state);
                 let cmd = if input.buttons & crate::XENORA_INPUT_RIGHT != 0 {
                     1u64
                 } else if input.buttons & crate::XENORA_INPUT_LEFT != 0 {
@@ -197,6 +232,18 @@ impl FrameLoop {
                 };
                 Ok(cmd)
             });
+            let snapshot = Arc::clone(self);
+            imports.register(
+                "xenora.dll",
+                "input_poll_snapshot",
+                move |args, _, memory| {
+                    let input = snapshot.lock().input;
+                    memory
+                        .write_bytes(args.rcx, &input.guest_bytes())
+                        .map_err(ExitReason::MemoryFault)?;
+                    Ok(1)
+                },
+            );
         }
         let limit = self.lock().limit as usize;
         let is_interactive = self.lock().interactive;
@@ -329,4 +376,32 @@ pub fn expected(index: u32) -> Vec<u8> {
             }
         })
         .collect()
+}
+
+#[cfg(test)]
+#[test]
+fn extended_controller_snapshot_retains_trigger_bytes_and_legacy_input_resets_them() {
+    let running = FrameLoop::default();
+    running.send_controller_input(ControllerInput {
+        state: InputState {
+            buttons: 0x10,
+            stick_x: -32767,
+            stick_y: 9,
+            connected: 1,
+            reserved: u16::MAX,
+            ..InputState::default()
+        },
+        left_trigger: 0x1234,
+        right_trigger: u16::MAX,
+    });
+    let bytes = running.lock().input.guest_bytes();
+    assert_eq!(std::mem::size_of::<ControllerInput>(), 20);
+    assert_eq!(
+        bytes,
+        [
+            16, 0, 0, 0, 1, 128, 9, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0x34, 0x12, 255, 255
+        ]
+    );
+    running.send_input(InputState::default());
+    assert_eq!(running.lock().input.guest_bytes(), [0; 20]);
 }

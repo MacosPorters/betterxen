@@ -201,6 +201,26 @@ fn probe_distinguishes_aliases_from_unavailable_services() {
 }
 
 #[test]
+fn probe_distinguishes_ordinal_from_matching_symbol_text() {
+    let mut pe = include_bytes!("../../../fixtures/pe/runtime-services.exe").to_vec();
+    pe[0x720..0x728].copy_from_slice(&((1_u64 << 63) | 42).to_le_bytes());
+    pe[0x762..0x76e].copy_from_slice(b"Ordinal#42\0\0");
+    let path = std::env::temp_dir().join(format!("xenora-probe-ordinal-{}", std::process::id()));
+    run_probe_and_export(&pe, &path, &ProbeConfig::default()).unwrap();
+    let csv = std::fs::read_to_string(path.join("imports.csv")).unwrap();
+    let json = std::fs::read_to_string(path.join("candidate_static_report.json")).unwrap();
+    std::fs::remove_dir_all(path).unwrap();
+    let rows: Vec<_> = csv
+        .lines()
+        .filter(|row| row.contains("Ordinal#42"))
+        .collect();
+    assert_eq!(rows.len(), 2);
+    assert!(rows[0].ends_with(",ordinal"));
+    assert!(rows[1].ends_with(",name"));
+    assert!(json.contains("\"distinct_import_keys\": 3"));
+}
+
+#[test]
 fn trusted_runner_callback_and_report_match_the_fixture() {
     let pe = include_bytes!("../../../fixtures/pe/trusted-runner.exe");
     let path = std::env::temp_dir().join(format!("xenora-probe-trusted-{}", std::process::id()));
@@ -230,7 +250,7 @@ fn trusted_runner_callback_and_report_match_the_fixture() {
     assert!(
         imports
             .lines()
-            .any(|line| line.contains("fixture_draw") && line.ends_with(",true"))
+            .any(|line| line.contains("fixture_draw") && line.ends_with(",true,name"))
     );
     assert!(json.contains("\"trusted_runner_binding_slots\": 1"));
     assert!(json.contains("\"unresolved_imports\": 1"));

@@ -4,13 +4,13 @@ use std::process::{Command, Stdio};
 
 use xenora_decoder::{
     Architecture, CompareRelation, DecodeError, DecodeErrorKind, DecodedInstruction, Instruction,
-    ScalarAluOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorSource, decode,
-    decode_at,
+    ScalarAluOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op,
+    VectorSource, VectorUnaryOp, decode, decode_at,
 };
 use xenora_isa::semantics::Signedness;
 use xenora_ref::{
-    BranchCondition, CompareSource, Comparison, Op, ScalarAlu, ScalarUnary, Source, VectorAlu,
-    VectorInteger,
+    BranchCondition, CompareSource, CompareWidth, Comparison, Op, ScalarAlu, ScalarImmediate,
+    ScalarUnary, Source, VectorAlu, VectorInteger, VectorUnary,
 };
 
 const FIXTURE: &[u8] = include_bytes!("../../../fixtures/rdna2/add.bin");
@@ -330,6 +330,22 @@ fn reference_op(instruction: Instruction) -> Op {
             src: VectorSource::Scalar(src),
         } => Op::MoveScalar(dst, src),
         Instruction::MoveB32 { dst, src } => Op::Move(dst, reference_source(src)),
+        Instruction::VectorUnary { op, dst, src } => Op::VectorUnary(
+            match op {
+                VectorUnaryOp::NotB32 => VectorUnary::Not,
+                VectorUnaryOp::BfrevB32 => VectorUnary::ReverseBits,
+                VectorUnaryOp::FfbhU32 => VectorUnary::FindFirstOneFromMsb,
+                VectorUnaryOp::FfblB32 => VectorUnary::FindFirstOneFromLsb,
+                VectorUnaryOp::FfbhI32 => VectorUnary::FindSignChange,
+            },
+            dst,
+            match src {
+                VectorSource::Register(reg) => CompareSource::Vector(reg),
+                VectorSource::Scalar(reg) => CompareSource::Scalar(reg),
+                VectorSource::Immediate(bits) => CompareSource::Immediate(bits),
+            },
+        ),
+        Instruction::VectorSwap { dst, src, .. } => Op::Swap(dst, src),
         Instruction::ScalarAlu {
             op,
             dst,
@@ -382,9 +398,10 @@ fn reference_op(instruction: Instruction) -> Op {
             src0,
             src1,
         } => Op::Add(dst, src0, src1),
-        Instruction::ScalarMoveB32 { dst, src } => Op::ScalarMove(dst, reference_scalar(src)),
-        Instruction::ScalarUnary { op, dst, src } => Op::ScalarUnary(
-            match op {
+        Instruction::ScalarUnary { op, dst, src } => {
+            let src = reference_scalar(src);
+            let unary = match op {
+                ScalarUnaryOp::MovB32 => return Op::ScalarMove(dst, src),
                 ScalarUnaryOp::NotB32 => ScalarUnary::Not,
                 ScalarUnaryOp::BrevB32 => ScalarUnary::ReverseBits,
                 ScalarUnaryOp::Bcnt0I32B32 => ScalarUnary::CountZeros,
@@ -396,10 +413,9 @@ fn reference_op(instruction: Instruction) -> Op {
                 ScalarUnaryOp::SextI32I8 => ScalarUnary::SignExtendByte,
                 ScalarUnaryOp::SextI32I16 => ScalarUnary::SignExtendShort,
                 ScalarUnaryOp::AbsI32 => ScalarUnary::Absolute,
-            },
-            dst,
-            reference_scalar(src),
-        ),
+            };
+            Op::ScalarUnary(unary, dst, src)
+        }
         Instruction::ScalarCompare { op, src0, src1 } => {
             let (src0, src1) = (reference_scalar(src0), reference_scalar(src1));
             // The reference keeps CompareEqual for EQ and uses its VOPC relation
@@ -416,6 +432,25 @@ fn reference_op(instruction: Instruction) -> Op {
                 ),
             }
         }
+        Instruction::ScalarImmediate { op, dst, simm16 } => Op::ScalarImmediate(
+            match op {
+                ScalarImmediateOp::MovkI32 => ScalarImmediate::Move,
+                ScalarImmediateOp::CmovkI32 => ScalarImmediate::ConditionalMove,
+                ScalarImmediateOp::AddkI32 => ScalarImmediate::Add,
+                ScalarImmediateOp::MulkI32 => ScalarImmediate::Multiply,
+            },
+            dst,
+            simm16,
+        ),
+        Instruction::ScalarImmediateCompare { op, src, simm16 } => Op::ScalarImmediate(
+            ScalarImmediate::Compare(Comparison {
+                // The reference's VOPC relation offsets, as for SOPC above.
+                offset: op.relation() as u8 + 1,
+                signed: op.semantics().signedness == Signedness::Signed,
+            }),
+            src,
+            simm16,
+        ),
         Instruction::BranchSccZero { target } => Op::Branch {
             target,
             condition: BranchCondition::SccZero,
@@ -470,8 +505,8 @@ fn reference_op(instruction: Instruction) -> Op {
             panic!("compute reference matrix received a graphics/image instruction")
         }
 
-        Instruction::VectorCompare { op, src0, src1 } => Op::Compare(
-            Comparison {
+        Instruction::VectorCompare { op, src0, src1 } => {
+            let comparison = Comparison {
                 offset: match op.relation() {
                     CompareRelation::Less => 1,
                     CompareRelation::Equal => 2,
@@ -483,14 +518,19 @@ fn reference_op(instruction: Instruction) -> Op {
                     CompareRelation::True => 7,
                 },
                 signed: op.signed(),
-            },
-            match src0 {
+            };
+            let src0 = match src0 {
                 VectorSource::Register(reg) => CompareSource::Vector(reg),
                 VectorSource::Scalar(reg) => CompareSource::Scalar(reg),
                 VectorSource::Immediate(bits) => CompareSource::Immediate(bits),
-            },
-            src1,
-        ),
+            };
+            match op.semantics().width {
+                16 => Op::WideCompare(comparison, CompareWidth::Half, src0, src1),
+                32 => Op::Compare(comparison, src0, src1),
+                64 => Op::WideCompare(comparison, CompareWidth::Double, src0, src1),
+                width => panic!("unexpected VOPC operand width {width}"),
+            }
+        }
         Instruction::VectorAlu {
             op,
             dst,
@@ -545,15 +585,18 @@ fn compares_fixture_instructions_against_llvm() {
         include_bytes!("../../../fixtures/rdna2/scalar-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-unary.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-arith.bin"),
+        include_bytes!("../../../fixtures/rdna2/scalar-immediate.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-integer.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare-ft.bin"),
+        include_bytes!("../../../fixtures/rdna2/vector-unary.bin"),
+        include_bytes!("../../../fixtures/rdna2/vector-compare-16.bin"),
         high_registers,
         &matrix,
     ] {
         count += compare_against_llvm(fixture, &mut forms);
     }
-    assert_eq!(forms.len(), 104, "forms compared: {forms:?}");
+    assert_eq!(forms.len(), 138, "forms compared: {forms:?}");
     eprintln!(
         "{count} three-way instruction comparisons across {} forms",
         forms.len()
@@ -611,6 +654,12 @@ fn assemble_matrix() -> Vec<u8> {
         s_or_b32 s103, s3, 0x80000000
         s_xor_b32 s102, s104, -16
         s_xor_b32 s7, s7, lit(0x1)
+        s_movk_i32 s105, 0xffff
+        s_movk_i32 s8, 0
+        s_cmovk_i32 s105, 0x8000
+        s_addk_i32 s9, 0x7fff
+        s_addk_i32 s105, 0xffff
+        s_mulk_i32 s8, 0x8001
         v_mov_b32_e32 v255, s105
         v_mov_b32_e32 v0, s0
         v_mov_b32_e32 v128, vcc_lo
@@ -634,6 +683,15 @@ fn assemble_matrix() -> Vec<u8> {
                 writeln!(assembly, "v_cmp_{relation}_{kind}_e32 vcc_lo, {src0}, v128").unwrap();
             }
             writeln!(assembly, "v_cmp_{relation}_{kind}_e32 vcc_lo, v1, v255").unwrap();
+        }
+    }
+    // Every SOPK compare on the lowest and highest readable SGPR.
+    for relation in ["eq", "lg", "gt", "ge", "lt", "le"] {
+        for kind in ["i32", "u32"] {
+            for register in ["s0", "s7", "s8", "s105"] {
+                writeln!(assembly, "s_cmpk_{relation}_{kind} {register}, 0x8000").unwrap();
+            }
+            writeln!(assembly, "s_cmpk_{relation}_{kind} s9, 0").unwrap();
         }
     }
     for value in -16..=64 {
@@ -956,14 +1014,16 @@ fn decodes_inline_negative_and_register_sources() {
     let decoded = decode(Architecture::Gfx1030, &bytes).unwrap();
     assert_eq!(
         decoded[0].instruction,
-        Instruction::ScalarMoveB32 {
+        Instruction::ScalarUnary {
+            op: ScalarUnaryOp::MovB32,
             dst: 10,
             src: ScalarSource::Immediate(5)
         }
     );
     assert_eq!(
         decoded[1].instruction,
-        Instruction::ScalarMoveB32 {
+        Instruction::ScalarUnary {
+            op: ScalarUnaryOp::MovB32,
             dst: 11,
             src: ScalarSource::Immediate(0xffff_fffd)
         }
@@ -997,7 +1057,8 @@ fn accepts_scalar_destination_105_and_vgpr_zero_add_sources() {
     let valid = 0xbee9_0380u32.to_le_bytes();
     assert_eq!(
         decode(Architecture::Gfx1030, &valid).unwrap()[0].instruction,
-        Instruction::ScalarMoveB32 {
+        Instruction::ScalarUnary {
+            op: ScalarUnaryOp::MovB32,
             dst: 105,
             src: ScalarSource::Immediate(0)
         }
@@ -1049,5 +1110,110 @@ fn decode_at_resolves_branch_targets_from_the_stream_offset() {
                 available: 0
             },
         })
+    );
+}
+
+#[test]
+fn decodes_sopk_immediates_and_rejects_non_sgpr_operands() {
+    use xenora_decoder::ScalarImmediateCompareOp;
+    let decode_word = |word: u32| decode(Architecture::Gfx1030, &word.to_le_bytes());
+    // Words assembled by LLVM for gfx1030 (llvm-mc --show-encoding).
+    // s_movk_i32 s8, 0x8000
+    let decoded = decode_word(0xb008_8000).unwrap();
+    assert_eq!(decoded[0].byte_len, 4);
+    assert_eq!(
+        decoded[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::MovkI32,
+            dst: 8,
+            simm16: 0x8000
+        }
+    );
+    // s_cmovk_i32 s105, 0xffff keeps the full 16 bits: the sign extension is
+    // the translator's job, not the decoder's.
+    assert_eq!(
+        decode_word(0xb169_ffff).unwrap()[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::CmovkI32,
+            dst: 105,
+            simm16: 0xffff
+        }
+    );
+    // s_cmpk_gt_u32 s0, 0x1234 and s_cmpk_le_i32 s7, 0xffff read SDST s0-s7.
+    assert_eq!(
+        decode_word(0xb580_1234).unwrap()[0].instruction,
+        Instruction::ScalarImmediateCompare {
+            op: ScalarImmediateCompareOp::CmpkGtU32,
+            src: 0,
+            simm16: 0x1234
+        }
+    );
+    assert_eq!(
+        decode_word(0xb407_ffff).unwrap()[0].instruction,
+        Instruction::ScalarImmediateCompare {
+            op: ScalarImmediateCompareOp::CmpkLeI32,
+            src: 7,
+            simm16: 0xffff
+        }
+    );
+    // s_addk_i32 s9, 0x7fff and s_mulk_i32 s105, 0
+    assert_eq!(
+        decode_word(0xb789_7fff).unwrap()[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::AddkI32,
+            dst: 9,
+            simm16: 0x7fff
+        }
+    );
+    assert_eq!(
+        decode_word(0xb869_0000).unwrap()[0].instruction,
+        Instruction::ScalarImmediate {
+            op: ScalarImmediateOp::MulkI32,
+            dst: 105,
+            simm16: 0
+        }
+    );
+    // vcc_lo, exec_lo, null and ttmp0 as SDST, and s_cmpk_eq_i32 m0: refused.
+    for (word, mnemonic, detail) in [
+        (
+            0xb06a_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb07e_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb07d_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb06c_0001,
+            "s_movk_i32",
+            "expected a normal SGPR destination",
+        ),
+        (
+            0xb1fc_0001,
+            "s_cmpk_eq_i32",
+            "expected a normal SGPR operand",
+        ),
+    ] {
+        assert_eq!(
+            decode_word(word).unwrap_err().kind,
+            DecodeErrorKind::UnsupportedForm { mnemonic, detail },
+            "{word:#010x}"
+        );
+    }
+    // Other SOPK opcodes (opcode 1 s_version, 17 s_getreg_b32) stay unsupported.
+    for word in [0xb080_0000u32, 0xb888_0000] {
+        assert!(decode_word(word).is_err(), "{word:#010x}");
+    }
+    // The fixed store fence is still the one decoded SOPK word outside the registry.
+    assert_eq!(
+        decode_word(0xbbfd_0000).unwrap()[0].instruction,
+        Instruction::WaitStore
     );
 }

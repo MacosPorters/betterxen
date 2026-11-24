@@ -53,8 +53,10 @@ pub fn get_api_sets_for_canonical(canonical: &str) -> &'static [&'static str] {
             "api-ms-win-core-debug-l1-1-0.dll",
             "api-ms-win-core-handle-l1-1-0.dll",
             "api-ms-win-core-interlocked-l1-1-0.dll",
+            "api-ms-win-core-fibers-l1-1-0.dll",
             "api-ms-win-core-datetime-l1-1-1.dll",
             "api-ms-win-core-timezone-l1-1-0.dll",
+            "api-ms-win-core-realtime-l1-1-0.dll",
             "api-ms-win-core-memory-l1-1-0.dll",
         ],
         "ucrtbase.dll" => &[

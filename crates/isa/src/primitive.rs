@@ -218,6 +218,11 @@ pub const fn sext_i32(a: u32, bits: u32) -> u32 {
     (((a << shift) as i32) >> shift) as u32
 }
 
+/// SIMM16 sign-extended to 32 bits (SOPK, guide 12.2).
+pub const fn sext_simm16(simm16: u16) -> u32 {
+    simm16 as i16 as i32 as u32
+}
+
 /// Two's-complement absolute value (wrapping, so `0x80000000` stays) and
 /// whether the result is nonzero.
 pub const fn abs_nonzero_i32(a: u32) -> (u32, bool) {
@@ -325,4 +330,9 @@ pub const fn absdiff_nonzero_i32(a: u32, b: u32) -> (u32, bool) {
 pub const fn lshl_add_carry_u32(a: u32, b: u32, shift: u32) -> (u32, bool) {
     let sum = ((a as u64) << shift) + b as u64;
     (sum as u32, sum >> 32 != 0)
+}
+
+/// A bitwise copy of the source (RDNA 2 guide section 12.3).
+pub(crate) const fn mov_b32(src: u32) -> u32 {
+    src
 }

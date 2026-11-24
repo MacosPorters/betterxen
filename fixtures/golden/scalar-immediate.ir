@@ -1,0 +1,26 @@
+0000: t0 = load.u32 input[index]
+0018: branch.uniform 0x0020 taken=false
+0024: branch.uniform 0x002c taken=true
+0030: branch.uniform 0x0038 taken=false
+003c: branch.uniform 0x0044 taken=true
+0048: branch.uniform 0x0050 taken=false
+0054: branch.uniform 0x005c taken=false
+0060: branch.uniform 0x0068 taken=false
+006c: branch.uniform 0x0078 taken=true
+007c: branch.uniform 0x0088 taken=false
+008c: branch.uniform 0x0098 taken=true
+009c: branch.uniform 0x00a8 taken=false
+00ac: branch.uniform 0x00b8 taken=false
+00c8: branch.uniform 0x00d4 taken=false
+00d8: branch.uniform 0x00e4 taken=false
+00e8: branch.uniform 0x00f4 taken=false
+00f8: branch.uniform 0x0104 taken=true
+0118: t17 = const.u32 0x00007d75
+011c: t18 = const.u32 0xc000ffff
+0120: t19 = xor.b32 t18, t17
+0124: t20 = const.u32 0x7fffffff
+0128: t21 = xor.b32 t20, t19
+012c: t22 = const.u32 0xffffff00
+0130: t23 = xor.b32 t22, t21
+0134: t24 = xor.b32 t0, t23
+0138: store.u32 output[index], t24
