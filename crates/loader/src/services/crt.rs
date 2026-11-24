@@ -281,6 +281,9 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strtok", |args, cpu, memory| {
         tokenize(memory, cpu.gs_base, args.rcx, args.rdx)
     });
+    registry.register(UCRT, "wcstok", |args, _, memory| {
+        tokenize_wide(memory, args.rcx, args.rdx, args.r8)
+    });
     registry.register(UCRT, "wcscpy", |args, _, memory| {
         copy_wide(memory, args.rcx, args.rdx, u64::MAX, true)
     });
@@ -299,7 +302,7 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     for symbol in [
         "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "wcsstr", "strspn",
         "strcspn", "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr", "strtok", "strpbrk",
-        "wcsspn", "wcscspn", "wcspbrk",
+        "wcsspn", "wcscspn", "wcspbrk", "wcstok",
     ] {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
@@ -492,20 +495,8 @@ fn wide_span(
     if address == 0 || set == 0 {
         return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
     }
-    let mut present = [0u64; 1024];
+    let present = wide_set(memory, set)?;
     let limit = SCAN_BUDGET / 2;
-    let mut terminated = false;
-    for offset in 0..limit {
-        let unit = StringUnit::Wide.read(memory, set, offset)? as usize;
-        if unit == 0 {
-            terminated = true;
-            break;
-        }
-        present[unit / 64] |= 1 << (unit % 64);
-    }
-    if !terminated {
-        return Err(ExitReason::IllegalInstruction(0xFE));
-    }
     for offset in 0..limit {
         let unit = StringUnit::Wide.read(memory, address, offset)? as usize;
         let found = present[unit / 64] & (1 << (unit % 64)) != 0;
@@ -514,6 +505,81 @@ fn wide_span(
         }
     }
     Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn wide_set(memory: &GuestMemory, address: u64) -> Result<[u64; 1024], ExitReason> {
+    let mut present = [0; 1024];
+    for offset in 0..(SCAN_BUDGET / 2) {
+        let unit = StringUnit::Wide.read(memory, address, offset)? as usize;
+        if unit == 0 {
+            return Ok(present);
+        }
+        present[unit / 64] |= 1 << (unit % 64);
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn locate_token(
+    memory: &GuestMemory,
+    cursor: u64,
+    unit: StringUnit,
+    delimiter: impl Fn(usize) -> bool,
+) -> Result<(u64, Option<u64>), ExitReason> {
+    let mut token = None;
+    for offset in 0..(SCAN_BUDGET / unit.width()) {
+        let value = unit.read(memory, cursor, offset)? as usize;
+        if value == 0 {
+            return Ok((token.unwrap_or(0), None));
+        }
+        let position = cursor + offset * unit.width();
+        if !delimiter(value) {
+            token.get_or_insert(position);
+        } else if let Some(token) = token {
+            return Ok((token, Some(position)));
+        }
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn tokenize_wide(
+    memory: &mut GuestMemory,
+    input: u64,
+    delimiters: u64,
+    context: u64,
+) -> Result<u64, ExitReason> {
+    if delimiters == 0 || context == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    let cursor = if input != 0 {
+        input
+    } else {
+        memory.read_u64(context).map_err(ExitReason::MemoryFault)?
+    };
+    if cursor == 0 {
+        return Ok(0);
+    }
+    let present = wide_set(memory, delimiters)?;
+    let (token, separator) = locate_token(memory, cursor, StringUnit::Wide, |unit| {
+        present[unit / 64] & (1 << (unit % 64)) != 0
+    })?;
+    memory
+        .check_write(context, 8)
+        .map_err(ExitReason::MemoryFault)?;
+    let next = if let Some(position) = separator {
+        let next = position
+            .checked_add(2)
+            .ok_or(ExitReason::MemoryFault(MemoryError::Overflow))?;
+        memory
+            .write_u16(position, 0)
+            .map_err(ExitReason::MemoryFault)?;
+        next
+    } else {
+        0
+    };
+    memory
+        .write_u64(context, next)
+        .map_err(ExitReason::MemoryFault)?;
+    Ok(token)
 }
 
 fn tokenize(
@@ -534,33 +600,22 @@ fn tokenize(
         return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
     }
     let present = byte_set(memory, delimiters)?;
-    let mut token = None;
-    for offset in 0..SCAN_BUDGET {
-        let byte = StringUnit::Byte.read(memory, cursor, offset)? as usize;
-        if byte == 0 {
-            memory.crt_token_cursors.remove(&teb);
-            return Ok(token.unwrap_or(0));
+    let (token, separator) = locate_token(memory, cursor, StringUnit::Byte, |byte| present[byte])?;
+    if let Some(position) = separator {
+        if memory.crt_token_cursors.len() >= 1024 && !memory.crt_token_cursors.contains_key(&teb) {
+            return Err(ExitReason::MemoryFault(MemoryError::AllocationFailed));
         }
-        let position = cursor + offset;
-        if !present[byte] {
-            token.get_or_insert(position);
-        } else if let Some(token) = token {
-            if memory.crt_token_cursors.len() >= 1024
-                && !memory.crt_token_cursors.contains_key(&teb)
-            {
-                return Err(ExitReason::MemoryFault(MemoryError::AllocationFailed));
-            }
-            let next = position
-                .checked_add(1)
-                .ok_or(ExitReason::MemoryFault(MemoryError::Overflow))?;
-            memory
-                .write_u8(position, 0)
-                .map_err(ExitReason::MemoryFault)?;
-            memory.crt_token_cursors.insert(teb, next);
-            return Ok(token);
-        }
+        let next = position
+            .checked_add(1)
+            .ok_or(ExitReason::MemoryFault(MemoryError::Overflow))?;
+        memory
+            .write_u8(position, 0)
+            .map_err(ExitReason::MemoryFault)?;
+        memory.crt_token_cursors.insert(teb, next);
+    } else {
+        memory.crt_token_cursors.remove(&teb);
     }
-    Err(ExitReason::IllegalInstruction(0xFE))
+    Ok(token)
 }
 
 fn copy_string(
@@ -1112,4 +1167,36 @@ fn substring_search_handles_overlapping_prefixes_and_stops_at_first_match() {
         find_substring(&memory, 0x1000, 0x2000, StringUnit::Byte).unwrap(),
         0x1003
     );
+}
+
+#[cfg(test)]
+#[test]
+fn wcstok_uses_explicit_context_and_preserves_input_on_invalid_context() {
+    use crate::memory::MemoryPermissions;
+
+    let mut memory = GuestMemory::new();
+    memory
+        .map_region(0x1000, 0x100, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    memory
+        .map_region(0x2000, 8, MemoryPermissions::READ_ONLY)
+        .unwrap();
+    for (index, value) in [0x03bb, 0x2603, 0x03bc, 0].into_iter().enumerate() {
+        memory.write_u16(0x1000 + index as u64 * 2, value).unwrap();
+    }
+    memory.write_u16(0x1020, 0x2603).unwrap();
+    assert!(tokenize_wide(&mut memory, 0x1000, 0x1020, 0x2000).is_err());
+    assert_eq!(memory.read_u16(0x1002).unwrap(), 0x2603);
+    assert_eq!(
+        tokenize_wide(&mut memory, 0x1000, 0x1020, 0x1040).unwrap(),
+        0x1000
+    );
+    assert_eq!(memory.read_u16(0x1002).unwrap(), 0);
+    assert_eq!(memory.read_u64(0x1040).unwrap(), 0x1004);
+    assert_eq!(tokenize_wide(&mut memory, 0, 0x1020, 0x1048).unwrap(), 0);
+    assert_eq!(
+        tokenize_wide(&mut memory, 0, 0x1020, 0x1040).unwrap(),
+        0x1004
+    );
+    assert_eq!(memory.read_u64(0x1040).unwrap(), 0);
 }

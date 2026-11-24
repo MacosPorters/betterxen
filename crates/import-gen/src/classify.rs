@@ -217,16 +217,19 @@ impl SymbolDb {
                 "strlen", "strnlen", "strcmp", "strncmp", "wcslen", "wcsnlen", "wcscmp", "wcsncmp",
                 "memset", "memcpy", "memmove", "memcmp", "memchr", "strcpy", "strncpy", "strcat",
                 "strncat", "strstr", "wcsstr", "strspn", "strcspn", "strtok", "strpbrk", "wcsspn",
-                "wcscspn", "wcspbrk", "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr",
+                "wcscspn", "wcspbrk", "wcstok", "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr",
                 "isalnum", "isalpha", "isdigit", "islower", "isspace", "isxdigit", "isupper",
                 "isprint", "iscntrl", "ispunct", "tolower", "toupper",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
-        for (sym, libc) in &[("wcstok", "wcstok"), ("wcsicmp", "wcscasecmp")] {
-            self.crt_native(m, sym, libc, "ISO C / POSIX — identical ABI on macOS");
-        }
+        self.crt_native(
+            m,
+            "wcsicmp",
+            "wcscasecmp",
+            "Legacy wide comparison candidate",
+        );
         // Safe-CRT variants — wrappers that ignore the buffer size (safe on our sandbox)
         for sym in &[
             "strcat_s",
