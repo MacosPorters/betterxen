@@ -56,13 +56,42 @@ impl OpenFile {
     }
 }
 
-fn check_sharing(objects: &super::ObjectState, path: &str, access: u32, share: u32) -> bool {
+/// What a sharing check compares against: a synthetic path, or the current
+/// identity of a host file.
+enum Target<'a> {
+    Path(&'a str),
+    Host(host_files::FileId),
+}
+
+impl Target<'_> {
+    fn matches(&self, file: &OpenFile) -> bool {
+        match (self, &file.host) {
+            (Self::Path(path), None) => file.path == *path,
+            (Self::Host(id), Some(host)) => host_files::current_id(host) == Some(*id),
+            _ => false,
+        }
+    }
+}
+
+fn check_sharing(
+    objects: &super::ObjectState,
+    target: &Target<'_>,
+    access: u32,
+    share: u32,
+) -> bool {
     !objects.handles.values().any(|object| {
         matches!(object, GuestObject::File(file)
-            if file.path == path
+            if target.matches(file)
                 && (share_mask(access) & !file.share != 0
                     || share_mask(file.open_access) & !share != 0))
     })
+}
+
+fn is_open(objects: &super::ObjectState, target: &Target<'_>) -> bool {
+    objects
+        .handles
+        .values()
+        .any(|object| matches!(object, GuestObject::File(file) if target.matches(file)))
 }
 
 fn create_host_file(
@@ -101,9 +130,13 @@ fn create_host_file(
     if modifies && !resolved.mount.writable() {
         return state.fail(teb, ERROR_ACCESS_DENIED, INVALID_HANDLE);
     }
-    let key = resolved.key();
     let mut objects = state.objects.lock().expect("guest object state");
-    if !check_sharing(&objects, &key, access, share) {
+    // Sharing is decided by host file identity. An existing file is checked
+    // before it is opened, so a refused open never truncates it.
+    let expected = entry.as_ref().map(|entry| entry.id);
+    if let Some(id) = expected
+        && !check_sharing(&objects, &Target::Host(id), access, share)
+    {
         return state.fail(teb, SHARING_VIOLATION, INVALID_HANDLE);
     }
     let Some(handle) = objects.next_handle() else {
@@ -113,13 +146,22 @@ fn create_host_file(
         read: access & READ != 0 || access & WRITE == 0,
         write: access & WRITE != 0,
         create: !exists,
-        truncate: exists && matches!(disposition, 2 | 5),
     };
     let host_name = entry.map_or(name, |entry| entry.name);
-    let file = match host_files::open_file(&parent, &host_name, &request) {
-        Ok(file) => file,
+    let (file, id) = match host_files::open_file(&parent, &host_name, &request, expected) {
+        Ok(opened) => opened,
         Err(error) => return state.fail(teb, host_files::win32_error(&error), INVALID_HANDLE),
     };
+    let key = id.key();
+    if !check_sharing(&objects, &Target::Host(id), access, share) {
+        return state.fail(teb, SHARING_VIOLATION, INVALID_HANDLE);
+    }
+    if exists
+        && matches!(disposition, 2 | 5)
+        && let Err(error) = file.set_len(0)
+    {
+        return state.fail(teb, host_files::win32_error(&error), INVALID_HANDLE);
+    }
     if matches!(disposition, 2 | 4) {
         state.fail(teb, if exists { ALREADY_EXISTS } else { 0 }, 0)?;
     }
@@ -205,22 +247,17 @@ fn change_host_namespace(
             return state.fail(teb, ERROR_DIRECTORY, 0);
         }
         (HostChange::RemoveDirectory, Some(entry)) => {
-            host_files::remove(&parent, &entry.name, true)
+            host_files::remove(&parent, &entry.name, &entry)
         }
         (HostChange::DeleteFile, Some(entry)) if entry.kind == Directory => {
             return state.fail(teb, ERROR_ACCESS_DENIED, 0);
         }
         (HostChange::DeleteFile, Some(entry)) => {
-            let key = resolved.key();
             let objects = state.objects.lock().expect("guest object state");
-            if objects
-                .handles
-                .values()
-                .any(|object| matches!(object, GuestObject::File(file) if file.path == key))
-            {
+            if is_open(&objects, &Target::Host(entry.id)) {
                 return state.fail(teb, SHARING_VIOLATION, 0);
             }
-            host_files::remove(&parent, &entry.name, false)
+            host_files::remove(&parent, &entry.name, &entry)
         }
     };
     match result {
@@ -477,7 +514,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if !exists && matches!(disposition, 3 | 5) {
             return open.fail(cpu.gs_base, FILE_NOT_FOUND, INVALID_HANDLE);
         }
-        if !check_sharing(&objects, &path, access, share) {
+        if !check_sharing(&objects, &Target::Path(&path), access, share) {
             return open.fail(cpu.gs_base, SHARING_VIOLATION, INVALID_HANDLE);
         }
         let Some(handle) = objects.next_handle() else {

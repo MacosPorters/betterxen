@@ -240,16 +240,54 @@ asynchronous I/O remain outside this subset.
 ### Host-backed guest drives
 
 `ServicesState::mount` exposes a host directory to the guest as a drive
-letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Nothing
-on the host is reachable without a mount, and mounts are read-only unless
-created writable. The root directory is opened once, and every guest path is
-resolved from that descriptor one component at a time with `openat` and
-`O_NOFOLLOW`. Names match the host listing ignoring ASCII case; two host
-entries that differ only by case are refused as ambiguous. `.` and `..`
-components, device names and Windows-invalid characters are invalid names.
-Symbolic links, devices and non-UTF-8 names are hidden from the guest, so a
-path cannot leave the root. New files and directories keep the guest's
-spelling.
+letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Without
+a mount, nothing on the host is reachable through these services. Mounts are
+read-only unless created writable.
+
+The confinement policy below is enforced in `services/host_files.rs` and
+covered by `crates/loader/tests/runtime_host_files.rs` and unit tests in that
+module. It has not yet had an independent security review.
+
+- **Path resolution.** The root directory is opened once. Every operation
+  resolves the guest path from that descriptor one component at a time with
+  `openat` and `O_NOFOLLOW`. `.` and `..` components, device names,
+  Windows-invalid characters and drive-relative paths are rejected. Names
+  match the host listing ignoring ASCII case. Two host entries that differ
+  only by case are refused as ambiguous.
+- **Hidden entries.** The guest cannot see or open symbolic links, devices,
+  sockets, FIFOs, non-UTF-8 names, or regular files with more than one hard
+  link. Hiding multiply linked files prevents a hard link from aliasing a
+  host file outside the root. The cost is that legitimately hard-linked files
+  are hidden too.
+- **Descriptor verification.** After each `openat`, the descriptor is
+  checked with `fstat`: it must be the expected type, a file must have one
+  link, and the device and inode must match what the listing reported. A host
+  change that swaps an entry between the listing and the open fails with
+  `ERROR_ACCESS_DENIED`. Removal also re-verifies the entry first.
+- **File identity.** Reads, writes and truncation use the verified
+  descriptor, so they reach the same file after a host rename. Sharing checks
+  and the open-file check in DeleteFileW compare the live device and inode of
+  every open handle, not guest paths. A truncating open is checked for
+  sharing before it truncates.
+- **Read-only enforcement.** Read-only mounts reject creation, truncation,
+  writes, deletion and directory changes with `ERROR_ACCESS_DENIED`. They also
+  open every file `O_RDONLY`, so the host kernel refuses writes as well.
+- **Resource limits.** A directory listing is bounded at 4,096 visible
+  entries. Larger directories report `ERROR_NOT_ENOUGH_MEMORY` rather than a
+  partial listing. Open handles share the 1,024-handle object table.
+  Transfers are limited to 1 MiB per call.
+- **Errors.** Errors from reading a directory or examining an entry are
+  reported, except an entry removed while it is being listed. Host errors map
+  to specific Win32 codes (for example `ENOENT` to `ERROR_FILE_NOT_FOUND`,
+  `ENOTEMPTY` to `ERROR_DIR_NOT_EMPTY`, `ENOSPC` to `ERROR_DISK_FULL`);
+  unrecognized errors report `ERROR_GEN_FAILURE`.
+
+Not covered: another host process that moves a directory or file the guest
+already holds open out of the mount. The guest keeps its handle to that
+object, because handles refer to opened files, not paths. Host processes with
+write access to a mounted directory are therefore trusted. Some file systems
+do not keep inode numbers stable (exFAT renumbers a file when its storage is
+first allocated), so identities are compared live rather than cached.
 
 CreateFileW, ReadFile, WriteFile, GetFileSizeEx, SetFilePointerEx,
 SetEndOfFile, GetFileAttributesW, FindFirstFileW and FindNextFileW work on
@@ -257,11 +295,9 @@ mounted drives with the same handle types, rights, sharing modes and file
 positions as the synthetic drive. CreateDirectoryW, RemoveDirectoryW and
 DeleteFileW also work on writable mounts. Files on read-only mounts report
 `FILE_ATTRIBUTE_READONLY`. MoveFileW returns `ERROR_NOT_SUPPORTED` on mounts.
-Host errors map to specific Win32 codes (for example `ENOENT` to
-`ERROR_FILE_NOT_FOUND`, `ENOTEMPTY` to `ERROR_DIR_NOT_EMPTY`, `ENOSPC` to
-`ERROR_DISK_FULL`); unrecognized errors report `ERROR_GEN_FAILURE`.
-Drive-relative paths such as `D:file` return `ERROR_PATH_NOT_FOUND`. Times,
-alternate names and asynchronous I/O are not reported.
+Times, alternate names and asynchronous I/O are not reported. The mount
+tests need a temporary directory that supports hard links and POSIX
+permissions: `/tmp`, or the directory named by `XENORA_TEST_TMP`.
 
 ### Event and semaphore signaling
 

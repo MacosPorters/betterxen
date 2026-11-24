@@ -4,16 +4,33 @@
 //!
 //! Each mount holds a descriptor for its root. Guest paths are resolved one
 //! component at a time with `openat` and `O_NOFOLLOW` from that descriptor,
-//! matching names case-insensitively against the real directory listing. A
-//! path can therefore never name anything outside the root: `..` and `.` are
-//! rejected as components, symbolic links are refused wherever they appear,
-//! and absolute host paths cannot be expressed. Mounts are read-only unless
-//! configured writable.
+//! matching names case-insensitively against the directory listing.
+//!
+//! Policy, enforced on every operation:
+//! - `.` and `..` components, device names and absolute host paths cannot be
+//!   expressed in a guest path.
+//! - Symbolic links, devices, sockets, FIFOs, non-UTF-8 names and regular
+//!   files with more than one hard link are hidden from the guest and cannot
+//!   be opened, so a link cannot alias a host file outside the root.
+//! - After each `openat`, the descriptor is checked with `fstat`: it must be
+//!   the expected type (directory or regular file), have one link if it is a
+//!   file, and keep the device and inode the listing reported. A concurrent
+//!   host change that swaps an entry between the listing and the open fails
+//!   with `ERROR_ACCESS_DENIED` instead of reaching the replacement.
+//! - Reads, writes and truncation use the verified descriptor, so they reach
+//!   the same file however the host renames it afterwards. Read-only mounts
+//!   open every file `O_RDONLY`, so the host kernel also refuses writes.
+//! - Sharing and deletion checks compare device and inode, not guest paths.
+//!
+//! Not covered: another host process that moves a directory or file the guest
+//! already holds open out of the mount. The guest keeps its handle to that
+//! object. Host processes with write access to a mounted directory are
+//! trusted. This boundary has not yet been independently security reviewed.
 
 use std::ffi::{CStr, CString};
 use std::fs::File;
 use std::io;
-use std::os::fd::{AsRawFd, FromRawFd, OwnedFd};
+use std::os::fd::{AsFd, AsRawFd, FromRawFd, OwnedFd};
 use std::path::Path;
 use std::sync::Arc;
 
@@ -21,13 +38,14 @@ pub(super) const ERROR_FILE_NOT_FOUND: u32 = 2;
 pub(super) const ERROR_PATH_NOT_FOUND: u32 = 3;
 pub(super) const ERROR_ACCESS_DENIED: u32 = 5;
 pub(super) const ERROR_FILE_EXISTS: u32 = 80;
+const ERROR_NOT_ENOUGH_MEMORY: u32 = 8;
 const ERROR_GEN_FAILURE: u32 = 31;
 const ERROR_DISK_FULL: u32 = 112;
 const ERROR_DIR_NOT_EMPTY: u32 = 145;
 const ERROR_FILENAME_EXCED_RANGE: u32 = 206;
 const ERROR_IO_DEVICE: u32 = 1117;
 /// Largest number of entries read from one host directory.
-const MAX_DIRECTORY_ENTRIES: usize = 4096;
+pub const MAX_DIRECTORY_ENTRIES: usize = 4096;
 
 /// A guest drive letter backed by a host directory.
 pub struct HostMount {
@@ -37,11 +55,12 @@ pub struct HostMount {
 }
 
 impl HostMount {
-    /// Mount `root` as guest drive `drive`. The directory is opened once; later
-    /// changes to the host path name do not move the mount.
+    /// Mount `root` as guest drive `drive`, which must be D: to Z:. The
+    /// directory is opened once; later changes to the host path name do not
+    /// move the mount.
     pub fn new(drive: char, root: &Path, writable: bool) -> io::Result<Self> {
         let drive = drive.to_ascii_lowercase();
-        if !drive.is_ascii_lowercase() || drive == 'c' {
+        if !('d'..='z').contains(&drive) {
             return Err(io::Error::new(
                 io::ErrorKind::InvalidInput,
                 "host mounts use drive letters D: to Z:",
@@ -59,10 +78,12 @@ impl HostMount {
         if fd < 0 {
             return Err(io::Error::last_os_error());
         }
+        // SAFETY: `fd` is a newly opened descriptor owned by nothing else.
+        let root = unsafe { OwnedFd::from_raw_fd(fd) };
+        status(&root)?;
         Ok(Self {
             drive: drive as u8,
-            // SAFETY: `fd` is a newly opened descriptor owned by nothing else.
-            root: Arc::new(unsafe { OwnedFd::from_raw_fd(fd) }),
+            root: Arc::new(root),
             writable,
         })
     }
@@ -88,9 +109,14 @@ pub(super) fn win32_error(error: &io::Error) -> u32 {
         Some(libc::ENOSPC | libc::EDQUOT | libc::EFBIG) => ERROR_DISK_FULL,
         Some(libc::ENOTEMPTY) => ERROR_DIR_NOT_EMPTY,
         Some(libc::ENAMETOOLONG) => ERROR_FILENAME_EXCED_RANGE,
+        Some(libc::ENOMEM) => ERROR_NOT_ENOUGH_MEMORY,
         Some(libc::EIO) => ERROR_IO_DEVICE,
         _ => ERROR_GEN_FAILURE,
     }
+}
+
+fn refused() -> io::Error {
+    io::Error::from_raw_os_error(libc::EACCES)
 }
 
 #[derive(Clone, Copy, PartialEq, Eq, Debug)]
@@ -99,11 +125,75 @@ pub(super) enum Kind {
     Directory,
 }
 
+/// The host object a name refers to: device and inode.
+#[derive(Clone, Copy, PartialEq, Eq, Debug)]
+pub(super) struct FileId {
+    device: u64,
+    inode: u64,
+}
+
+impl FileId {
+    /// A label for the handle table. Sharing compares live identities.
+    pub(super) fn key(self) -> String {
+        format!("host:{:x}:{:x}", self.device, self.inode)
+    }
+}
+
+#[derive(Debug)]
 pub(super) struct Entry {
     /// The host name, with its original case.
     pub(super) name: String,
     pub(super) kind: Kind,
     pub(super) size: u64,
+    pub(super) id: FileId,
+}
+
+/// Type, link count, size and identity of `stat`, or `None` for objects the
+/// guest may not see.
+fn classify(status: &libc::stat) -> Option<(Kind, u64, FileId)> {
+    let kind = match status.st_mode & libc::S_IFMT {
+        libc::S_IFREG if status.st_nlink == 1 => Kind::File,
+        libc::S_IFDIR => Kind::Directory,
+        _ => return None,
+    };
+    let id = FileId {
+        device: status.st_dev as u64,
+        inode: status.st_ino,
+    };
+    Some((kind, status.st_size as u64, id))
+}
+
+fn status(fd: &OwnedFd) -> io::Result<libc::stat> {
+    let mut status = std::mem::MaybeUninit::<libc::stat>::uninit();
+    // SAFETY: `fd` is open and `status` has room for a stat.
+    if unsafe { libc::fstat(fd.as_raw_fd(), status.as_mut_ptr()) } != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    // SAFETY: fstat succeeded and initialized `status`.
+    Ok(unsafe { status.assume_init() })
+}
+
+/// Check that an opened descriptor is still the object the listing reported.
+fn verify(fd: &OwnedFd, kind: Kind, expected: Option<FileId>) -> io::Result<FileId> {
+    match classify(&status(fd)?) {
+        Some((found, _, id)) if found == kind && expected.is_none_or(|expected| expected == id) => {
+            Ok(id)
+        }
+        _ => Err(refused()),
+    }
+}
+
+/// The current identity of an open host file. Some file systems, such as
+/// exFAT, change a file's inode number when its storage is first allocated,
+/// so identities are compared as they are now rather than as they were when
+/// the file was opened.
+pub(super) fn current_id(file: &File) -> Option<FileId> {
+    let fd = file.as_fd().try_clone_to_owned().ok()?;
+    let status = status(&fd).ok()?;
+    Some(FileId {
+        device: status.st_dev as u64,
+        inode: status.st_ino,
+    })
 }
 
 fn c_name(name: &str) -> io::Result<CString> {
@@ -128,8 +218,14 @@ fn open_at(directory: &OwnedFd, name: &str, flags: i32, mode: u32) -> io::Result
     Ok(unsafe { OwnedFd::from_raw_fd(fd) })
 }
 
-/// Regular files and directories in `directory`. Symbolic links, devices and
-/// names that are not UTF-8 are omitted, so the guest never sees them.
+fn open_directory(parent: &OwnedFd, name: &str, expected: Option<FileId>) -> io::Result<OwnedFd> {
+    let directory = open_at(parent, name, libc::O_RDONLY | libc::O_DIRECTORY, 0)?;
+    verify(&directory, Kind::Directory, expected)?;
+    Ok(directory)
+}
+
+/// Visible entries of `directory`. Errors from reading the directory or from
+/// examining an entry are returned, except an entry removed while listing.
 pub(super) fn list(directory: &OwnedFd) -> io::Result<Vec<Entry>> {
     // fdopendir takes ownership of its descriptor, so give it a duplicate.
     // SAFETY: `directory` is open; the duplicate is checked.
@@ -149,10 +245,17 @@ pub(super) fn list(directory: &OwnedFd) -> io::Result<Vec<Entry>> {
     unsafe { libc::rewinddir(stream) };
     let mut entries = Vec::new();
     let result = loop {
+        // readdir signals errors only through errno, so clear it first.
+        // SAFETY: errno is thread-local.
+        unsafe { *libc::__error() = 0 };
         // SAFETY: `stream` is a valid directory stream until closedir below.
         let entry = unsafe { libc::readdir(stream) };
         if entry.is_null() {
-            break Ok(());
+            let error = io::Error::last_os_error();
+            break match error.raw_os_error() {
+                Some(0) | None => Ok(()),
+                Some(_) => Err(error),
+            };
         }
         // SAFETY: readdir returned a valid entry with a NUL-terminated name.
         let raw = unsafe { CStr::from_ptr((*entry).d_name.as_ptr()) };
@@ -171,14 +274,15 @@ pub(super) fn list(directory: &OwnedFd) -> io::Result<Vec<Entry>> {
             )
         };
         if found != 0 {
-            continue;
+            let error = io::Error::last_os_error();
+            if error.raw_os_error() == Some(libc::ENOENT) {
+                continue;
+            }
+            break Err(error);
         }
         // SAFETY: fstatat succeeded and initialized `status`.
-        let status = unsafe { status.assume_init() };
-        let kind = match status.st_mode & libc::S_IFMT {
-            libc::S_IFREG => Kind::File,
-            libc::S_IFDIR => Kind::Directory,
-            _ => continue,
+        let Some((kind, size, id)) = classify(&unsafe { status.assume_init() }) else {
+            continue;
         };
         if entries.len() >= MAX_DIRECTORY_ENTRIES {
             break Err(io::Error::from_raw_os_error(libc::ENOMEM));
@@ -186,7 +290,8 @@ pub(super) fn list(directory: &OwnedFd) -> io::Result<Vec<Entry>> {
         entries.push(Entry {
             name: name.to_owned(),
             kind,
-            size: status.st_size as u64,
+            size,
+            id,
         });
     };
     // SAFETY: `stream` is valid and closed exactly once.
@@ -202,7 +307,7 @@ fn find(directory: &OwnedFd, component: &str) -> io::Result<Option<Entry>> {
         .filter(|entry| entry.name.eq_ignore_ascii_case(component));
     let first = matches.next();
     if matches.next().is_some() {
-        return Err(io::Error::from_raw_os_error(libc::EACCES));
+        return Err(refused());
     }
     Ok(first)
 }
@@ -214,16 +319,6 @@ pub(super) struct Resolved<'a> {
 }
 
 impl Resolved<'_> {
-    /// The handle-table key, used for sharing checks.
-    pub(super) fn key(&self) -> String {
-        let mut key = format!("{}:", self.mount.drive as char);
-        for component in &self.components {
-            key.push('\\');
-            key.push_str(&component.to_ascii_lowercase());
-        }
-        key
-    }
-
     /// Open the directory holding the final component.
     pub(super) fn parent(&self) -> Result<OwnedFd, u32> {
         let parents = self
@@ -239,18 +334,13 @@ impl Resolved<'_> {
     }
 
     fn walk(&self, components: &[String]) -> Result<OwnedFd, u32> {
-        let mut directory = open_at(&self.mount.root, ".", libc::O_RDONLY | libc::O_DIRECTORY, 0)
-            .map_err(|error| win32_error(&error))?;
+        let mut directory =
+            open_directory(&self.mount.root, ".", None).map_err(|error| win32_error(&error))?;
         for component in components {
             match find(&directory, component).map_err(|error| win32_error(&error))? {
                 Some(entry) if entry.kind == Kind::Directory => {
-                    directory = open_at(
-                        &directory,
-                        &entry.name,
-                        libc::O_RDONLY | libc::O_DIRECTORY,
-                        0,
-                    )
-                    .map_err(|error| win32_error(&error))?;
+                    directory = open_directory(&directory, &entry.name, Some(entry.id))
+                        .map_err(|error| win32_error(&error))?;
                 }
                 _ => return Err(ERROR_PATH_NOT_FOUND),
             }
@@ -263,10 +353,12 @@ impl Resolved<'_> {
     pub(super) fn lookup(&self) -> Result<(OwnedFd, Option<Entry>), u32> {
         let parent = self.parent()?;
         let Some(name) = self.components.last() else {
+            let id = verify(&parent, Kind::Directory, None).map_err(|error| win32_error(&error))?;
             let root = Entry {
                 name: String::new(),
                 kind: Kind::Directory,
                 size: 0,
+                id,
             };
             return Ok((parent, Some(root)));
         };
@@ -310,15 +402,16 @@ pub(super) struct OpenRequest {
     pub(super) read: bool,
     pub(super) write: bool,
     pub(super) create: bool,
-    pub(super) truncate: bool,
 }
 
-/// Open `name` in `directory`, creating it exclusively when it did not exist.
+/// Open `name` in `directory`, creating it exclusively when it did not exist,
+/// and check the result is the regular file `expected` names.
 pub(super) fn open_file(
     directory: &OwnedFd,
     name: &str,
     request: &OpenRequest,
-) -> io::Result<File> {
+    expected: Option<FileId>,
+) -> io::Result<(File, FileId)> {
     let mut flags = match (request.read, request.write) {
         (_, false) => libc::O_RDONLY,
         (false, true) => libc::O_WRONLY,
@@ -327,11 +420,9 @@ pub(super) fn open_file(
     if request.create {
         flags |= libc::O_CREAT | libc::O_EXCL;
     }
-    if request.truncate {
-        flags |= libc::O_TRUNC;
-    }
     let fd = open_at(directory, name, flags, 0o644)?;
-    Ok(File::from(fd))
+    let id = verify(&fd, Kind::File, expected)?;
+    Ok((File::from(fd), id))
 }
 
 pub(super) fn create_directory(directory: &OwnedFd, name: &str) -> io::Result<()> {
@@ -343,17 +434,110 @@ pub(super) fn create_directory(directory: &OwnedFd, name: &str) -> io::Result<()
     Ok(())
 }
 
-/// Remove a file, or an empty directory when `directory_entry` is set.
-pub(super) fn remove(directory: &OwnedFd, name: &str, directory_entry: bool) -> io::Result<()> {
+/// Remove the entry `name` after checking it is still the object `expected`.
+pub(super) fn remove(directory: &OwnedFd, name: &str, expected: &Entry) -> io::Result<()> {
+    let opened = match expected.kind {
+        Kind::Directory => open_directory(directory, name, Some(expected.id))?,
+        Kind::File => open_at(directory, name, libc::O_RDONLY, 0)?,
+    };
+    verify(&opened, expected.kind, Some(expected.id))?;
     let name = c_name(name)?;
-    let flags = if directory_entry {
-        libc::AT_REMOVEDIR
-    } else {
-        0
+    let flags = match expected.kind {
+        Kind::Directory => libc::AT_REMOVEDIR,
+        Kind::File => 0,
     };
     // SAFETY: `name` is NUL-terminated and `directory` is open.
     if unsafe { libc::unlinkat(directory.as_raw_fd(), name.as_ptr(), flags) } != 0 {
         return Err(io::Error::last_os_error());
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn tree(name: &str) -> std::path::PathBuf {
+        let base = std::env::var_os("XENORA_TEST_TMP").map_or_else(
+            || std::path::PathBuf::from("/tmp"),
+            std::path::PathBuf::from,
+        );
+        let path = base.join(format!("xenora-host-unit-{name}-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&path);
+        std::fs::create_dir_all(&path).unwrap();
+        path
+    }
+
+    fn root(path: &Path) -> OwnedFd {
+        open_directory(&HostMount::new('d', path, true).unwrap().root, ".", None).unwrap()
+    }
+
+    #[test]
+    fn an_entry_swapped_after_listing_is_refused() {
+        let path = tree("swap");
+        std::fs::create_dir(path.join("Data")).unwrap();
+        std::fs::write(path.join("file.bin"), b"a").unwrap();
+        std::fs::create_dir(path.join("outside")).unwrap();
+        let fd = root(&path);
+        let data = find(&fd, "data").unwrap().unwrap();
+        let file = find(&fd, "FILE.BIN").unwrap().unwrap();
+
+        // Swap both entries between the listing and the open.
+        std::fs::rename(path.join("Data"), path.join("Moved")).unwrap();
+        std::fs::rename(path.join("outside"), path.join("Data")).unwrap();
+        std::fs::rename(path.join("file.bin"), path.join("old.bin")).unwrap();
+        std::fs::write(path.join("file.bin"), b"replacement").unwrap();
+
+        let error = open_directory(&fd, &data.name, Some(data.id)).unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::EACCES));
+        let request = OpenRequest {
+            read: true,
+            write: false,
+            create: false,
+        };
+        let error = open_file(&fd, &file.name, &request, Some(file.id)).unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::EACCES));
+        let error = remove(&fd, &file.name, &file).unwrap_err();
+        assert_eq!(error.raw_os_error(), Some(libc::EACCES));
+        assert_eq!(
+            std::fs::read(path.join("file.bin")).unwrap(),
+            b"replacement"
+        );
+        std::fs::remove_dir_all(&path).unwrap();
+    }
+
+    #[test]
+    fn read_only_opens_cannot_write_at_the_host_level() {
+        use std::os::unix::fs::FileExt;
+        let path = tree("read-only");
+        std::fs::write(path.join("file.bin"), b"keep").unwrap();
+        let fd = root(&path);
+        let entry = find(&fd, "file.bin").unwrap().unwrap();
+        let request = OpenRequest {
+            read: true,
+            write: false,
+            create: false,
+        };
+        let (file, _) = open_file(&fd, &entry.name, &request, Some(entry.id)).unwrap();
+        assert!(file.write_at(b"x", 0).is_err());
+        assert!(file.set_len(0).is_err());
+        assert_eq!(std::fs::read(path.join("file.bin")).unwrap(), b"keep");
+        std::fs::remove_dir_all(&path).unwrap();
+    }
+
+    #[test]
+    fn ambiguous_case_variants_are_refused() {
+        let path = tree("case");
+        std::fs::write(path.join("a.txt"), b"1").unwrap();
+        if std::fs::write(path.join("A.TXT"), b"2").is_ok()
+            && std::fs::read(path.join("a.txt")).unwrap() == b"1"
+        {
+            // Only a case-sensitive file system can hold both names.
+            assert_eq!(
+                find(&root(&path), "a.txt").unwrap_err().raw_os_error(),
+                Some(libc::EACCES)
+            );
+        }
+        std::fs::remove_dir_all(&path).unwrap();
+    }
 }

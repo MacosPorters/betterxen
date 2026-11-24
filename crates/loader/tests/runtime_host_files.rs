@@ -51,13 +51,15 @@ const BUFFER: u64 = SCRATCH + 0x600;
 const COUNT: u64 = SCRATCH + 0x700;
 const FIND_DATA: u64 = SCRATCH + 0x800;
 
-/// A fresh directory under the system temporary directory, removed on drop.
+/// A fresh directory, removed on drop. It lives under `XENORA_TEST_TMP` or
+/// `/tmp`, which must support hard links and POSIX permissions.
 struct Tree(PathBuf);
 
 impl Tree {
     fn new(name: &str) -> Self {
-        let path =
-            std::env::temp_dir().join(format!("xenora-host-files-{name}-{}", std::process::id()));
+        let base = std::env::var_os("XENORA_TEST_TMP")
+            .map_or_else(|| PathBuf::from("/tmp"), PathBuf::from);
+        let path = base.join(format!("xenora-host-files-{name}-{}", std::process::id()));
         let _ = std::fs::remove_dir_all(&path);
         std::fs::create_dir_all(&path).unwrap();
         Self(path)
@@ -360,8 +362,12 @@ fn writable_mounts_create_change_and_remove_only_inside_the_root() {
 #[test]
 fn mounts_are_explicit_and_unique_per_drive() {
     let tree = Tree::new("mounts");
-    assert!(HostMount::new('C', &tree.0, false).is_err());
-    assert!(HostMount::new('1', &tree.0, false).is_err());
+    for drive in ['A', 'b', 'C', 'c', '1', ':', 'é'] {
+        assert!(HostMount::new(drive, &tree.0, false).is_err(), "{drive}");
+    }
+    for drive in ['D', 'd', 'Z', 'z'] {
+        assert!(HostMount::new(drive, &tree.0, false).is_ok(), "{drive}");
+    }
     assert!(HostMount::new('D', &tree.path("missing"), false).is_err());
     let mut state = ServicesState::new(Arc::new(MockClock::new(0)));
     assert!(
@@ -382,4 +388,207 @@ fn mounts_are_explicit_and_unique_per_drive() {
         INVALID
     );
     assert_ne!(guest.error(), 0);
+}
+
+#[test]
+fn hard_links_are_hidden_so_they_cannot_alias_outside_files() {
+    let tree = Tree::new("hard-links");
+    std::fs::create_dir_all(tree.path("root")).unwrap();
+    std::fs::write(tree.path("outside.txt"), b"secret").unwrap();
+    std::fs::hard_link(tree.path("outside.txt"), tree.path("root/alias.txt")).unwrap();
+    std::fs::write(tree.path("root/plain.txt"), b"plain").unwrap();
+    let mount = HostMount::new('D', &tree.path("root"), true).unwrap();
+    let mut guest = guest_with(vec![mount]);
+
+    assert_eq!(
+        open(&mut guest, r"D:\alias.txt", GENERIC_READ, 1, OPEN_EXISTING),
+        INVALID
+    );
+    assert_eq!(guest.error(), 2);
+    // A writable mount cannot replace or delete the alias either.
+    assert_eq!(
+        open(&mut guest, r"D:\alias.txt", GENERIC_WRITE, 0, OPEN_ALWAYS),
+        INVALID
+    );
+    assert_eq!(guest.error(), 80);
+    assert_eq!(path_call(&mut guest, "DeleteFileW", r"D:\alias.txt"), 0);
+    assert_eq!(guest.error(), 2);
+    put_path(&mut guest, PATH, r"D:\*");
+    let search = guest.call("FindFirstFileW", &[PATH, FIND_DATA]);
+    assert_eq!(found_name(&guest), "plain.txt");
+    assert_eq!(guest.call("FindNextFileW", &[search, FIND_DATA]), 0);
+    assert_eq!(std::fs::read(tree.path("outside.txt")).unwrap(), b"secret");
+}
+
+#[test]
+fn sharing_follows_the_host_file_rather_than_its_name() {
+    let tree = Tree::new("identity");
+    std::fs::create_dir_all(tree.path("root")).unwrap();
+    std::fs::write(tree.path("root/a.txt"), b"first").unwrap();
+    let mount = HostMount::new('F', &tree.path("root"), true).unwrap();
+    let mut guest = guest_with(vec![mount]);
+
+    let file = open(
+        &mut guest,
+        r"F:\a.txt",
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        OPEN_EXISTING,
+    );
+    assert_ne!(file, INVALID);
+    // The host renames the file while the guest holds it exclusively.
+    std::fs::rename(tree.path("root/a.txt"), tree.path("root/b.txt")).unwrap();
+    assert_eq!(
+        open(&mut guest, r"F:\b.txt", GENERIC_READ, 3, OPEN_EXISTING),
+        INVALID
+    );
+    assert_eq!(guest.error(), 32);
+    assert_eq!(path_call(&mut guest, "DeleteFileW", r"F:\b.txt"), 0);
+    assert_eq!(guest.error(), 32);
+    // The handle still refers to the same file under its new name.
+    assert!(write(&mut guest, file, b"SECOND"));
+    assert_eq!(std::fs::read(tree.path("root/b.txt")).unwrap(), b"SECOND");
+    // A different file now using the old name is unrelated to the handle.
+    std::fs::write(tree.path("root/a.txt"), b"other").unwrap();
+    let other = open(&mut guest, r"F:\a.txt", GENERIC_READ, 0, OPEN_EXISTING);
+    assert_ne!(other, INVALID);
+    assert_eq!(guest.call("CloseHandle", &[other]), 1);
+    assert_eq!(guest.call("CloseHandle", &[file]), 1);
+    assert_eq!(path_call(&mut guest, "DeleteFileW", r"F:\b.txt"), 1);
+}
+
+#[test]
+fn host_changes_between_guest_calls_cannot_redirect_paths() {
+    let tree = Tree::new("concurrent");
+    std::fs::create_dir_all(tree.path("root/Data")).unwrap();
+    std::fs::create_dir_all(tree.path("elsewhere")).unwrap();
+    std::fs::write(tree.path("elsewhere/level.bin"), b"secret").unwrap();
+    std::fs::write(tree.path("root/Data/level.bin"), b"data").unwrap();
+    let mount = HostMount::new('D', &tree.path("root"), false).unwrap();
+    let mut guest = guest_with(vec![mount]);
+    let file = open(
+        &mut guest,
+        r"D:\Data\level.bin",
+        GENERIC_READ,
+        1,
+        OPEN_EXISTING,
+    );
+    assert_ne!(file, INVALID);
+
+    // The directory is replaced by a link to a directory outside the root.
+    std::fs::rename(tree.path("root/Data"), tree.path("root/Old")).unwrap();
+    symlink(&tree.path("elsewhere"), &tree.path("root/Data"));
+    assert_eq!(
+        open(
+            &mut guest,
+            r"D:\Data\level.bin",
+            GENERIC_READ,
+            1,
+            OPEN_EXISTING
+        ),
+        INVALID
+    );
+    assert_eq!(guest.error(), 3);
+    put_path(&mut guest, PATH, r"D:\Data\*");
+    assert_eq!(guest.call("FindFirstFileW", &[PATH, FIND_DATA]), INVALID);
+    assert_eq!(guest.error(), 3);
+    // The open handle keeps reading the file it opened.
+    assert_eq!(read(&mut guest, file, 8).unwrap(), b"data");
+
+    // A file replaced by a directory is refused as a file.
+    std::fs::create_dir_all(tree.path("root/Old/level2.bin")).unwrap();
+    assert_eq!(
+        open(
+            &mut guest,
+            r"D:\Old\level2.bin",
+            GENERIC_READ,
+            1,
+            OPEN_EXISTING
+        ),
+        INVALID
+    );
+    assert_eq!(guest.error(), 5);
+    assert_eq!(
+        std::fs::read(tree.path("elsewhere/level.bin")).unwrap(),
+        b"secret"
+    );
+}
+
+#[test]
+fn read_only_mounts_refuse_every_change() {
+    let tree = Tree::new("refuse");
+    std::fs::create_dir_all(tree.path("root/Dir")).unwrap();
+    std::fs::write(tree.path("root/file.bin"), b"keep").unwrap();
+    let mount = HostMount::new('D', &tree.path("root"), false).unwrap();
+    let mut guest = guest_with(vec![mount]);
+    let reader = open(&mut guest, r"D:\file.bin", GENERIC_READ, 3, OPEN_EXISTING);
+    assert_ne!(reader, INVALID);
+    assert_eq!(guest.call("SetEndOfFile", &[reader]), 0);
+    assert_eq!(guest.error(), 5);
+    assert!(!write(&mut guest, reader, b"x"));
+    for disposition in [1, 2, 4, 5] {
+        assert_eq!(
+            open(
+                &mut guest,
+                r"D:\file.bin",
+                GENERIC_READ | GENERIC_WRITE,
+                3,
+                disposition
+            ),
+            INVALID
+        );
+        assert_eq!(
+            guest.error(),
+            if disposition == 1 { 80 } else { 5 },
+            "{disposition}"
+        );
+    }
+    for (symbol, path) in [
+        ("DeleteFileW", r"D:\file.bin"),
+        ("RemoveDirectoryW", r"D:\Dir"),
+        ("CreateDirectoryW", r"D:\New"),
+    ] {
+        assert_eq!(path_call(&mut guest, symbol, path), 0, "{symbol}");
+        assert_eq!(guest.error(), 5, "{symbol}");
+    }
+    assert_eq!(std::fs::read(tree.path("root/file.bin")).unwrap(), b"keep");
+    assert!(tree.path("root/Dir").is_dir());
+    assert!(!tree.path("root/New").exists());
+}
+
+#[test]
+fn enumeration_errors_and_limits_are_reported() {
+    use std::os::unix::fs::PermissionsExt;
+    let tree = Tree::new("limits");
+    std::fs::create_dir_all(tree.path("root/Big")).unwrap();
+    std::fs::create_dir_all(tree.path("root/Locked")).unwrap();
+    for index in 0..=4096 {
+        std::fs::write(tree.path(&format!("root/Big/{index}.bin")), b"").unwrap();
+    }
+    std::fs::set_permissions(
+        tree.path("root/Locked"),
+        std::fs::Permissions::from_mode(0o000),
+    )
+    .unwrap();
+    let mount = HostMount::new('D', &tree.path("root"), false).unwrap();
+    let mut guest = guest_with(vec![mount]);
+
+    // 4,097 entries exceed the 4,096-entry listing bound.
+    put_path(&mut guest, PATH, r"D:\Big\*");
+    assert_eq!(guest.call("FindFirstFileW", &[PATH, FIND_DATA]), INVALID);
+    assert_eq!(guest.error(), 8); // ERROR_NOT_ENOUGH_MEMORY
+    assert_eq!(
+        open(&mut guest, r"D:\Big\1.bin", GENERIC_READ, 1, OPEN_EXISTING),
+        INVALID
+    );
+    assert_eq!(guest.error(), 8);
+    // A directory the host cannot read reports access denied, not emptiness.
+    put_path(&mut guest, PATH, r"D:\Locked\*");
+    assert_eq!(guest.call("FindFirstFileW", &[PATH, FIND_DATA]), INVALID);
+    assert_eq!(guest.error(), 5);
+    std::fs::set_permissions(
+        tree.path("root/Locked"),
+        std::fs::Permissions::from_mode(0o755),
+    )
+    .unwrap();
 }
