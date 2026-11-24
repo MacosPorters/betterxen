@@ -285,7 +285,7 @@ fn vop3_compare_rejects_excluded_operands_and_modifiers() {
 }
 
 #[test]
-#[ignore = "requires native Metal and the VOP3A compiler implementation"]
+#[ignore = "requires a native Metal device with API and shader validation"]
 fn vop3_vcc_compare_matches_the_guide_on_native_metal() {
     assert_eq!(std::env::var("MTL_DEBUG_LAYER").as_deref(), Ok("1"));
     assert_eq!(std::env::var("MTL_SHADER_VALIDATION").as_deref(), Ok("1"));

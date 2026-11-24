@@ -495,3 +495,17 @@ fn vector_compares_lower_to_per_thread_wave_masks_and_selects() {
         include_str!("../../../fixtures/golden/vector-compare.metal")
     );
 }
+
+#[test]
+fn vop3_compare_forms_lower_to_wave_masks() {
+    let code = include_bytes!("../../../fixtures/rdna2/vop3-compare.bin");
+    let compiled = compile(Architecture::Gfx1030, code).unwrap();
+    assert_eq!(
+        compiled.ir,
+        include_str!("../../../fixtures/golden/vop3-compare.ir")
+    );
+    assert_eq!(
+        compiled.msl,
+        include_str!("../../../fixtures/golden/vop3-compare.metal")
+    );
+}
