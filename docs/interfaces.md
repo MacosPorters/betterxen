@@ -225,6 +225,30 @@ clamps the result and sets ERANGE. Scans have a 1 MiB input budget. The long-lon
 Microsoft's _strtoi64, _strtoui64, _wcstoi64, and _wcstoui64 apply the
 same rules with 64-bit results.
 
+### CRT locale and formatted output
+
+`setlocale` accepts only the C locale (`"C"`, `"POSIX"`, empty string, and
+ASCII-case variants of `C.UTF-8`). Querying with a null locale name returns
+a durable `"C"` string. Other locale names fail with `EINVAL` and a null
+result. `localeconv` returns a guest `lconv` for that C locale. Thread
+locales and `_create_locale` remain unsupported.
+
+`sprintf` and `snprintf` implement a bounded C-locale subset: `%%`, `%c`,
+`%s`, `%d`/`%i`, `%u`, `%x`/`%X`, `%p`, optional zero-pad widths, and
+`l`/`ll`/`z`/`t` length modifiers. Null string arguments render as
+`(null)`. Other conversions stop the guest. Transfers stay within the 1 MiB
+service budget. Stream I/O (`fopen`, `printf`, and the `__stdio_common_*`
+helpers) is not implemented yet.
+
+### XAsync helpers
+
+`XAsyncRun`, `XAsyncGetStatus`, `XAsyncCancel` and `XAsyncGetResultSize` are
+registered on `xgameruntime.dll`. The current subset runs the work callback
+and optional completion callback on the calling thread before `XAsyncRun`
+returns (immediate dispatch). `XAsyncGetStatus` with `wait=true` returns
+`ERROR_NOT_SUPPORTED`. Queue-port scheduling of XAsync work remains future
+work; see the existing manual `XTaskQueue*` subset for port dispatch.
+
 ### Built-in guest modules
 
 GetModuleHandleA and GetModuleHandleW recognize synthetic Kernel32 and UCRT

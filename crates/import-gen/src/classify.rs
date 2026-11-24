@@ -320,8 +320,6 @@ impl SymbolDb {
             ("vsprintf", "vsprintf"),
             ("vsnprintf", "vsnprintf"),
             ("vfprintf", "vfprintf"),
-            ("sprintf", "sprintf"),
-            ("snprintf", "snprintf"),
             ("fprintf", "fprintf"),
             ("printf", "printf"),
             ("sscanf", "sscanf"),
@@ -329,6 +327,11 @@ impl SymbolDb {
             ("scanf", "scanf"),
         ] {
             self.crt_native(m, sym, libc, "ISO C stdio — identical ABI on macOS");
+        }
+        for module in [m, "ucrtbase.dll"] {
+            for symbol in ["sprintf", "snprintf"] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
         }
         // Windows stdio_common helpers — stub (they're UCRT internal; we don't need them
         // when the guest calls the public functions)
@@ -599,13 +602,11 @@ impl SymbolDb {
 
     fn populate_crt_locale(&mut self) {
         let m = "api-ms-win-crt-locale-l1-1-0.dll";
-        self.crt_native(m, "localeconv", "localeconv", "ISO C localeconv");
-        self.win32_stub(
-            m,
-            "setlocale",
-            false,
-            "Windows setlocale — stub returning 'C'",
-        );
+        for module in [m, "ucrtbase.dll"] {
+            for symbol in ["setlocale", "localeconv"] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
         self.win32_stub(
             m,
             "_create_locale",
