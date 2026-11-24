@@ -437,6 +437,16 @@ security-review and implementation-review agents (not a human audit).
   truncation cannot make a file larger than the mount's limit
   (`HostMount::with_max_file_size`, 1 GiB by default); they report
   `ERROR_DISK_FULL` instead.
+- **Mount quota.** `HostMount::with_quota(bytes, entries)` optionally bounds
+  the net bytes and the net number of files and directories that guest
+  operations add to a writable mount, relative to its contents when mounted.
+  Writes, extending `SetEndOfFile`, `CreateFileW`, `CreateDirectoryW`,
+  `GetTempFileNameW` and CRT `fopen` are charged; shrinking, `DeleteFileW`
+  and `RemoveDirectoryW` give the amount back, never below zero. An operation
+  that would exceed a limit fails with `ERROR_DISK_FULL` (CRT: `ENOSPC`) and
+  leaves the host unchanged. CRT streams are charged when `fclose` writes them
+  back. Changes made by host processes are not counted, and
+  `HostMount::usage` reports the current amounts. No quota is set by default.
 - **Errors.** Errors from reading a directory or examining an entry are
   reported, except an entry removed while it is being listed. Host errors map
   to specific Win32 codes (for example `ENOENT` to `ERROR_FILE_NOT_FOUND`,

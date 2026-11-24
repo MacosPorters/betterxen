@@ -36,7 +36,7 @@ use std::fs::File;
 use std::io;
 use std::os::fd::{AsFd, AsRawFd, BorrowedFd, FromRawFd, OwnedFd};
 use std::path::Path;
-use std::sync::Arc;
+use std::sync::{Arc, Mutex};
 
 pub(super) const ERROR_FILE_NOT_FOUND: u32 = 2;
 pub(super) const ERROR_PATH_NOT_FOUND: u32 = 3;
@@ -53,12 +53,73 @@ pub const DEFAULT_MAX_FILE_SIZE: u64 = 1 << 30;
 /// Largest number of entries read from one host directory.
 pub const MAX_DIRECTORY_ENTRIES: usize = 4096;
 
+/// How much a guest may add to one writable mount while it is mounted.
+///
+/// Usage is net growth relative to the mount's contents when it was created:
+/// bytes added by writes and extending truncation, minus bytes freed by
+/// shrinking or deleting files, and entries created minus entries deleted.
+/// Freeing never takes usage below zero, so deleting files that were already
+/// there does not raise the limit beyond the configured amount. Changes made
+/// by host processes are not counted.
+#[derive(Debug)]
+pub(super) struct Budget {
+    max_bytes: Option<u64>,
+    max_entries: Option<u64>,
+    used: Mutex<Usage>,
+}
+
+#[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
+pub struct Usage {
+    pub bytes: u64,
+    pub entries: u64,
+}
+
+impl Budget {
+    /// Account for a file changing from `from` to `to` bytes. Growth beyond
+    /// the byte limit fails with `ERROR_DISK_FULL` and charges nothing.
+    pub(super) fn resize(&self, from: u64, to: u64) -> Result<(), u32> {
+        let mut used = self.used.lock().expect("mount usage");
+        if to > from {
+            let bytes = used.bytes.checked_add(to - from).ok_or(ERROR_DISK_FULL)?;
+            if self.max_bytes.is_some_and(|max| bytes > max) {
+                return Err(ERROR_DISK_FULL);
+            }
+            used.bytes = bytes;
+        } else {
+            used.bytes = used.bytes.saturating_sub(from - to);
+        }
+        Ok(())
+    }
+
+    /// Reserve one new file or directory entry.
+    pub(super) fn add_entry(&self) -> Result<(), u32> {
+        let mut used = self.used.lock().expect("mount usage");
+        if self.max_entries.is_some_and(|max| used.entries >= max) {
+            return Err(ERROR_DISK_FULL);
+        }
+        used.entries += 1;
+        Ok(())
+    }
+
+    /// Release an entry, and the bytes of a file, that no longer exist.
+    pub(super) fn remove_entry(&self, bytes: u64) {
+        let mut used = self.used.lock().expect("mount usage");
+        used.entries = used.entries.saturating_sub(1);
+        used.bytes = used.bytes.saturating_sub(bytes);
+    }
+
+    fn usage(&self) -> Usage {
+        *self.used.lock().expect("mount usage")
+    }
+}
+
 /// A guest drive letter backed by a host directory.
 pub struct HostMount {
     drive: u8,
     root: Arc<OwnedFd>,
     writable: bool,
     max_file_size: u64,
+    budget: Arc<Budget>,
 }
 
 impl HostMount {
@@ -98,7 +159,34 @@ impl HostMount {
             root: Arc::new(root),
             writable,
             max_file_size: DEFAULT_MAX_FILE_SIZE,
+            budget: Arc::new(Budget {
+                max_bytes: None,
+                max_entries: None,
+                used: Mutex::default(),
+            }),
         })
+    }
+
+    /// Limit the net bytes and the net number of files and directories guest
+    /// operations may add to this mount. `None` leaves that amount
+    /// unlimited; the per-file size limit still applies. Operations that
+    /// would exceed a limit fail with `ERROR_DISK_FULL`.
+    pub fn with_quota(mut self, bytes: Option<u64>, entries: Option<u64>) -> Self {
+        self.budget = Arc::new(Budget {
+            max_bytes: bytes,
+            max_entries: entries,
+            used: Mutex::default(),
+        });
+        self
+    }
+
+    /// Net bytes and entries guest operations have added so far.
+    pub fn usage(&self) -> Usage {
+        self.budget.usage()
+    }
+
+    pub(super) fn budget(&self) -> &Arc<Budget> {
+        &self.budget
     }
 
     /// Limit how large guest writes and truncation may make any file on this
@@ -657,6 +745,37 @@ mod tests {
             );
         }
         std::fs::remove_dir_all(&path).unwrap();
+    }
+
+    #[test]
+    fn budgets_charge_net_growth_and_never_credit_below_zero() {
+        let budget = Budget {
+            max_bytes: Some(10),
+            max_entries: Some(1),
+            used: Mutex::default(),
+        };
+        assert_eq!(budget.resize(0, 10), Ok(()));
+        assert_eq!(budget.resize(10, 11), Err(ERROR_DISK_FULL));
+        assert_eq!(budget.usage().bytes, 10);
+        // Shrinking a larger file that predates the mount frees at most what
+        // was charged.
+        assert_eq!(budget.resize(100, 0), Ok(()));
+        assert_eq!(budget.usage().bytes, 0);
+        assert_eq!(budget.resize(u64::MAX - 1, u64::MAX), Ok(()));
+        assert_eq!(budget.resize(0, u64::MAX), Err(ERROR_DISK_FULL));
+        assert_eq!(budget.add_entry(), Ok(()));
+        assert_eq!(budget.add_entry(), Err(ERROR_DISK_FULL));
+        budget.remove_entry(5);
+        budget.remove_entry(5);
+        assert_eq!(
+            budget.usage(),
+            Usage {
+                bytes: 0,
+                entries: 0
+            }
+        );
+        let unlimited = HostMount::new('d', Path::new("/"), true).unwrap();
+        assert_eq!(unlimited.budget().resize(0, u64::MAX), Ok(()));
     }
 
     #[test]

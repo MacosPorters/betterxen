@@ -70,6 +70,28 @@ struct FileInstance {
 pub(super) struct HostFile {
     file: File,
     max_size: u64,
+    budget: Arc<host_files::Budget>,
+}
+
+impl HostFile {
+    fn len(&self) -> Result<u64, u32> {
+        self.file
+            .metadata()
+            .map(|metadata| metadata.len())
+            .map_err(|error| host_files::win32_error(&error))
+    }
+
+    /// Change the file to `length` bytes, charging growth to the mount.
+    fn set_len(&self, length: u64) -> Result<(), u32> {
+        let old = self.len()?;
+        self.budget.resize(old, length)?;
+        if let Err(error) = self.file.set_len(length) {
+            let now = self.len().unwrap_or(old);
+            let _ = self.budget.resize(length, now);
+            return Err(host_files::win32_error(&error));
+        }
+        Ok(())
+    }
 }
 
 impl OpenFile {
@@ -182,9 +204,23 @@ fn create_host_file(
         create: !exists,
     };
     let host_name = entry.map_or(name, |entry| entry.name);
+    let budget = Arc::clone(resolved.mount.budget());
+    if !exists && let Err(error) = budget.add_entry() {
+        return state.fail(teb, error, INVALID_HANDLE);
+    }
     let (file, id) = match host_files::open_file(&parent, &host_name, &request, expected) {
         Ok(opened) => opened,
-        Err(error) => return state.fail(teb, host_files::win32_error(&error), INVALID_HANDLE),
+        Err(error) => {
+            if !exists {
+                budget.remove_entry(0);
+            }
+            return state.fail(teb, host_files::win32_error(&error), INVALID_HANDLE);
+        }
+    };
+    let host = HostFile {
+        file,
+        max_size: resolved.mount.max_file_size(),
+        budget,
     };
     let key = id.key();
     if !check_sharing(&objects, &Target::Host(id), access, share) {
@@ -192,9 +228,9 @@ fn create_host_file(
     }
     if exists
         && matches!(disposition, 2 | 5)
-        && let Err(error) = file.set_len(0)
+        && let Err(error) = host.set_len(0)
     {
-        return state.fail(teb, host_files::win32_error(&error), INVALID_HANDLE);
+        return state.fail(teb, error, INVALID_HANDLE);
     }
     if matches!(disposition, 2 | 4) {
         state.fail(teb, if exists { ALREADY_EXISTS } else { 0 }, 0)?;
@@ -207,10 +243,7 @@ fn create_host_file(
             open_access: access,
             access,
             share,
-            host: Some(Arc::new(HostFile {
-                file,
-                max_size: resolved.mount.max_file_size(),
-            })),
+            host: Some(Arc::new(host)),
         }),
     );
     Ok(handle)
@@ -276,20 +309,30 @@ fn change_host_namespace(
         Err(error) => return state.fail(teb, error, 0),
     };
     use host_files::Kind::{Directory, File};
+    let budget = resolved.mount.budget();
     let result = match (change, entry) {
         (HostChange::CreateDirectory, Some(_)) => return state.fail(teb, ALREADY_EXISTS, 0),
-        (HostChange::CreateDirectory, None) => match host_files::create_directory(&parent, &name) {
-            Err(error) if error.raw_os_error() == Some(libc::EEXIST) => {
-                return state.fail(teb, ALREADY_EXISTS, 0);
+        (HostChange::CreateDirectory, None) => {
+            if let Err(error) = budget.add_entry() {
+                return state.fail(teb, error, 0);
             }
-            result => result,
-        },
+            match host_files::create_directory(&parent, &name) {
+                Ok(()) => Ok(()),
+                Err(error) => {
+                    budget.remove_entry(0);
+                    if error.raw_os_error() == Some(libc::EEXIST) {
+                        return state.fail(teb, ALREADY_EXISTS, 0);
+                    }
+                    Err(error)
+                }
+            }
+        }
         (_, None) => return state.fail(teb, FILE_NOT_FOUND, 0),
         (HostChange::RemoveDirectory, Some(entry)) if entry.kind == File => {
             return state.fail(teb, ERROR_DIRECTORY, 0);
         }
         (HostChange::RemoveDirectory, Some(entry)) => {
-            host_files::remove(&parent, &entry.name, &entry)
+            host_files::remove(&parent, &entry.name, &entry).map(|()| budget.remove_entry(0))
         }
         (HostChange::DeleteFile, Some(entry)) if entry.kind == Directory => {
             return state.fail(teb, ERROR_ACCESS_DENIED, 0);
@@ -300,6 +343,7 @@ fn change_host_namespace(
                 return state.fail(teb, SHARING_VIOLATION, 0);
             }
             host_files::remove(&parent, &entry.name, &entry)
+                .map(|()| budget.remove_entry(entry.size))
         }
     };
     match result {
@@ -625,6 +669,7 @@ fn temp_file_name(
                 return Err(ERROR_ACCESS_DENIED);
             }
             let directory = resolved.directory()?;
+            let budget = resolved.mount.budget();
             let occupied = if unique == 0 {
                 host_files::list(&directory)
                     .map_err(|error| host_files::win32_error(&error))?
@@ -650,11 +695,14 @@ fn temp_file_name(
                         write: true,
                         create: true,
                     };
-                    match host_files::open_file(&directory, name, &request, None) {
-                        Ok(_) => Ok(true),
+                    budget.add_entry()?;
+                    let created = match host_files::open_file(&directory, name, &request, None) {
+                        Ok(_) => return Ok(true),
                         Err(error) if error.raw_os_error() == Some(libc::EEXIST) => Ok(false),
                         Err(error) => Err(host_files::win32_error(&error)),
-                    }
+                    };
+                    budget.remove_entry(0);
+                    created
                 },
             )
         });
@@ -1466,9 +1514,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if position > host.max_size {
                 return truncate.fail(cpu.gs_base, DISK_FULL, 0);
             }
-            return match host.file.set_len(position) {
+            return match host.set_len(position) {
                 Ok(()) => Ok(1),
-                Err(error) => truncate.fail(cpu.gs_base, host_files::win32_error(&error), 0),
+                Err(error) => truncate.fail(cpu.gs_base, error, 0),
             };
         }
         if position > MAX_BYTES as u64 {
@@ -1539,9 +1587,29 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 {
                     return state.fail(cpu.gs_base, ERROR_NOACCESS, 0);
                 }
+                // Charge growth before writing; settle on what the file holds
+                // if the write fails part way.
+                let grown = if writing && count != 0 {
+                    let old = match host.len() {
+                        Ok(old) => old,
+                        Err(error) => return state.fail(cpu.gs_base, error, 0),
+                    };
+                    if let Err(error) = host.budget.resize(old, old.max(end)) {
+                        return state.fail(cpu.gs_base, error, 0);
+                    }
+                    Some((old, old.max(end)))
+                } else {
+                    None
+                };
                 let transferred = match host_transfer(&host.file, position, &mut buffer, writing) {
                     Ok(transferred) => transferred,
-                    Err(error) => return state.fail(cpu.gs_base, error, 0),
+                    Err(error) => {
+                        if let Some((old, charged)) = grown {
+                            let now = host.len().unwrap_or(old);
+                            let _ = host.budget.resize(charged, now);
+                        }
+                        return state.fail(cpu.gs_base, error, 0);
+                    }
                 };
                 if !writing && transferred != 0 {
                     memory

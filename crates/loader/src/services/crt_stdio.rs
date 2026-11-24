@@ -23,6 +23,7 @@ const EINVAL: u32 = 22;
 const ENOENT: u32 = 2;
 const ENOMEM: u32 = 12;
 const EACCES: u32 = 13;
+const ENOSPC: u32 = 28;
 const MAX_FORMAT: usize = 4096;
 const MAX_OUTPUT: usize = 1 << 20;
 const MAX_PATH: usize = 260;
@@ -55,7 +56,8 @@ struct Stream {
     /// Host file kept open so a writable stream can replace its contents on
     /// `fclose`. Read-only host opens drop the descriptor after the initial
     /// read into `data`.
-    host: Option<File>,
+    /// The mount's quota is charged when `fclose` writes the contents back.
+    host: Option<(File, Arc<host_files::Budget>)>,
     /// True when the stream was opened on a mounted drive (even if `host` was
     /// dropped after a read-only load). Host-backed streams skip the in-memory
     /// name store on `fclose`.
@@ -258,9 +260,20 @@ fn errno_from_host(code: u32) -> u32 {
     match code {
         2 | 3 => ENOENT, // FILE_NOT_FOUND / PATH_NOT_FOUND
         5 => EACCES,     // ACCESS_DENIED
+        112 => ENOSPC,   // DISK_FULL
         _ => EINVAL,
     }
 }
+
+type HostStream = Result<
+    (
+        String,
+        Vec<u8>,
+        Option<(File, Arc<host_files::Budget>)>,
+        usize,
+    ),
+    u32,
+>;
 
 fn open_host_stream(
     state: &Arc<ServicesState>,
@@ -268,7 +281,7 @@ fn open_host_stream(
     readable: bool,
     writable: bool,
     truncate: bool,
-) -> Result<(String, Vec<u8>, Option<File>, usize), u32> {
+) -> HostStream {
     let resolved = match host_files::resolve(&state.mounts, path, valid_host_component) {
         Some(Ok(resolved)) => resolved,
         Some(Err(code)) => return Err(errno_from_host(code)),
@@ -301,10 +314,23 @@ fn open_host_stream(
         .as_ref()
         .map_or(name.as_str(), |entry| entry.name.as_str());
     let expected = entry.as_ref().map(|entry| entry.id);
-    let (mut file, _) = host_files::open_file(&parent, host_name, &request, expected)
-        .map_err(|error| errno_from_host(host_files::win32_error(&error)))?;
+    let budget = Arc::clone(resolved.mount.budget());
+    if request.create {
+        budget.add_entry().map_err(errno_from_host)?;
+    }
+    let (mut file, _) = match host_files::open_file(&parent, host_name, &request, expected) {
+        Ok(opened) => opened,
+        Err(error) => {
+            if request.create {
+                budget.remove_entry(0);
+            }
+            return Err(errno_from_host(host_files::win32_error(&error)));
+        }
+    };
     if exists && truncate {
+        let length = file.metadata().map_err(|_| EACCES)?.len();
         file.set_len(0).map_err(|_| EACCES)?;
+        budget.resize(length, 0).map_err(errno_from_host)?;
     }
     let mut data = Vec::new();
     if !truncate {
@@ -315,7 +341,7 @@ fn open_host_stream(
     }
     let host = if writable {
         file.seek(SeekFrom::Start(0)).map_err(|_| EACCES)?;
-        Some(file)
+        Some((file, budget))
     } else {
         None
     };
@@ -626,13 +652,30 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         };
         if stream.kind == Kind::File && stream.host_backed {
             if stream.dirty
-                && let Some(mut file) = stream.host.take()
+                && let Some((mut file, budget)) = stream.host.take()
             {
-                let failed = file
-                    .set_len(stream.data.len() as u64)
-                    .and_then(|_| file.seek(SeekFrom::Start(0)))
-                    .and_then(|_| file.write_all(&stream.data))
-                    .is_err();
+                let target = stream.data.len() as u64;
+                let failed = match file.metadata() {
+                    Err(_) => true,
+                    Ok(metadata) => {
+                        let length = metadata.len();
+                        if let Err(code) = budget.resize(length, target) {
+                            set_errno(memory, cpu.gs_base, errno_from_host(code))?;
+                            return Ok(u64::from(u32::MAX));
+                        }
+                        let failed = file
+                            .set_len(target)
+                            .and_then(|_| file.seek(SeekFrom::Start(0)))
+                            .and_then(|_| file.write_all(&stream.data))
+                            .is_err();
+                        if failed {
+                            // Charge what the host file now holds.
+                            let now = file.metadata().map_or(length, |metadata| metadata.len());
+                            let _ = budget.resize(target, now);
+                        }
+                        failed
+                    }
+                };
                 if failed {
                     set_errno(memory, cpu.gs_base, EACCES)?;
                     return Ok(u64::from(u32::MAX));

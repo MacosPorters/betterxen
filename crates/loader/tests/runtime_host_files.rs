@@ -1122,3 +1122,99 @@ fn crt_fopen_writes_through_a_writable_host_mount() {
     assert_eq!(&got, b"stdio");
     assert_eq!(guest.call("fclose", &[reader]), 0);
 }
+
+/// A mount quota bounds the net bytes and entries guest operations add,
+/// across Win32 file calls, GetTempFileNameW and CRT streams. Exceeding it
+/// fails like a full volume: ERROR_DISK_FULL (112) and no host change.
+#[test]
+fn mount_quota_bounds_net_bytes_and_entries_added_by_the_guest() {
+    let tree = Tree::new("mount-quota");
+    let root = tree.path("root");
+    std::fs::create_dir_all(&root).unwrap();
+    std::fs::write(root.join("old.bin"), b"666666").unwrap();
+    let mount = HostMount::new('G', &root, true)
+        .unwrap()
+        .with_quota(Some(10), Some(2));
+    let mut guest = guest_with(vec![mount]);
+    let rw = GENERIC_READ | GENERIC_WRITE;
+
+    // First entry: a new file that takes six of the ten bytes.
+    let a = open(&mut guest, r"G:\a.bin", rw, 0, CREATE_NEW);
+    assert_ne!(a, INVALID);
+    assert!(write(&mut guest, a, b"aaaaaa"));
+    assert!(!write(&mut guest, a, b"bbbbb"));
+    assert_eq!(guest.error(), 112);
+    assert_eq!(std::fs::read(root.join("a.bin")).unwrap(), b"aaaaaa");
+    // Overwriting existing bytes adds nothing.
+    assert_eq!(guest.call("SetFilePointerEx", &[a, 0, 0, 0]), 1);
+    assert!(write(&mut guest, a, b"cccccc"));
+    // Extending with SetEndOfFile is charged the same way.
+    assert_eq!(guest.call("SetFilePointerEx", &[a, 11, 0, 0]), 1);
+    assert_eq!(guest.call("SetEndOfFile", &[a]), 0);
+    assert_eq!(guest.error(), 112);
+    assert_eq!(guest.call("SetFilePointerEx", &[a, 10, 0, 0]), 1);
+    assert_eq!(guest.call("SetEndOfFile", &[a]), 1);
+    assert_eq!(std::fs::metadata(root.join("a.bin")).unwrap().len(), 10);
+    assert_eq!(guest.call("CloseHandle", &[a]), 1);
+
+    // Second entry: a directory. Then every entry is used.
+    put_path(&mut guest, PATH, r"G:\dir");
+    assert_eq!(guest.call("CreateDirectoryW", &[PATH, 0]), 1);
+    assert_eq!(open(&mut guest, r"G:\b.bin", rw, 0, CREATE_NEW), INVALID);
+    assert_eq!(guest.error(), 112);
+    assert!(!root.join("b.bin").exists());
+    put_path(&mut guest, PATH, r"G:\dir2");
+    assert_eq!(guest.call("CreateDirectoryW", &[PATH, 0]), 0);
+    assert_eq!(guest.error(), 112);
+    assert!(!root.join("dir2").exists());
+    let prefix = OTHER_PATH;
+    put_path(&mut guest, prefix, "tmp");
+    put_path(&mut guest, PATH, r"G:\dir");
+    assert_eq!(
+        guest.call("GetTempFileNameW", &[PATH, prefix, 0, BUFFER]),
+        0
+    );
+    assert_eq!(guest.error(), 112);
+    assert_eq!(std::fs::read_dir(root.join("dir")).unwrap().count(), 0);
+    // Clear of COUNT and FIND_DATA, which later calls overwrite.
+    let path = OTHER_PATH + 0x100;
+    let mode = OTHER_PATH + 0x140;
+    guest.memory.write_bytes(path, b"G:\\crt.bin\0").unwrap();
+    guest.memory.write_bytes(mode, b"wb\0").unwrap();
+    assert_eq!(guest.call("fopen", &[path, mode]), 0);
+    assert!(!root.join("crt.bin").exists());
+    // Opening an existing file needs no new entry.
+    let old = open(&mut guest, r"G:\old.bin", rw, 0, OPEN_EXISTING);
+    assert_ne!(old, INVALID);
+
+    // Deleting a.bin returns its entry and its ten bytes.
+    put_path(&mut guest, PATH, r"G:\a.bin");
+    assert_eq!(guest.call("DeleteFileW", &[PATH]), 1);
+    let b = open(&mut guest, r"G:\b.bin", rw, 0, CREATE_NEW);
+    assert_ne!(b, INVALID);
+    assert!(write(&mut guest, b, b"0123456789"));
+    assert!(!write(&mut guest, b, b"x"));
+    assert_eq!(guest.error(), 112);
+
+    // Shrinking a file that predates the mount frees its bytes for others.
+    assert_eq!(guest.call("SetEndOfFile", &[old]), 1);
+    assert_eq!(std::fs::metadata(root.join("old.bin")).unwrap().len(), 0);
+    assert!(write(&mut guest, b, b"abcdef"));
+    assert!(!write(&mut guest, b, b"x"));
+    assert_eq!(guest.error(), 112);
+    assert_eq!(std::fs::metadata(root.join("b.bin")).unwrap().len(), 16);
+    assert_eq!(guest.call("CloseHandle", &[b]), 1);
+    assert_eq!(guest.call("CloseHandle", &[old]), 1);
+
+    // Removing the directory frees an entry, so a CRT stream may create a
+    // file, but writing past the byte budget fails at fclose.
+    put_path(&mut guest, PATH, r"G:\dir");
+    assert_eq!(guest.call("RemoveDirectoryW", &[PATH]), 1);
+    let payload = OTHER_PATH + 0x180;
+    guest.memory.write_bytes(payload, b"z").unwrap();
+    let stream = guest.call("fopen", &[path, mode]);
+    assert_ne!(stream, 0);
+    assert_eq!(guest.call("fwrite", &[payload, 1, 1, stream]), 1);
+    assert_eq!(guest.call("fclose", &[stream]) as u32, u32::MAX);
+    assert_eq!(std::fs::metadata(root.join("crt.bin")).unwrap().len(), 0);
+}
