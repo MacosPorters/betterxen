@@ -60,6 +60,8 @@ remains unsupported.
 
 - Added an immediate-dispatch XAsync subset (`XAsyncRun`, `XAsyncGetStatus`, `XAsyncCancel`, `XAsyncGetResultSize`) on `xgameruntime.dll`. Work and completion run on the calling thread before `XAsyncRun` returns; waiting GetStatus is unsupported. Builds on the existing manual `XTaskQueue*` services.
 
+- Added in-memory CRT FILE streams (`fopen`/`fclose`/`fread`/`fwrite`/`fseek`/`ftell`/`feof`/`ferror`/`rewind`, `__acrt_iob_func`) and a runtime environment block for `getenv` / `GetEnvironmentVariableA` / `GetEnvironmentVariableW`. Stream names are single path components with no host mapping; the host process environment is not exposed by default.
+
 - Added guest system information, memory status, calendar time conversion, interrupt time and sleeping. The guest sees a configurable simulated machine (`GuestSystemProfile`, one processor by default), kept separate from the detected host hardware (`HostCapabilities`). Sleeping goes through the injectable clock, so tests advance time deterministically. An original PE32+ fixture verifies `SYSTEM_INFO`, `MEMORYSTATUSEX` and `SYSTEMTIME` layouts and leap-year handling against dates computed independently.
 
 - Added services that call guest code and continue when it returns. The import dispatcher can run a sequence of guest callbacks on a checked stack frame, verifying the Win64 nonvolatile registers after each one. The CRT uses this for `qsort`, `qsort_s`, `bsearch`, `bsearch_s`, `_initterm`, `_initterm_e`, onexit tables, `atexit` and `_cexit`. Kernel32 uses it for `InitOnceExecuteOnce` and `FlsFree` cleanup callbacks. Original guest comparators and initializers in a PE32+ fixture verify ordering, stop-on-failure and register preservation.

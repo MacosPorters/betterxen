@@ -12,6 +12,7 @@
 mod crt;
 mod crt_callbacks;
 mod crt_ctype;
+mod crt_env;
 mod crt_locale;
 mod crt_stdio;
 mod events;
@@ -209,6 +210,8 @@ pub struct ServicesState {
     gdk_queue_changed: Condvar,
     gdk_async: Arc<Mutex<gdk_async::AsyncOps>>,
     locale: Mutex<crt_locale::LocaleState>,
+    stdio: Mutex<crt_stdio::StdioState>,
+    env: Mutex<crt_env::EnvState>,
     winsock_changed: Condvar,
     pub next_alloc_addr: AtomicU64,
     pub graphics: Arc<Mutex<crate::graphics::GraphicsContext>>,
@@ -235,6 +238,8 @@ impl ServicesState {
             gdk_queue_changed: Condvar::new(),
             gdk_async: Arc::new(Mutex::default()),
             locale: Mutex::default(),
+            stdio: Mutex::default(),
+            env: Mutex::default(),
             winsock_changed: Condvar::new(),
             next_alloc_addr: AtomicU64::new(0x0000_0002_0000_0000), // 8GB guest heap
             graphics: Arc::new(Mutex::new(crate::graphics::GraphicsContext::new())),
@@ -407,7 +412,8 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     crt::register_conversions(registry);
     crt_locale::register(registry, &state);
     crt_ctype::register(registry);
-    crt_stdio::register(registry);
+    crt_stdio::register(registry, &state);
+    crt_env::register(registry, &state);
     crt_callbacks::register(registry, &state);
     heap::register(registry, &state);
 

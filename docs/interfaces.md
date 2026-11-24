@@ -244,8 +244,19 @@ C-locale `ctype.h` predicates (`isalnum`, `isalpha`, `isdigit`, `islower`,
 `%s`, `%d`/`%i`, `%u`, `%x`/`%X`, `%p`, optional zero-pad widths, and
 `l`/`ll`/`z`/`t` length modifiers. Null string arguments render as
 `(null)`. Other conversions stop the guest. Transfers stay within the 1 MiB
-service budget. Stream I/O (`fopen`, `printf`, and the `__stdio_common_*`
-helpers) is not implemented yet.
+service budget.
+
+In-memory FILE streams implement `fopen`, `fclose`, `fread`, `fwrite`,
+`fseek`, `ftell`, `feof`, `ferror`, `rewind` and `__acrt_iob_func`. Names are
+single path components with no host mapping; up to 32 streams and 16 MiB per
+file. Stdin is empty, stdout/stderr discard writes. `printf`/`fprintf` and
+the `__stdio_common_*` helpers remain unimplemented.
+
+### Process environment
+
+`getenv`, `GetEnvironmentVariableA` and `GetEnvironmentVariableW` read a
+runtime-owned environment block (defaults include `OS=Windows_NT`). The host
+process environment is not visible unless an entry is installed here.
 
 ### XAsync helpers
 

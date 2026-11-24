@@ -274,23 +274,34 @@ impl SymbolDb {
 
     fn populate_crt_stdio(&mut self) {
         let m = "api-ms-win-crt-stdio-l1-1-0.dll";
+        for module in [m, "ucrtbase.dll"] {
+            for symbol in [
+                "sprintf",
+                "snprintf",
+                "fopen",
+                "fclose",
+                "fread",
+                "fwrite",
+                "fseek",
+                "ftell",
+                "feof",
+                "ferror",
+                "rewind",
+                "__acrt_iob_func",
+            ] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
         for (sym, libc) in &[
-            ("fclose", "fclose"),
             ("fflush", "fflush"),
             ("fgetc", "fgetc"),
             ("fgetpos", "fgetpos"),
-            ("fopen", "fopen"),
             ("fputc", "fputc"),
             ("fputs", "fputs"),
-            ("fread", "fread"),
-            ("fseek", "fseek"),
             ("fsetpos", "fsetpos"),
-            ("ftell", "ftell"),
-            ("fwrite", "fwrite"),
             ("getc", "getc"),
             ("putc", "putc"),
             ("puts", "puts"),
-            ("rewind", "rewind"),
             ("remove", "remove"),
             ("rename", "rename"),
             ("setvbuf", "setvbuf"),
@@ -306,11 +317,6 @@ impl SymbolDb {
         ] {
             self.crt_native(m, sym, libc, "ISO C stdio — identical ABI on macOS");
         }
-        for module in [m, "ucrtbase.dll"] {
-            for symbol in ["sprintf", "snprintf"] {
-                self.ins(module, symbol, Classification::StandardService);
-            }
-        }
         // Windows stdio_common helpers — stub (they're UCRT internal; we don't need them
         // when the guest calls the public functions)
         for sym in &[
@@ -323,7 +329,6 @@ impl SymbolDb {
             "__stdio_common_vswprintf_s",
             "__stdio_common_vswscanf",
             "__stdio_common_vsnwprintf_s",
-            "__acrt_iob_func",
         ] {
             self.win32_stub(
                 m,
@@ -371,7 +376,7 @@ impl SymbolDb {
             self.crt_native(m, sym, libc, "ISO C runtime — identical ABI on macOS");
         }
         for module in [m, "ucrtbase.dll"] {
-            for symbol in ["_errno", "_get_errno", "_set_errno"] {
+            for symbol in ["_errno", "_get_errno", "_set_errno", "getenv"] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
@@ -900,6 +905,14 @@ impl SymbolDb {
     fn populate_win32_profile(&mut self) {
         for module in ["kernel32.dll", "api-ms-win-core-profile-l1-1-0.dll"] {
             for symbol in ["QueryPerformanceCounter", "QueryPerformanceFrequency"] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
+        for module in [
+            "kernel32.dll",
+            "api-ms-win-core-processenvironment-l1-1-0.dll",
+        ] {
+            for symbol in ["GetEnvironmentVariableA", "GetEnvironmentVariableW"] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
