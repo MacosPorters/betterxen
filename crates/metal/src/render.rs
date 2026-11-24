@@ -101,7 +101,43 @@ impl NativeCompute {
             colors,
             [width, height],
             clear,
-            sampled,
+            sampled.map(|(texture, sampler)| (texture.raw(), sampler)),
+        )
+        .map(|(pixels, _)| pixels)
+    }
+
+    /// As [`Self::render_rgba8_sampled`], with level 0 of a BC1 upload bound
+    /// natively as a `BC1_RGBA` texture to fragment texture slot 0 and the
+    /// sampler to fragment sampler slot 0.
+    ///
+    /// # Errors
+    ///
+    /// As [`Self::render_rgba8_sampled`], and for an invalid BC1 level.
+    #[allow(clippy::too_many_arguments)]
+    pub fn render_rgba8_sampled_bc1(
+        &self,
+        source: &str,
+        entries: [&str; 2],
+        vertices: &[[f32; 4]; 3],
+        colors: &[[f32; 4]; 3],
+        extent: [usize; 2],
+        clear: [u8; 4],
+        texture: &Bc1Upload<'_>,
+        sampler: &crate::sampler::MetalSampler,
+    ) -> Result<Vec<u8>, MetalError> {
+        let level = texture
+            .subresource(0, 0)
+            .map_err(|error| MetalError::new("texture subresource", format!("{error:?}")))?;
+        self.validate_bc_extent(level.width, level.height, "BC1")?;
+        let bc1 = self.new_bc1_texture(&level)?;
+        self.render_rgba8_internal(
+            source,
+            entries,
+            vertices,
+            colors,
+            extent,
+            clear,
+            Some((&bc1, sampler)),
         )
         .map(|(pixels, _)| pixels)
     }
@@ -116,7 +152,7 @@ impl NativeCompute {
         [width, height]: [usize; 2],
         clear: [u8; 4],
         sampled: Option<(
-            &crate::texture_pipeline::MetalRgba8Texture,
+            &ProtocolObject<dyn MTLTexture>,
             &crate::sampler::MetalSampler,
         )>,
     ) -> Result<(Vec<u8>, Option<f64>), MetalError> {
@@ -228,7 +264,7 @@ impl NativeCompute {
                 encoder.setVertexBuffer_offset_atIndex(Some(&positions), 0, 0);
                 encoder.setVertexBuffer_offset_atIndex(Some(&colors), 0, 1);
                 if let Some((tex, samp)) = sampled {
-                    encoder.setFragmentTexture_atIndex(Some(tex.raw()), 0);
+                    encoder.setFragmentTexture_atIndex(Some(tex), 0);
                     encoder.setFragmentSamplerState_atIndex(Some(samp.raw()), 0);
                 }
                 encoder.drawPrimitives_vertexStart_vertexCount(MTLPrimitiveType::Triangle, 0, 3);

@@ -204,6 +204,7 @@ dependencies = [
  "sha2",
  "xenora-metal",
  "xenora-shader",
+ "xenora-texture",
 ]
 
 [[package]]

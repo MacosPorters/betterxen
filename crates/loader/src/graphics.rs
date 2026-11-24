@@ -122,6 +122,9 @@ pub enum GraphicsError {
     /// An indexed draw reads past its index buffer or fetches a vertex,
     /// after applying the base vertex, outside its vertex buffer.
     IndexOutOfRange,
+    /// A descriptor heap, view, sampler, root signature or binding outside
+    /// the supported texture-binding subset. Nothing is drawn.
+    Unsupported(&'static str),
 }
 
 impl std::fmt::Display for GraphicsError {
@@ -149,6 +152,7 @@ impl std::fmt::Display for GraphicsError {
                 write!(f, "unsupported index buffer format {format}")
             }
             Self::IndexOutOfRange => write!(f, "indexed draw outside its index or vertex buffer"),
+            Self::Unsupported(what) => write!(f, "unsupported texture binding: {what}"),
         }
     }
 }
@@ -180,6 +184,9 @@ pub struct GraphicsResource {
     pub state: ResourceStates,
     pub guest_backing_addr: Option<u64>,
     pub data: Vec<u8>,
+    /// The texel format of a `Texture2D` that a shader resource view may
+    /// read; `None` for buffers and textures without a supported format.
+    pub texture_format: Option<TextureFormat>,
 }
 
 /// Index size of an index buffer view, as `D3D12_INDEX_BUFFER_VIEW::Format`.
@@ -207,6 +214,377 @@ impl IndexFormat {
         }
     }
 }
+
+/// Descriptors one shader-visible heap may hold.
+pub const MAX_DESCRIPTORS_PER_HEAP: u32 = 64;
+/// Largest width and height of a texture that a shader resource view reads.
+pub const MAX_TEXTURE_DIMENSION: u32 = 64;
+/// `GetDescriptorHandleIncrementSize` for both supported heap types. Guests
+/// must query it rather than assume a value, as on D3D12.
+pub const DESCRIPTOR_HANDLE_INCREMENT: u32 = 32;
+/// `D3D12_DESCRIPTOR_RANGE_OFFSET_APPEND`.
+pub const DESCRIPTOR_RANGE_OFFSET_APPEND: u32 = 0xffff_ffff;
+/// DXGI format code of `R8G8B8A8_UNORM`.
+pub const DXGI_FORMAT_R8G8B8A8_UNORM: u32 = 28;
+/// DXGI format code of `BC1_UNORM`.
+pub const DXGI_FORMAT_BC1_UNORM: u32 = 71;
+/// `D3D12_FILTER_MIN_MAG_MIP_POINT`.
+pub const D3D12_FILTER_MIN_MAG_MIP_POINT: u32 = 0;
+/// `D3D12_TEXTURE_ADDRESS_MODE_CLAMP`.
+pub const D3D12_TEXTURE_ADDRESS_MODE_CLAMP: u32 = 3;
+
+/// Largest image the software reference draws for a textured draw.
+pub const MAX_SOFTWARE_TEXTURED_PIXELS: usize = 4096;
+/// The read-only `D3D12_RESOURCE_STATES`: vertex and constant buffer, index
+/// buffer, depth read, both shader resources, indirect argument and copy source.
+const READ_STATES: u32 = 0x1 | 0x2 | 0x20 | 0x40 | 0x80 | 0x200 | 0x800;
+
+/// Bit that separates GPU descriptor handles from CPU ones.
+const GPU_DESCRIPTOR_SPACE: u64 = 1 << 63;
+
+/// `D3D12_DESCRIPTOR_HEAP_TYPE`; only the two shader-visible types exist here.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DescriptorHeapType {
+    CbvSrvUav,
+    Sampler,
+}
+
+impl DescriptorHeapType {
+    /// The heap type for a `D3D12_DESCRIPTOR_HEAP_TYPE` value: `CBV_SRV_UAV`
+    /// (0) or `SAMPLER` (1). `RTV` (2) and `DSV` (3) are not supported.
+    pub const fn from_d3d12(value: u32) -> Option<Self> {
+        match value {
+            0 => Some(Self::CbvSrvUav),
+            1 => Some(Self::Sampler),
+            _ => None,
+        }
+    }
+}
+
+/// `D3D12_CPU_DESCRIPTOR_HANDLE`: the destination of descriptor creation.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct CpuDescriptorHandle(pub u64);
+
+/// `D3D12_GPU_DESCRIPTOR_HANDLE`: the base of a bound descriptor table.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct GpuDescriptorHandle(pub u64);
+
+/// `handle + index × increment`, or `None` when the sum leaves the heap's
+/// 32-bit offset field and would carry into its heap ID.
+const fn offset_handle(handle: u64, index: u32) -> Option<u64> {
+    let offset = (handle as u32 as u64) + index as u64 * DESCRIPTOR_HANDLE_INCREMENT as u64;
+    if offset > u32::MAX as u64 {
+        None
+    } else {
+        Some(handle & !(u32::MAX as u64) | offset)
+    }
+}
+
+impl CpuDescriptorHandle {
+    /// The handle `index` increments past this one, if it stays in its heap's range.
+    pub const fn offset(self, index: u32) -> Option<Self> {
+        match offset_handle(self.0, index) {
+            Some(value) => Some(Self(value)),
+            None => None,
+        }
+    }
+}
+
+impl GpuDescriptorHandle {
+    /// The handle `index` increments past this one, if it stays in its heap's range.
+    pub const fn offset(self, index: u32) -> Option<Self> {
+        match offset_handle(self.0, index) {
+            Some(value) => Some(Self(value)),
+            None => None,
+        }
+    }
+}
+
+/// Texel format of a texture a shader resource view reads. Rows are linear
+/// and tightly packed: four bytes per texel, or eight bytes per 4×4 block.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum TextureFormat {
+    Rgba8Unorm,
+    Bc1Unorm,
+}
+
+impl TextureFormat {
+    /// The format for a DXGI format code, `R8G8B8A8_UNORM` (28) or `BC1_UNORM` (71).
+    pub const fn from_dxgi(format: u32) -> Option<Self> {
+        match format {
+            DXGI_FORMAT_R8G8B8A8_UNORM => Some(Self::Rgba8Unorm),
+            DXGI_FORMAT_BC1_UNORM => Some(Self::Bc1Unorm),
+            _ => None,
+        }
+    }
+
+    /// Bytes of one level of `width` × `height` texels.
+    pub const fn level_size(self, width: u32, height: u32) -> usize {
+        match self {
+            Self::Rgba8Unorm => width as usize * height as usize * 4,
+            Self::Bc1Unorm => width.div_ceil(4) as usize * height.div_ceil(4) as usize * 8,
+        }
+    }
+}
+
+/// `D3D12_SRV_DIMENSION`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum SrvDimension {
+    Buffer,
+    Texture1D,
+    Texture2D,
+    Texture2DArray,
+    Texture3D,
+    TextureCube,
+}
+
+/// `D3D12_SHADER_RESOURCE_VIEW_DESC` for a single-level 2D texture.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct ShaderResourceViewDesc {
+    /// DXGI format code; it must equal the resource's format.
+    pub format: u32,
+    pub view_dimension: SrvDimension,
+    pub most_detailed_mip: u32,
+    pub mip_levels: u32,
+}
+
+/// `D3D12_SAMPLER_DESC` without the fields that point sampling ignores.
+#[derive(Clone, Copy, Debug, PartialEq)]
+pub struct SamplerDesc {
+    pub filter: u32,
+    pub address_u: u32,
+    pub address_v: u32,
+    pub address_w: u32,
+    pub mip_lod_bias: f32,
+    pub min_lod: f32,
+    pub max_lod: f32,
+}
+
+impl SamplerDesc {
+    /// Point filtering with clamp addressing, the one supported state.
+    pub const fn point_clamp() -> Self {
+        Self {
+            filter: D3D12_FILTER_MIN_MAG_MIP_POINT,
+            address_u: D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+            address_v: D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+            address_w: D3D12_TEXTURE_ADDRESS_MODE_CLAMP,
+            mip_lod_bias: 0.0,
+            min_lod: 0.0,
+            max_lod: f32::MAX,
+        }
+    }
+
+    fn validate(&self) -> Result<(), GraphicsError> {
+        if self.filter != D3D12_FILTER_MIN_MAG_MIP_POINT {
+            return Err(GraphicsError::Unsupported(
+                "sampler filter other than point",
+            ));
+        }
+        if [self.address_u, self.address_v, self.address_w]
+            .iter()
+            .any(|&mode| mode != D3D12_TEXTURE_ADDRESS_MODE_CLAMP)
+        {
+            return Err(GraphicsError::Unsupported(
+                "sampler address mode other than clamp",
+            ));
+        }
+        if self.mip_lod_bias != 0.0
+            || self.min_lod != 0.0
+            || self.max_lod.is_nan()
+            || self.max_lod < 0.0
+        {
+            return Err(GraphicsError::Unsupported("sampler LOD bias or range"));
+        }
+        Ok(())
+    }
+}
+
+/// `D3D12_DESCRIPTOR_RANGE_TYPE`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum DescriptorRangeType {
+    Srv,
+    Uav,
+    Cbv,
+    Sampler,
+}
+
+/// `D3D12_DESCRIPTOR_RANGE`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct DescriptorRange {
+    pub range_type: DescriptorRangeType,
+    pub num_descriptors: u32,
+    pub base_shader_register: u32,
+    pub register_space: u32,
+    pub offset_in_descriptors_from_table_start: u32,
+}
+
+/// `D3D12_SHADER_VISIBILITY`.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum ShaderVisibility {
+    All,
+    Vertex,
+    Hull,
+    Domain,
+    Geometry,
+    Pixel,
+}
+
+/// `D3D12_ROOT_PARAMETER`, by parameter type.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub enum RootParameter {
+    DescriptorTable {
+        ranges: Vec<DescriptorRange>,
+        visibility: ShaderVisibility,
+    },
+    Constants32Bit {
+        visibility: ShaderVisibility,
+    },
+    Cbv {
+        visibility: ShaderVisibility,
+    },
+    Srv {
+        visibility: ShaderVisibility,
+    },
+    Uav {
+        visibility: ShaderVisibility,
+    },
+}
+
+/// `D3D12_ROOT_SIGNATURE_DESC`, unserialized. Static samplers are counted only:
+/// any is unsupported.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct RootSignatureDesc {
+    pub parameters: Vec<RootParameter>,
+    pub static_sampler_count: u32,
+}
+
+/// The supported root signature: one pixel-stage table holding `t0` and
+/// one holding `s0`, at these root parameter indices.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+struct RootSignature {
+    srv_parameter: u32,
+    sampler_parameter: u32,
+}
+
+impl RootSignature {
+    fn from_desc(desc: &RootSignatureDesc) -> Result<Self, GraphicsError> {
+        if desc.static_sampler_count != 0 {
+            return Err(GraphicsError::Unsupported("static samplers"));
+        }
+        if desc.parameters.len() != 2 {
+            return Err(GraphicsError::Unsupported(
+                "root signature other than one SRV table and one sampler table",
+            ));
+        }
+        let mut srv = None;
+        let mut sampler = None;
+        for (index, parameter) in (0u32..).zip(&desc.parameters) {
+            let RootParameter::DescriptorTable { ranges, visibility } = parameter else {
+                return Err(GraphicsError::Unsupported(
+                    "root constants or root descriptors",
+                ));
+            };
+            if *visibility != ShaderVisibility::Pixel {
+                return Err(GraphicsError::Unsupported("shader stage other than pixel"));
+            }
+            let [range] = ranges.as_slice() else {
+                return Err(GraphicsError::Unsupported(
+                    "descriptor table with other than one range",
+                ));
+            };
+            if range.num_descriptors != 1
+                || range.base_shader_register != 0
+                || range.register_space != 0
+                || !matches!(
+                    range.offset_in_descriptors_from_table_start,
+                    0 | DESCRIPTOR_RANGE_OFFSET_APPEND
+                )
+            {
+                return Err(GraphicsError::Unsupported(
+                    "descriptor range other than one descriptor at register 0, space 0",
+                ));
+            }
+            let slot = match range.range_type {
+                DescriptorRangeType::Srv => &mut srv,
+                DescriptorRangeType::Sampler => &mut sampler,
+                DescriptorRangeType::Uav => return Err(GraphicsError::Unsupported("UAV range")),
+                DescriptorRangeType::Cbv => return Err(GraphicsError::Unsupported("CBV range")),
+            };
+            if slot.replace(index).is_some() {
+                return Err(GraphicsError::Unsupported(
+                    "more than one table of one range type",
+                ));
+            }
+        }
+        match (srv, sampler) {
+            (Some(srv_parameter), Some(sampler_parameter)) => Ok(Self {
+                srv_parameter,
+                sampler_parameter,
+            }),
+            _ => Err(GraphicsError::Unsupported(
+                "root signature without both an SRV and a sampler table",
+            )),
+        }
+    }
+}
+
+/// One filled descriptor.
+#[derive(Clone, Copy, Debug)]
+enum Descriptor {
+    Srv {
+        resource: GraphicsHandle,
+        format: TextureFormat,
+    },
+    Sampler(SamplerDesc),
+}
+
+/// Per-execution root signature, heap and table bindings.
+#[derive(Default)]
+struct TableBindings {
+    root_signature: Option<(GraphicsHandle, RootSignature)>,
+    srv_heap: Option<u32>,
+    sampler_heap: Option<u32>,
+    tables: [Option<GpuDescriptorHandle>; 2],
+}
+
+/// A shader-visible descriptor heap.
+struct DescriptorHeap {
+    handle: GraphicsHandle,
+    heap_type: DescriptorHeapType,
+    slots: Vec<Option<Descriptor>>,
+}
+
+/// The texture a textured draw samples, as bound through its SRV table.
+#[derive(Clone, Copy, Debug)]
+pub struct TextureView<'a> {
+    pub format: TextureFormat,
+    pub width: u32,
+    pub height: u32,
+    /// The single level: tightly packed rows of texels or BC1 blocks.
+    pub bytes: &'a [u8],
+}
+
+/// One triangle that samples a bound texture in the pixel stage.
+///
+/// Each vertex supplies a float4 position and a float4 texture coordinate,
+/// whose `xy` are the normalized `uv` the pixel stage samples at.
+#[derive(Clone, Copy, Debug)]
+pub struct TexturedDraw<'a> {
+    pub positions: [[f32; 4]; 3],
+    pub texcoords: [[f32; 4]; 3],
+    pub viewport: (usize, usize),
+    pub clear_color: [u8; 4],
+    pub texture: TextureView<'a>,
+    pub sampler: SamplerDesc,
+}
+
+/// Backend renderer for textured draws.
+pub type TexturedBackendRenderer<'a> =
+    dyn Fn(&TexturedDraw<'_>) -> Result<Vec<u8>, GraphicsError> + 'a;
+
+/// Shared thread-safe textured backend renderer instance.
+pub type SharedTexturedBackendRenderer =
+    Arc<dyn Fn(&TexturedDraw<'_>) -> Result<Vec<u8>, GraphicsError> + Send + Sync>;
 
 /// Primitive Draw Command recorded in a Command List.
 #[derive(Clone, Debug)]
@@ -246,6 +624,19 @@ pub enum GraphicsCommand {
         start_index_location: u32,
         base_vertex_location: i32,
         start_instance_location: u32,
+    },
+    /// `SetDescriptorHeaps`: at most one heap of each type.
+    SetDescriptorHeaps {
+        heaps: Vec<GraphicsHandle>,
+    },
+    /// `SetGraphicsRootSignature`; it clears every bound table.
+    SetGraphicsRootSignature {
+        root_signature: GraphicsHandle,
+    },
+    /// `SetGraphicsRootDescriptorTable`.
+    SetGraphicsRootDescriptorTable {
+        root_parameter_index: u32,
+        base: GpuDescriptorHandle,
     },
 }
 
@@ -298,9 +689,14 @@ pub struct GraphicsContext {
     allocators: HashMap<GraphicsHandle, GraphicsCommandAllocator>,
     command_lists: HashMap<GraphicsHandle, GraphicsCommandList>,
     resources: HashMap<GraphicsHandle, GraphicsResource>,
+    /// Descriptor heaps by handle ID, which descriptor handles encode.
+    descriptor_heaps: HashMap<u32, DescriptorHeap>,
+    root_signatures: HashMap<GraphicsHandle, RootSignature>,
     pub last_presentation: Arc<Mutex<FramePresentation>>,
     /// Optional active backend renderer (e.g. Native Metal).
     backend: Option<SharedBackendRenderer>,
+    /// Optional backend renderer for textured draws.
+    textured_backend: Option<SharedTexturedBackendRenderer>,
     backend_id: GraphicsBackendId,
 }
 
@@ -319,8 +715,11 @@ impl GraphicsContext {
             allocators: HashMap::new(),
             command_lists: HashMap::new(),
             resources: HashMap::new(),
+            descriptor_heaps: HashMap::new(),
+            root_signatures: HashMap::new(),
             last_presentation: Arc::new(Mutex::new(FramePresentation::default())),
             backend: None,
+            textured_backend: None,
             backend_id: GraphicsBackendId::SoftwareReference,
         }
     }
@@ -337,10 +736,20 @@ impl GraphicsContext {
         self.backend_id = GraphicsBackendId::MetalNative;
     }
 
+    /// Install a native Metal adapter for draws that sample a bound texture.
+    pub fn set_metal_textured_backend<F>(&mut self, renderer: F)
+    where
+        F: Fn(&TexturedDraw<'_>) -> Result<Vec<u8>, GraphicsError> + Send + Sync + 'static,
+    {
+        self.textured_backend = Some(Arc::new(renderer));
+        self.backend_id = GraphicsBackendId::MetalNative;
+    }
+
     /// Explicitly configure context to require native Metal without an attached backend.
     /// Useful for verifying that missing/unsupported Metal devices correctly fail execution.
     pub fn set_require_metal_without_backend(&mut self) {
         self.backend = None;
+        self.textured_backend = None;
         self.backend_id = GraphicsBackendId::MetalNative;
     }
 
@@ -447,6 +856,8 @@ impl GraphicsContext {
             return Err(GraphicsError::InvalidDeviceHandle);
         }
         let handle = self.allocate_handle();
+        let texture_format = (desc.dimension == ResourceDimension::Texture2D && desc.format_rgba8)
+            .then_some(TextureFormat::Rgba8Unorm);
         let size = match desc.dimension {
             ResourceDimension::Buffer => desc.width as usize,
             ResourceDimension::Texture2D => (desc.width as usize) * (desc.height as usize) * 4,
@@ -460,6 +871,7 @@ impl GraphicsContext {
                 state: initial_state,
                 guest_backing_addr: guest_addr,
                 data: vec![0u8; size],
+                texture_format,
             },
         );
         Ok(handle)
@@ -559,7 +971,10 @@ impl GraphicsContext {
             .resources
             .get(&resource)
             .ok_or(GraphicsError::InvalidResourceHandle)?;
-        if offset + stride > res.data.len() && res.guest_backing_addr.is_none() {
+        let end = offset
+            .checked_add(stride)
+            .ok_or(GraphicsError::InvalidDescriptor)?;
+        if end > res.data.len() && res.guest_backing_addr.is_none() {
             return Err(GraphicsError::InvalidDescriptor);
         }
         cmd_list.commands.push(GraphicsCommand::SetVertexBuffer {
@@ -661,6 +1076,319 @@ impl GraphicsContext {
         Ok(())
     }
 
+    /// Create a committed single-level 2D texture (`CreateCommittedResource`
+    /// with a texture format). `format` is a DXGI code: `R8G8B8A8_UNORM` (28)
+    /// or `BC1_UNORM` (71). BC1 sizes must be multiples of four.
+    pub fn create_committed_texture2d(
+        &mut self,
+        device: GraphicsHandle,
+        width: u32,
+        height: u32,
+        format: u32,
+        initial_state: ResourceStates,
+        guest_addr: Option<u64>,
+    ) -> Result<GraphicsHandle, GraphicsError> {
+        if !self.devices.contains_key(&device) {
+            return Err(GraphicsError::InvalidDeviceHandle);
+        }
+        let format =
+            TextureFormat::from_dxgi(format).ok_or(GraphicsError::Unsupported("texture format"))?;
+        if !(1..=MAX_TEXTURE_DIMENSION).contains(&width)
+            || !(1..=MAX_TEXTURE_DIMENSION).contains(&height)
+        {
+            return Err(GraphicsError::Unsupported("texture size"));
+        }
+        if format == TextureFormat::Bc1Unorm
+            && (!width.is_multiple_of(4) || !height.is_multiple_of(4))
+        {
+            return Err(GraphicsError::Unsupported(
+                "BC1 size not a multiple of four",
+            ));
+        }
+        let handle = self.allocate_handle();
+        self.resources.insert(
+            handle,
+            GraphicsResource {
+                handle,
+                desc: ResourceDesc {
+                    dimension: ResourceDimension::Texture2D,
+                    width: u64::from(width),
+                    height,
+                    depth_or_array_size: 1,
+                    mip_levels: 1,
+                    format_rgba8: format == TextureFormat::Rgba8Unorm,
+                },
+                state: initial_state,
+                guest_backing_addr: guest_addr,
+                data: vec![0; format.level_size(width, height)],
+                texture_format: Some(format),
+            },
+        );
+        Ok(handle)
+    }
+
+    /// Create a descriptor heap (`CreateDescriptorHeap`). `heap_type` is a
+    /// `D3D12_DESCRIPTOR_HEAP_TYPE`; only shader-visible `CBV_SRV_UAV` and
+    /// `SAMPLER` heaps of 1 to [`MAX_DESCRIPTORS_PER_HEAP`] descriptors exist.
+    pub fn create_descriptor_heap(
+        &mut self,
+        device: GraphicsHandle,
+        heap_type: u32,
+        num_descriptors: u32,
+        shader_visible: bool,
+    ) -> Result<GraphicsHandle, GraphicsError> {
+        if !self.devices.contains_key(&device) {
+            return Err(GraphicsError::InvalidDeviceHandle);
+        }
+        let heap_type = DescriptorHeapType::from_d3d12(heap_type)
+            .ok_or(GraphicsError::Unsupported("descriptor heap type"))?;
+        if !shader_visible {
+            return Err(GraphicsError::Unsupported(
+                "non-shader-visible descriptor heap",
+            ));
+        }
+        if !(1..=MAX_DESCRIPTORS_PER_HEAP).contains(&num_descriptors) {
+            return Err(GraphicsError::Unsupported("descriptor heap capacity"));
+        }
+        let handle = self.allocate_handle();
+        if handle.id >= 1 << 31 {
+            return Err(GraphicsError::Unsupported(
+                "descriptor heap ID space exhausted",
+            ));
+        }
+        self.descriptor_heaps.insert(
+            handle.id,
+            DescriptorHeap {
+                handle,
+                heap_type,
+                slots: vec![None; num_descriptors as usize],
+            },
+        );
+        Ok(handle)
+    }
+
+    fn descriptor_heap(&self, heap: GraphicsHandle) -> Result<&DescriptorHeap, GraphicsError> {
+        self.descriptor_heaps
+            .get(&heap.id)
+            .filter(|found| found.handle == heap)
+            .ok_or(GraphicsError::InvalidDescriptor)
+    }
+
+    /// `GetCPUDescriptorHandleForHeapStart`.
+    pub fn cpu_descriptor_handle_for_heap_start(
+        &self,
+        heap: GraphicsHandle,
+    ) -> Result<CpuDescriptorHandle, GraphicsError> {
+        self.descriptor_heap(heap)?;
+        Ok(CpuDescriptorHandle(u64::from(heap.id) << 32))
+    }
+
+    /// `GetGPUDescriptorHandleForHeapStart`.
+    pub fn gpu_descriptor_handle_for_heap_start(
+        &self,
+        heap: GraphicsHandle,
+    ) -> Result<GpuDescriptorHandle, GraphicsError> {
+        self.descriptor_heap(heap)?;
+        Ok(GpuDescriptorHandle(
+            GPU_DESCRIPTOR_SPACE | u64::from(heap.id) << 32,
+        ))
+    }
+
+    /// `GetDescriptorHandleIncrementSize` for a `D3D12_DESCRIPTOR_HEAP_TYPE`.
+    pub fn descriptor_handle_increment_size(&self, heap_type: u32) -> Result<u32, GraphicsError> {
+        DescriptorHeapType::from_d3d12(heap_type)
+            .map(|_| DESCRIPTOR_HANDLE_INCREMENT)
+            .ok_or(GraphicsError::Unsupported("descriptor heap type"))
+    }
+
+    /// The heap ID and slot index a handle in the given space names, if it is
+    /// increment-aligned. The heap itself is not checked.
+    fn decode_descriptor_handle(value: u64, gpu: bool) -> Option<(u32, usize)> {
+        if (value & GPU_DESCRIPTOR_SPACE != 0) != gpu {
+            return None;
+        }
+        let value = value & !GPU_DESCRIPTOR_SPACE;
+        let offset = value as u32;
+        if !offset.is_multiple_of(DESCRIPTOR_HANDLE_INCREMENT) {
+            return None;
+        }
+        Some((
+            (value >> 32) as u32,
+            (offset / DESCRIPTOR_HANDLE_INCREMENT) as usize,
+        ))
+    }
+
+    fn write_descriptor(
+        &mut self,
+        dest: CpuDescriptorHandle,
+        heap_type: DescriptorHeapType,
+        descriptor: Descriptor,
+    ) -> Result<(), GraphicsError> {
+        let (heap_id, index) = Self::decode_descriptor_handle(dest.0, false)
+            .ok_or(GraphicsError::InvalidDescriptor)?;
+        let heap = self
+            .descriptor_heaps
+            .get_mut(&heap_id)
+            .ok_or(GraphicsError::InvalidDescriptor)?;
+        if heap.heap_type != heap_type {
+            return Err(GraphicsError::InvalidDescriptor);
+        }
+        let slot = heap
+            .slots
+            .get_mut(index)
+            .ok_or(GraphicsError::InvalidDescriptor)?;
+        *slot = Some(descriptor);
+        Ok(())
+    }
+
+    /// `CreateShaderResourceView` of a single-level 2D texture into a
+    /// `CBV_SRV_UAV` heap slot. The view format must equal the resource's.
+    pub fn create_shader_resource_view(
+        &mut self,
+        resource: GraphicsHandle,
+        desc: &ShaderResourceViewDesc,
+        dest: CpuDescriptorHandle,
+    ) -> Result<(), GraphicsError> {
+        let res = self
+            .resources
+            .get(&resource)
+            .ok_or(GraphicsError::InvalidResourceHandle)?;
+        if res.desc.dimension != ResourceDimension::Texture2D
+            || res.desc.depth_or_array_size != 1
+            || res.desc.mip_levels != 1
+        {
+            return Err(GraphicsError::Unsupported(
+                "SRV of a resource other than a single-level, single-slice 2D texture",
+            ));
+        }
+        if desc.view_dimension != SrvDimension::Texture2D {
+            return Err(GraphicsError::Unsupported(
+                "SRV dimension other than Texture2D",
+            ));
+        }
+        if desc.most_detailed_mip != 0 || desc.mip_levels != 1 {
+            return Err(GraphicsError::Unsupported(
+                "SRV mip range other than level 0",
+            ));
+        }
+        let format = TextureFormat::from_dxgi(desc.format)
+            .ok_or(GraphicsError::Unsupported("SRV format"))?;
+        if res.texture_format != Some(format) {
+            return Err(GraphicsError::Unsupported(
+                "SRV format differs from the resource",
+            ));
+        }
+        let max = u64::from(MAX_TEXTURE_DIMENSION);
+        if !(1..=max).contains(&res.desc.width) || !(1..=max).contains(&u64::from(res.desc.height))
+        {
+            return Err(GraphicsError::Unsupported("texture size"));
+        }
+        self.write_descriptor(
+            dest,
+            DescriptorHeapType::CbvSrvUav,
+            Descriptor::Srv { resource, format },
+        )
+    }
+
+    /// `CreateSampler` into a `SAMPLER` heap slot.
+    pub fn create_sampler(
+        &mut self,
+        desc: &SamplerDesc,
+        dest: CpuDescriptorHandle,
+    ) -> Result<(), GraphicsError> {
+        desc.validate()?;
+        self.write_descriptor(
+            dest,
+            DescriptorHeapType::Sampler,
+            Descriptor::Sampler(*desc),
+        )
+    }
+
+    /// `CreateRootSignature` from an unserialized description. Only one
+    /// pixel-stage table for `t0` and one for `s0` are supported.
+    pub fn create_root_signature(
+        &mut self,
+        device: GraphicsHandle,
+        desc: &RootSignatureDesc,
+    ) -> Result<GraphicsHandle, GraphicsError> {
+        if !self.devices.contains_key(&device) {
+            return Err(GraphicsError::InvalidDeviceHandle);
+        }
+        let root_signature = RootSignature::from_desc(desc)?;
+        let handle = self.allocate_handle();
+        self.root_signatures.insert(handle, root_signature);
+        Ok(handle)
+    }
+
+    fn recording_list(
+        &mut self,
+        list: GraphicsHandle,
+    ) -> Result<&mut GraphicsCommandList, GraphicsError> {
+        let cmd_list = self
+            .command_lists
+            .get_mut(&list)
+            .ok_or(GraphicsError::InvalidCommandListHandle)?;
+        if !cmd_list.is_recording {
+            return Err(GraphicsError::CommandListNotRecording);
+        }
+        Ok(cmd_list)
+    }
+
+    /// Record `SetDescriptorHeaps`: at most one heap of each type.
+    pub fn cmd_set_descriptor_heaps(
+        &mut self,
+        list: GraphicsHandle,
+        heaps: &[GraphicsHandle],
+    ) -> Result<(), GraphicsError> {
+        let mut types = Vec::with_capacity(heaps.len());
+        for &heap in heaps {
+            let heap_type = self.descriptor_heap(heap)?.heap_type;
+            if types.contains(&heap_type) {
+                return Err(GraphicsError::InvalidDescriptor);
+            }
+            types.push(heap_type);
+        }
+        self.recording_list(list)?
+            .commands
+            .push(GraphicsCommand::SetDescriptorHeaps {
+                heaps: heaps.to_vec(),
+            });
+        Ok(())
+    }
+
+    /// Record `SetGraphicsRootSignature`.
+    pub fn cmd_set_graphics_root_signature(
+        &mut self,
+        list: GraphicsHandle,
+        root_signature: GraphicsHandle,
+    ) -> Result<(), GraphicsError> {
+        if !self.root_signatures.contains_key(&root_signature) {
+            return Err(GraphicsError::InvalidDescriptor);
+        }
+        self.recording_list(list)?
+            .commands
+            .push(GraphicsCommand::SetGraphicsRootSignature { root_signature });
+        Ok(())
+    }
+
+    /// Record `SetGraphicsRootDescriptorTable`. When the list executes, the
+    /// command checks the base against the bound root signature and the bound
+    /// heap of the table's type. A draw then reads the descriptor it names.
+    pub fn cmd_set_graphics_root_descriptor_table(
+        &mut self,
+        list: GraphicsHandle,
+        root_parameter_index: u32,
+        base: GpuDescriptorHandle,
+    ) -> Result<(), GraphicsError> {
+        self.recording_list(list)?
+            .commands
+            .push(GraphicsCommand::SetGraphicsRootDescriptorTable {
+                root_parameter_index,
+                base,
+            });
+        Ok(())
+    }
+
     /// Close command list.
     pub fn close_command_list(&mut self, list: GraphicsHandle) -> Result<(), GraphicsError> {
         let cmd_list = self
@@ -738,6 +1466,11 @@ impl GraphicsContext {
         backend_renderer: Option<&BackendRenderer<'_>>,
         backend_id: GraphicsBackendId,
     ) -> Result<ExecutionOutcome, GraphicsError> {
+        let textured_backend = self.textured_backend.clone();
+        let textured_renderer: Option<&TexturedBackendRenderer<'_>> = match &textured_backend {
+            Some(arc) => Some(arc.as_ref()),
+            None => None,
+        };
         let cmd_queue = self
             .queues
             .get_mut(&queue)
@@ -766,6 +1499,7 @@ impl GraphicsContext {
         let mut index_buffer: Option<(GraphicsHandle, usize, IndexFormat)> = None;
         let mut rendered_output: Option<Vec<u8>> = None;
         let mut draw_count = 0usize;
+        let mut bindings = TableBindings::default();
 
         for cmd in &cmd_list.commands {
             match cmd {
@@ -807,6 +1541,59 @@ impl GraphicsContext {
                     offset,
                     format,
                 } => index_buffer = Some((*resource, *offset, *format)),
+                GraphicsCommand::SetDescriptorHeaps { heaps } => {
+                    let (mut srv_heap, mut sampler_heap) = (None, None);
+                    for &heap in heaps {
+                        match self.descriptor_heap(heap)?.heap_type {
+                            DescriptorHeapType::CbvSrvUav => srv_heap = Some(heap.id),
+                            DescriptorHeapType::Sampler => sampler_heap = Some(heap.id),
+                        }
+                    }
+                    // Changing the heaps invalidates tables bound in the old
+                    // ones; setting the same heaps again keeps them.
+                    if (srv_heap, sampler_heap) != (bindings.srv_heap, bindings.sampler_heap) {
+                        bindings.tables = [None; 2];
+                    }
+                    bindings.srv_heap = srv_heap;
+                    bindings.sampler_heap = sampler_heap;
+                }
+                GraphicsCommand::SetGraphicsRootSignature { root_signature } => {
+                    let layout = *self
+                        .root_signatures
+                        .get(root_signature)
+                        .ok_or(GraphicsError::InvalidDescriptor)?;
+                    // A different root signature invalidates every root
+                    // argument; setting the bound one again keeps them.
+                    if bindings.root_signature.map(|(handle, _)| handle) != Some(*root_signature) {
+                        bindings.tables = [None; 2];
+                    }
+                    bindings.root_signature = Some((*root_signature, layout));
+                }
+                GraphicsCommand::SetGraphicsRootDescriptorTable {
+                    root_parameter_index,
+                    base,
+                } => {
+                    let (_, layout) = bindings
+                        .root_signature
+                        .ok_or(GraphicsError::InvalidDescriptor)?;
+                    let bound_heap = if *root_parameter_index == layout.srv_parameter {
+                        bindings.srv_heap
+                    } else if *root_parameter_index == layout.sampler_parameter {
+                        bindings.sampler_heap
+                    } else {
+                        return Err(GraphicsError::InvalidDescriptor);
+                    };
+                    // The base must name a slot of the bound heap of the
+                    // table's type; its contents are read at the draw.
+                    let (heap_id, index) = Self::decode_descriptor_handle(base.0, true)
+                        .ok_or(GraphicsError::InvalidDescriptor)?;
+                    if bound_heap != Some(heap_id)
+                        || index >= self.descriptor_heaps[&heap_id].slots.len()
+                    {
+                        return Err(GraphicsError::InvalidDescriptor);
+                    }
+                    bindings.tables[*root_parameter_index as usize] = Some(*base);
+                }
                 GraphicsCommand::DrawIndexedInstanced {
                     index_count_per_instance,
                     instance_count,
@@ -822,6 +1609,9 @@ impl GraphicsContext {
                     }
                     if *index_count_per_instance == 0 || *instance_count == 0 {
                         continue;
+                    }
+                    if bindings.root_signature.is_some() {
+                        return Err(GraphicsError::Unsupported("textured indexed draws"));
                     }
                     let vertices = self.fetch_indexed_triangle(
                         memory,
@@ -848,8 +1638,41 @@ impl GraphicsContext {
                 }
                 GraphicsCommand::DrawInstanced {
                     vertex_count_per_instance,
-                    ..
+                    instance_count,
+                    start_vertex_location,
+                    start_instance_location,
                 } => {
+                    if let Some((_, root_signature)) = bindings.root_signature {
+                        if *vertex_count_per_instance == 0 || *instance_count == 0 {
+                            continue;
+                        }
+                        if *vertex_count_per_instance != 3
+                            || *instance_count != 1
+                            || *start_instance_location != 0
+                        {
+                            return Err(GraphicsError::Unsupported(
+                                "textured draw other than one instance of three vertices",
+                            ));
+                        }
+                        let pixels = self.textured_draw(
+                            memory,
+                            &bindings,
+                            root_signature,
+                            (vertex_resource, vertex_offset, vertex_stride),
+                            *start_vertex_location,
+                            (viewport, clear_color),
+                            (textured_renderer, backend_id),
+                        )?;
+                        draw_count += 1;
+                        if let Some(th) = target_handle
+                            && let Some(target_res) = self.resources.get_mut(&th)
+                            && target_res.data.len() >= pixels.len()
+                        {
+                            target_res.data[..pixels.len()].copy_from_slice(&pixels);
+                        }
+                        rendered_output = Some(pixels);
+                        continue;
+                    }
                     if *vertex_count_per_instance < 3 {
                         continue;
                     }
@@ -976,6 +1799,184 @@ impl GraphicsContext {
         Ok(vertices)
     }
 
+    /// Resolve the SRV and sampler tables, fetch one textured triangle and
+    /// draw it on the textured backend, or on the software reference when no
+    /// native backend is required. Every check runs before any drawing.
+    #[allow(clippy::too_many_arguments)]
+    fn textured_draw(
+        &self,
+        memory: &GuestMemory,
+        bindings: &TableBindings,
+        root_signature: RootSignature,
+        (vertex_resource, vertex_offset, vertex_stride): (Option<GraphicsHandle>, usize, usize),
+        start_vertex: u32,
+        (viewport, clear_color): ((usize, usize), [u8; 4]),
+        (renderer, backend_id): (Option<&TexturedBackendRenderer<'_>>, GraphicsBackendId),
+    ) -> Result<Vec<u8>, GraphicsError> {
+        let srv = self.resolve_table(bindings, root_signature.srv_parameter, bindings.srv_heap)?;
+        let sampler = self.resolve_table(
+            bindings,
+            root_signature.sampler_parameter,
+            bindings.sampler_heap,
+        )?;
+        let (Descriptor::Srv { resource, format }, Descriptor::Sampler(sampler)) = (srv, sampler)
+        else {
+            return Err(GraphicsError::InvalidDescriptor);
+        };
+        let texture = self
+            .resources
+            .get(&resource)
+            .ok_or(GraphicsError::InvalidResourceHandle)?;
+        // COMMON promotes to a shader-resource read. Any other state must
+        // include PIXEL_SHADER_RESOURCE and combine it only with read states.
+        let state = texture.state.0;
+        if state != ResourceStates::COMMON.0
+            && (state & ResourceStates::PIXEL_SHADER_RESOURCE.0 == 0 || state & !READ_STATES != 0)
+        {
+            return Err(GraphicsError::ResourceLifetimeViolation);
+        }
+        let width = texture.desc.width as u32;
+        let height = texture.desc.height;
+        let mut bytes = vec![0; format.level_size(width, height)];
+        Self::read_resource(texture, memory, 0, &mut bytes)?;
+
+        let vertex_res = vertex_resource
+            .and_then(|handle| self.resources.get(&handle))
+            .ok_or(GraphicsError::InvalidResourceHandle)?;
+        if vertex_stride < 32 {
+            return Err(GraphicsError::InvalidDescriptor);
+        }
+        let mut positions = [[0.0f32; 4]; 3];
+        let mut texcoords = [[0.0f32; 4]; 3];
+        for (k, (position, texcoord)) in positions.iter_mut().zip(&mut texcoords).enumerate() {
+            let at = (start_vertex as usize + k)
+                .checked_mul(vertex_stride)
+                .and_then(|bytes| bytes.checked_add(vertex_offset))
+                .ok_or(GraphicsError::IndexOutOfRange)?;
+            let mut raw = [0u8; 32];
+            Self::read_resource(vertex_res, memory, at, &mut raw)?;
+            for (value, bytes) in position
+                .iter_mut()
+                .chain(texcoord.iter_mut())
+                .zip(raw.as_chunks::<4>().0)
+            {
+                *value = f32::from_le_bytes(*bytes);
+            }
+        }
+
+        let draw = TexturedDraw {
+            positions,
+            texcoords,
+            viewport,
+            clear_color,
+            texture: TextureView {
+                format,
+                width,
+                height,
+                bytes: &bytes,
+            },
+            sampler,
+        };
+        if let Some(renderer) = renderer {
+            renderer(&draw)
+        } else if backend_id == GraphicsBackendId::MetalNative {
+            Err(GraphicsError::NativeMetalRequired)
+        } else {
+            Self::execute_software_reference_textured_draw(&draw)
+        }
+    }
+
+    /// The descriptor that the table at `parameter` names in the bound heap.
+    fn resolve_table(
+        &self,
+        bindings: &TableBindings,
+        parameter: u32,
+        bound_heap: Option<u32>,
+    ) -> Result<Descriptor, GraphicsError> {
+        let base = bindings.tables[parameter as usize].ok_or(GraphicsError::InvalidDescriptor)?;
+        let (heap_id, index) =
+            Self::decode_descriptor_handle(base.0, true).ok_or(GraphicsError::InvalidDescriptor)?;
+        if bound_heap != Some(heap_id) {
+            return Err(GraphicsError::InvalidDescriptor);
+        }
+        self.descriptor_heaps
+            .get(&heap_id)
+            .and_then(|heap| heap.slots.get(index).copied().flatten())
+            .ok_or(GraphicsError::InvalidDescriptor)
+    }
+
+    /// Software reference for a textured triangle: the coverage rule of
+    /// [`Self::execute_software_reference_draw`], affine interpolation of the
+    /// texture coordinate at each pixel center, and point sampling with
+    /// clamp addressing (`texel = min(floor(clamp(u, 0, 1) * width), width - 1)`).
+    /// BC1 levels are decoded with `xenora_texture::decode_bc1`. Positions
+    /// must have `w == 1`.
+    pub fn execute_software_reference_textured_draw(
+        draw: &TexturedDraw<'_>,
+    ) -> Result<Vec<u8>, GraphicsError> {
+        if draw.positions.iter().any(|position| position[3] != 1.0) {
+            return Err(GraphicsError::Unsupported(
+                "software textured draw with w other than 1",
+            ));
+        }
+        if draw
+            .positions
+            .iter()
+            .chain(&draw.texcoords)
+            .flatten()
+            .any(|value| !value.is_finite())
+        {
+            return Err(GraphicsError::InvalidDescriptor);
+        }
+        let max = MAX_TEXTURE_DIMENSION;
+        if !(1..=max).contains(&draw.texture.width) || !(1..=max).contains(&draw.texture.height) {
+            return Err(GraphicsError::Unsupported("texture size"));
+        }
+        let texels = decode_texture(&draw.texture)?;
+        let (tex_w, tex_h) = (draw.texture.width as usize, draw.texture.height as usize);
+        let (w, h) = draw.viewport;
+        let count = w
+            .checked_mul(h)
+            .filter(|&count| (1..=MAX_SOFTWARE_TEXTURED_PIXELS).contains(&count))
+            .ok_or(GraphicsError::InvalidViewport)?;
+        let mut pixels = draw.clear_color.repeat(count);
+        let window = |p: [f32; 4]| [(p[0] + 1.0) * 0.5 * w as f32, (1.0 - p[1]) * 0.5 * h as f32];
+        let [p0, p1, p2] = draw.positions.map(window);
+        let edge = |a: [f32; 2], b: [f32; 2], c: [f32; 2]| -> f32 {
+            (c[0] - a[0]) * (b[1] - a[1]) - (c[1] - a[1]) * (b[0] - a[0])
+        };
+        let area = edge(p0, p1, p2);
+        if area.abs() < 1e-5 {
+            return Ok(pixels);
+        }
+        let nearest = |coord: f32, size: usize| {
+            ((f64::from(coord.clamp(0.0, 1.0)) * size as f64).floor() as usize).min(size - 1)
+        };
+        for y in 0..h {
+            for x in 0..w {
+                let pt = [x as f32 + 0.5, y as f32 + 0.5];
+                let b = [edge(p1, p2, pt), edge(p2, p0, pt), edge(p0, p1, pt)];
+                let inside = if area > 0.0 {
+                    b.iter().all(|&e| e >= 0.0)
+                } else {
+                    b.iter().all(|&e| e <= 0.0)
+                };
+                if !inside {
+                    continue;
+                }
+                let [u, v] = [0, 1].map(|axis| {
+                    (0..3)
+                        .map(|k| b[k] / area * draw.texcoords[k][axis])
+                        .sum::<f32>()
+                });
+                let texel = (nearest(v, tex_h) * tex_w + nearest(u, tex_w)) * 4;
+                let idx = (y * w + x) * 4;
+                pixels[idx..idx + 4].copy_from_slice(&texels[texel..texel + 4]);
+            }
+        }
+        Ok(pixels)
+    }
+
     /// Read `out.len()` bytes at `offset` of a resource, from its guest backing
     /// when it has one. The range must lie inside the resource's size.
     fn read_resource(
@@ -1055,5 +2056,32 @@ impl GraphicsContext {
         }
 
         Ok(pixels)
+    }
+}
+
+/// Row-major RGBA8 texels of a bound texture level.
+fn decode_texture(texture: &TextureView<'_>) -> Result<Vec<u8>, GraphicsError> {
+    let (width, height) = (texture.width as usize, texture.height as usize);
+    if texture.bytes.len() != texture.format.level_size(texture.width, texture.height) {
+        return Err(GraphicsError::InvalidDescriptor);
+    }
+    match texture.format {
+        TextureFormat::Rgba8Unorm => Ok(texture.bytes.to_vec()),
+        TextureFormat::Bc1Unorm => {
+            let blocks_wide = width.div_ceil(4);
+            let mut texels = vec![0; width * height * 4];
+            for (block_index, block) in texture.bytes.as_chunks::<8>().0.iter().enumerate() {
+                let decoded = xenora_texture::decode_bc1(*block);
+                let (bx, by) = (block_index % blocks_wide * 4, block_index / blocks_wide * 4);
+                for (i, texel) in decoded.iter().enumerate() {
+                    let (x, y) = (bx + i % 4, by + i / 4);
+                    if x < width && y < height {
+                        let at = (y * width + x) * 4;
+                        texels[at..at + 4].copy_from_slice(texel);
+                    }
+                }
+            }
+            Ok(texels)
+        }
     }
 }

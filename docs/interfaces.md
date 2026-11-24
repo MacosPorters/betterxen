@@ -498,3 +498,47 @@ compare function. Colour and the stored depth are both read back.
 
 These passes are checked on the GPU with Metal validation against expectations
 derived independently from the public semantics; synthetic fixtures only.
+
+### Guest texture binding (descriptor tables)
+
+`GraphicsContext` lets a guest command list sample one texture in the pixel
+stage through a D3D12-shaped binding. A draw samples only if a root signature
+is bound. Draws without one keep the flat-colour path. The supported subset
+is fixed. Anything outside it fails with `GraphicsError::Unsupported` when the
+object is created, or with an error at execution. A rejected draw never
+reaches the backend. Draws recorded before it in the same list have already
+run.
+
+| Object | Supported |
+| --- | --- |
+| `create_descriptor_heap` | Shader-visible `CBV_SRV_UAV` (0) or `SAMPLER` (1) heaps of 1–64 descriptors. RTV, DSV and CPU-only heaps are unsupported. |
+| `create_committed_texture2d` | One level of `R8G8B8A8_UNORM` (28) or `BC1_UNORM` (71), 1–64 texels per side. BC1 sizes must be multiples of four. Rows are linear: 4 bytes per texel, or 8 bytes per 4×4 block. Xbox tiling is not handled. |
+| `create_shader_resource_view` | A `Texture2D` view of mip 0 of a single-level, single-slice 2D texture, in the resource's own format. |
+| `create_sampler` | Point filtering (`MIN_MAG_MIP_POINT`), clamp addressing on U, V and W, no LOD bias and a minimum LOD of 0. |
+| `create_root_signature` | Exactly two pixel-visibility descriptor tables, in either order: one with a single SRV range for `t0`, and one with a single sampler range for `s0` (one descriptor each, space 0). Root constants, root descriptors, CBV and UAV ranges, extra tables or ranges and static samplers are unsupported. |
+| `cmd_set_descriptor_heaps` | At most one heap of each type. |
+| `cmd_set_graphics_root_descriptor_table` | The base must be a GPU handle to a slot of the bound heap of the table's type. The slot must hold a descriptor when a draw reads it. Changing the heaps or binding a different root signature clears every table. Setting the same heaps or the same root signature again keeps them. |
+
+Descriptor handles follow D3D12 pointer arithmetic: the heap start plus
+`index × GetDescriptorHandleIncrementSize` (32 here; guests must query the
+value). `offset` returns `None` rather than carry into the next heap. CPU and
+GPU handles are separate spaces. A textured draw is a `DrawInstanced` of
+one instance of three vertices with start instance 0, starting at any vertex. Zero vertices or
+instances draw nothing. The sampled texture must be in `COMMON` or a read-only state that includes
+`PIXEL_SHADER_RESOURCE`. The software reference draws at most 4096 pixels. Each vertex record holds a float4 position
+at byte 0 and a float4 texture coordinate at byte 16, with a stride of at
+least 32. Textured indexed draws are unsupported.
+
+The native backend receives a `TexturedDraw` with the bound level and must
+bind it to fragment texture 0 and sampler 0, which are the `tex0` and `samp0` arguments of
+the translated `image_sample_lz` pixel stage. `NativeCompute::render_rgba8_sampled_bc1`
+binds a BC1 level natively for that purpose. The software reference has no
+clipping or depth test. A pixel is covered when its centre lies inside or on
+an edge of the triangle. The texture coordinate is interpolated affinely, so
+`w = 1` is required, and point sampled with
+`min(floor(clamp(u, 0, 1) × width), width − 1)`. It decodes BC1 with the
+spec-exact `xenora_texture::decode_bc1`. Apple's hardware rounds BC1's two
+interpolated palette entries differently (171/84 against 170/85, measured
+on an M5 Pro), so the tests use endpoint colours only. Pipeline
+state objects do not exist yet, so the backend, not the guest, chooses the
+pixel shader. These entry points are not yet wired to guest imports.
