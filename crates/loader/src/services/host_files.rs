@@ -46,7 +46,7 @@ const ERROR_NOT_ENOUGH_MEMORY: u32 = 8;
 const ERROR_GEN_FAILURE: u32 = 31;
 const ERROR_DISK_FULL: u32 = 112;
 const ERROR_DIR_NOT_EMPTY: u32 = 145;
-const ERROR_FILENAME_EXCED_RANGE: u32 = 206;
+pub(super) const ERROR_FILENAME_EXCED_RANGE: u32 = 206;
 const ERROR_IO_DEVICE: u32 = 1117;
 /// Default largest file guest writes may produce on a writable mount.
 pub const DEFAULT_MAX_FILE_SIZE: u64 = 1 << 30;

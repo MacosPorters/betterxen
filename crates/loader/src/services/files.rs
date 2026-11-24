@@ -532,6 +532,56 @@ fn share_mask(access: u32) -> u32 {
 }
 
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
+    for (symbol, wide) in [("GetTempPathA", false), ("GetTempPathW", true)] {
+        let state = Arc::clone(state);
+        registry.register_with_status(
+            KERNEL32,
+            symbol,
+            ServiceStatus::Partial,
+            move |args, cpu, memory| {
+                let mut path = {
+                    let env = state.env.lock().expect("guest environment");
+                    ["TMP", "TEMP", "USERPROFILE"]
+                        .into_iter()
+                        .find_map(|key| env.get(key).filter(|value| !value.is_empty()))
+                        .unwrap_or(r"C:\")
+                        .replace('/', "\\")
+                };
+                if !path.ends_with('\\') {
+                    path.push('\\');
+                }
+                let (bytes, required) = if wide {
+                    let bytes: Vec<_> = path
+                        .encode_utf16()
+                        .chain([0])
+                        .flat_map(u16::to_le_bytes)
+                        .collect();
+                    let required = bytes.len() / 2;
+                    (bytes, required)
+                } else {
+                    if !path.is_ascii() {
+                        return state.fail(cpu.gs_base, INVALID_NAME, 0);
+                    }
+                    let mut bytes = path.into_bytes();
+                    bytes.push(0);
+                    let required = bytes.len();
+                    (bytes, required)
+                };
+                if required > 261 {
+                    return state.fail(cpu.gs_base, host_files::ERROR_FILENAME_EXCED_RANGE, 0);
+                }
+                if (args.rcx as u32 as usize) < required {
+                    return Ok(required as u64);
+                }
+                if args.rdx == 0 || memory.write_bytes(args.rdx, &bytes).is_err() {
+                    return state.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+                }
+                Ok((required - 1) as u64)
+            },
+        );
+        registry.alias(FILE_API, KERNEL32, symbol);
+    }
+
     for (get, set, wide) in [
         ("GetCurrentDirectoryW", "SetCurrentDirectoryW", true),
         ("GetCurrentDirectoryA", "SetCurrentDirectoryA", false),

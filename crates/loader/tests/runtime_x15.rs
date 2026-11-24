@@ -1671,7 +1671,10 @@ fn test_guest_synthetic_file_io_through_iat() {
         }
         let bytes = TestPeBuilder::new(IMAGE, 0x1000)
             .add_import(
-                if matches!(symbol, "SetCurrentDirectoryA" | "SetCurrentDirectoryW") {
+                if matches!(
+                    symbol,
+                    "SetCurrentDirectoryA" | "SetCurrentDirectoryW" | "SetEnvironmentVariableW"
+                ) {
                     "kernel32.dll"
                 } else {
                     MODULE
@@ -1707,6 +1710,20 @@ fn test_guest_synthetic_file_io_through_iat() {
     let namespace = |symbol, path| path_call(symbol, path, 0, 0, None);
     let call = |symbol, args: &[u64]| call_service_fixture(&state, "kernel32.dll", symbol, args);
     let output = PROCESS_FIXTURE_OUTPUT;
+    let temp = call("GetTempPathA", &[4, output]);
+    assert_eq!(temp.execution.final_state.get(Register::Rax), 3);
+    assert_eq!(temp.image.memory.read_u32(output).unwrap().to_le_bytes(), *b"C:\\\0");
+    let short = call("GetTempPathW", &[3, output]);
+    assert_eq!(short.execution.final_state.get(Register::Rax), 4);
+    assert_eq!(short.image.memory.read_u64(output).unwrap(), u64::MAX);
+    assert_eq!(path_call("SetEnvironmentVariableW", "TEMP", 0, 0, Some("C:/work")), 1);
+    assert_eq!(path_call("SetEnvironmentVariableW", "TMP", 0, 0, Some("C:/scratch")), 1);
+    let temp = call_service_fixture(&state, MODULE, "GetTempPathW", &[12, output]);
+    assert_eq!(temp.execution.final_state.get(Register::Rax), 11);
+    assert_eq!(
+        (0..12).map(|i| temp.image.memory.read_u16(output + i * 2).unwrap()).collect::<Vec<_>>(),
+        "C:\\scratch\\".encode_utf16().chain([0]).collect::<Vec<_>>()
+    );
     assert_eq!(namespace("CreateDirectoryW", "C:/work"), 1);
     assert_eq!(namespace("SetCurrentDirectoryW", "C:/work"), 1);
     let narrow = call("GetCurrentDirectoryA", &[8, output]);

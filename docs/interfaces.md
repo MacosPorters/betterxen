@@ -354,6 +354,12 @@ letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Without
 a mount, nothing on the host is reachable through these services. Mounts are
 read-only unless created writable.
 
+The partial `GetTempPathA/W` services use the first nonempty guest value
+among `TMP`, `TEMP`, and `USERPROFILE`, falling back to the synthetic
+`C:\` root. They add a trailing separator without checking whether the
+directory exists. The narrow entry point accepts ASCII. No host environment
+is consulted.
+
 The confinement policy below is enforced in `services/host_files.rs` and
 covered by `crates/loader/tests/runtime_host_files.rs` and unit tests in that
 module. Guest path confinement for this boundary was reviewed by Cursor

@@ -29,6 +29,10 @@ pub(super) struct EnvState {
 }
 
 impl EnvState {
+    pub(super) fn get(&self, key: &str) -> Option<&str> {
+        self.values.get(key).map(String::as_str)
+    }
+
     fn with_defaults() -> Self {
         let mut values = BTreeMap::new();
         values.insert("OS".into(), "Windows_NT".into());
