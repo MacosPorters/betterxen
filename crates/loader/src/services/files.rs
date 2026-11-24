@@ -1163,26 +1163,35 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         Ok(1)
     });
 
-    let size = Arc::clone(state);
-    registry.register(KERNEL32, "GetFileSizeEx", move |args, cpu, memory| {
-        let objects = size.objects.lock().expect("guest object state");
-        let Some(GuestObject::File(file)) = objects.handles.get(&args.rcx) else {
-            return size.fail(cpu.gs_base, ERROR_INVALID_HANDLE, 0);
-        };
-        let bytes = match file.host_len() {
-            Some(Ok(bytes)) => bytes,
-            Some(Err(error)) => return size.fail(cpu.gs_base, error, 0),
-            None => objects
-                .files
-                .get(&file.path)
-                .expect("open file exists")
-                .len() as u64,
-        };
-        if args.rdx == 0 || memory.write_u64(args.rdx, bytes).is_err() {
-            return size.fail(cpu.gs_base, ERROR_NOACCESS, 0);
-        }
-        Ok(1)
-    });
+    for (symbol, extended) in [("GetFileSize", false), ("GetFileSizeEx", true)] {
+        let size = Arc::clone(state);
+        registry.register(KERNEL32, symbol, move |args, cpu, memory| {
+            let failure = if extended { 0 } else { u64::from(u32::MAX) };
+            let objects = size.objects.lock().expect("guest object state");
+            let Some(GuestObject::File(file)) = objects.handles.get(&args.rcx) else {
+                return size.fail(cpu.gs_base, ERROR_INVALID_HANDLE, failure);
+            };
+            let bytes = match file.host_len() {
+                Some(Ok(bytes)) => bytes,
+                Some(Err(error)) => return size.fail(cpu.gs_base, error, failure),
+                None => objects.files.get(&file.path).expect("open file exists").len() as u64,
+            };
+            if extended {
+                if args.rdx == 0 || memory.write_u64(args.rdx, bytes).is_err() {
+                    return size.fail(cpu.gs_base, ERROR_NOACCESS, failure);
+                }
+                return Ok(1);
+            }
+            if args.rdx != 0 && memory.write_u32(args.rdx, (bytes >> 32) as u32).is_err() {
+                return size.fail(cpu.gs_base, ERROR_NOACCESS, failure);
+            }
+            let low = bytes as u32;
+            if low == u32::MAX {
+                size.set_last_error(cpu.gs_base, 0);
+            }
+            Ok(u64::from(low))
+        });
+    }
 
     let flush = Arc::clone(state);
     registry.register(KERNEL32, "FlushFileBuffers", move |args, cpu, _| {
@@ -1402,6 +1411,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
     for symbol in [
         "CreateFileA",
         "CreateFileW",
+        "GetFileSize",
         "GetFileSizeEx",
         "FlushFileBuffers",
         "ReadFile",

@@ -28,6 +28,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "ReadFile"),
     (KERNEL32, "WriteFile"),
     (KERNEL32, "CloseHandle"),
+    (FILE_API, "GetFileSize"),
     (KERNEL32, "GetFileSizeEx"),
     (FILE_API, "FlushFileBuffers"),
     (KERNEL32, "SetFilePointerEx"),
@@ -152,6 +153,34 @@ fn found_name(guest: &Guest) -> String {
 
 fn symlink(target: &Path, link: &Path) {
     std::os::unix::fs::symlink(target, link).unwrap();
+}
+
+#[test]
+fn legacy_file_size_splits_large_lengths_and_distinguishes_failure() {
+    let tree = Tree::new("legacy-size");
+    let root = tree.path("root");
+    std::fs::create_dir_all(&root).unwrap();
+    let host_file = std::fs::File::create(root.join("Sparse.dat")).unwrap();
+    host_file.set_len(0x1_ffff_ffff).unwrap();
+    let mut guest = guest_with(vec![HostMount::new('D', &root, false).unwrap()]);
+    let file = open(&mut guest, r"D:\Sparse.dat", GENERIC_READ, 0, OPEN_EXISTING);
+    assert_ne!(file, INVALID);
+    let invalid_size = u64::from(u32::MAX);
+    guest.memory.write_u64(COUNT, u64::MAX).unwrap();
+
+    assert_eq!(guest.call("GetFileSize", &[file, 1]), invalid_size);
+    assert_eq!(guest.error(), 998);
+    assert_eq!(guest.call("GetFileSize", &[file, COUNT]), invalid_size);
+    assert_eq!(guest.error(), 0);
+    assert_eq!(guest.u64_at(COUNT), 0xffff_ffff_0000_0001);
+    host_file.set_len(0x1_0000_0007).unwrap();
+    assert_eq!(guest.call("GetFileSize", &[file, 0]), 7);
+    assert_eq!(guest.call("GetFileSizeEx", &[file, COUNT]), 1);
+    assert_eq!(guest.u64_at(COUNT), 0x1_0000_0007);
+    assert_eq!(guest.call("CloseHandle", &[file]), 1);
+    assert_eq!(guest.call("GetFileSize", &[file, COUNT]), invalid_size);
+    assert_eq!(guest.error(), 6);
+    assert_eq!(guest.u64_at(COUNT), 0x1_0000_0007);
 }
 
 #[test]
