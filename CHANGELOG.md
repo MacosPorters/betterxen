@@ -31,6 +31,7 @@ remains unsupported.
 - Added a Python 3 fallback for `timeout` in `scripts/test-gpu.sh`, so the native Metal suite runs on stock macOS without GNU coreutils while preserving bounded execution and the usual timeout exit status.
 
 ### Added
+- `MoveFileW` renames closed files and directories within one writable host mount, including changes of case only. It uses an exclusive host rename (`renameatx_np` with `RENAME_EXCL` on macOS), so an existing name is never replaced. Moves between drives and of open files fail explicitly. A translated guest test covers renames, collisions, confinement and errors.
 - Writable host mounts accept an optional quota (`HostMount::with_quota`) on the net bytes and the number of files and directories guest operations add. Win32 writes, extending `SetEndOfFile`, file and directory creation, `GetTempFileNameW` and CRT `fopen`/`fclose` are charged; deletion and shrinking give the amount back. Exceeding the quota fails with `ERROR_DISK_FULL` (CRT `ENOSPC`) without changing the host. A translated guest test covers each path.
 - Extended CRT FILE streams so mounted drive paths (`D:\…`) open through the host mount table: the file is buffered under the stream size cap and writable streams replace the host file on `fclose`. Single-component names stay in-memory. Covered by unit and import-table tests.
 - Added CRT `atoi` / `atol` / `atoll` / `_atoi64` / `_wtoi` / `_wtol` / `_wtoi64` as base-10 wrappers over the existing integer conversion parser (Windows LLP64 `long` is 32-bit).

@@ -526,6 +526,50 @@ fn read_ascii_path(memory: &GuestMemory, address: u64) -> Result<Option<String>,
 }
 
 /// The resolved path when `address` names a drive backed by a host mount.
+/// MoveFileW within one writable mount: a file or directory keeps its
+/// contents and identity under the new name. Moving between mounts is not
+/// supported, and an open file cannot be moved.
+fn move_host_entry(
+    state: &ServicesState,
+    teb: u64,
+    source: Result<host_files::Resolved<'_>, u32>,
+    target: Result<host_files::Resolved<'_>, u32>,
+) -> Result<u64, ExitReason> {
+    let (source, target) = match (source, target) {
+        (Ok(source), Ok(target)) => (source, target),
+        (Err(error), _) | (_, Err(error)) => return state.fail(teb, error, 0),
+    };
+    if !std::ptr::eq(source.mount, target.mount) {
+        return state.fail(teb, ERROR_NOT_SUPPORTED, 0);
+    }
+    let Some(to) = target.components.last() else {
+        return state.fail(teb, ERROR_ACCESS_DENIED, 0);
+    };
+    if source.components.is_empty() || !source.mount.writable() {
+        return state.fail(teb, ERROR_ACCESS_DENIED, 0);
+    }
+    let (from_directory, entry) = match source.lookup() {
+        Ok((directory, Some(entry))) => (directory, entry),
+        Ok((_, None)) => return state.fail(teb, FILE_NOT_FOUND, 0),
+        Err(error) => return state.fail(teb, error, 0),
+    };
+    let to_directory = match target.parent() {
+        Ok(directory) => directory,
+        Err(error) => return state.fail(teb, error, 0),
+    };
+    let objects = state.objects.lock().expect("guest object state");
+    if entry.kind == host_files::Kind::File && is_open(&objects, &Target::Host(entry.id)) {
+        return state.fail(teb, SHARING_VIOLATION, 0);
+    }
+    match host_files::rename(&from_directory, &entry.name, &entry, &to_directory, to) {
+        Ok(()) => Ok(1),
+        Err(error) if error.raw_os_error() == Some(libc::EEXIST) => {
+            state.fail(teb, ALREADY_EXISTS, 0)
+        }
+        Err(error) => state.fail(teb, host_files::win32_error(&error), 0),
+    }
+}
+
 fn host_path<'a>(
     state: &'a ServicesState,
     memory: &GuestMemory,
@@ -1186,10 +1230,16 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
 
     let rename = Arc::clone(state);
     registry.register(KERNEL32, "MoveFileW", move |args, cpu, memory| {
-        if host_path(&rename, memory, args.rcx)?.is_some()
-            || host_path(&rename, memory, args.rdx)?.is_some()
-        {
-            return rename.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
+        match (
+            host_path(&rename, memory, args.rcx)?,
+            host_path(&rename, memory, args.rdx)?,
+        ) {
+            (None, None) => {}
+            (Some(source), Some(target)) => {
+                return move_host_entry(&rename, cpu.gs_base, source, target);
+            }
+            // Moving between drives would need a copy, which is not supported.
+            _ => return rename.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0),
         }
         let mut objects = rename.objects.lock().expect("guest object state");
         let Some(source) = guest_path(memory, args.rcx, &objects.current_directory)

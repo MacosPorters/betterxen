@@ -809,8 +809,7 @@ fn writable_mounts_create_change_and_remove_only_inside_the_root() {
     assert_eq!(path_call(&mut guest, "RemoveDirectoryW", "F:\\Saves"), 1);
     assert!(!saves.exists());
 
-    // A symbolic link cannot be written through or replaced, and moves on
-    // host mounts are not supported yet.
+    // A symbolic link cannot be written through, replaced or moved.
     assert_eq!(
         open(&mut guest, "F:\\escape", GENERIC_WRITE, 0, OPEN_ALWAYS),
         INVALID
@@ -818,10 +817,10 @@ fn writable_mounts_create_change_and_remove_only_inside_the_root() {
     assert_eq!(guest.error(), 80);
     assert_eq!(path_call(&mut guest, "DeleteFileW", "F:\\escape"), 0);
     assert_eq!(guest.error(), 2);
-    put_path(&mut guest, PATH, "F:\\a.txt");
-    put_path(&mut guest, OTHER_PATH, "F:\\b.txt");
+    put_path(&mut guest, PATH, "F:\\escape");
+    put_path(&mut guest, OTHER_PATH, "F:\\moved");
     assert_eq!(guest.call("MoveFileW", &[PATH, OTHER_PATH]), 0);
-    assert_eq!(guest.error(), 50);
+    assert_eq!(guest.error(), 2);
 
     assert_eq!(std::fs::read(tree.path("outside.txt")).unwrap(), b"secret");
     assert!(tree.path("root/escape").is_symlink());
@@ -1217,4 +1216,118 @@ fn mount_quota_bounds_net_bytes_and_entries_added_by_the_guest() {
     assert_eq!(guest.call("fwrite", &[payload, 1, 1, stream]), 1);
     assert_eq!(guest.call("fclose", &[stream]) as u32, u32::MAX);
     assert_eq!(std::fs::metadata(root.join("crt.bin")).unwrap().len(), 0);
+}
+
+/// MoveFileW renames files and directories within one writable mount,
+/// keeping contents and refusing to replace an existing name.
+/// Expected codes follow the MoveFileW and System Error Codes pages:
+/// ERROR_ALREADY_EXISTS (183), ERROR_FILE_NOT_FOUND (2),
+/// ERROR_PATH_NOT_FOUND (3), ERROR_SHARING_VIOLATION (32) and
+/// ERROR_ACCESS_DENIED (5). Moves between drives are not supported (50).
+#[test]
+fn move_file_renames_within_one_writable_mount() {
+    let tree = Tree::new("host-move");
+    let root = tree.path("root");
+    std::fs::create_dir_all(root.join("Saves/Old")).unwrap();
+    std::fs::write(root.join("Saves/slot1.dat"), b"one").unwrap();
+    std::fs::write(root.join("Saves/slot2.dat"), b"two").unwrap();
+    std::fs::write(root.join("Saves/Old/keep.dat"), b"keep").unwrap();
+    std::fs::write(tree.path("outside.txt"), b"secret").unwrap();
+    let mut guest = guest_with(vec![
+        HostMount::new('D', &root, true).unwrap(),
+        HostMount::new('E', &root, false).unwrap(),
+        HostMount::new('F', &tree.path("root/Saves/Old"), true).unwrap(),
+    ]);
+    let moved = |guest: &mut Guest, from: &str, to: &str| {
+        put_path(guest, PATH, from);
+        put_path(guest, OTHER_PATH, to);
+        if guest.call("MoveFileW", &[PATH, OTHER_PATH]) == 1 {
+            0
+        } else {
+            guest.error()
+        }
+    };
+
+    // A file moves into another directory under a new name, any case.
+    assert_eq!(
+        moved(
+            &mut guest,
+            r"D:\SAVES\SLOT1.DAT",
+            r"d:\saves\old\Slot-A.dat"
+        ),
+        0
+    );
+    assert!(!root.join("Saves/slot1.dat").exists());
+    assert_eq!(
+        std::fs::read(root.join("Saves/Old/Slot-A.dat")).unwrap(),
+        b"one"
+    );
+    // An existing target is never replaced, whatever its case.
+    assert_eq!(
+        moved(
+            &mut guest,
+            r"D:\Saves\slot2.dat",
+            r"D:\Saves\Old\SLOT-a.DAT"
+        ),
+        183
+    );
+    assert_eq!(std::fs::read(root.join("Saves/slot2.dat")).unwrap(), b"two");
+    assert_eq!(
+        moved(&mut guest, r"D:\Saves\slot2.dat", r"D:\Saves\Old"),
+        183
+    );
+    // A change of case alone renames the entry in place.
+    assert_eq!(
+        moved(&mut guest, r"D:\Saves\slot2.dat", r"D:\Saves\SLOT2.DAT"),
+        0
+    );
+    let names: Vec<_> = std::fs::read_dir(root.join("Saves"))
+        .unwrap()
+        .map(|entry| entry.unwrap().file_name().into_string().unwrap())
+        .collect();
+    assert!(names.contains(&"SLOT2.DAT".to_owned()), "{names:?}");
+    // Directories move with their contents.
+    assert_eq!(moved(&mut guest, r"D:\Saves\Old", r"D:\Archive"), 0);
+    assert_eq!(
+        std::fs::read(root.join("Archive/keep.dat")).unwrap(),
+        b"keep"
+    );
+    assert_eq!(
+        std::fs::read(root.join("Archive/Slot-A.dat")).unwrap(),
+        b"one"
+    );
+
+    // Missing sources and target directories.
+    assert_eq!(moved(&mut guest, r"D:\nothing.dat", r"D:\x.dat"), 2);
+    assert_eq!(
+        moved(&mut guest, r"D:\Saves\SLOT2.DAT", r"D:\Missing\x.dat"),
+        3
+    );
+    // Neither `..` nor a host path can name somewhere outside the root.
+    assert_eq!(
+        moved(&mut guest, r"D:\Saves\SLOT2.DAT", r"D:\..\stolen.dat"),
+        123
+    );
+    assert!(!tree.path("stolen.dat").exists());
+    // The mount root, read-only mounts and other drives.
+    assert_eq!(moved(&mut guest, r"D:\", r"D:\Root2"), 5);
+    assert_eq!(moved(&mut guest, r"E:\Saves\SLOT2.DAT", r"E:\x.dat"), 5);
+    assert_eq!(moved(&mut guest, r"D:\Saves\SLOT2.DAT", r"F:\x.dat"), 50);
+    assert_eq!(moved(&mut guest, r"D:\Saves\SLOT2.DAT", r"C:\x.dat"), 50);
+    assert!(root.join("Saves/SLOT2.DAT").exists());
+
+    // An open file cannot be moved until its handle is closed.
+    let handle = open(
+        &mut guest,
+        r"D:\Saves\SLOT2.DAT",
+        GENERIC_READ,
+        3,
+        OPEN_EXISTING,
+    );
+    assert_ne!(handle, INVALID);
+    assert_eq!(moved(&mut guest, r"D:\Saves\SLOT2.DAT", r"D:\x.dat"), 32);
+    assert_eq!(guest.call("CloseHandle", &[handle]), 1);
+    assert_eq!(moved(&mut guest, r"D:\Saves\SLOT2.DAT", r"D:\x.dat"), 0);
+    assert_eq!(std::fs::read(root.join("x.dat")).unwrap(), b"two");
+    assert_eq!(std::fs::read(tree.path("outside.txt")).unwrap(), b"secret");
 }

@@ -25,8 +25,8 @@
 //! Not covered: another host process that moves a directory or file the guest
 //! already holds open out of the mount. The guest keeps its handle to that
 //! object. Host processes with write access to a mounted directory are
-//! trusted. Removal is name-based `unlinkat` after a final listing check, so
-//! a concurrent host rename in that window can delete a different entry
+//! trusted. Removal and renaming are name-based after a final listing check, so
+//! a concurrent host rename in that window can delete or move a different entry
 //! inside the root (never outside it); directories have no post-unlink check.
 //! This boundary was agent-reviewed for guest path confinement; it is not a
 //! substitute for an independent human security audit.
@@ -657,6 +657,80 @@ pub(super) fn remove(directory: &OwnedFd, name: &str, expected: &Entry) -> io::R
         }
     }
     Ok(())
+}
+
+/// Rename `from` in `source` to `to` in `target`, after checking the source
+/// entry is still the object `expected`. The target name must not exist,
+/// except when it names the source itself (a change of case only).
+///
+/// The exclusive rename is atomic on the host, so a concurrent host change
+/// cannot make the guest replace an existing entry. As with [`remove`], the
+/// source is matched by name after the final listing check, so a concurrent
+/// host rename in that window can move a different in-tree entry.
+pub(super) fn rename(
+    source: &OwnedFd,
+    from: &str,
+    expected: &Entry,
+    target: &OwnedFd,
+    to: &str,
+) -> io::Result<()> {
+    match find(source, from)? {
+        Some(entry) if entry.id == expected.id && entry.kind == expected.kind => {}
+        _ => return Err(refused()),
+    }
+    let case_only = match find(target, to)? {
+        Some(entry) if entry.id == expected.id => true,
+        Some(_) => return Err(io::Error::from_raw_os_error(libc::EEXIST)),
+        None => false,
+    };
+    let from = c_name(from)?;
+    let to = c_name(to)?;
+    // SAFETY: both names are NUL-terminated and both directories are open.
+    let result = unsafe {
+        if case_only {
+            libc::renameat(
+                source.as_raw_fd(),
+                from.as_ptr(),
+                target.as_raw_fd(),
+                to.as_ptr(),
+            )
+        } else {
+            exclusive_rename(source.as_raw_fd(), &from, target.as_raw_fd(), &to)
+        }
+    };
+    if result != 0 {
+        return Err(io::Error::last_os_error());
+    }
+    Ok(())
+}
+
+/// `renameat` that fails with `EEXIST` instead of replacing the target.
+///
+/// # Safety
+/// Both descriptors must be open directories.
+unsafe fn exclusive_rename(source: i32, from: &CStr, target: i32, to: &CStr) -> i32 {
+    #[cfg(any(target_os = "macos", target_os = "ios"))]
+    // SAFETY: guaranteed by the caller; the names are NUL-terminated.
+    unsafe {
+        libc::renameatx_np(
+            source,
+            from.as_ptr(),
+            target,
+            to.as_ptr(),
+            libc::RENAME_EXCL,
+        )
+    }
+    #[cfg(target_os = "linux")]
+    // SAFETY: as above.
+    unsafe {
+        libc::renameat2(
+            source,
+            from.as_ptr(),
+            target,
+            to.as_ptr(),
+            libc::RENAME_NOREPLACE,
+        )
+    }
 }
 
 #[cfg(test)]

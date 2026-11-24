@@ -469,7 +469,14 @@ SetEndOfFile, GetFileAttributesW, FindFirstFileW and FindNextFileW work on
 mounted drives with the same handle types, rights, sharing modes and file
 positions as the synthetic drive. CreateDirectoryW, RemoveDirectoryW and
 DeleteFileW also work on writable mounts. Files on read-only mounts report
-`FILE_ATTRIBUTE_READONLY`. MoveFileW returns `ERROR_NOT_SUPPORTED` on mounts.
+`FILE_ATTRIBUTE_READONLY`. MoveFileW renames a closed file or a directory
+within one writable mount with an exclusive host rename, so it never replaces
+an existing name (`ERROR_ALREADY_EXISTS`); a change of case alone renames in
+place. An open file reports `ERROR_SHARING_VIOLATION`, since
+`FILE_SHARE_DELETE` is not supported. Moves between drives, which Windows
+performs by copying, return `ERROR_NOT_SUPPORTED`. As with deletion, the source
+is matched by name after a final listing check, so a concurrent host rename
+can move a different entry inside the mount, never one outside it.
 Times, alternate names and asynchronous I/O are not reported. The mount
 tests need a temporary directory that supports hard links and POSIX
 permissions: `/tmp`, or the directory named by `XENORA_TEST_TMP`.
