@@ -220,19 +220,15 @@ impl SymbolDb {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
+        for module in [m, "ucrtbase.dll"] {
+            for symbol in [
+                "isalnum", "isalpha", "isdigit", "islower", "isspace", "isxdigit", "isupper",
+                "isprint", "iscntrl", "ispunct", "tolower", "toupper",
+            ] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
         for (sym, libc) in &[
-            ("isalnum", "isalnum"),
-            ("isalpha", "isalpha"),
-            ("isdigit", "isdigit"),
-            ("islower", "islower"),
-            ("isspace", "isspace"),
-            ("isxdigit", "isxdigit"),
-            ("isupper", "isupper"),
-            ("isprint", "isprint"),
-            ("iscntrl", "iscntrl"),
-            ("ispunct", "ispunct"),
-            ("tolower", "tolower"),
-            ("toupper", "toupper"),
             ("memchr", "memchr"),
             ("strcat", "strcat"),
             ("strcpy", "strcpy"),

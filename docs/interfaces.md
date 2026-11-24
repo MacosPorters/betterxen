@@ -233,6 +233,11 @@ a durable `"C"` string. Other locale names fail with `EINVAL` and a null
 result. `localeconv` returns a guest `lconv` for that C locale. Thread
 locales and `_create_locale` remain unsupported.
 
+C-locale `ctype.h` predicates (`isalnum`, `isalpha`, `isdigit`, `islower`,
+`isupper`, `isspace`, `isxdigit`, `isprint`, `iscntrl`, `ispunct`) and
+`tolower` / `toupper` accept `EOF` or an `unsigned char` value. Other
+`int` arguments stop the guest.
+
 `sprintf` and `snprintf` implement a bounded C-locale subset: `%%`, `%c`,
 `%s`, `%d`/`%i`, `%u`, `%x`/`%X`, `%p`, optional zero-pad widths, and
 `l`/`ll`/`z`/`t` length modifiers. Null string arguments render as

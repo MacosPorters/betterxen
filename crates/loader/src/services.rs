@@ -11,6 +11,7 @@
 
 mod crt;
 mod crt_callbacks;
+mod crt_ctype;
 mod crt_locale;
 mod crt_stdio;
 mod events;
@@ -405,6 +406,7 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     crt::register_errno(registry);
     crt::register_conversions(registry);
     crt_locale::register(registry, &state);
+    crt_ctype::register(registry);
     crt_stdio::register(registry);
     crt_callbacks::register(registry, &state);
     heap::register(registry, &state);
