@@ -516,9 +516,20 @@ impl GuestMemory {
 
     /// Read an instruction byte from guest memory, verifying execute permission.
     pub fn fetch_instruction_byte(&self, address: u64) -> Result<u8, MemoryError> {
-        let mut buf = [0u8; 1];
-        self.read_checked(address, &mut buf, Some("execute"))?;
-        Ok(buf[0])
+        address.checked_add(1).ok_or(MemoryError::Overflow)?;
+        let region = self
+            .regions
+            .iter()
+            .find(|region| region.base + region.data.len() as u64 > address)
+            .filter(|region| region.base <= address)
+            .ok_or(MemoryError::UnmappedAddress(address))?;
+        if !region.permissions.execute {
+            return Err(MemoryError::PermissionViolation {
+                address,
+                required: "execute",
+            });
+        }
+        Ok(region.data[(address - region.base) as usize])
     }
 
     /// Read a 64-bit integer (little endian) from guest memory.
@@ -635,5 +646,212 @@ mod tests {
             Ok(moved)
         );
         assert_eq!(memory.heap_allocation_size(PROCESS_HEAP, moved), Some(1));
+    }
+}
+
+#[cfg(test)]
+mod instruction_fetch_tests {
+    use super::{MemoryPermissions as P, *};
+
+    fn denied(address: u64) -> Result<u8, MemoryError> {
+        Err(MemoryError::PermissionViolation {
+            address,
+            required: "execute",
+        })
+    }
+    fn missing(address: u64) -> Result<u8, MemoryError> {
+        Err(MemoryError::UnmappedAddress(address))
+    }
+
+    #[test]
+    fn fetch_reports_overflow_before_lookup() {
+        let m = GuestMemory::new();
+        for at in [0, 1, 0x1000, u64::MAX - 1] {
+            assert_eq!(m.fetch_instruction_byte(at), missing(at));
+        }
+        assert_eq!(
+            m.fetch_instruction_byte(u64::MAX),
+            Err(MemoryError::Overflow)
+        );
+        let mut m = GuestMemory::new();
+        m.map_region(u64::MAX, 0, P::NO_ACCESS).unwrap();
+        assert_eq!(
+            m.fetch_instruction_byte(u64::MAX),
+            Err(MemoryError::Overflow)
+        );
+    }
+
+    #[test]
+    fn fetch_checks_execute_permission_for_every_byte_value() {
+        let bytes: Vec<u8> = (0..=255).collect();
+        for flags in 0..8 {
+            let permission = P {
+                read: flags & 1 != 0,
+                write: flags & 2 != 0,
+                execute: flags & 4 != 0,
+            };
+            let mut m = GuestMemory::new();
+            m.map_region_with_data(0x1000, bytes.len(), permission, &bytes)
+                .unwrap();
+            for (offset, byte) in bytes.iter().enumerate() {
+                let at = 0x1000 + offset as u64;
+                assert_eq!(
+                    m.fetch_instruction_byte(at),
+                    if flags & 4 != 0 {
+                        Ok(*byte)
+                    } else {
+                        denied(at)
+                    },
+                    "flags={flags}, at={at:x}"
+                );
+            }
+        }
+    }
+
+    #[test]
+    fn fetch_handles_sparse_and_out_of_order_mappings() {
+        let mut m = GuestMemory::new();
+        m.map_region_with_data(0x3000, 2, P::READ_EXECUTE, &[0xc1, 0xc2])
+            .unwrap();
+        m.map_region_with_data(0, 2, P::READ_EXECUTE, &[0x01, 0x02])
+            .unwrap();
+        m.map_region_with_data(0x2000, 1, P::READ_ONLY, &[0xb1])
+            .unwrap();
+        m.map_region_with_data(0x1000, 2, P::READ_EXECUTE, &[0xa1, 0xa2])
+            .unwrap();
+        for (at, byte) in [
+            (0, 1),
+            (1, 2),
+            (0x1000, 0xa1),
+            (0x1001, 0xa2),
+            (0x3000, 0xc1),
+            (0x3001, 0xc2),
+        ] {
+            assert_eq!(m.fetch_instruction_byte(at), Ok(byte));
+        }
+        assert_eq!(m.fetch_instruction_byte(0x2000), denied(0x2000));
+        for at in [2, 0xfff, 0x1002, 0x2001, 0x2fff, 0x3002] {
+            assert_eq!(m.fetch_instruction_byte(at), missing(at));
+        }
+    }
+
+    #[test]
+    fn fetch_ignores_empty_mappings_at_shared_boundaries() {
+        for zero_first in [false, true] {
+            for execute in [false, true] {
+                let mut m = GuestMemory::new();
+                let permission = P {
+                    read: false,
+                    write: false,
+                    execute,
+                };
+                if zero_first {
+                    for _ in 0..7 {
+                        m.map_region(0x1000, 0, P::READ_WRITE_EXECUTE).unwrap();
+                    }
+                }
+                m.map_region_with_data(0x1000, 2, permission, &[0x34, 0x56])
+                    .unwrap();
+                for _ in 0..7 {
+                    m.map_region(0x1000, 0, P::NO_ACCESS).unwrap();
+                }
+                for _ in 0..7 {
+                    m.map_region(0x1002, 0, P::READ_WRITE_EXECUTE).unwrap();
+                }
+                for (at, byte) in [(0x1000, 0x34), (0x1001, 0x56)] {
+                    assert_eq!(
+                        m.fetch_instruction_byte(at),
+                        if execute { Ok(byte) } else { denied(at) }
+                    );
+                }
+                assert_eq!(m.fetch_instruction_byte(0x1002), missing(0x1002));
+            }
+        }
+        let mut m = GuestMemory::new();
+        for at in [1, 1, 2, 0x1000] {
+            m.map_region(at, 0, P::READ_WRITE_EXECUTE).unwrap();
+        }
+        for at in [0, 1, 2, 3, 0x1000] {
+            assert_eq!(m.fetch_instruction_byte(at), missing(at));
+        }
+    }
+
+    #[test]
+    fn fetch_checks_adjacent_mapping_permissions() {
+        let mut m = GuestMemory::new();
+        m.map_region_with_data(0x1000, 1, P::READ_EXECUTE, &[0xa5])
+            .unwrap();
+        m.map_region_with_data(0x1001, 1, P::READ_WRITE, &[0x5a])
+            .unwrap();
+        m.map_region(0x1001, 0, P::READ_EXECUTE).unwrap();
+        m.map_region_with_data(0x1002, 1, P::READ_EXECUTE, &[0xc3])
+            .unwrap();
+        assert_eq!(m.fetch_instruction_byte(0x1000), Ok(0xa5));
+        assert_eq!(m.fetch_instruction_byte(0x1001), denied(0x1001));
+        assert_eq!(m.fetch_instruction_byte(0x1002), Ok(0xc3));
+        assert_eq!(m.fetch_instruction_byte(0x1003), missing(0x1003));
+    }
+
+    #[test]
+    fn fetch_handles_the_highest_region_end() {
+        let mut m = GuestMemory::new();
+        m.map_region_with_data(u64::MAX - 2, 2, P::READ_EXECUTE, &[0x12, 0x34])
+            .unwrap();
+        m.map_region(u64::MAX, 0, P::READ_EXECUTE).unwrap();
+        assert_eq!(
+            m.fetch_instruction_byte(u64::MAX - 3),
+            missing(u64::MAX - 3)
+        );
+        assert_eq!(m.fetch_instruction_byte(u64::MAX - 2), Ok(0x12));
+        assert_eq!(m.fetch_instruction_byte(u64::MAX - 1), Ok(0x34));
+        assert_eq!(
+            m.fetch_instruction_byte(u64::MAX),
+            Err(MemoryError::Overflow)
+        );
+    }
+
+    #[test]
+    fn fetch_observes_writes_clones_and_mapping_changes() {
+        let mut m = GuestMemory::new();
+        m.map_region_with_data(0x1000, 1, P::READ_WRITE_EXECUTE, &[0x11])
+            .unwrap();
+        let mut clone = m.clone();
+        m.write_u8(0x1000, 0x22).unwrap();
+        clone.write_u8(0x1000, 0x33).unwrap();
+        assert_eq!(m.fetch_instruction_byte(0x1000), Ok(0x22));
+        assert_eq!(clone.fetch_instruction_byte(0x1000), Ok(0x33));
+        let base = m
+            .map_virtual_allocation(0x4000, 1, P::READ_WRITE_EXECUTE)
+            .unwrap();
+        m.write_u8(base, 0x44).unwrap();
+        assert_eq!(m.fetch_instruction_byte(base), Ok(0x44));
+        assert!(m.release_virtual_allocation(base));
+        assert_eq!(m.fetch_instruction_byte(base), missing(base));
+        m.map_region_with_data(base, 1, P::READ_ONLY, &[0x55])
+            .unwrap();
+        assert_eq!(m.fetch_instruction_byte(base), denied(base));
+        assert_eq!(clone.fetch_instruction_byte(base), missing(base));
+    }
+
+    #[test]
+    fn fetch_keeps_first_mapping_priority_after_empty_heap_growth() {
+        // Existing private allocation methods can grow a zero allocation onto an
+        // earlier mapping at its base. The fetch-only patch must preserve the
+        // original mapping's priority even for this already-representable state.
+        let mut m = GuestMemory::new();
+        m.map_region_with_data(0x1000, 1, P::READ_EXECUTE, &[0x90])
+            .unwrap();
+        const BASE: u64 = 0x0000_0003_0000_0000;
+        m.map_region_with_data(BASE, 4, P::READ_EXECUTE, &[0x11, 0x22, 0x33, 0x44])
+            .unwrap();
+        let empty = m.map_heap_allocation(PROCESS_HEAP, 0).unwrap();
+        assert_eq!(empty, BASE);
+        assert_eq!(
+            m.resize_heap_allocation(PROCESS_HEAP, empty, 2, true),
+            Ok(BASE)
+        );
+        assert_eq!(m.fetch_instruction_byte(BASE), Ok(0x11));
+        assert_eq!(m.fetch_instruction_byte(BASE + 1), Ok(0x22));
+        assert_eq!(m.fetch_instruction_byte(BASE + 3), Ok(0x44));
     }
 }
