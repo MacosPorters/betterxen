@@ -49,3 +49,4 @@ either path. The [changelog](../CHANGELOG.md) records notable changes.
 - [Legal scope](legal.md), [dependency licensing](licenses.md), and [third-party notices](../THIRD_PARTY_NOTICES.md) — Input policy, attribution, and redistribution findings.
 - [Contribution guidelines](../CONTRIBUTING.md) — Original authorship, Developer Certificate of Origin sign-off, and evidence requirements.
 - [Agent task queue](coordination/agent-tasks.md) — Areas, claiming, leases, upstream sync, verification and the security model for parallel contributors and coding agents.
+- [Legacy issue migration inventory](coordination/issue-migration.md) — Dry-run inventory for migrating legacy `##` issue headings to the `###` agent-task form with explicit maintainer review.

@@ -11,6 +11,7 @@ remains unsupported.
 
 ### Added
 
+- Added a dry-run legacy issue migration inventory (`scripts/agent_queue/migrate.py` and `python3 -m agent_queue migrate-inventory`) with unit tests (`tests/agent_queue/test_migrate.py`) and coordination docs (`docs/coordination/issue-migration.md`). Compares legacy `##` headings against the parser's `###` headings across area, owned files, acceptance command, and dependencies, preserves existing issue history in `### Context`, refuses to fabricate file ownership, and requires explicit maintainer approval before any issue edit or `agent:ready` label.
 - Added explicit claim-before-work rules for contributors and coding agents to `AGENTS.md`, `CONTRIBUTING.md` and the pull request template: check for existing claims, claim with `/claim`, keep a 24-hour lease alive with `/progress`, `/release` when stopping, and link the claimed issue. Without the claim workflow, the earliest valid claim comment wins.
 - Added native Metal upload and readback of BC2 and BC3 textures: `xenora-texture` gains a
   pitched `BcAlphaUpload` for 16-byte blocks, and `NativeCompute::read_bc_alpha_upload` sends

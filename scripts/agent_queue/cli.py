@@ -8,7 +8,7 @@ from datetime import datetime, timezone
 from . import config as cfgmod
 from . import ghio
 from . import lease as L
-from . import prcheck, queue
+from . import migrate, prcheck, queue
 from . import tasks as T
 from . import decide as decide_mod
 from .decide import decide
@@ -48,6 +48,7 @@ def main(argv):
     s = sub.add_parser("list"); s.add_argument("--state", required=True); s.add_argument("--area", default=""); s.add_argument("--json", action="store_true")
     s = sub.add_parser("next"); s.add_argument("--state", required=True); s.add_argument("--area", required=True); s.add_argument("--login", required=True)
     s = sub.add_parser("check-body"); s.add_argument("--file", required=True)
+    s = sub.add_parser("migrate-inventory"); s.add_argument("--state", required=True); s.add_argument("--text", action="store_true"); s.add_argument("--include-closed", action="store_true")
     s = sub.add_parser("event"); s.add_argument("--path", required=True)
     s = sub.add_parser("config-get"); s.add_argument("key")
     a = p.parse_args(argv)
@@ -139,6 +140,12 @@ def main(argv):
             return 1
         print("area:" + t["area"])
         print("priority:" + t["priority"])
+    elif a.cmd == "migrate-inventory":
+        res = migrate.inventory(_load(a.state), include_closed=a.include_closed)
+        if a.text:
+            sys.stdout.write(migrate.format_report(res))
+        else:
+            _out(res)
     elif a.cmd == "touch":
         # stdin lines "<sha>\t<path>"; report those touching patterns of tasks held by login
         state, hits = _load(a.state), []
