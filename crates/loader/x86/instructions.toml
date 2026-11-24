@@ -90,6 +90,7 @@ syscall = { terminator = true, ref = "sdm SYSCALL" }
 clc = { writes = "cf", ref = "sdm CLC" }
 stc = { writes = "cf", ref = "sdm STC" }
 cmc = { reads = "cf", writes = "cf", ref = "sdm CMC" }
+cpuid = { ref = "sdm CPUID" }
 
 # SSE and SSE2 moves and packed integer operations. None reads or writes RFLAGS.
 movaps = { ref = "sdm MOVAPS" }
@@ -564,6 +565,13 @@ size = "n"
 op = "syscall"
 map = "0f"
 opcode = 0x05
+enc = "none"
+size = "n"
+
+[[form]]
+op = "cpuid"
+map = "0f"
+opcode = 0xA2
 enc = "none"
 size = "n"
 

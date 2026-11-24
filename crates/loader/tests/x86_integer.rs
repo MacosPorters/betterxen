@@ -729,6 +729,24 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             Outcome::Done(none)
         }
         "nop" | "pause" => Outcome::Done(none),
+        "cpuid" => {
+            // Xenora's guest CPUID contract, restated: the vendor "Xenora guest"
+            // and the four features whose every instruction exists, CMOV and
+            // POPCNT in leaf 1, LZCNT and long mode in leaf 0x8000_0001.
+            let word = |text: &[u8; 4]| u32::from_le_bytes(*text);
+            let values = match m.gpr[RAX] as u32 {
+                0 => [1, word(b"Xeno"), word(b"uest"), word(b"ra g")],
+                1 => [0, 0, 1 << 23, 1 << 15],
+                0x8000_0000 => [0x8000_0001, 0, 0, 0],
+                0x8000_0001 => [0, 0, 1 << 5, 1 << 29],
+                _ => [0; 4],
+            };
+            // EAX, EBX, ECX and EDX, each zero-extended.
+            for (index, value) in [0, 3, 1, 2].into_iter().zip(values) {
+                m.gpr[index] = u64::from(value);
+            }
+            Outcome::Done(none)
+        }
         "push" => {
             m.pushed = read(m, places[0], 64) as u64;
             m.gpr[4] -= 8;

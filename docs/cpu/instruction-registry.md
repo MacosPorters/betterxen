@@ -59,6 +59,28 @@ These rules hold for both engines and are what a guest scheduler has to preserve
 
 The SDM cases for these forms in `tests/cpu_known_answers.rs` were written before this implementation, by another contributor. `tests/x86_atomic.rs` adds the LOCK rules, both compare outcomes at every width, unaligned operands and faults. None of it has been compared with x86 hardware, and nothing here establishes multi-thread behaviour.
 
+## Guest CPUID
+
+CPUID (`0F A2`) returns a fixed table that never reads the host. It describes a synthetic processor: the vendor string is `Xenora guest`, not Intel's or AMD's, and leaf 1 reports no family, model or stepping.
+
+| Leaf (EAX) | EAX | EBX | ECX | EDX |
+| --- | --- | --- | --- | --- |
+| 0 | 1, the highest basic leaf | `Xeno` | `uest` | `ra g` |
+| 1 | 0 | 0 | POPCNT (bit 23) | CMOV (bit 15) |
+| 0x8000_0000 | 0x8000_0001, the highest extended leaf | 0 | 0 | 0 |
+| 0x8000_0001 | 0 | 0 | LZCNT (bit 5) | long mode (bit 29) |
+| any other | 0 | 0 | 0 | 0 |
+
+A feature bit is set only when every instruction of that feature is implemented. That is stricter than "some of it works", and it has consequences:
+
+- SSE and SSE2 are not reported, although most of their instructions exist, because parts are still rejected: RSQRTPS and MFENCE, for example. BMI1 is not reported although TZCNT exists, because ANDN does not. The x87 FPU, MMX, FXSAVE, CMPXCHG8B, the time-stamp counter, LAHF and SYSRET are absent too.
+- The table is therefore truthful about Xenora, not plausible as hardware: every real 64-bit processor reports the FPU and SSE2. A guest that tests a bit before using a feature avoids it; a guest that assumes SSE2 because it runs in 64-bit mode still gets every form that exists and an illegal-instruction exit for one that does not.
+- A leaf that is not listed returns zeros, whatever the subleaf. Intel processors answer a leaf above the highest basic one with that leaf's data instead; software is expected to read the highest leaf first.
+
+`xenora_loader::cpu::cpuid` is the one copy of the table. A runtime service that reports processor features should read it rather than keep its own list.
+
+`tests/cpu_features.rs` pins every leaf in both engines. For each reported feature it requires the feature's whole instruction set among the fixtures that `tests/x86_integer.rs` executes. For each feature software commonly tests that is not reported, it holds one instruction of that feature that both engines must refuse. To report a new feature: implement all of its instructions, remove its witness, add its instruction list to the reported set, then set the bit. The pairing of instructions with feature bits follows the Intel SDM; nothing was compared with a processor.
+
 ## Rejected on purpose
 
 LOCK except as described above, F2 or F3 where it is neither PAUSE nor part of a declared form, F2 combined with F3, address-size overrides, an ignored segment override after FS or GS, 16-bit stack and branch forms, 16-bit BSWAP and MOVSXD, bit tests of memory by a register index, RCL, RCR, SHLD, SHRD, string instructions, MMX, the RCP and RSQRT approximations, SSE3 and later, VEX, CMPXCHG8B, CMPXCHG16B and fences. The DBT also refuses raw SYSCALL.

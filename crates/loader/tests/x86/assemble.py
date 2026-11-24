@@ -95,7 +95,7 @@ def cases():
         out += [f"{op} ah, bl", f"{op} cl, dh", f"{op} {mem(8)}, ch"]
     out += ["mov ah, bl", "mov dl, ch", "mov bh, 0x21", "xchg ah, bl", "mov sil, dil",
             "movabs r15, 0x8877665544332211", "mov rcx, -2", "bswap ebx", "bswap r9",
-            "cbw", "cwde", "cdqe", "cwd", "cdq", "cqo", "clc", "stc", "cmc", "nop",
+            "cbw", "cwde", "cdqe", "cwd", "cdq", "cqo", "clc", "stc", "cmc", "nop", "cpuid",
             "nop dword ptr [rax + 8]", "pause", "push r9", "push rbx", "push -5", "push 0x12345678",
             f"push {mem(64)}", "pop rbx", "pop r12", f"pop {mem(64)}", "leave"]
     return list(dict.fromkeys(out))
