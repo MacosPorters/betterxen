@@ -1806,6 +1806,10 @@ fn test_guest_synthetic_file_io_through_iat() {
     assert_ne!(writer, u64::MAX);
     assert_eq!(open("sample.dat", 0x8000_0000, 3), u64::MAX);
     let wrote = call("WriteFile", &[writer, output, 4, output + 8, 0]);
+    assert_eq!(
+        call("FlushFileBuffers", &[writer]).execution.final_state.get(Register::Rax),
+        1
+    );
     assert_eq!(wrote.execution.final_state.get(Register::Rax), 1);
     assert_eq!(wrote.image.memory.read_u32(output + 8).unwrap(), 4);
     assert_eq!(

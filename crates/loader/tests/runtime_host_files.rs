@@ -29,6 +29,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "WriteFile"),
     (KERNEL32, "CloseHandle"),
     (KERNEL32, "GetFileSizeEx"),
+    (FILE_API, "FlushFileBuffers"),
     (KERNEL32, "SetFilePointerEx"),
     (KERNEL32, "SetEndOfFile"),
     (FILE_API, "GetFileAttributesA"),
@@ -167,6 +168,7 @@ fn ansi_create_file_uses_the_same_mount_and_sharing_rules() {
     let file = open_ansi(&mut guest, b"D:\\Mixed.txt\0", CREATE_NEW);
     assert_ne!(file, INVALID);
     assert!(write(&mut guest, file, b"from ANSI"));
+    assert_eq!(guest.call("FlushFileBuffers", &[file]), 1);
     assert_eq!(
         open(&mut guest, r"D:\mixed.txt", GENERIC_READ, 1, OPEN_EXISTING),
         INVALID
@@ -198,6 +200,8 @@ fn ansi_delete_uses_mount_permissions_and_sharing() {
     ]);
     let open_file = open(&mut guest, r"D:\Mixed.txt", GENERIC_READ, 1, OPEN_EXISTING);
     assert_ne!(open_file, INVALID);
+    assert_eq!(guest.call("FlushFileBuffers", &[open_file]), 0);
+    assert_eq!(guest.error(), 5);
     let delete = |guest: &mut Guest, name: &[u8]| {
         guest.memory.write_bytes(PATH, name).unwrap();
         guest.call("DeleteFileA", &[PATH])
@@ -208,6 +212,8 @@ fn ansi_delete_uses_mount_permissions_and_sharing() {
     assert_eq!(guest.error(), 32);
     assert!(root.join("Mixed.txt").exists());
     assert_eq!(guest.call("CloseHandle", &[open_file]), 1);
+    assert_eq!(guest.call("FlushFileBuffers", &[open_file]), 0);
+    assert_eq!(guest.error(), 6);
     assert_eq!(delete(&mut guest, b"D:\\mixed.txt\0"), 1);
     assert!(!root.join("Mixed.txt").exists());
     assert_eq!(delete(&mut guest, b"D:\\mixed.txt\0"), 0);

@@ -1184,6 +1184,24 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         Ok(1)
     });
 
+    let flush = Arc::clone(state);
+    registry.register(KERNEL32, "FlushFileBuffers", move |args, cpu, _| {
+        let objects = flush.objects.lock().expect("guest object state");
+        let Some(GuestObject::File(file)) = objects.handles.get(&args.rcx) else {
+            return flush.fail(cpu.gs_base, ERROR_INVALID_HANDLE, 0);
+        };
+        if file.access & WRITE == 0 {
+            return flush.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
+        }
+        if let Some(host) = &file.host
+            && let Err(error) = host.file.sync_all()
+        {
+            return flush.fail(cpu.gs_base, host_files::win32_error(&error), 0);
+        }
+        // Synthetic writes update the in-memory file immediately.
+        Ok(1)
+    });
+
     let seek = Arc::clone(state);
     registry.register(KERNEL32, "SetFilePointerEx", move |args, cpu, memory| {
         let mut objects = seek.objects.lock().expect("guest object state");
@@ -1385,6 +1403,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "CreateFileA",
         "CreateFileW",
         "GetFileSizeEx",
+        "FlushFileBuffers",
         "ReadFile",
         "WriteFile",
         "SetFilePointerEx",

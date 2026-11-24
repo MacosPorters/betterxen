@@ -354,6 +354,10 @@ letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Without
 a mount, nothing on the host is reachable through these services. Mounts are
 read-only unless created writable.
 
+The partial `FlushFileBuffers` service requires a writable file handle.
+It synchronizes the backing file on a host mount. Synthetic file writes
+are already visible in the guest's in-memory filesystem.
+
 The ANSI forms `CreateFileA`, `DeleteFileA`, and `GetFileAttributesA`
 accept ASCII paths and use the same guest namespace and mount rules as the
 wide forms.

@@ -988,6 +988,7 @@ impl SymbolDb {
                 "ReadFile",
                 "WriteFile",
                 "GetFileSizeEx",
+                "FlushFileBuffers",
                 "SetFilePointerEx",
                 "SetEndOfFile",
                 "CreateDirectoryW",
@@ -1009,12 +1010,6 @@ impl SymbolDb {
         }
         self.win32_stub(m, "CloseHandle", false, "CloseHandle — no-op stub");
         self.win32_stub(m, "GetFileSize", false, "GetFileSize — stub returning 0");
-        self.win32_stub(
-            m,
-            "FlushFileBuffers",
-            false,
-            "FlushFileBuffers — no-op stub",
-        );
     }
 
     // ---- Proprietary / unavailable -----------------------------------------
