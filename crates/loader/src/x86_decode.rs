@@ -66,6 +66,8 @@ pub enum Entry {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Encoding {
     None,
+    /// A string instruction: source `[RSI]`, destination `[RDI]`, REP allowed.
+    String,
     RmReg,
     RegRm,
     RegRmImm,
@@ -172,6 +174,8 @@ pub struct Insn {
     /// Carries a LOCK prefix. Set only for a lockable form with a memory
     /// destination.
     pub lock: bool,
+    /// A string instruction carrying a REP prefix.
+    pub rep: bool,
 }
 
 impl Insn {
@@ -310,8 +314,12 @@ pub fn decode<E>(
     let opcode = if two_byte { cursor.u8()? } else { byte };
     let slot = usize::from(opcode);
     let table = if !two_byte {
-        // Only PAUSE (F3 90) has a meaning here for F3 on a one-byte opcode.
-        if repne || (rep && opcode != 0x90) {
+        // On a one-byte opcode F3 is PAUSE (F3 90) or REP on a string form.
+        let string = matches!(
+            ONE_BYTE[slot],
+            Entry::Form(index) if FORMS[usize::from(index)].encoding == Encoding::String
+        );
+        if repne || (rep && opcode != 0x90 && !string) {
             return Err(DecodeError::Unsupported(if rep { 0xF3 } else { 0xF2 }));
         }
         &ONE_BYTE
@@ -424,6 +432,15 @@ pub fn decode<E>(
         }
     } else if matches!(form.encoding, Encoding::OpReg | Encoding::OpRegImm) {
         reg = register(opcode & 7, rex_b, size);
+    } else if form.encoding == Encoding::String {
+        // The source is DS:[RSI], which FS or GS may override. The destination
+        // ES:[RDI] takes no override.
+        rm = Some(RmOperand::Mem(MemOperand {
+            base: Some(6),
+            index: None,
+            disp: 0,
+            segment,
+        }));
     }
     // LOCK is an invalid opcode unless the instruction is lockable and its
     // destination is memory (Intel SDM Vol. 2, "LOCK").
@@ -467,6 +484,7 @@ pub fn decode<E>(
         imm,
         condition: opcode & 0xF,
         lock,
+        rep: rep && form.encoding == Encoding::String,
     })
 }
 

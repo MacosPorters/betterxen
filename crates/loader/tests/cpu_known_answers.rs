@@ -2666,7 +2666,7 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("bt_memory_register_offset_can_fault", 0),
     ("btr16_memory_negative_16bit_offset", 0),
     ("bts_memory_negative_offset", 0),
-    ("cmpsb_is_rsi_minus_rdi", 0),
+    ("cmpsb_is_rsi_minus_rdi", 1),
     ("cmpxchg16b_equal", 0),
     ("cmpxchg16b_equal_without_lock", 0),
     ("cmpxchg16b_not_equal", 0),
@@ -2681,8 +2681,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("enter_leave_round_trip", 0),
     ("fifteen_byte_instruction_executes", 0),
     ("fs_addr32_truncates_before_adding_base", 0),
-    ("fs_rep_movsb_overrides_source_only", 0),
-    ("fs_rep_movsb_overrides_source_only_df_clear", 0),
     ("haddps_hsubpd_addsubps", 0),
     ("insertps_zero_mask", 0),
     ("jecxz_tests_low_32_bits", 1),
@@ -2691,9 +2689,9 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("lahf_zero", 0),
     ("lea64_addr32_truncates_effective_address", 0),
     ("lock_btc_memory", 0),
-    ("lodsd_zero_extends", 0),
+    ("lodsd_zero_extends", 1),
     ("lodsd_zero_extends_df_clear", 0),
-    ("lodsw_preserves_upper48", 0),
+    ("lodsw_preserves_upper48", 1),
     ("loop_decrements_rcx_without_flags", 1),
     ("loopne_stops_on_zero_flag", 1),
     ("maskmovdqu_selects_bytes", 0),
@@ -2701,7 +2699,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("mov_moffs8_store", 0),
     ("movddup_movsldup_movshdup", 0),
     ("movdqa_movaps_aligned_store_and_load", 3),
-    ("movsb_forward", 0),
     ("mpsadbw", 0),
     ("pabs_min_is_unchanged", 0),
     ("packusdw", 0),
@@ -2739,27 +2736,16 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("rcr8_by10_is_by_one_mod_9", 0),
     ("rcr8_by1_clear_carry_in", 0),
     ("rcr8_by1_set_carry_in", 0),
-    ("rep_lodsb_source_fault", 0),
-    ("rep_movs_zero_count_touches_nothing", 0),
-    ("rep_movsb_addr32_uses_32bit_registers", 0),
-    ("rep_movsb_fault_df_clear", 0),
-    ("rep_movsb_fault_stops_at_failing_iteration", 0),
-    ("rep_movsb_overlap_propagates_df_clear", 0),
-    ("rep_movsq_overlap_propagates", 0),
-    ("rep_movsq_zero_count_df_clear", 0),
-    ("rep_movsw_backward", 0),
-    ("rep_stosd_df_clear", 0),
-    ("rep_stosd_forward", 0),
-    ("rep_stosq_fault_df_clear", 0),
-    ("rep_stosq_fault_stops_at_failing_iteration", 0),
-    ("repe_cmpsb_fault_restores_flags", 0),
+    ("rep_lodsb_source_fault", 1),
+    ("rep_movsb_addr32_uses_32bit_registers", 1),
+    ("repe_cmpsb_fault_restores_flags", 1),
     ("repe_cmpsb_fault_restores_flags_df_clear", 0),
-    ("repe_cmpsb_stops_at_difference", 0),
+    ("repe_cmpsb_stops_at_difference", 1),
     ("repe_cmpsb_stops_at_difference_df_clear", 0),
-    ("repe_cmpsb_zero_count_keeps_flags", 0),
-    ("repne_scasb_finds_byte", 0),
+    ("repe_cmpsb_zero_count_keeps_flags", 1),
+    ("repne_scasb_finds_byte", 1),
     ("repne_scasb_finds_byte_df_clear", 0),
-    ("repne_scasd_exhausts_count", 0),
+    ("repne_scasd_exhausts_count", 1),
     ("rex_not_adjacent_to_opcode_is_ignored", 0),
     ("roundps_uses_mxcsr_rc", 0),
     ("roundsd_suppress_precision", 0),
@@ -3613,6 +3599,7 @@ fn dbt_route_of_every_case_is_recorded() {
         let memory = start.image.load(&case.code);
         let text: Vec<&str> = case.asm.split(';').map(str::trim).collect();
         let mut routes = Vec::new();
+        let mut repeats = false;
         for (index, &offset) in case.offsets.iter().enumerate() {
             let Ok(insn) = decode(CODE + offset as u64, |at| memory.fetch_instruction_byte(at))
             else {
@@ -3620,6 +3607,7 @@ fn dbt_route_of_every_case_is_recorded() {
             };
             let name = text.get(index).copied().unwrap_or(case.asm);
             routes.push(is_native(&insn));
+            repeats |= insn.rep;
             if is_native(&insn) {
                 native.insert(name);
             } else {
@@ -3634,13 +3622,13 @@ fn dbt_route_of_every_case_is_recorded() {
         };
         counts.entry(group).or_default()[kind] += 1;
         // Straight-line cases run each instruction once, so the counter must equal
-        // the number of helper instructions.
+        // the number of helper instructions. A REP form runs once per element.
         let labelled = text.iter().any(|piece| {
             piece
                 .split_once(':')
                 .is_some_and(|(label, _)| label.parse::<u8>().is_ok())
         });
-        if !labelled && case.fault.is_empty() && routes.len() == case.offsets.len() {
+        if !labelled && !repeats && case.fault.is_empty() && routes.len() == case.offsets.len() {
             let mut dbt = new_dbt();
             let mut memory = memory.clone();
             run_dbt(&mut dbt, &start.cpu, &mut memory, BUDGET);
