@@ -267,7 +267,7 @@ fn vop3_variant_dispatch_selects_exactly_the_registry_vop3_rows() {
         let mut variants = VectorCompareVop3Op::ALL
             .into_iter()
             .filter(|op| op.base() == base_op);
-        if base.width == 64 {
+        if base.width != 32 {
             assert_eq!(variants.next(), None, "{}", base.name);
             continue;
         }
