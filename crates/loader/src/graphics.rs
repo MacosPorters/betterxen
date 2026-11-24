@@ -233,6 +233,12 @@ pub const D3D12_FILTER_MIN_MAG_MIP_POINT: u32 = 0;
 /// `D3D12_TEXTURE_ADDRESS_MODE_CLAMP`.
 pub const D3D12_TEXTURE_ADDRESS_MODE_CLAMP: u32 = 3;
 
+/// Largest image the software reference draws for a textured draw.
+pub const MAX_SOFTWARE_TEXTURED_PIXELS: usize = 4096;
+/// The read-only `D3D12_RESOURCE_STATES`: vertex and constant buffer, index
+/// buffer, depth read, both shader resources, indirect argument and copy source.
+const READ_STATES: u32 = 0x1 | 0x2 | 0x20 | 0x40 | 0x80 | 0x200 | 0x800;
+
 /// Bit that separates GPU descriptor handles from CPU ones.
 const GPU_DESCRIPTOR_SPACE: u64 = 1 << 63;
 
@@ -1365,8 +1371,9 @@ impl GraphicsContext {
         Ok(())
     }
 
-    /// Record `SetGraphicsRootDescriptorTable`. The table is resolved against
-    /// the bound root signature and heaps when a draw uses it.
+    /// Record `SetGraphicsRootDescriptorTable`. When the list executes, the
+    /// command checks the base against the bound root signature and the bound
+    /// heap of the table's type. A draw then reads the descriptor it names.
     pub fn cmd_set_graphics_root_descriptor_table(
         &mut self,
         list: GraphicsHandle,
@@ -1820,10 +1827,11 @@ impl GraphicsContext {
             .resources
             .get(&resource)
             .ok_or(GraphicsError::InvalidResourceHandle)?;
-        // COMMON promotes to a shader-resource read; any other state must
-        // include PIXEL_SHADER_RESOURCE.
-        if texture.state != ResourceStates::COMMON
-            && texture.state.0 & ResourceStates::PIXEL_SHADER_RESOURCE.0 == 0
+        // COMMON promotes to a shader-resource read. Any other state must
+        // include PIXEL_SHADER_RESOURCE and combine it only with read states.
+        let state = texture.state.0;
+        if state != ResourceStates::COMMON.0
+            && (state & ResourceStates::PIXEL_SHADER_RESOURCE.0 == 0 || state & !READ_STATES != 0)
         {
             return Err(GraphicsError::ResourceLifetimeViolation);
         }
@@ -1927,10 +1935,11 @@ impl GraphicsContext {
         let texels = decode_texture(&draw.texture)?;
         let (tex_w, tex_h) = (draw.texture.width as usize, draw.texture.height as usize);
         let (w, h) = draw.viewport;
-        if w == 0 || h == 0 {
-            return Err(GraphicsError::InvalidViewport);
-        }
-        let mut pixels = draw.clear_color.repeat(w * h);
+        let count = w
+            .checked_mul(h)
+            .filter(|&count| (1..=MAX_SOFTWARE_TEXTURED_PIXELS).contains(&count))
+            .ok_or(GraphicsError::InvalidViewport)?;
+        let mut pixels = draw.clear_color.repeat(count);
         let window = |p: [f32; 4]| [(p[0] + 1.0) * 0.5 * w as f32, (1.0 - p[1]) * 0.5 * h as f32];
         let [p0, p1, p2] = draw.positions.map(window);
         let edge = |a: [f32; 2], b: [f32; 2], c: [f32; 2]| -> f32 {

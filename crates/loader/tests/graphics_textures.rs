@@ -144,7 +144,8 @@ struct Rig {
 
 /// SRV heap slots: 0 texture A (4×4), 1 texture B (4×4), 2 the 8×8 BC1
 /// texture, 3 empty.
-/// Sampler heap slots: 0 and 1 point/clamp, 2 empty.
+/// Sampler heap slots: 0 and 2 point/clamp, 1 empty. Every supported
+/// sampler has the same state, so slots differ only in being filled.
 fn rig() -> Rig {
     let mut ctx = GraphicsContext::new();
     let device = ctx.create_device().unwrap();
@@ -226,7 +227,7 @@ fn rig() -> Rig {
     let sampler_start = ctx
         .cpu_descriptor_handle_for_heap_start(sampler_heap)
         .unwrap();
-    for slot in 0..2 {
+    for slot in [0, 2] {
         ctx.create_sampler(
             &SamplerDesc::point_clamp(),
             sampler_start.offset(slot).unwrap(),
@@ -647,7 +648,7 @@ fn bad_bindings_fail_and_never_draw() {
         (srv(4), "SRV slot past the heap"),
         (
             Binding {
-                sampler_slot: Some(2),
+                sampler_slot: Some(1),
                 ..SLOT_0
             },
             "empty sampler slot",
@@ -793,7 +794,7 @@ fn swapped_root_parameters_and_second_sampler_slot() {
         &mut rig,
         Binding {
             swapped: true,
-            sampler_slot: Some(1),
+            sampler_slot: Some(2),
             ..srv(1)
         },
     )
@@ -973,6 +974,17 @@ fn texture_shape_and_state_are_checked() {
     ));
     for (state, ok) in [
         (ResourceStates::COPY_DEST, false),
+        (
+            ResourceStates(ResourceStates::COPY_DEST.0 | ResourceStates::PIXEL_SHADER_RESOURCE.0),
+            false,
+        ),
+        (
+            ResourceStates(
+                ResourceStates::NON_PIXEL_SHADER_RESOURCE.0
+                    | ResourceStates::PIXEL_SHADER_RESOURCE.0,
+            ),
+            true,
+        ),
         (ResourceStates::RENDER_TARGET, false),
         (ResourceStates::PIXEL_SHADER_RESOURCE, true),
     ] {
@@ -999,6 +1011,32 @@ fn texture_shape_and_state_are_checked() {
                 "{state:?}"
             );
         }
+    }
+}
+
+/// The public software reference rejects viewports it cannot allocate.
+#[test]
+fn software_reference_rejects_oversized_viewports() {
+    let texels = texture_a();
+    for viewport in [(usize::MAX, 2), (65, 64), (0, 4)] {
+        let draw = xenora_loader::graphics::TexturedDraw {
+            positions: VERTICES.map(|v| [v[0], v[1], v[2], v[3]]),
+            texcoords: VERTICES.map(|v| [v[4], v[5], v[6], v[7]]),
+            viewport,
+            clear_color: [0, 0, 0, 255],
+            texture: xenora_loader::graphics::TextureView {
+                format: TextureFormat::Rgba8Unorm,
+                width: 4,
+                height: 4,
+                bytes: &texels,
+            },
+            sampler: SamplerDesc::point_clamp(),
+        };
+        assert_eq!(
+            GraphicsContext::execute_software_reference_textured_draw(&draw),
+            Err(GraphicsError::InvalidViewport),
+            "{viewport:?}"
+        );
     }
 }
 

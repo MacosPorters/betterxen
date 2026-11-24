@@ -523,9 +523,9 @@ Descriptor handles follow D3D12 pointer arithmetic: the heap start plus
 `index × GetDescriptorHandleIncrementSize` (32 here; guests must query the
 value). `offset` returns `None` rather than carry into the next heap. CPU and
 GPU handles are separate spaces. A textured draw is a `DrawInstanced` of
-one instance of three vertices, starting at any vertex. Zero vertices or
-instances draw nothing. The sampled texture must be in `COMMON` or a state
-that includes `PIXEL_SHADER_RESOURCE`. Each vertex record holds a float4 position
+one instance of three vertices with start instance 0, starting at any vertex. Zero vertices or
+instances draw nothing. The sampled texture must be in `COMMON` or a read-only state that includes
+`PIXEL_SHADER_RESOURCE`. The software reference draws at most 4096 pixels. Each vertex record holds a float4 position
 at byte 0 and a float4 texture coordinate at byte 16, with a stride of at
 least 32. Textured indexed draws are unsupported.
 
