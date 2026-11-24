@@ -688,10 +688,34 @@ decoded = true
 llvm = "three-way passed"
 
 [[instruction]]
+form = "s_and_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
 form = "s_or_b32"
 encoding = "SOP2, normal SGPR destination; normal SGPR, inline integer or literal sources with at most one literal; SCC = result != 0"
 representation = "`880ED00D`"
 lowering = "resolved scalar state and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_or_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
 reference = "implemented"
 cpu = "local known-answer test passed"
 gpu = "local Apple M5 readback passed; acceptance pending"
@@ -712,10 +736,34 @@ decoded = true
 llvm = "three-way passed"
 
 [[instruction]]
+form = "s_xor_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
 form = "s_andn2_b32"
 encoding = "SOP2, normal SGPR destination; normal SGPR, inline integer or literal sources with at most one literal; D = S0 & ~S1; SCC = result != 0"
 representation = "`8A09FF08 FF00FF00`"
 lowering = "resolved scalar state and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_andn2_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
 reference = "implemented"
 cpu = "local known-answer test passed"
 gpu = "local Apple M5 readback passed; acceptance pending"
@@ -736,10 +784,34 @@ decoded = true
 llvm = "three-way passed"
 
 [[instruction]]
+form = "s_orn2_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
 form = "s_nand_b32"
 encoding = "SOP2, normal SGPR destination; normal SGPR, inline integer or literal sources with at most one literal; D = ~(S0 & S1); SCC = result != 0"
 representation = "`8C0B0808`"
 lowering = "resolved scalar state and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_nand_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
 reference = "implemented"
 cpu = "local known-answer test passed"
 gpu = "local Apple M5 readback passed; acceptance pending"
@@ -760,10 +832,34 @@ decoded = true
 llvm = "three-way passed"
 
 [[instruction]]
+form = "s_nor_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
 form = "s_xnor_b32"
 encoding = "SOP2, normal SGPR destination; normal SGPR, inline integer or literal sources with at most one literal; D = ~(S0 ^ S1); SCC = result != 0"
 representation = "`8E0D080C`"
 lowering = "resolved scalar state and SCC"
+reference = "implemented"
+cpu = "local known-answer test passed"
+gpu = "local Apple M5 readback passed; acceptance pending"
+recognized = true
+decoded = true
+llvm = "three-way passed"
+
+[[instruction]]
+form = "s_xnor_b64"
+encoding = "SOP2, even SGPR pairs, inline integers or one zero-extended literal, SCC = full result != 0"
+representation = "4 B, 8 B with literal"
+lowering = "resolved scalar pairs and SCC"
 reference = "implemented"
 cpu = "local known-answer test passed"
 gpu = "local Apple M5 readback passed; acceptance pending"

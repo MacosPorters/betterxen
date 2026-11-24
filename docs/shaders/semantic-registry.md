@@ -6,7 +6,8 @@ the decoder uses. This page explains where entries live, what each field means,
 how to check and regenerate the tables, and what the generator does not do for
 you.
 
-The registry covers the nine SOP2 forms listed in [SOP2 scalar ALU](scalar-alu.md).
+The registry covers the forms counted in [semantic coverage](semantic-coverage.md); the SOP2
+forms are listed in [SOP2 scalar ALU](scalar-alu.md) and [64-bit scalar logic](scalar-logic-b64.md).
 
 ## Files
 
@@ -98,7 +99,9 @@ The root file holds:
   (an SGPR, an inline integer -16 to 64, or a literal word) and at most one
   literal. A rule's `unsupported` list names the encodings it rejects, which
   stay unsupported instead of being guessed. The list must name exactly the
-  encodings the decoder rejects.
+  encodings the decoder rejects. For SOP2 64-bit logic, `sop2_sgpr_pair`
+  requires even SGPR pair bases and accepts one zero-extended literal word.
+  See [SOP2 64-bit logic](scalar-logic-b64.md) for the operand contract.
 
 Each `[[form]]` entry has exactly these fields. A missing or unknown field is an
 error.
@@ -112,7 +115,7 @@ error.
 | `operation` | The primitive the form uses | `add`, `sub`, `and`, `or`, `xor`, `andn2`, `orn2`, `nand`, `nor`, `xnor`, `lshl`, `lshr`, `ashr`, `min`, `max`, `cselect`, `bfm`, `mul`, `mul_hi`, `bfe`, `absdiff`, `lshl_add`, `mul24`, `mul_hi24` (vector only), `mov` (SOP1 and SOPK), `cmov` (SOPK only), `compare` and the SOP1 unaries |
 | `signedness` | How operands are read | `unsigned`, `signed`, `bitwise` (always `bitwise` for the logical operations, `cselect` and `bfm`; never for the arithmetic ones, `add`, `sub`, `min`, `max`, `mul`, `mul_hi`, `bfe`, `absdiff` and `lshl_add`; shifts take their primitive's signedness) |
 | `carry_in` | Implicit carry, borrow or select input | `none`, `scc` for unsigned scalar `add` and `sub` and required for scalar `cselect`, `vcc` for the Wave32 VOP2 select and carry forms |
-| `width` | Operand and result width in bits (operand width for compares) | `32`, `16` with `vopc_vcc_half`, or `64` with `vopc_vcc_pair` |
+| `width` | Operand and result width in bits (operand width for compares) | `32`, `16` with `vopc_vcc_half`, or `64` with `sop2_sgpr_pair` or `vopc_vcc_pair` |
 | `source_bits` | Sign extension only: the low bits of S0 that are read. The XML must list S0 with that size and format (`FMT_NUM_I8` or `FMT_NUM_I16`) | `8`, `16`; required for `sext`, rejected elsewhere |
 | `relation` | Compares only: the relation tested with S0 on the left | `eq`, `lg` (not equal), `gt`, `ge`, `lt`, `le`; required for `compare`, rejected elsewhere |
 | `source_order` | Vector forms only: `reversed` when the guide computes `op(S1, S0)` (the XML records no operand order); absent otherwise | `reversed` |

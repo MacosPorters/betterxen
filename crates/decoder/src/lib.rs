@@ -3,10 +3,10 @@
 use std::fmt;
 
 pub use xenora_isa::{
-    Architecture, CompareRelation, ExportTarget, Instruction, InterpolationPhase, ScalarAluOp,
-    ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp,
-    SoppControlOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSource, VectorSwapOp,
-    VectorUnaryOp,
+    Architecture, CompareRelation, ExportTarget, Instruction, InterpolationPhase, ScalarAlu64Op,
+    ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarSource,
+    ScalarSource64, ScalarUnaryOp, SoppControlOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
+    VectorSource, VectorSwapOp, VectorUnaryOp,
 };
 use xenora_isa::{
     BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_WAITCNT_VSCNT, V_ADD_F32,
@@ -406,6 +406,9 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
         let instruction = op.decode(|| branch_target(immediate, offset, op.mnemonic()))?;
         return Ok((instruction, 4));
     }
+    if let Some(op) = ScalarAlu64Op::from_word(first) {
+        return scalar_alu64(op, first, bytes);
+    }
     if let Some(op) = ScalarAluOp::from_word(first) {
         return scalar_alu(op, first, bytes);
     }
@@ -485,6 +488,57 @@ fn scalar_alu(
     let (src1, len1) = scalar_source(src1_bits, bytes, mnemonic)?;
     Ok((
         Instruction::ScalarAlu {
+            op,
+            dst,
+            src0,
+            src1,
+        },
+        len0.max(len1),
+    ))
+}
+
+// RDNA 2 ISA guide 3.6.3 and 5.2: normal 64-bit SGPR operands use even pairs.
+// The XML declares U64 literal operands; apply the guide's unsigned expansion (6.2.1).
+fn scalar_alu64(
+    op: ScalarAlu64Op,
+    first: u32,
+    bytes: &[u8],
+) -> Result<(Instruction, u8), DecodeErrorKind> {
+    let mnemonic = op.mnemonic();
+    let dst = ((first >> 16) & 0x7f) as u8;
+    if dst > 104 || !dst.is_multiple_of(2) {
+        return Err(unsupported(
+            mnemonic,
+            "expected an even normal SGPR destination pair",
+        ));
+    }
+    let (left, right) = (first as u8, (first >> 8) as u8);
+    if (left, right) == (255, 255) {
+        return Err(unsupported(
+            mnemonic,
+            "only one source may select a literal",
+        ));
+    }
+    let read = |selector| {
+        let (source, len) = scalar_source(selector, bytes, mnemonic)?;
+        let source = match source {
+            ScalarSource::Register(base) if base.is_multiple_of(2) => {
+                ScalarSource64::RegisterPair(base)
+            }
+            ScalarSource::Register(_) => {
+                return Err(unsupported(mnemonic, "expected an even SGPR source pair"));
+            }
+            ScalarSource::Immediate(value) if selector == 255 => {
+                ScalarSource64::Immediate(u64::from(value))
+            }
+            ScalarSource::Immediate(value) => ScalarSource64::Immediate((value as i32) as u64),
+        };
+        Ok((source, len))
+    };
+    let (src0, len0) = read(left)?;
+    let (src1, len1) = read(right)?;
+    Ok((
+        Instruction::ScalarAlu64 {
             op,
             dst,
             src0,

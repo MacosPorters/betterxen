@@ -294,11 +294,10 @@ fn stage_c_forms_match_the_guide_on_the_independent_interpreter() {
 }
 
 #[test]
-fn odd_opcodes_beside_the_stage_c_forms_stay_unsupported() {
-    // The 64-bit neighbours (opcodes 21-35 odd) read aligned SGPR pairs
-    // (s[10:11] = s[8:9] op s[12:13], all initialized); neither interpreter
-    // supports them, so each must refuse the SOP2 word.
-    for op in (21..=35).step_by(2) {
+fn sop2_64_bit_shifts_stay_unsupported() {
+    // Aligned, initialized pairs distinguish rejection of each shift opcode
+    // from rejection of an operand.
+    for op in [31, 33, 35] {
         let alu = [0x8000_0000 | op << 23 | 10 << 16 | 12 << 8 | 8];
         let init = [(8, 1), (9, 2), (12, 3), (13, 4)];
         let code = program(&init, false, &alu, 10);

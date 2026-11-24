@@ -67,6 +67,7 @@ enum Insn {
     /// SOP2 opcode 0-10, 14, 16, 18, an even opcode 20-36, 38-40, 44, 46-49,
     /// 53 or 54.
     SAlu(u32, u8, Src, Src),
+    SLogic64(u32, u8, (Src, bool), (Src, bool)),
     /// SOPC opcode 0-11: `s_cmp_{eq,lg,gt,ge,lt,le}_i32` then `_u32`.
     SCmp(u32, Src, Src),
     /// SOPK opcode 0 or 2-16 on SGPR `SDST` (s0-s105) with the raw SIMM16.
@@ -289,6 +290,9 @@ fn run_wave(program: &[(usize, Insn)], wave: &[u32]) -> Result<Vec<u32>, String>
             Insn::SImm(opcode, dst, simm16) => {
                 scalar_immediate(&mut sgpr, &mut scc, (opcode, dst, simm16), offset).map(|()| None)
             }
+            Insn::SLogic64(opcode, dst, a, b) => {
+                scalar_logic64(&mut sgpr, &mut scc, (opcode, dst, a, b), offset).map(|()| None)
+            }
             Insn::SAlu(opcode, dst, a, b) => {
                 scalar_alu(&mut sgpr, &mut scc, (opcode, dst, a, b), offset).map(|()| None)
             }
@@ -456,6 +460,52 @@ fn scalar_immediate(
         _ => d(sgpr)?.wrapping_mul(sext),
     };
     sgpr[dst as usize] = Some(value);
+    Ok(())
+}
+
+// Guide 12.1: the eight logical equations apply independently to each bit.
+fn scalar_logic64(
+    sgpr: &mut [Option<u32>; 128],
+    scc: &mut Option<bool>,
+    (opcode, dst, a, b): (u32, u8, (Src, bool), (Src, bool)),
+    offset: usize,
+) -> Result<(), String> {
+    if dst < 8 {
+        return Err(format!("{offset:#x}: write to a resource SGPR"));
+    }
+    let read = |(src, negative_inline)| -> Result<u64, String> {
+        match src {
+            Src::Imm(bits) if negative_inline => Ok(bits as i32 as u64),
+            Src::Imm(bits) => Ok(u64::from(bits)),
+            Src::Reg(reg) => {
+                let word = |r: u8| {
+                    sgpr[usize::from(r)].ok_or_else(|| format!("{offset:#x}: uninitialized s{r}"))
+                };
+                let (low, high) = (word(reg)?, word(reg + 1)?);
+                Ok(u64::from(high) * (1 << 32) + u64::from(low))
+            }
+        }
+    };
+    let (a, b) = (read(a)?, read(b)?);
+    let value = (0..64).fold(0, |result, bit| {
+        let x = (a >> bit) & 1 == 1;
+        let y = (b >> bit) & 1 == 1;
+        let set = match opcode {
+            15 => x && y,
+            17 => x || y,
+            19 => x != y,
+            21 => x && !y,
+            23 => x || !y,
+            25 => !x || !y,
+            27 => !x && !y,
+            29 => x == y,
+            _ => unreachable!("only SOP2 logical opcodes decode as pairs"),
+        };
+        result | u64::from(set) << bit
+    });
+    sgpr[usize::from(dst)] = Some(value as u32);
+    sgpr[usize::from(dst) + 1] = Some((value >> 32) as u32);
+    *scc = Some(value != 0);
     Ok(())
 }
 
@@ -1380,15 +1430,7 @@ fn decode_one(code: &[u8], offset: usize) -> Result<(Insn, usize), String> {
         && matches!(
             (first >> 23) & 0x7f,
             0..=10
-                | 14
-                | 16
-                | 18
-                | 20
-                | 22
-                | 24
-                | 26
-                | 28
-                | 30
+                | 14..=30
                 | 32
                 | 34
                 | 36
@@ -1409,7 +1451,23 @@ fn decode_one(code: &[u8], offset: usize) -> Result<(Insn, usize), String> {
         }
         let (sa, la) = scalar_source(code, offset, a)?;
         let (sb, lb) = scalar_source(code, offset, b)?;
-        return Ok((Insn::SAlu((first >> 23) & 0x7f, dst, sa, sb), la.max(lb)));
+        let opcode = (first >> 23) & 0x7f;
+        let instruction = if matches!(opcode, 15 | 17 | 19 | 21 | 23 | 25 | 27 | 29) {
+            // Guide 3.6.3: any 64-bit SGPR operand must start at an even index.
+            let unaligned = |src| matches!(src, Src::Reg(reg) if !reg.is_multiple_of(2));
+            if !dst.is_multiple_of(2) || unaligned(sa) || unaligned(sb) {
+                return Err(fail("unaligned SOP2 register pair"));
+            }
+            Insn::SLogic64(
+                opcode,
+                dst,
+                (sa, (193..=208).contains(&a)),
+                (sb, (193..=208).contains(&b)),
+            )
+        } else {
+            Insn::SAlu(opcode, dst, sa, sb)
+        };
+        return Ok((instruction, la.max(lb)));
     }
     // SOPC: ENCODING 0b10_1111110 in bits 23-31, OP in 16-22.
     if first >> 23 == 0b1_0111_1110 && (first >> 16) & 0x7f <= 11 {

@@ -24,6 +24,7 @@ either path. The [changelog](../CHANGELOG.md) records notable changes.
 - [Instruction coverage](shaders/instruction-coverage.md) — Desktop gfx1030 instruction forms, operand limits, and CPU and GPU results.
 - [Semantic coverage](shaders/semantic-coverage.md) — Generated per-family counts of identified, declared, decoded, lowered and verified gfx1030 forms.
 - [SOP2 scalar ALU](shaders/scalar-alu.md) — Supported scalar add, subtract and bitwise forms, their SCC rules and sources.
+- [SOP2 64-bit logic](shaders/scalar-logic-b64.md) — Register pairs, literal expansion, SCC and local verification.
 - [Semantic registry](shaders/semantic-registry.md) — How to add an instruction form: registry fields, validation, generation and the independence rule.
 - [VOP1 vector unary and swap](shaders/vector-unary.md) — Wave32 integer bit operations, register exchange, and operand limits.
 - [VOP2 select and carry](shaders/vector-vcc.md) — Wave32 lane selection, carry and borrow through the vector condition code.

@@ -332,6 +332,54 @@ pub const fn lshl_add_carry_u32(a: u32, b: u32, shift: u32) -> (u32, bool) {
     (sum as u32, sum >> 32 != 0)
 }
 
+/// SOP2 AND over 64 bits, with SCC set for a nonzero result.
+pub const fn and_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = a & b;
+    (value, value != 0)
+}
+
+/// SOP2 OR over 64 bits, with SCC set for a nonzero result.
+pub const fn or_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = a | b;
+    (value, value != 0)
+}
+
+/// SOP2 XOR over 64 bits, with SCC set for a nonzero result.
+pub const fn xor_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = a ^ b;
+    (value, value != 0)
+}
+
+/// SOP2 ANDN2 over 64 bits, with SCC set for a nonzero result.
+pub const fn andn2_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = a & !b;
+    (value, value != 0)
+}
+
+/// SOP2 ORN2 over 64 bits, with SCC set for a nonzero result.
+pub const fn orn2_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = a | !b;
+    (value, value != 0)
+}
+
+/// SOP2 NAND over 64 bits, with SCC set for a nonzero result.
+pub const fn nand_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = !(a & b);
+    (value, value != 0)
+}
+
+/// SOP2 NOR over 64 bits, with SCC set for a nonzero result.
+pub const fn nor_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = !(a | b);
+    (value, value != 0)
+}
+
+/// SOP2 XNOR over 64 bits, with SCC set for a nonzero result.
+pub const fn xnor_nonzero_b64(a: u64, b: u64) -> (u64, bool) {
+    let value = !(a ^ b);
+    (value, value != 0)
+}
+
 /// A bitwise copy of the source (RDNA 2 guide section 12.3).
 pub(crate) const fn mov_b32(src: u32) -> u32 {
     src

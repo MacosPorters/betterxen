@@ -990,6 +990,14 @@ mod review {
     }
 
     #[test]
+    fn scalar_logic_b64_fixture_folds_both_halves() {
+        let input = [0, 1, u32::MAX, 0x1234_5678];
+        let expected = input.map(|word| word ^ 0xedcb_a986);
+        let code = include_bytes!("../../fixtures/rdna2/scalar-logic-b64.bin");
+        verify(code, &input, Some(&expected));
+    }
+
+    #[test]
     fn scalar_immediate_fixture_records_every_registry_sopk_form() {
         let input = [0, 1, u32::MAX, SCALAR_IMMEDIATE_KEY, 0x1234_5678];
         let expected: Vec<_> = input

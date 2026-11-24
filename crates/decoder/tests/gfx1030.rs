@@ -4,8 +4,8 @@ use std::process::{Command, Stdio};
 
 use xenora_decoder::{
     Architecture, CompareRelation, DecodeError, DecodeErrorKind, DecodedInstruction, Instruction,
-    ScalarAluOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op,
-    VectorSource, VectorUnaryOp, decode, decode_at,
+    ScalarAlu64Op, ScalarAluOp, ScalarImmediateOp, ScalarSource, ScalarSource64, ScalarUnaryOp,
+    VectorAluOp, VectorAluVop3Op, VectorSource, VectorUnaryOp, decode, decode_at,
 };
 use xenora_isa::semantics::Signedness;
 use xenora_ref::{
@@ -330,6 +330,33 @@ fn reference_op(instruction: Instruction) -> Op {
             src: VectorSource::Scalar(src),
         } => Op::MoveScalar(dst, src),
         Instruction::MoveB32 { dst, src } => Op::Move(dst, reference_source(src)),
+        Instruction::ScalarAlu64 {
+            op,
+            dst,
+            src0,
+            src1,
+        } => {
+            let pair = |src| match src {
+                ScalarSource64::RegisterPair(base) => {
+                    [Source::Register(base), Source::Register(base + 1)]
+                }
+                ScalarSource64::Immediate(bits) => [
+                    Source::Immediate(bits as u32),
+                    Source::Immediate((bits >> 32) as u32),
+                ],
+            };
+            let kind = match op {
+                ScalarAlu64Op::AndB64 => ScalarAlu::And,
+                ScalarAlu64Op::OrB64 => ScalarAlu::Or,
+                ScalarAlu64Op::XorB64 => ScalarAlu::Xor,
+                ScalarAlu64Op::Andn2B64 => ScalarAlu::AndNot,
+                ScalarAlu64Op::Orn2B64 => ScalarAlu::OrNot,
+                ScalarAlu64Op::NandB64 => ScalarAlu::Nand,
+                ScalarAlu64Op::NorB64 => ScalarAlu::Nor,
+                ScalarAlu64Op::XnorB64 => ScalarAlu::Xnor,
+            };
+            Op::ScalarLogicPair(kind, dst, pair(src0), pair(src1))
+        }
         Instruction::VectorUnary { op, dst, src } => Op::VectorUnary(
             match op {
                 VectorUnaryOp::NotB32 => VectorUnary::Not,
@@ -586,6 +613,7 @@ fn compares_fixture_instructions_against_llvm() {
         include_bytes!("../../../fixtures/rdna2/ashr.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-alu.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-logic.bin"),
+        include_bytes!("../../../fixtures/rdna2/scalar-logic-b64.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-unary.bin"),
         include_bytes!("../../../fixtures/rdna2/scalar-arith.bin"),
@@ -601,7 +629,7 @@ fn compares_fixture_instructions_against_llvm() {
     ] {
         count += compare_against_llvm(fixture, &mut forms);
     }
-    assert_eq!(forms.len(), 142, "forms compared: {forms:?}");
+    assert_eq!(forms.len(), 150, "forms compared: {forms:?}");
     eprintln!(
         "{count} three-way instruction comparisons across {} forms",
         forms.len()

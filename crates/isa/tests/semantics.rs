@@ -5,8 +5,8 @@ use xenora_isa::semantics::{
     CarryIn, FORM_IDS, FORMS, GENERATED_SCHEMA, MaskEffect, SCHEMA, SccEffect, Signedness, Wave,
 };
 use xenora_isa::{
-    CompareRelation, ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp,
-    ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
+    CompareRelation, ScalarAlu64Op, ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp,
+    ScalarImmediateOp, ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
 };
 
 #[test]
@@ -60,8 +60,21 @@ fn scalar_alu_dispatch_selects_exactly_the_registry_sop2_forms() {
         assert_eq!(op.reads_scc(), row.carry_in == CarryIn::Scc);
         assert_eq!(op.writes_scc(), row.scc != SccEffect::Unchanged);
     }
+    for op in ScalarAlu64Op::ALL {
+        let row = op.semantics();
+        assert_eq!(row.family, EncodingFamily::Sop2);
+        assert_eq!(row.width, 64);
+        assert_eq!(row.name.to_ascii_lowercase(), op.mnemonic());
+        assert_eq!(row.carry_in, CarryIn::None);
+        assert_eq!(row.scc, SccEffect::Nonzero);
+    }
     dispatch_selects_exactly(EncodingFamily::Sop2, |word| {
-        ScalarAluOp::from_word(word).map(|op| op.semantics().name)
+        let narrow = ScalarAluOp::from_word(word);
+        let wide = ScalarAlu64Op::from_word(word);
+        assert!(narrow.is_none() || wide.is_none());
+        narrow
+            .map(|op| op.semantics().name)
+            .or_else(|| wide.map(|op| op.semantics().name))
     });
 }
 
