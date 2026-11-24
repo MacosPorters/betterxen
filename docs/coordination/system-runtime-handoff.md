@@ -1,18 +1,29 @@
 # System-runtime agent handoff
 
-**Updated:** 2026-11-24T20:01Z (UTC)  
+**PR review checkpoint:** 2026-11-24T23:40Z (UTC) — no new human feedback on #312 or #316 since 20:01Z
 **Owner identity on commits:** Adeeb Rahman `<therealabeeb@icloud.com>` (GitHub: `soggyramennoodle`)  
 **Do not add** `Co-authored-by: Cursor` or any AI attribution trailers (`AGENTS.md`).
 
 This file is the pick-up brief for the next agent continuing the system-runtime lane. Read it before editing.
 
+## Resume here
+
+1. Start at `docs/coordination/system-runtime-handoff.md` in `/Volumes/SSD/Xenora`.
+2. Check [PR #312](https://github.com/ranveersoni98/Xenora/pull/312) and [PR #316](https://github.com/ranveersoni98/Xenora/pull/316) for conversation comments, review submissions, and inline review comments newer than the PR review checkpoint above. Address any new actionable feedback immediately.
+3. If there is no new actionable feedback, continue the remaining work in `/Users/therealabeeb/Downloads/gta6 prompt 1 6.2 sol low.txt`. The SSD copy is `artifacts/system-runtime/implementation-brief.txt` and the work log is `artifacts/system-runtime/ledger.md`.
+4. While actively working, recheck both PRs every 10 minutes and sync upstream `main` every 10–15 minutes. Resume prompt work after addressing feedback.
+
 ---
 
 ## One-line status
 
-Active branch `feat/system-runtime-expansion` is pushed to tip **`36f9b1c`** (handoff doc). Review-fix tip for elforeign is **`8a677bc`**. PR **#312** is open with **CHANGES_REQUESTED** (blocking items addressed; awaiting re-review). PR **#316** still **CHANGES_REQUESTED** (fuzz harness fix already replied; awaiting maintainer re-review). Keep expanding runtime **unless** new PR feedback appears — then switch to feedback first.
+Active branch `feat/system-runtime-expansion` is at local tip **`c45e11d`**. The last fetched fork tip is **`c789dc6`**. Review-fix tip for elforeign is **`8a677bc`**. PR **#312** is open with **CHANGES_REQUESTED** (blocking items addressed; awaiting re-review). PR **#316** still **CHANGES_REQUESTED** (fuzz harness fix already replied; awaiting maintainer re-review). Keep expanding runtime **unless** new PR feedback appears — then switch to feedback first.
 
 ---
+
+## Test environment note
+
+The SSD is **exFAT** (no hard links, no POSIX permissions). Do **not** set `XENORA_TEST_TMP` to an SSD path: 9 host-file tests fail there for filesystem reasons. Leave it unset (defaults to `/tmp`, APFS).
 
 ## Workspace and remotes
 
@@ -22,8 +33,9 @@ Active branch `feat/system-runtime-expansion` is pushed to tip **`36f9b1c`** (ha
 | Fork remote | `fork` → `https://github.com/soggyramennoodle/Xenora.git` |
 | Upstream remote | `origin` → `https://github.com/ranveersoni98/Xenora.git` |
 | Active branch | `feat/system-runtime-expansion` (tracks `fork/feat/system-runtime-expansion`) |
-| Tip (handoff) | `36f9b1c` — *Document system-runtime handoff for the next agent.* (review-fix parent: `8a677bc`) |
-| Upstream `main` at handoff | `d7f7d58` (merged into the branch) |
+| Local branch tip | `b0b6733` — Share file position and timestamp policy across duplicate handles |
+| Last fetched fork tip | `c789dc6` |
+| Last fetched upstream `main` | `3b47c21` (merged into both PR branches 2026-11-24) |
 | Toolchain | `CARGO_HOME=/Volumes/SSD/xenora-toolchain/cargo` `RUSTUP_HOME=/Volumes/SSD/xenora-toolchain/rustup` put `…/cargo/bin` on `PATH` |
 | Prompt / brief | `/Users/therealabeeb/Downloads/gta6 prompt 1 6.2 sol low.txt` (ownership of Win32/CRT/runtime lane — **not finished**) |
 
@@ -66,8 +78,8 @@ Suggested reply if asked about #323: *Not us — we’re on system-runtime CRT/F
 
 #### elforeign non-blocking (not done yet)
 
-- ASCII-only case folding: add test + clearer error for non-ASCII case variants on APFS.
-- Consider per-mount quota (total bytes / file count) beyond per-file size cap.
+- ASCII-only case folding follow-up verified locally in `c45e11d` on SSD-backed APFS. The commit is unpushed.
+- Per-mount quota implemented locally: `HostMount::with_quota(bytes, entries)` (net growth, `ERROR_DISK_FULL`/`ENOSPC`), guest test `mount_quota_bounds_net_bytes_and_entries_added_by_the_guest`.
 - Scope: branch still overlaps #316 history; once #316 merges, #312 diff should shrink toward FS+later CRT — or split if maintainer asks.
 
 #### Local verification after unlink fix
@@ -139,12 +151,11 @@ GitHub PR subscribe MCP returned 403 earlier; the local loop is the reliable pat
 
 ## Next actions (priority order)
 
-1. **Wait / poll** for elforeign or maintainer re-review on #312 after `8a677bc`.
+1. **Check both PRs** using the timestamp under Resume here.
 2. On new #312/#316 comments → implement / reply immediately.
 3. If quiet → continue CRT/runtime gaps that **do not** collide with #323 (no `CreateThread` scheduler). Sensible candidates:
-   - elforeign non-blocking: ASCII case test + clearer EEXIST mapping on mounts.
-   - `GetCurrentDirectory` / `SetCurrentDirectory` synthetic `C:\` (if still missing).
-   - More CRT (`strtok` is stubbed in import-gen — only if a real bounded design exists; don’t ship a fake).
+   - `GetTempFileNameW` is verified on synthetic and mounted drives. Continue remaining filesystem compatibility and verification from the brief. The host-mount quota suggestion remains open.
+   - `strtok_s` and `wcstok_s` are implemented and exercised through translated guest imports. Both are partial because they return `EINVAL` without invoking the UCRT invalid-parameter handler.
    - Keep docs/`CHANGELOG` honest; no Xbox claims.
 4. Sync `main` when new upstream commits appear; resolve changelog conflicts by **keeping both** sides.
 5. Prefer updating **#312** for work that depends on host mounts; a cherry-pick onto bare `main` fails (stdio/host_files not on `main` alone).
