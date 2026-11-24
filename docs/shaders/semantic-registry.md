@@ -127,7 +127,7 @@ error.
 | `shift_count_bits` | Shifts only: the low bits of the count source used as the count: S1, or S0 for a vector form with `source_order = "reversed"`. Scalar forms mask it in the generated evaluation, vector forms in their MSL template; the XML must list the count source as unsigned | `5` (log2 of `width`); required for shifts, rejected elsewhere |
 | `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (SOPC and SOPK compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
 | `vcc`, `exec` | Implicit effect on VCC and EXEC | `unchanged`; `vcc` is `lane_mask` exactly for the VOPC compares (VCC_LO bit n = EXEC[n] & test, fully written; VCC_HI unknown afterwards, see [vector-compare.md](vector-compare.md)); `exec` must be `unchanged` (explicit destinations are covered by the operand rule) |
-| `wave` | Wave sizes the form is valid in | `wave32` for VOPC compares and VOP1 integer forms in the Wave32 compute fixture ABI, `any` for other registry forms |
+| `wave` | Wave sizes the form is valid in | `wave32` for SOPP controls, VOPC compares and VOP1 integer forms in the Wave32 compute fixture ABI, `any` for other registry forms |
 | `operands` | Name of an `[operand_rules]` entry for the same family | e.g. `sop2_sgpr` |
 | `spec` | References `{ document, section, page }` | at least one `guide` reference with a page above 0 |
 | `verify` | Evidence the form needs before it counts as verified | `reference`, `independent`, `metal`, `llvm_encoding` |
@@ -218,6 +218,17 @@ zero-extended for `unsigned`. A SOPK compare's opcode must be 3 (`signed`) or 9
 The XML must give SIMM16 as 16-bit `FMT_NUM_I16` (`FMT_NUM_U16` for `unsigned`).
 The word never takes a literal dword. The details are in
 [scalar-immediate.md](scalar-immediate.md).
+
+The SOPP control rules (AMD RDNA 2 ISA guide §§12.5 and 13.1.5) generate
+`SoppControlOp` for the existing Wave32 compute subset. `sopp_end` accepts
+`s_endpgm` with zero in SIMM16. `sopp_wait` accepts only `s_waitcnt vmcnt(0)`
+(`0x3f70`), completing a pending vector load. `sopp_branch` accepts
+`s_branch`, `s_cbranch_scc0`, `s_cbranch_vccz` and `s_cbranch_execz` with a
+nonnegative signed SIMM16 displacement in dwords from the next instruction.
+The decoder and compiler require a valid target boundary. The conditional
+branches read SCC, VCC_LO or EXEC_LO without writing those registers.
+Other SOPP forms, including `s_nop`, the nonzero branches, `s_sendmsg`,
+`s_trap`, `s_sethalt` and `s_setprio`, remain unsupported.
 
 Behaviour is chosen only from these declared fields, never from the mnemonic.
 

@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Changed
+- Moved the six supported gfx1030 SOPP compute control forms into the semantic registry, preserving instruction decoding and shader lowering. Part of #215.
 - Moved gfx1030 `s_mov_b32` (SOP1) into the semantic registry, preserving its existing decode domain and shader output. The move operand rule retains explicit VCC and EXEC half destinations. Part of #215.
 - Moved the six hand-written gfx1030 VOP2 logical and shift forms (`v_and_b32`, `v_or_b32`, `v_xor_b32`, `v_lshlrev_b32`, `v_lshrrev_b32`, `v_ashrrev_i32`, AMD guide section 12.7) into the semantic registry under a new VGPR-only operand rule `vop2_vgpr2`, with no behaviour change: a sweep of 132,608 VOP2, VOP1 and SOP1 words decodes to the same text, length and error before and after, the MSL goldens are unchanged, and the runtime-region allowlist admits exactly the same six forms. The per-lane `VectorBinary` gained `And`, `Or`, `Xor` and the three shifts (count masked to S0[4:0]); 6 hand-written instruction variants and their decoder and lowering arms are gone (17 hand-written forms remain). Part of #215.
 - Added non-blocking Metal compute submission through `submit_words` and `wait`, with completion-aware resource retirement and a sixteen-dispatch in-flight limit. Synchronous calls keep their existing behavior. The benchmark reports the host submission split and compares synchronous and pipelined batches.

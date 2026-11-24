@@ -5,12 +5,11 @@ use std::fmt;
 pub use xenora_isa::{
     Architecture, CompareRelation, ExportTarget, Instruction, InterpolationPhase, ScalarAluOp,
     ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp,
-    VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorCompareVop3Op, VectorSource, VectorSwapOp,
-    VectorUnaryOp,
+    SoppControlOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorCompareVop3Op,
+    VectorSource, VectorSwapOp, VectorUnaryOp,
 };
 use xenora_isa::{
-    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
-    S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_ENDPGM, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
+    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_WAITCNT_VSCNT, V_ADD_F32,
     V_INTERP_P1_F32, V_INTERP_P2_F32, V_MOV_B32, V_MUL_F32, VCC_LO,
 };
 
@@ -41,17 +40,11 @@ const fn concat_forms<const N: usize>() -> [(&'static str, EncodingFamily); N] {
 }
 
 /// Decoded forms not yet described by the semantic registry.
-const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 16] = [
+const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 10] = [
     ("BUFFER_LOAD_DWORD", EncodingFamily::Mubuf),
     ("BUFFER_STORE_DWORD", EncodingFamily::Mubuf),
     ("EXP", EncodingFamily::Exp),
     ("IMAGE_SAMPLE_LZ", EncodingFamily::Mimg),
-    ("S_BRANCH", EncodingFamily::Sopp),
-    ("S_CBRANCH_EXECZ", EncodingFamily::Sopp),
-    ("S_CBRANCH_SCC0", EncodingFamily::Sopp),
-    ("S_CBRANCH_VCCZ", EncodingFamily::Sopp),
-    ("S_ENDPGM", EncodingFamily::Sopp),
-    ("S_WAITCNT", EncodingFamily::Sopp),
     ("S_WAITCNT_VSCNT", EncodingFamily::Sopk),
     ("V_ADD_F32", EncodingFamily::Vop2),
     ("V_INTERP_P1_F32", EncodingFamily::Vintrp),
@@ -417,33 +410,24 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
         let simm16 = first as u16;
         return Ok((Instruction::ScalarImmediateCompare { op, src, simm16 }, 4));
     }
-    if S_BRANCH.matches(first) {
-        let target = branch_target(first, offset, "s_branch")?;
-        return Ok((Instruction::Branch { target }, S_BRANCH.byte_len()));
+    if let Some(op) = SoppControlOp::from_word(first) {
+        let immediate = first as u16;
+        if op
+            .required_immediate()
+            .is_some_and(|exact| immediate != exact)
+        {
+            let detail = if op == SoppControlOp::EndProgram {
+                "expected zero immediate"
+            } else {
+                "expected vmcnt(0) alone"
+            };
+            return Err(unsupported(op.mnemonic(), detail));
+        }
+        let instruction = op.decode(|| branch_target(immediate, offset, op.mnemonic()))?;
+        return Ok((instruction, 4));
     }
     if let Some(op) = ScalarAluOp::from_word(first) {
         return scalar_alu(op, first, bytes);
-    }
-    if S_CBRANCH_SCC0.matches(first) {
-        let target = branch_target(first, offset, "s_cbranch_scc0")?;
-        return Ok((
-            Instruction::BranchSccZero { target },
-            S_CBRANCH_SCC0.byte_len(),
-        ));
-    }
-    if S_CBRANCH_EXECZ.matches(first) {
-        let target = branch_target(first, offset, "s_cbranch_execz")?;
-        return Ok((
-            Instruction::BranchExecZero { target },
-            S_CBRANCH_EXECZ.byte_len(),
-        ));
-    }
-    if S_CBRANCH_VCCZ.matches(first) {
-        let target = branch_target(first, offset, "s_cbranch_vccz")?;
-        return Ok((
-            Instruction::BranchVccZero { target },
-            S_CBRANCH_VCCZ.byte_len(),
-        ));
     }
     if let Some(op) = VectorAluOp::from_word(first) {
         // VOP2: SRC0 in bits 0-8, VSRC1 in bits 9-16, VDST in bits 17-24.
@@ -481,15 +465,6 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
             V_MUL_F32.byte_len(),
         ));
     }
-    if S_WAITCNT.matches(first) {
-        return scalar_form(
-            first,
-            S_WAITCNT.byte_len(),
-            0xbf8c_3f70,
-            Instruction::WaitLoad,
-            "expected vmcnt(0) alone",
-        );
-    }
     if S_WAITCNT_VSCNT.matches(first) {
         return scalar_form(
             first,
@@ -497,15 +472,6 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
             0xbbfd_0000,
             Instruction::WaitStore,
             "expected null, 0",
-        );
-    }
-    if S_ENDPGM.matches(first) {
-        return scalar_form(
-            first,
-            S_ENDPGM.byte_len(),
-            0xbf81_0000,
-            Instruction::EndProgram,
-            "expected zero immediate",
         );
     }
 
@@ -564,11 +530,11 @@ fn scalar_source(
 }
 
 fn branch_target(
-    first: u32,
+    immediate: u16,
     offset: usize,
     mnemonic: &'static str,
 ) -> Result<usize, DecodeErrorKind> {
-    let displacement = first as u16 as i16;
+    let displacement = immediate as i16;
     let words = usize::try_from(displacement)
         .map_err(|_| unsupported(mnemonic, "expected a forward branch"))?;
     offset

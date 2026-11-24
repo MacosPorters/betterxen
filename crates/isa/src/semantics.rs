@@ -94,6 +94,18 @@ pub enum Operation {
     Move,
     /// SOPK: SDST receives the sign-extended SIMM16 when SCC is set.
     ConditionalMove,
+    /// Terminate the program.
+    EndProgram,
+    /// Unconditional PC-relative branch.
+    Branch,
+    /// Branch when SCC is clear.
+    BranchSccZero,
+    /// Branch when VCC is zero.
+    BranchVccZero,
+    /// Branch when EXEC is zero.
+    BranchExecZero,
+    /// Complete an outstanding vector load.
+    WaitLoad,
     /// Swap the two old per-lane VGPR values (guide 12.8).
     Swap,
 }
@@ -237,6 +249,12 @@ pub enum OperandRule {
     /// SOPK integer compare: SDST (s0-s105) is the left operand, SIMM16 the right
     /// (sign-extended for `_i32`, zero-extended for `_u32`); only SCC is written.
     SopkCompare,
+    /// SOPP termination with zero in the reserved immediate field.
+    SoppEnd,
+    /// SOPP branch with a signed dword displacement from the next instruction.
+    SoppBranch,
+    /// SOPP wait with exactly vmcnt(0) and the other counters disabled.
+    SoppWait,
     /// VOPC vector compare: the destination is `vcc_lo` (Wave32); SRC0 is a VGPR,
     /// s0-s105, `vcc_lo`, an inline integer -16..64 or a literal word; VSRC1 is a
     /// VGPR. Everything else is rejected as unsupported.
