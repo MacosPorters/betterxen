@@ -120,10 +120,16 @@ fn build(imports: &[(&str, Symbol)]) -> Image {
 }
 
 fn standard(clock: u64) -> (ImportRegistry, Arc<MockClock>) {
-    let clock = Arc::new(MockClock::new(clock));
-    let mut registry = ImportRegistry::new();
-    register_standard_services(&mut registry, Arc::new(ServicesState::new(clock.clone())));
+    let (registry, clock, _) = standard_with_state(clock);
     (registry, clock)
+}
+
+fn standard_with_state(clock: u64) -> (ImportRegistry, Arc<MockClock>, Arc<ServicesState>) {
+    let clock = Arc::new(MockClock::new(clock));
+    let state = Arc::new(ServicesState::new(clock.clone()));
+    let mut registry = ImportRegistry::new();
+    register_standard_services(&mut registry, state.clone());
+    (registry, clock, state)
 }
 
 /// A guest whose image imports every generated service from its own library.
@@ -131,6 +137,7 @@ struct Guest {
     engine: DbtEngine,
     memory: GuestMemory,
     clock: Arc<MockClock>,
+    state: Arc<ServicesState>,
     teb: u64,
     /// Upper halves and XMM lanes of unrelated arguments hold this pattern.
     xmm: [u128; 4],
@@ -151,7 +158,7 @@ impl Guest {
         memory
             .map_region(STACK, 0x1000, MemoryPermissions::READ_WRITE)
             .unwrap();
-        let (mut registry, clock) = standard(0x01DA_0000_1234_5678);
+        let (mut registry, clock, state) = standard_with_state(0x01DA_0000_1234_5678);
         let bound = registry
             .bind_imports(&pe, &image.bytes, BASE, &mut memory)
             .unwrap();
@@ -162,6 +169,7 @@ impl Guest {
             engine,
             memory,
             clock,
+            state,
             teb: 0,
             xmm: [0xAAAA_BBBB_CCCC_DDDD_EEEE_FFFF_0123_4567; 4],
         }
@@ -552,6 +560,48 @@ fn last_error_isolated_across_guest_thread_switches() {
     assert_eq!(guest.last_error(), 0);
     guest.teb = 0x20000;
     assert_eq!(guest.last_error(), 6);
+}
+
+/// The last-error code is documented as kept per thread, and most functions
+/// set it only when they fail (errhandlingapi.h GetLastError).
+#[test]
+fn a_successful_call_keeps_another_threads_error_and_its_own() {
+    let mut guest = Guest::new();
+    guest.teb = 0x10000;
+    assert_eq!(guest.call("VirtualAlloc", &[0, 0, 0x3000, 4]), 0);
+    assert_eq!(guest.last_error(), 87); // ERROR_INVALID_PARAMETER
+    guest.teb = 0x20000;
+    guest.call("SetLastError", &[0xFFFF_FFFF]);
+    assert_eq!(guest.call("GetCurrentProcess", &[]), PROCESS);
+    assert_eq!(guest.call("GetCurrentThreadId", &[]), 0x4104);
+    assert_eq!(
+        guest.last_error(),
+        0xFFFF_FFFF,
+        "success keeps a nonzero error"
+    );
+    guest.teb = 0x10000;
+    assert_eq!(guest.last_error(), 87);
+}
+
+#[test]
+fn a_retired_thread_starts_clean_when_its_teb_address_is_reused() {
+    let mut guest = Guest::new();
+    guest.teb = 0x10000;
+    guest.call("SetLastError", &[998]);
+    guest.teb = 0x20000;
+    guest.call("CloseHandle", &[0x1234]);
+
+    assert!(guest.state.retire_thread_last_error(0x10000));
+    assert!(!guest.state.retire_thread_last_error(0x10000));
+    assert!(
+        !guest.state.retire_thread_last_error(0x30000),
+        "a thread that never failed holds no value"
+    );
+    assert_eq!(guest.last_error(), 6, "the other thread is untouched");
+    guest.teb = 0x10000;
+    assert_eq!(guest.last_error(), 0);
+    guest.call("SetLastError", &[5]);
+    assert_eq!(guest.last_error(), 5);
 }
 
 #[test]

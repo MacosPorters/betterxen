@@ -49,7 +49,20 @@ VARIANT_KEYS = {"of", "family", "opcode", "operands", "spec", "verify"}
 # The assembler suffix LLVM prints for a variant's encoding family.
 ASSEMBLY_SUFFIX = {"VOP3": "_e64"}
 
+# Control effects select an existing typed instruction and its operand contract.
+# The XML records SCC as a separate implicit input. VCC and EXEC predicates
+# have fieldless mask inputs instead.
+CONTROL_OPERATIONS = {
+    "end_program": ("EndProgram", "sopp_end", None),
+    "branch": ("Branch", "sopp_branch", None),
+    "branch_scc_zero": ("BranchSccZero", "sopp_branch", None),
+    "branch_vcc_zero": ("BranchVccZero", "sopp_branch", "OPR_VCC"),
+    "branch_exec_zero": ("BranchExecZero", "sopp_branch", "OPR_SDST_EXEC"),
+    "wait_load": ("WaitLoad", "sopp_wait", None),
+}
+
 OPERATIONS = {
+    **{name: variant for name, (variant, _, _) in CONTROL_OPERATIONS.items()},
     "add": "Add", "sub": "Sub", "and": "And", "or": "Or", "xor": "Xor",
     "andn2": "AndNot", "orn2": "OrNot", "nand": "Nand", "nor": "Nor", "xnor": "Xnor",
     "lshl": "ShiftLeft", "lshr": "LogicalShiftRight", "ashr": "ArithmeticShiftRight",
@@ -61,7 +74,7 @@ OPERATIONS = {
     "mul": "Multiply", "mul_hi": "MultiplyHigh", "bfe": "BitfieldExtract",
     "absdiff": "AbsoluteDifference", "lshl_add": "ShiftLeftAdd",
     "mul24": "Multiply24", "mul_hi24": "MultiplyHigh24",
-    "mov": "Move", "cmov": "ConditionalMove",
+    "mov": "Move", "cmov": "ConditionalMove", "swap": "Swap",
 }
 # Unary operations read one source; they need an operand rule of the unary kind.
 UNARY = {"not", "brev", "bcnt0", "bcnt1", "ff0", "ff1", "flbit", "sext", "abs"}
@@ -76,10 +89,13 @@ RELATIONS = {
 }
 # F and T exist only as VOPC compares (guide Table 59 offsets 0 and 7).
 VECTOR_ONLY_RELATIONS = {"f", "t"}
-# Guide 12.9 Table 59 and Table 61: a 32-bit integer VOPC compare's opcode is
-# its group base (128 for _I32, 192 for _U32) plus its relation's offset. This
-# is the guide's opcode layout, not a reading of the mnemonic.
-VOPC_INTEGER_BASES = {"signed": 128, "unsigned": 192}
+# Guide 12.9 Tables 59 and 61: integer VOPC opcodes are the group base
+# for the operand width and signedness plus the relation offset.
+VOPC_INTEGER_BASES = {
+    16: {"signed": 136, "unsigned": 168},
+    32: {"signed": 128, "unsigned": 192},
+    64: {"signed": 160, "unsigned": 224},
+}
 VOPC_RELATION_OFFSETS = {"f": 0, "lt": 1, "eq": 2, "le": 3, "gt": 4, "lg": 5, "ge": 6, "t": 7}
 # (relation, signedness) -> primitive. Equality does not depend on signedness,
 # so both declared signednesses of EQ and LG share one primitive.
@@ -97,7 +113,7 @@ COMPARE_PRIMITIVES = {
 # the signedness their primitive names, and their S1 is an unsigned count.
 LOGICAL = {
     "and", "or", "xor", "andn2", "orn2", "nand", "nor", "xnor",
-    "not", "brev", "bcnt0", "bcnt1", "ff0", "ff1", "cselect", "bfm",
+    "not", "brev", "bcnt0", "bcnt1", "ff0", "ff1", "cselect", "bfm", "swap",
 }
 ARITHMETIC = {
     "add", "sub", "min", "max", "mul", "mul_hi", "bfe", "absdiff", "lshl_add", "mul24", "mul_hi24",
@@ -124,7 +140,7 @@ SHIFT_AMOUNTS = {1, 2, 3, 4}
 SOURCE_ORDER_KEY = "source_order"
 SOURCE_ORDERS = {"reversed"}
 SIGNEDNESS = {"unsigned": "Unsigned", "signed": "Signed", "bitwise": "Bitwise"}
-CARRY_IN = {"none": "None", "scc": "Scc"}
+CARRY_IN = {"none": "None", "scc": "Scc", "vcc": "Vcc"}
 SCC = {
     "unchanged": "Unchanged",
     "carry_out": "CarryOut",
@@ -134,16 +150,18 @@ SCC = {
     "relation": "Relation",
     "selected_src0": "SelectedSrc0",
 }
-# lane_mask: the Wave32 VOPC result written to VCC_LO (vcc only; EXEC writes
-# such as v_cmpx have no contract yet, so exec must stay unchanged).
+# lane_mask: the Wave32 compare or carry result written to VCC_LO.
+# EXEC writes such as v_cmpx have no contract, so exec must stay unchanged.
 MASK = {"unchanged": "Unchanged", "lane_mask": "LaneMask"}
 WAVE = {"any": "Any", "wave32": "Wave32"}
-# Which wave declaration each operand-rule kind must make. The decoder has no
-# wave-size input, so "wave32" is only true where the caller's ABI fixes the
-# wave size: the lane-mask compares, whose one entry point is the Wave32
-# compute fixture ABI (docs/shaders/vector-compare.md section 2). Every other
-# kind must be "any".
-WAVE_BY_KIND = {"vector_compare": "wave32"}
+# The synthetic compute fixture ABI fixes the wave size for these operand-rule
+# kinds and for the VCC-reading VOP2 rule. Other forms declare "any".
+WAVE_BY_KIND = {"control": "wave32", "vector_compare": "wave32", "vector_unary": "wave32", "vector_swap": "wave32"}
+VCC_VECTOR_PRIMITIVES = {
+    ("cselect", "bitwise"): "Select",
+    ("add", "unsigned"): "AddCarry",
+    ("sub", "unsigned"): "SubtractBorrow",
+}
 EVIDENCE = {
     "reference": "Reference",
     "independent": "Independent",
@@ -164,7 +182,6 @@ PINNED_DOCUMENTS = {
         "file": "amdgpu_isa_rdna2.xml",
     },
 }
-WIDTHS = {32}
 
 # (operation, signedness) -> (required SCC effect, primitive, takes carry-in).
 # A form whose declaration is not a row here has no primitive and is rejected.
@@ -184,6 +201,7 @@ PRIMITIVES = {
     ("lshl", "bitwise"): ("nonzero", "lshl_nonzero_b32", False),
     ("lshr", "unsigned"): ("nonzero", "lshr_nonzero_b32", False),
     ("ashr", "signed"): ("nonzero", "ashr_nonzero_i32", False),
+    ("mov", "bitwise"): ("unchanged", "mov_b32", False),
     ("not", "bitwise"): ("nonzero", "not_nonzero_b32", False),
     ("brev", "bitwise"): ("unchanged", "brev_b32", False),
     ("bcnt0", "bitwise"): ("nonzero", "bcnt0_nonzero_b32", False),
@@ -258,7 +276,67 @@ UNSUPPORTED_COMBOS = {
 # VOP3 rules also name source classes and encoding fields they refuse.
 VOP3_COMBOS = {"src_sgpr", "src_inline", "src_literal", "modifiers", "src2"}
 ALL_COMBOS = UNSUPPORTED_COMBOS | {"src_vcc_hi", "src_null"} | VOP3_COMBOS
+VECTOR_UNARY_PRIMITIVES = {
+    ("not", "bitwise"): "Not",
+    ("brev", "bitwise"): "ReverseBits",
+    ("flbit", "unsigned"): "FindHighUnsigned",
+    ("ff1", "bitwise"): "FindLow",
+    ("flbit", "signed"): "FindHighSigned",
+}
+
 OPERAND_RULES = {
+    "sopp_end": {
+        "rust": "SoppEnd",
+        "enum": "SoppControlOp",
+        "shape": {"family": "SOPP", "src": [], "max_literals": 0, "immediate": 0},
+        "unsupported": set(),
+        "kind": "control",
+    },
+    "sopp_branch": {
+        "rust": "SoppBranch",
+        "enum": "SoppControlOp",
+        "shape": {"family": "SOPP", "src": [{"field": "SIMM16", "class": "label"}], "max_literals": 0},
+        "unsupported": set(),
+        "kind": "control",
+    },
+    "sopp_wait": {
+        "rust": "SoppWait",
+        "enum": "SoppControlOp",
+        "shape": {"family": "SOPP", "src": [{"field": "SIMM16", "class": "waitcnt"}],
+                  "max_literals": 0, "immediate": 0x3f70},
+        "unsupported": set(),
+        "kind": "control",
+    },
+    "vop1_vgpr": {
+        "rust": "Vop1Vgpr",
+        "enum": "VectorUnaryOp",
+        "shape": {
+            "family": "VOP1",
+            "dst": {"field": "VDST", "class": "vgpr", "min": 0, "max": 255},
+            "src": [{"field": "SRC0", "class": "vector_source"}],
+            "max_literals": 1,
+        },
+        "unsupported": {
+            "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline",
+            "src_special",
+        },
+        "kind": "vector_unary",
+    },
+    "vop1_swap": {
+        "rust": "Vop1Swap",
+        "enum": "VectorSwapOp",
+        "shape": {
+            "family": "VOP1",
+            "dst": {"field": "VDST", "class": "vgpr", "min": 0, "max": 255},
+            "src": [{"field": "SRC0", "class": "vgpr"}],
+            "max_literals": 0,
+        },
+        "unsupported": {
+            "src_sgpr", "src_vcc", "src_exec", "src_m0", "src_ttmp", "src_null", "src_inline",
+            "src_float_inline", "src_special", "src_literal",
+        },
+        "kind": "vector_swap",
+    },
     "sop2_sgpr": {
         "rust": "Sop2Sgpr",
         "enum": "ScalarAluOp",
@@ -301,6 +379,18 @@ OPERAND_RULES = {
         },
         # One source, so two literals cannot occur; the rest are rejected.
         "unsupported": {combo for combo in UNSUPPORTED_COMBOS if combo != "two_literals"},
+        "kind": "unary",
+    },
+    "sop1_move": {
+        "rust": "Sop1Move",
+        "enum": "ScalarUnaryOp",
+        "shape": {
+            "family": "SOP1",
+            "dst": {"field": "SDST", "class": "sgpr_or_vcc_exec"},
+            "src": [{"field": "SSRC0", "class": "scalar_source"}],
+            "max_literals": 1,
+        },
+        "unsupported": UNSUPPORTED_COMBOS - {"two_literals", "dst_vcc", "dst_exec"},
         "kind": "unary",
     },
     "sopk_sgpr": {
@@ -350,6 +440,44 @@ OPERAND_RULES = {
         },
         "kind": "vector_compare",
     },
+    "vopc_vcc_half": {
+        "rust": "VopcVccHalf",
+        "enum": "VectorCompareOp",
+        "shape": {
+            "family": "VOPC",
+            "src": [
+                {"field": "SRC0", "class": "vector_source"},
+                {"field": "VSRC1", "class": "vgpr"},
+            ],
+            "max_literals": 0,
+        },
+        # The destination is implicitly vcc_lo; the decoder rejects these SRC0
+        # selectors (the same vector_source as VOP2).
+        "unsupported": {
+            "src_literal", "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline",
+            "src_special",
+        },
+        "kind": "vector_compare",
+        "width": 16,
+    },
+    "vopc_vcc_pair": {
+        "rust": "VopcVccPair",
+        "enum": "VectorCompareOp",
+        "shape": {
+            "family": "VOPC",
+            "src": [
+                {"field": "SRC0", "class": "vector_pair_or_inline_integer"},
+                {"field": "VSRC1", "class": "vgpr_pair"},
+            ],
+            "max_literals": 0,
+        },
+        "unsupported": {
+            "src_vcc", "src_literal", "src_exec", "src_m0", "src_ttmp", "src_null",
+            "src_float_inline", "src_special",
+        },
+        "kind": "vector_compare",
+        "width": 64,
+    },
     "vop3_vgpr2": {
         "rust": "Vop3Vgpr2",
         "enum": "VectorAluOp",
@@ -391,6 +519,24 @@ OPERAND_RULES = {
         },
         # vector_source = VGPR, s0-s105, vcc_lo, inline integer -16..64 or a
         # literal; the decoder rejects these SRC0 selectors.
+        "unsupported": {
+            "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline",
+            "src_special",
+        },
+        "kind": "vector",
+    },
+    "vop2_vcc": {
+        "rust": "Vop2Vcc",
+        "enum": "VectorAluOp",
+        "shape": {
+            "family": "VOP2",
+            "dst": {"field": "VDST", "class": "vgpr", "min": 0, "max": 255},
+            "src": [
+                {"field": "SRC0", "class": "vector_source"},
+                {"field": "VSRC1", "class": "vgpr"},
+            ],
+            "max_literals": 1,
+        },
         "unsupported": {
             "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline",
             "src_special",
@@ -586,24 +732,35 @@ def _check_xml(form, rule, snapshot, errors):
     operands = {}
     scc_in = scc_out = False
     implicit = set()
-    vcc_writes = []
-    for field, data_format, kind, size, is_input, is_output, _implicit, _encoded in variant["operands"]:
+    vcc_operands = []
+    control_mask = CONTROL_OPERATIONS.get(form["operation"], (None, None, None))[2]
+    mask_inputs = 0
+    for field, data_format, kind, size, is_input, is_output, is_implicit, encoded in variant["operands"]:
         if kind == "OPR_SSRC_SPECIAL_SCC":
             scc_in |= is_input
             scc_out |= is_output
+        elif control_mask and (field, kind, data_format, size, is_input, is_output, is_implicit, encoded) == (
+            "", control_mask, "FMT_NUM_M64", 64, True, False, True, True
+        ):
+            mask_inputs += 1
         elif field:
             operands[field] = (data_format, size, is_input, is_output)
+        elif kind == "OPR_VCC":
+            vcc_operands.append((is_input, is_output))
         else:
             implicit.add(kind)
-            if kind == "OPR_VCC":
-                vcc_writes.append((is_input, is_output))
-    # The vocabulary states SCC effects and a lane-mask VCC write; any other
-    # implicit XML operand (such as an EXEC write) is undeclared.
+    if form["carry_in"] == "vcc":
+        if vcc_operands.count((True, False)) != 1:
+            errors.append(f"{label}: carry_in vcc requires one implicit XML VCC input")
+        if (True, False) in vcc_operands:
+            vcc_operands.remove((True, False))
     if form["vcc"] == "lane_mask":
-        # Exactly one fieldless VCC operand, written and not read.
-        if vcc_writes != [(False, True)]:
+        if vcc_operands != [(False, True)]:
             errors.append(f"{label}: vcc lane_mask but the XML has no implicit VCC output")
-        implicit.discard("OPR_VCC")
+    elif vcc_operands:
+        implicit.add("OPR_VCC")
+    if control_mask and mask_inputs != 1:
+        errors.append(f"{label}: expected one implicit {control_mask} input in the XML")
     if implicit:
         errors.append(f"{label}: XML implicit operands {sorted(implicit)} are not declared")
     if scc_in != (form["carry_in"] == "scc"):
@@ -624,6 +781,14 @@ def _check_xml(form, rule, snapshot, errors):
             errors.append(f"{label}: XML has no operand {field}")
             continue
         data_format, size, is_input, is_output = operands[field]
+        if field == "SIMM16" and _rule_kind(form) == "control":
+            expected_kind, expected_format = (
+                ("OPR_LABEL", "FMT_NUM_I16") if form["operands"] == "sopp_branch"
+                else ("OPR_WAITCNT", "FMT_NUM_B16")
+            )
+            if [field, expected_format, expected_kind, 16, True, False, False, True] not in variant["operands"]:
+                errors.append(f"{label}: SIMM16 is not an encoded {expected_kind} input")
+            continue
         if field == "SIMM16":
             # The 16-bit immediate: signed forms read it as FMT_NUM_I16 (sign
             # extended), unsigned compares as FMT_NUM_U16 (zero extended).
@@ -637,7 +802,10 @@ def _check_xml(form, rule, snapshot, errors):
         expected = bits if type(bits) is int else form["width"]
         if size != expected:
             errors.append(f"{label}: {field} is {size} bits in the XML, declared {expected}")
-        if (is_input, is_output) != (is_source, not is_source):
+        # The XML marks both swap operands as outputs. Guide 12.8 also
+        # reads both old values before assigning either result.
+        direction = (False, True) if _rule_kind(form) == "vector_swap" else (is_source, not is_source)
+        if (is_input, is_output) != direction:
             errors.append(f"{label}: {field} direction disagrees with the XML")
         if field == count_field:
             if data_format != "FMT_NUM_U32":
@@ -647,7 +815,11 @@ def _check_xml(form, rule, snapshot, errors):
         elif type(bits) is int:
             if data_format != f"FMT_NUM_I{bits}":
                 errors.append(f"{label}: {field} has XML format {data_format}, not FMT_NUM_I{bits}")
-        elif is_source and data_format not in SOURCE_FORMATS.get(form["signedness"], ()):
+        elif is_source and data_format not in (
+            {f"FMT_NUM_{'I' if form['signedness'] == 'signed' else 'U'}{form['width']}"}
+            if form["operands"] in ("vopc_vcc_half", "vopc_vcc_pair")
+            else SOURCE_FORMATS.get(form["signedness"], ())
+        ):
             errors.append(
                 f"{label}: signedness {form['signedness']} contradicts XML format {data_format}"
             )
@@ -717,10 +889,13 @@ def validate(registry, snapshot):
             errors.append(f"{label}: variant {form['variant']!r} is reserved")
         if type(form["opcode"]) is not int or not 0 <= form["opcode"] <= U16_MAX:
             errors.append(f"{label}: invalid opcode")
-        wave = WAVE_BY_KIND.get(_rule_kind(form), "any")
+        reads_vcc = form["operands"] == "vop2_vcc"
+        wave = "wave32" if reads_vcc else WAVE_BY_KIND.get(_rule_kind(form), "any")
+        if (form["carry_in"] == "vcc") != reads_vcc:
+            errors.append(f"{label}: implicit VCC input requires the vop2_vcc rule")
         if form["wave"] in WAVE and form["wave"] != wave:
             errors.append(f"{label}: wave {form['wave']} is not enforced for this rule (requires {wave})")
-        lane_mask = _rule_kind(form) == "vector_compare"
+        lane_mask = _rule_kind(form) == "vector_compare" or (reads_vcc and form["operation"] != "cselect")
         if form["vcc"] in MASK and (form["vcc"] == "lane_mask") != lane_mask:
             errors.append(
                 f"{label}: vcc {form['vcc']} contradicts rule {form['operands']} "
@@ -728,7 +903,8 @@ def validate(registry, snapshot):
             )
         if form["exec"] != "unchanged":
             errors.append(f"{label}: exec {form['exec']} has no contract (requires unchanged)")
-        if type(form["width"]) is not int or form["width"] not in WIDTHS:
+        expected_width = (_implemented_rule(form) or {}).get("width", 32)
+        if type(form["width"]) is not int or form["width"] != expected_width:
             errors.append(f"{label}: width {form['width']} is not supported")
         for key, value in (
             ("name", form["name"]),
@@ -768,7 +944,7 @@ def validate(registry, snapshot):
                 errors.append(f"{label}: unknown {SOURCE_ORDER_KEY} {order!r}")
             elif _rule_kind(form) != "vector":
                 errors.append(f"{label}: {SOURCE_ORDER_KEY} on a non-vector form")
-        if form["operation"] in SCC_READERS and form["carry_in"] != "scc":
+        if not reads_vcc and form["operation"] in SCC_READERS and form["carry_in"] != "scc":
             errors.append(f"{label}: operation {form['operation']} reads SCC (requires carry_in scc)")
         if form["operation"] == "sext":
             bits = form.get(SOURCE_BITS_KEY)
@@ -794,7 +970,7 @@ def validate(registry, snapshot):
                         f"{expected} (guide 13.1.2), not {form['opcode']}"
                     )
             elif _rule_kind(form) == "vector_compare":
-                base = VOPC_INTEGER_BASES.get(form["signedness"])
+                base = VOPC_INTEGER_BASES.get(expected_width, {}).get(form["signedness"])
                 expected = None if base is None else base + VOPC_RELATION_OFFSETS[relation]
                 if form["opcode"] != expected:
                     errors.append(
@@ -808,10 +984,24 @@ def validate(registry, snapshot):
             if form["carry_in"] != "none":
                 errors.append(f"{label}: carry_in {form['carry_in']} contradicts compare")
             primitive = (scc, None, False)
-        elif _rule_kind(form) == "vector":
+        elif form["operation"] in CONTROL_OPERATIONS:
+            variant, operand_rule, _ = CONTROL_OPERATIONS[form["operation"]]
+            signedness = "signed" if operand_rule == "sopp_branch" else "bitwise"
+            if (form["variant"], form["operands"], form["signedness"]) != (variant, operand_rule, signedness):
+                errors.append(f"{label}: control operation requires {variant}, {operand_rule}, {signedness}")
+            if RELATION_KEY in form or form["width"] != 32:
+                errors.append(f"{label}: control operation requires width 32 and no relation")
+            primitive = ("unchanged", None, form["operation"] == "branch_scc_zero")
+        elif _rule_kind(form) in ("vector", "vector_unary", "vector_swap"):
             if RELATION_KEY in form:
                 errors.append(f"{label}: {RELATION_KEY} on a non-compare operation")
-            lowering = VECTOR_PRIMITIVES.get((form["operation"], form["signedness"]))
+            key = (form["operation"], form["signedness"])
+            table = {
+                "vector": VCC_VECTOR_PRIMITIVES if reads_vcc else VECTOR_PRIMITIVES,
+                "vector_unary": VECTOR_UNARY_PRIMITIVES,
+                "vector_swap": {("swap", "bitwise"): "Swap"},
+            }[_rule_kind(form)]
+            lowering = table.get(key)
             primitive = None if lowering is None else ("unchanged", lowering, False)
         else:
             if RELATION_KEY in form:
@@ -839,8 +1029,13 @@ def validate(registry, snapshot):
         elif form["operands"] in OPERAND_RULES and OPERAND_RULES[form["operands"]]["kind"] != (
             (_rule_kind(form) if _rule_kind(form) in ("vector_compare", "immediate_compare") else "compare")
             if form["operation"] == "compare"
-            else "unary" if form["operation"] in UNARY
+            else "vector_swap" if form["operation"] == "swap"
+            else "vector_unary" if _rule_kind(form) == "vector_unary" and form["operation"] in UNARY
+            else "unary" if form["operation"] in UNARY or (
+                form["operation"] == "mov" and form["family"] == "SOP1"
+            )
             else "vector" if _rule_kind(form) == "vector" and form["operation"] not in UNARY
+            else "control" if form["operation"] in CONTROL_OPERATIONS
             else "immediate" if _rule_kind(form) == "immediate"
             else "alu"
         ):
@@ -1027,7 +1222,7 @@ def render(registry, snapshot):
         "use crate::primitive;",
         "use crate::semantics::{",
         "    CarryIn, Document, Evidence, FormSemantics, MaskEffect, Operation, OperandRule, SccEffect,",
-        "    Signedness, SpecRef, VectorBinary, Wave,",
+        "    Signedness, SpecRef, VectorBinary, VectorLowering, VectorUnary, VectorVcc, Wave,",
         "};",
         "use crate::CompareRelation;",
         "",
@@ -1217,7 +1412,7 @@ def _render_enum(rule_name, forms, snapshot, positions):
         f"pub enum {enum} {{",
     ]
     for form in forms:
-        carry = " plus SCC" if form["carry_in"] == "scc" else ""
+        carry = {"scc": " plus SCC", "vcc": " with VCC input"}.get(form["carry_in"], "")
         what = f"compare {form[RELATION_KEY]}" if RELATION_KEY in form else form["operation"]
         effect = f"VCC = {form['vcc']}" if form["vcc"] != "unchanged" else f"SCC = {form['scc']}"
         out += [
@@ -1274,6 +1469,67 @@ def _render_enum(rule_name, forms, snapshot, positions):
         "        }]",
         "    }",
     ]
+    if kind == "control":
+        out += [
+            "",
+            "    /// Exact SIMM16 required by the fixture, or None for a displacement.",
+            "    pub const fn required_immediate(self) -> Option<u16> {",
+            "        match self {",
+        ]
+        for form in forms:
+            exact = OPERAND_RULES[form["operands"]]["shape"].get("immediate")
+            value = "None" if exact is None else f"Some({exact:#x})"
+            out.append(f"            Self::{form['variant']} => {value},")
+        out += [
+            "        }",
+            "    }",
+            "",
+            "    /// Constructs the existing decoded instruction, resolving a target only for a branch.",
+            "    pub fn decode<E>(",
+            "        self,",
+            "        target: impl FnOnce() -> Result<usize, E>,",
+            "    ) -> Result<crate::Instruction, E> {",
+            "        Ok(match self {",
+        ]
+        for form in forms:
+            variant = form["variant"]
+            fields = " { target: target()? }" if form["operands"] == "sopp_branch" else ""
+            out.append(f"            Self::{variant} => crate::Instruction::{variant}{fields},")
+        out += ["        })", "    }", "}", "", "impl crate::Instruction {",
+                "    /// The registry operation corresponding to a decoded SOPP control.",
+                f"    pub const fn sopp_control(self) -> Option<{enum}> {{",
+                "        match self {"]
+        for form in forms:
+            variant = form["variant"]
+            fields = " { .. }" if form["operands"] == "sopp_branch" else ""
+            out.append(f"            Self::{variant}{fields} => Some({enum}::{variant}),")
+        out += ["            _ => None,", "        }", "    }", "}"]
+        return out
+    if kind in ("vector_unary", "vector_swap"):
+        out += [
+            "",
+            "    /// Assembler name of the 32-bit VOP1 encoding.",
+            "    pub const fn assembly_name(self) -> &'static str {",
+            "        match self {",
+        ]
+        suffix = "_e32" if kind == "vector_unary" else ""
+        out += [f"            Self::{form['variant']} => \"{form['name'].lower()}{suffix}\"," for form in forms]
+        out += ["        }", "    }"]
+    if kind == "vector_swap":
+        return out + ["}"]
+    if kind == "vector_unary":
+        out += [
+            "",
+            "    /// Per-lane integer operation selected by the registry.",
+            "    pub const fn lowering(self) -> VectorUnary {",
+            "        match self {",
+        ]
+        out += [
+            f"            Self::{form['variant']} => "
+            f"VectorUnary::{VECTOR_UNARY_PRIMITIVES[(form['operation'], form['signedness'])]},"
+            for form in forms
+        ]
+        return out + ["        }", "    }", "}"]
     if kind == "immediate":
         out += [
             "",
@@ -1416,14 +1672,16 @@ def _render_enum(rule_name, forms, snapshot, positions):
             "    }",
             "",
             "    /// The per-lane operation its MSL lowering uses.",
-            "    pub const fn lowering(self) -> VectorBinary {",
+            "    pub const fn lowering(self) -> VectorLowering {",
             "        match self {",
         ]
-        out += [
-            f"            Self::{form['variant']} => "
-            f"VectorBinary::{VECTOR_PRIMITIVES[(form['operation'], form['signedness'])]},"
-            for form in forms
-        ]
+        for form in forms:
+            key = (form["operation"], form["signedness"])
+            if form["operands"] == "vop2_vcc":
+                lowering = f"Vcc(VectorVcc::{VCC_VECTOR_PRIMITIVES[key]})"
+            else:
+                lowering = f"Binary(VectorBinary::{VECTOR_PRIMITIVES[key]})"
+            out.append(f"            Self::{form['variant']} => VectorLowering::{lowering},")
         out += [
             "        }",
             "    }",
@@ -1473,6 +1731,7 @@ def _render_enum(rule_name, forms, snapshot, positions):
         out += ["        }", "    }"]
     if kind in ("compare", "vector_compare"):
         result = "SCC" if kind == "compare" else "per-lane result"
+        has_pairs = any(form["width"] == 64 for form in forms)
         out += [
             "",
             "    /// The relation tested, with S0 on the left.",
@@ -1489,11 +1748,32 @@ def _render_enum(rule_name, forms, snapshot, positions):
             "",
             f"    /// The {result}: whether the relation holds for S0 and S1.",
             "    pub const fn test(self, src0: u32, src1: u32) -> bool {",
-            "        match self {",
         ]
+        if has_pairs:
+            out += [
+                "        self.test_bits(src0 as u64, src1 as u64)",
+                "    }",
+                "",
+                "    /// Test raw operand bits at the width declared by this VOPC form.",
+                "    pub const fn test_bits(self, src0: u64, src1: u64) -> bool {",
+            ]
+        out += ["        match self {"]
         for form in forms:
-            function = COMPARE_PRIMITIVES[(form[RELATION_KEY], form["signedness"])]
-            out.append(f"            Self::{form['variant']} => primitive::{function}(src0, src1),")
+            relation = form[RELATION_KEY]
+            if form["width"] in (16, 64) and relation not in VECTOR_ONLY_RELATIONS:
+                symbol = {"lt": "<", "eq": "==", "le": "<=", "gt": ">", "lg": "!=", "ge": ">="}[relation]
+                width = form["width"]
+                if width == 64 and form["signedness"] == "unsigned":
+                    left, right = "src0", "src1"
+                else:
+                    cast = f"{'i' if form['signedness'] == 'signed' else 'u'}{width}"
+                    left, right = f"(src0 as {cast})", f"(src1 as {cast})"
+                expression = f"{left} {symbol} {right}"
+            else:
+                function = COMPARE_PRIMITIVES[(relation, form["signedness"])]
+                args = "src0 as u32, src1 as u32" if has_pairs else "src0, src1"
+                expression = f"primitive::{function}({args})"
+            out.append(f"            Self::{form['variant']} => {expression},")
         out += ["        }", "    }", "}"]
         return out
     out += [

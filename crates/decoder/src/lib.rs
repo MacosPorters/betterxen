@@ -5,17 +5,17 @@ use std::fmt;
 pub use xenora_isa::{
     Architecture, CompareRelation, ExportTarget, Instruction, InterpolationPhase, ScalarAluOp,
     ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarSource, ScalarUnaryOp,
-    VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSource,
+    SoppControlOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSource, VectorSwapOp,
+    VectorUnaryOp,
 };
 use xenora_isa::{
-    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
-    S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
+    BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_WAITCNT_VSCNT, V_ADD_F32,
     V_INTERP_P1_F32, V_INTERP_P2_F32, V_MOV_B32, V_MUL_F32, VCC_LO,
 };
 
 use xenora_isa::meta::EncodingFamily;
-pub use xenora_isa::semantics::VectorBinary;
 use xenora_isa::semantics::{FORM_IDS, OperandRule};
+pub use xenora_isa::semantics::{VectorBinary, VectorLowering, VectorUnary, VectorVcc};
 
 /// Metadata forms that [`decode`] turns into an [`Instruction`] for at least one
 /// operand combination: the hand-written forms below followed by every form of
@@ -40,18 +40,11 @@ const fn concat_forms<const N: usize>() -> [(&'static str, EncodingFamily); N] {
 }
 
 /// Decoded forms not yet described by the semantic registry.
-const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 17] = [
+const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 10] = [
     ("BUFFER_LOAD_DWORD", EncodingFamily::Mubuf),
     ("BUFFER_STORE_DWORD", EncodingFamily::Mubuf),
     ("EXP", EncodingFamily::Exp),
     ("IMAGE_SAMPLE_LZ", EncodingFamily::Mimg),
-    ("S_BRANCH", EncodingFamily::Sopp),
-    ("S_CBRANCH_EXECZ", EncodingFamily::Sopp),
-    ("S_CBRANCH_SCC0", EncodingFamily::Sopp),
-    ("S_CBRANCH_VCCZ", EncodingFamily::Sopp),
-    ("S_ENDPGM", EncodingFamily::Sopp),
-    ("S_MOV_B32", EncodingFamily::Sop1),
-    ("S_WAITCNT", EncodingFamily::Sopp),
     ("S_WAITCNT_VSCNT", EncodingFamily::Sopk),
     ("V_ADD_F32", EncodingFamily::Vop2),
     ("V_INTERP_P1_F32", EncodingFamily::Vintrp),
@@ -317,6 +310,23 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
     if V_MOV_B32.matches(first) {
         return move_b32(first, bytes);
     }
+    // AMD RDNA 2 ISA guide 13.3.2: VDST occupies bits 17–24 and SRC0 bits 0–8.
+    if let Some(op) = VectorUnaryOp::from_word(first) {
+        let dst = (first >> 17) as u8;
+        let (src, len) = vector_src0(first, bytes, op.assembly_name())?;
+        return Ok((Instruction::VectorUnary { op, dst, src }, len));
+    }
+    if let Some(op) = VectorSwapOp::from_word(first) {
+        if first & 0x100 == 0 {
+            return Err(unsupported(
+                op.assembly_name(),
+                "expected a VGPR SRC0 for writeback",
+            ));
+        }
+        let dst = (first >> 17) as u8;
+        let src = first as u8;
+        return Ok((Instruction::VectorSwap { op, dst, src }, 4));
+    }
     if let Some(op) = VectorCompareOp::from_word(first) {
         return vector_compare(op, first, bytes);
     }
@@ -324,23 +334,21 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
         let second = word(bytes, 8)?;
         return Ok((vop3_vgpr2(op, first, second)?, 8));
     }
-    if S_MOV_B32.matches(first) {
-        let dst = ((first >> 16) & 0x7f) as u8;
-        if !matches!(dst, 0..=107 | 126..=127) {
-            return Err(unsupported(
-                "s_mov_b32",
-                "expected a normal SGPR or EXEC/VCC destination",
-            ));
-        }
-        let (src, len) = scalar_source(first as u8, bytes, "s_mov_b32")?;
-        return Ok((Instruction::ScalarMoveB32 { dst, src }, len));
-    }
     if let Some(op) = ScalarUnaryOp::from_word(first) {
         // SOP1: SSRC0 in bits 0-7, SDST in bits 16-22.
         let mnemonic = op.mnemonic();
         let dst = ((first >> 16) & 0x7f) as u8;
-        if dst > 105 {
-            return Err(unsupported(mnemonic, "expected a normal SGPR destination"));
+        match op.semantics().operands {
+            OperandRule::Sop1Move if !matches!(dst, 0..=107 | 126..=127) => {
+                return Err(unsupported(
+                    mnemonic,
+                    "expected a normal SGPR or EXEC/VCC destination",
+                ));
+            }
+            OperandRule::Sop1Sgpr if dst > 105 => {
+                return Err(unsupported(mnemonic, "expected a normal SGPR destination"));
+            }
+            _ => {}
         }
         let (src, len) = scalar_source(first as u8, bytes, mnemonic)?;
         return Ok((Instruction::ScalarUnary { op, dst, src }, len));
@@ -382,33 +390,24 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
         let simm16 = first as u16;
         return Ok((Instruction::ScalarImmediateCompare { op, src, simm16 }, 4));
     }
-    if S_BRANCH.matches(first) {
-        let target = branch_target(first, offset, "s_branch")?;
-        return Ok((Instruction::Branch { target }, S_BRANCH.byte_len()));
+    if let Some(op) = SoppControlOp::from_word(first) {
+        let immediate = first as u16;
+        if op
+            .required_immediate()
+            .is_some_and(|exact| immediate != exact)
+        {
+            let detail = if op == SoppControlOp::EndProgram {
+                "expected zero immediate"
+            } else {
+                "expected vmcnt(0) alone"
+            };
+            return Err(unsupported(op.mnemonic(), detail));
+        }
+        let instruction = op.decode(|| branch_target(immediate, offset, op.mnemonic()))?;
+        return Ok((instruction, 4));
     }
     if let Some(op) = ScalarAluOp::from_word(first) {
         return scalar_alu(op, first, bytes);
-    }
-    if S_CBRANCH_SCC0.matches(first) {
-        let target = branch_target(first, offset, "s_cbranch_scc0")?;
-        return Ok((
-            Instruction::BranchSccZero { target },
-            S_CBRANCH_SCC0.byte_len(),
-        ));
-    }
-    if S_CBRANCH_EXECZ.matches(first) {
-        let target = branch_target(first, offset, "s_cbranch_execz")?;
-        return Ok((
-            Instruction::BranchExecZero { target },
-            S_CBRANCH_EXECZ.byte_len(),
-        ));
-    }
-    if S_CBRANCH_VCCZ.matches(first) {
-        let target = branch_target(first, offset, "s_cbranch_vccz")?;
-        return Ok((
-            Instruction::BranchVccZero { target },
-            S_CBRANCH_VCCZ.byte_len(),
-        ));
     }
     if let Some(op) = VectorAluOp::from_word(first) {
         // VOP2: SRC0 in bits 0-8, VSRC1 in bits 9-16, VDST in bits 17-24.
@@ -420,7 +419,10 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
                 let (_, src0, _) = vop2_registers(first, op.assembly_name())?;
                 (VectorSource::Register(src0), 4)
             }
-            _ => vector_src0(first, bytes, op.assembly_name())?,
+            OperandRule::Vop2Vgpr | OperandRule::Vop2Vcc => {
+                vector_src0(first, bytes, op.assembly_name())?
+            }
+            _ => unreachable!("non-VOP2 operand rule for VOP2 instruction"),
         };
         return Ok((
             Instruction::VectorAlu {
@@ -446,15 +448,6 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
             V_MUL_F32.byte_len(),
         ));
     }
-    if S_WAITCNT.matches(first) {
-        return scalar_form(
-            first,
-            S_WAITCNT.byte_len(),
-            0xbf8c_3f70,
-            Instruction::WaitLoad,
-            "expected vmcnt(0) alone",
-        );
-    }
     if S_WAITCNT_VSCNT.matches(first) {
         return scalar_form(
             first,
@@ -462,15 +455,6 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
             0xbbfd_0000,
             Instruction::WaitStore,
             "expected null, 0",
-        );
-    }
-    if S_ENDPGM.matches(first) {
-        return scalar_form(
-            first,
-            S_ENDPGM.byte_len(),
-            0xbf81_0000,
-            Instruction::EndProgram,
-            "expected zero immediate",
         );
     }
 
@@ -529,11 +513,11 @@ fn scalar_source(
 }
 
 fn branch_target(
-    first: u32,
+    immediate: u16,
     offset: usize,
     mnemonic: &'static str,
 ) -> Result<usize, DecodeErrorKind> {
-    let displacement = first as u16 as i16;
+    let displacement = immediate as i16;
     let words = usize::try_from(displacement)
         .map_err(|_| unsupported(mnemonic, "expected a forward branch"))?;
     offset
@@ -660,11 +644,26 @@ fn vector_compare(
     bytes: &[u8],
 ) -> Result<(Instruction, u8), DecodeErrorKind> {
     let src1 = ((first >> 9) & 0xff) as u8;
-    let (src0, len) = vector_src0(first, bytes, op.assembly_name())?;
+    let mnemonic = op.assembly_name();
+    if op.semantics().width == 64 {
+        // Guide §3.6.3 requires even SGPR bases. Reject invalid selectors
+        // before reading a literal word or considering the execution mask.
+        let source = first & 0x1ff;
+        if src1 == 255
+            || !matches!(source, 0..=104 | 128..=208 | 256..=510)
+            || (source <= 104 && !source.is_multiple_of(2))
+        {
+            return Err(unsupported(mnemonic, "invalid 64-bit compare source"));
+        }
+    }
+    if op.semantics().width == 16 && first & 0x1ff == 255 {
+        return Err(unsupported(mnemonic, "literal in 16-bit compare"));
+    }
+    let (src0, len) = vector_src0(first, bytes, mnemonic)?;
     Ok((Instruction::VectorCompare { op, src0, src1 }, len))
 }
 
-/// The 9-bit SRC0 of a VOPC or VOP2 word: a VGPR, `s0-s105`, `vcc_lo`, an
+/// The 9-bit SRC0 of a VOP1, VOP2 or VOPC word: a VGPR, `s0-s105`, `vcc_lo`, an
 /// inline integer -16..64 or a literal word; everything else is unsupported.
 fn vector_src0(
     first: u32,

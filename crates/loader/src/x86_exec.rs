@@ -10,7 +10,7 @@
 //! the state unchanged. Flags that the architecture leaves undefined keep their
 //! previous value, which is permitted but not something guests may rely on.
 
-use crate::cpu::{CpuState, ExitReason, RFlags, Register};
+use crate::cpu::{CpuState, ExitReason, RFlags, Register, cpuid};
 use crate::memory::GuestMemory;
 use crate::x86_decode::{Encoding, Insn, MemOperand, RegOperand, RmOperand, Segment};
 use crate::x86_simd;
@@ -19,8 +19,11 @@ use crate::x86_table::Op;
 const RAX: usize = Register::Rax as usize;
 const RCX: usize = Register::Rcx as usize;
 const RDX: usize = Register::Rdx as usize;
+const RBX: usize = Register::Rbx as usize;
 const RSP: usize = Register::Rsp as usize;
 const RBP: usize = Register::Rbp as usize;
+const RSI: usize = Register::Rsi as usize;
+const RDI: usize = Register::Rdi as usize;
 
 /// Value mask of an operand of `size` bytes.
 fn mask(size: u8) -> u64 {
@@ -369,6 +372,35 @@ pub fn execute(
             write_rm(cpu, memory, insn, b)?;
             write_reg(cpu, insn.reg, size, a);
         }
+        Op::Xadd => {
+            let (a, b) = operands(cpu, memory, insn)?;
+            let (value, flags) = add(a, b, false, size);
+            write_rm(cpu, memory, insn, value)?;
+            // The source is loaded before the destination is stored, so a
+            // register added to itself keeps the sum.
+            if insn.rm != Some(RmOperand::Reg(insn.reg)) {
+                write_reg(cpu, insn.reg, size, a);
+            }
+            cpu.flags = flags;
+        }
+        Op::Cmpxchg => {
+            let (destination, source) = operands(cpu, memory, insn)?;
+            let expected = cpu.gpr[RAX] & mask(size);
+            let (_, flags) = sub(expected, destination, false, size);
+            // The destination is written whether or not the values match, so a
+            // mismatch on memory that cannot be written still faults.
+            let matched = expected == destination;
+            write_rm(
+                cpu,
+                memory,
+                insn,
+                if matched { source } else { destination },
+            )?;
+            if !matched {
+                write_reg(cpu, accumulator(RAX), size, destination);
+            }
+            cpu.flags = flags;
+        }
         Op::Bswap => {
             let value = read_reg(cpu, insn.reg, size).swap_bytes() >> (64 - 8 * u32::from(size));
             write_reg(cpu, insn.reg, size, value);
@@ -544,6 +576,45 @@ pub fn execute(
             cpu.gpr[RSP] = sp.wrapping_add(8).wrapping_add(insn.imm);
         }
         Op::Nop => {}
+        Op::Cpuid => {
+            // The leaf is EAX and the subleaf ECX. Each result is a 32-bit
+            // register write, so the upper halves are cleared.
+            let values = cpuid(cpu.gpr[RAX] as u32, cpu.gpr[RCX] as u32);
+            for (register, value) in [RAX, RBX, RCX, RDX].into_iter().zip(values) {
+                cpu.gpr[register] = u64::from(value);
+            }
+        }
+        Op::Movs | Op::Stos => {
+            // One element per execution. A REP form with elements left keeps
+            // RIP on itself, so every element is a step of its own: it counts
+            // against the step budget, and a fault keeps the elements already
+            // done, with RSI, RDI and RCX at the element that faulted.
+            if !(insn.rep && cpu.gpr[RCX] == 0) {
+                let value = if insn.op == Op::Movs {
+                    read_rm(cpu, memory, insn)?
+                } else {
+                    cpu.gpr[RAX] & mask(size)
+                };
+                write_mem(memory, cpu.gpr[RDI], size, value)?;
+                let step = if cpu.df {
+                    u64::from(size).wrapping_neg()
+                } else {
+                    u64::from(size)
+                };
+                if insn.op == Op::Movs {
+                    cpu.gpr[RSI] = cpu.gpr[RSI].wrapping_add(step);
+                }
+                cpu.gpr[RDI] = cpu.gpr[RDI].wrapping_add(step);
+                if insn.rep {
+                    cpu.gpr[RCX] -= 1;
+                    if cpu.gpr[RCX] != 0 {
+                        next = insn.rip;
+                    }
+                }
+            }
+        }
+        Op::Cld => cpu.df = false,
+        Op::Std => cpu.df = true,
         Op::Clc => cpu.flags.cf = false,
         Op::Stc => cpu.flags.cf = true,
         Op::Cmc => cpu.flags.cf = !cpu.flags.cf,

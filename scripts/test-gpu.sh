@@ -58,8 +58,4 @@ timeout 30s cargo test --locked -p xenora-ffi --features gpu-tests --test audio_
 # Native Metal known answers of the independent semantic review, including SOP2 scalar ALU
 # and VOPC compares.
 cargo test --locked -p xenora-semantic-review --no-run
-# Oracles whose translator side has not landed are skipped by name until it does
-# (#215: the PR that translates the forms removes its skip).
-timeout 120s cargo test --locked -p xenora-semantic-review -- --ignored --nocapture --test-threads=1 \
-    --skip vopc_wide_match_the_guide_on_native_metal \
-    --skip vop1_integer_forms_match_the_guide_on_native_metal
+timeout 120s cargo test --locked -p xenora-semantic-review -- --ignored --nocapture --test-threads=1

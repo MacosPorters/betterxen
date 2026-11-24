@@ -20,8 +20,20 @@ pub use rdna2::{
 };
 pub use semantics_gen::{
     ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarUnaryOp,
-    VectorAluOp, VectorAluVop3Op, VectorCompareOp,
+    SoppControlOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp, VectorSwapOp, VectorUnaryOp,
 };
+
+impl VectorAluOp {
+    /// Whether this encoding takes a per-lane VCC_LO bit.
+    pub fn reads_vcc(self) -> bool {
+        self.semantics().carry_in == semantics::CarryIn::Vcc
+    }
+
+    /// Whether this encoding replaces the Wave32 VCC_LO mask.
+    pub fn writes_vcc(self) -> bool {
+        self.semantics().vcc == semantics::MaskEffect::LaneMask
+    }
+}
 
 /// SGPR index of `vcc_lo`, the Wave32 vector condition code.
 pub const VCC_LO: u8 = 106;
@@ -155,6 +167,14 @@ pub enum Instruction {
     WaitStore,
     /// VOP1 unmodified 32-bit vector move.
     MoveB32 { dst: u8, src: VectorSource },
+    /// VOP1 unary integer operation with a single VGPR result.
+    VectorUnary {
+        op: VectorUnaryOp,
+        dst: u8,
+        src: VectorSource,
+    },
+    /// VOP1 register swap. Both operands are inputs and outputs.
+    VectorSwap { op: VectorSwapOp, dst: u8, src: u8 },
     /// VOP3 encoding of a registry VOP2 integer operation (operand rule
     /// `vop3_vgpr2`): two VGPR sources and no input or output modifiers.
     VectorAluVop3 {
@@ -163,10 +183,8 @@ pub enum Instruction {
         src0: u8,
         src1: u8,
     },
-    /// SOP1 32-bit move to a normal SGPR or an EXEC/VCC half.
-    ScalarMoveB32 { dst: u8, src: ScalarSource },
-    /// SOP1 32-bit unary integer operation writing a normal SGPR (s0-s105) and,
-    /// for some operations, SCC.
+    /// SOP1 32-bit unary integer operation. The move also allows an explicit
+    /// VCC or EXEC half destination. Some unary operations write SCC.
     ScalarUnary {
         op: ScalarUnaryOp,
         dst: u8,
@@ -201,8 +219,9 @@ pub enum Instruction {
         src: u8,
         simm16: u16,
     },
-    /// VOPC 32-bit integer compare writing a Wave32 mask to `vcc_lo`.
-    /// `src0` is a VGPR, `s0-s105`, `vcc_lo`, an inline integer or a literal.
+    /// VOPC integer compare writing a Wave32 mask to `vcc_lo`.
+    /// For 64-bit forms register operands name pair bases and the immediate
+    /// contains the low word of a sign-extended inline integer.
     VectorCompare {
         op: VectorCompareOp,
         src0: VectorSource,
@@ -281,8 +300,9 @@ impl Instruction {
             Self::WaitLoad => "s_waitcnt",
             Self::WaitStore => "s_waitcnt_vscnt",
             Self::MoveB32 { .. } => "v_mov_b32_e32",
+            Self::VectorUnary { op, .. } => op.assembly_name(),
+            Self::VectorSwap { op, .. } => op.assembly_name(),
             Self::VectorAluVop3 { op, .. } => op.assembly_name(),
-            Self::ScalarMoveB32 { .. } => "s_mov_b32",
             Self::ScalarUnary { op, .. } => op.mnemonic(),
             Self::ScalarAlu { op, .. } => op.mnemonic(),
             Self::ScalarCompare { op, .. } => op.mnemonic(),
@@ -333,7 +353,10 @@ impl fmt::Display for Instruction {
             }
             Self::WaitLoad => formatter.write_str(" vmcnt(0)"),
             Self::WaitStore => formatter.write_str(" null, 0"),
-            Self::MoveB32 { dst, src } => write!(formatter, " v{dst}, {src}"),
+            Self::MoveB32 { dst, src } | Self::VectorUnary { dst, src, .. } => {
+                write!(formatter, " v{dst}, {src}")
+            }
+            Self::VectorSwap { dst, src, .. } => write!(formatter, " v{dst}, v{src}"),
             Self::VectorAluVop3 {
                 dst, src0, src1, ..
             }
@@ -341,7 +364,7 @@ impl fmt::Display for Instruction {
             | Self::VectorMulF32 { dst, src0, src1 } => {
                 write!(formatter, " v{dst}, v{src0}, v{src1}")
             }
-            Self::ScalarMoveB32 { dst, src } | Self::ScalarUnary { dst, src, .. } => {
+            Self::ScalarUnary { dst, src, .. } => {
                 write!(formatter, " {}, {src}", ScalarDestination(dst))
             }
             Self::ScalarAlu {
@@ -354,13 +377,37 @@ impl fmt::Display for Instruction {
             Self::ScalarImmediateCompare { src, simm16, .. } => {
                 write!(formatter, " s{src}, {simm16:#x}")
             }
+            Self::VectorCompare { op, src0, src1 } if op.semantics().width == 64 => {
+                formatter.write_str(" vcc_lo, ")?;
+                match src0 {
+                    VectorSource::Register(base) => {
+                        write!(formatter, "v[{base}:{}]", u16::from(base) + 1)?;
+                    }
+                    VectorSource::Scalar(base) => {
+                        write!(formatter, "s[{base}:{}]", u16::from(base) + 1)?;
+                    }
+                    VectorSource::Immediate(bits) => write!(formatter, "{}", bits as i32)?,
+                }
+                write!(formatter, ", v[{src1}:{}]", u16::from(src1) + 1)
+            }
             Self::VectorCompare { src0, src1, .. } => {
                 write!(formatter, " vcc_lo, {src0}, v{src1}")
             }
             Self::VectorAlu {
-                dst, src0, src1, ..
+                op,
+                dst,
+                src0,
+                src1,
             } => {
-                write!(formatter, " v{dst}, {src0}, v{src1}")
+                write!(formatter, " v{dst}, ")?;
+                if op.writes_vcc() {
+                    write!(formatter, "vcc_lo, ")?;
+                }
+                write!(formatter, "{src0}, v{src1}")?;
+                if op.reads_vcc() {
+                    write!(formatter, ", vcc_lo")?;
+                }
+                Ok(())
             }
             Self::Branch { target }
             | Self::BranchSccZero { target }

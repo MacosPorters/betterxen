@@ -189,8 +189,9 @@ Eleven 32-bit SOP1 forms are declared in the registry (operand rule
 (0xffffffff); `s_flbit_i32` returns -1 for both 0 and -1; sign extension reads
 S0[7:0] or S0[15:0]; `s_abs_i32` of 0x80000000 is 0x80000000. Only NOT, BCNT0,
 BCNT1 and ABS write SCC, as D != 0; the other seven leave it unchanged.
-`s_mov_b32` stays hand-written, because it also accepts EXEC and VCC halves as
-destinations. As for SOP2, destinations s0-s7 are refused when a fixture runs
+`s_mov_b32` is the twelfth registry SOP1 form, under its own operand rule
+`sop1_move`, because it also accepts EXEC and VCC halves as destinations (the
+domain the hand-written decoder accepted before #215 moved it). As for SOP2, destinations s0-s7 are refused when a fixture runs
 (they hold its buffer descriptors), and float inline constants are rejected.
 
 `tests/validation/tests/sop1_unary.rs` checks 4,126 cases, with expected values

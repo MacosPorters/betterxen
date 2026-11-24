@@ -50,6 +50,8 @@ pub struct Form {
     pub no_rex_b: bool,
     /// A 16-byte memory operand may have any alignment.
     pub unaligned: bool,
+    /// The LOCK prefix is accepted when the ModRM operand is memory.
+    pub lockable: bool,
 }
 
 /// Opcode table entry.
@@ -64,6 +66,8 @@ pub enum Entry {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum Encoding {
     None,
+    /// A string instruction: source `[RSI]`, destination `[RDI]`, REP allowed.
+    String,
     RmReg,
     RegRm,
     RegRmImm,
@@ -167,6 +171,11 @@ pub struct Insn {
     pub imm: u64,
     /// Condition code for Jcc, CMOVcc and SETcc.
     pub condition: u8,
+    /// Carries a LOCK prefix. Set only for a lockable form with a memory
+    /// destination.
+    pub lock: bool,
+    /// A string instruction carrying a REP prefix.
+    pub rep: bool,
 }
 
 impl Insn {
@@ -231,8 +240,9 @@ impl<E, F: FnMut(u64) -> Result<u8, E>> Cursor<F> {
 /// Decode one instruction at `rip`. `fetch` supplies the byte at an address and
 /// is called only for bytes that belong to the instruction, in order.
 ///
-/// Forms the registry does not declare, LOCK, address-size overrides and an
-/// ignored segment override after FS or GS are rejected rather than approximated.
+/// Forms the registry does not declare, LOCK anywhere but on a lockable form
+/// with a memory destination, address-size overrides and an ignored segment
+/// override after FS or GS are rejected rather than approximated.
 pub fn decode<E>(
     rip: u64,
     fetch: impl FnMut(u64) -> Result<u8, E>,
@@ -246,6 +256,7 @@ pub fn decode<E>(
     let mut operand_size = false;
     let mut rep = false;
     let mut repne = false;
+    let mut lock = false;
     let mut segment = None;
     let mut byte = cursor.u8()?;
     loop {
@@ -264,6 +275,11 @@ pub fn decode<E>(
             }
             0xF2 => {
                 repne = true;
+                byte = cursor.u8()?;
+                continue;
+            }
+            0xF0 => {
+                lock = true;
                 byte = cursor.u8()?;
                 continue;
             }
@@ -298,8 +314,12 @@ pub fn decode<E>(
     let opcode = if two_byte { cursor.u8()? } else { byte };
     let slot = usize::from(opcode);
     let table = if !two_byte {
-        // Only PAUSE (F3 90) has a meaning here for F3 on a one-byte opcode.
-        if repne || (rep && opcode != 0x90) {
+        // On a one-byte opcode F3 is PAUSE (F3 90) or REP on a string form.
+        let string = matches!(
+            ONE_BYTE[slot],
+            Entry::Form(index) if FORMS[usize::from(index)].encoding == Encoding::String
+        );
+        if repne || (rep && opcode != 0x90 && !string) {
             return Err(DecodeError::Unsupported(if rep { 0xF3 } else { 0xF2 }));
         }
         &ONE_BYTE
@@ -412,6 +432,20 @@ pub fn decode<E>(
         }
     } else if matches!(form.encoding, Encoding::OpReg | Encoding::OpRegImm) {
         reg = register(opcode & 7, rex_b, size);
+    } else if form.encoding == Encoding::String {
+        // The source is DS:[RSI], which FS or GS may override. The destination
+        // ES:[RDI] takes no override.
+        rm = Some(RmOperand::Mem(MemOperand {
+            base: Some(6),
+            index: None,
+            disp: 0,
+            segment,
+        }));
+    }
+    // LOCK is an invalid opcode unless the instruction is lockable and its
+    // destination is memory (Intel SDM Vol. 2, "LOCK").
+    if lock && !(form.lockable && matches!(rm, Some(RmOperand::Mem(_)))) {
+        return Err(DecodeError::Unsupported(0xF0));
     }
 
     let mut imm = match form.immediate {
@@ -449,6 +483,8 @@ pub fn decode<E>(
         reg,
         imm,
         condition: opcode & 0xF,
+        lock,
+        rep: rep && form.encoding == Encoding::String,
     })
 }
 

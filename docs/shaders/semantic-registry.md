@@ -109,18 +109,18 @@ error.
 | `family` | Encoding family; must match the XML base encoding | e.g. `SOP2` |
 | `opcode` | Opcode; must match the XML | non-negative integer |
 | `variant` | Rust enum variant of the typed operation | CamelCase, e.g. `AddU32` |
-| `operation` | The primitive the form uses | `add`, `sub`, `and`, `or`, `xor`, `andn2`, `orn2`, `nand`, `nor`, `xnor`, `lshl`, `lshr`, `ashr`, `min`, `max`, `cselect`, `bfm`, `mul`, `mul_hi`, `bfe`, `absdiff`, `lshl_add`, `mul24`, `mul_hi24` (vector only), `mov` and `cmov` (SOPK only), `compare` and the SOP1 unaries |
+| `operation` | The primitive the form uses | `add`, `sub`, `and`, `or`, `xor`, `andn2`, `orn2`, `nand`, `nor`, `xnor`, `lshl`, `lshr`, `ashr`, `min`, `max`, `cselect`, `bfm`, `mul`, `mul_hi`, `bfe`, `absdiff`, `lshl_add`, `mul24`, `mul_hi24` (vector only), `mov` (SOP1 and SOPK), `cmov` (SOPK only), `compare` and the SOP1 unaries |
 | `signedness` | How operands are read | `unsigned`, `signed`, `bitwise` (always `bitwise` for the logical operations, `cselect` and `bfm`; never for the arithmetic ones, `add`, `sub`, `min`, `max`, `mul`, `mul_hi`, `bfe`, `absdiff` and `lshl_add`; shifts take their primitive's signedness) |
-| `carry_in` | Whether the form reads SCC: carry-in, borrow-in or the select condition | `none`, `scc` (`scc` only for unsigned `add` and `sub`, and required for `cselect`) |
-| `width` | Operand and result width in bits | `32` |
+| `carry_in` | Implicit carry, borrow or select input | `none`, `scc` for unsigned scalar `add` and `sub` and required for scalar `cselect`, `vcc` for the Wave32 VOP2 select and carry forms |
+| `width` | Operand and result width in bits (operand width for compares) | `32`, `16` with `vopc_vcc_half`, or `64` with `vopc_vcc_pair` |
 | `source_bits` | Sign extension only: the low bits of S0 that are read. The XML must list S0 with that size and format (`FMT_NUM_I8` or `FMT_NUM_I16`) | `8`, `16`; required for `sext`, rejected elsewhere |
 | `relation` | Compares only: the relation tested with S0 on the left | `eq`, `lg` (not equal), `gt`, `ge`, `lt`, `le`; required for `compare`, rejected elsewhere |
 | `source_order` | Vector forms only: `reversed` when the guide computes `op(S1, S0)` (the XML records no operand order); absent otherwise | `reversed` |
 | `shift_amount` | `lshl_add` only: the fixed left shift of S0 before the add | `1` to `4`; required for `lshl_add`, rejected elsewhere |
 | `shift_count_bits` | Shifts only: the low bits of the count source used as the count: S1, or S0 for a vector form with `source_order = "reversed"`. Scalar forms mask it in the generated evaluation, vector forms in their MSL template; the XML must list the count source as unsigned | `5` (log2 of `width`); required for shifts, rejected elsewhere |
 | `scc` | What the form writes to SCC | `carry_out`, `borrow`, `signed_overflow`, `nonzero`, `relation` (SOPC and SOPK compares only), `selected_src0` (min and max: S0 won the strict compare, so a tie gives 0), `unchanged` |
-| `vcc`, `exec` | Effect on VCC and EXEC, stated rather than implied | `unchanged`; `vcc` is `lane_mask` exactly for the VOPC compares (VCC_LO bit n = EXEC[n] & test, fully written; VCC_HI unknown afterwards, see [vector-compare.md](vector-compare.md)); `exec` must be `unchanged` (no EXEC-writing contract yet) |
-| `wave` | Wave sizes the form is valid in | `wave32` exactly for the VOPC compares (their one entry point is the Wave32 compute fixture ABI, vector-compare.md section 2), `any` for everything else; the decoder has no wave-size input, so no other form may claim `wave32` |
+| `vcc`, `exec` | Implicit effect on VCC and EXEC | `vcc` is `lane_mask` for [VOPC compares](vector-compare.md) and the three [VOP2 carry forms](vector-vcc.md). These write all of VCC_LO, zero inactive lane bits and leave VCC_HI unknown. Other forms declare `vcc` as `unchanged`. All forms declare `exec` as `unchanged`. Operand rules cover explicit destinations. |
+| `wave` | Wave sizes the form is valid in | `wave32` for SOPP controls, VOPC compares, VOP1 integer forms and VCC-reading VOP2 forms in the Wave32 compute fixture ABI, `any` for other registry forms |
 | `operands` | Name of an `[operand_rules]` entry for the same family | e.g. `sop2_sgpr` |
 | `spec` | References `{ document, section, page }` | at least one `guide` reference with a page above 0 |
 | `verify` | Evidence the form needs before it counts as verified | `reference`, `independent`, `metal`, `llvm_encoding` |
@@ -154,11 +154,19 @@ fixes the `scc` value:
 | `cmov` / `signed` (SOPK only) | `unchanged` | `sext_simm16` | required |
 | `compare` / `signed` or `unsigned` | `relation` | `eq_b32`, `ne_b32` (for both signednesses), `gt_i32`/`gt_u32`, `ge_*`, `lt_*`, `le_*` | no |
 
-Vector forms (operand rules `vop2_vgpr` and `vop2_vgpr2`, kind `vector`; both
+SOP1 unary forms share `ScalarUnaryOp`. The `sop1_sgpr` rule accepts
+destination encodings 0–105. The `sop1_move` rule for `s_mov_b32` also accepts
+106–107 (VCC halves) and 126–127 (EXEC halves) as explicit destinations.
+Both rules accept source registers s0–s105, inline integers −16 through 64,
+and one literal dword. The move copies the source and leaves SCC unchanged.
+The destination vocabulary preserves the original decoder subset of the
+RDNA 2 guide sections 5.3 and 12.3.
+
+Binary vector forms (operand rules `vop2_vgpr` and `vop2_vgpr2`, kind `vector`; both
 generate the one `VectorAluOp` enum, whose `operand_rule()` tells the decoder
 which rule a form uses) use a separate table:
 the pair picks the per-lane `VectorBinary` the MSL lowering uses, and `scc`
-must be `unchanged` (VOP2 integer forms write no SCC, VCC or EXEC):
+must be `unchanged` (these binary forms write no SCC, VCC or EXEC):
 
 | `operation` / `signedness` | `VectorBinary` |
 | --- | --- |
@@ -169,6 +177,12 @@ must be `unchanged` (VOP2 integer forms write no SCC, VCC or EXEC):
 | `and`, `or`, `xor` / `bitwise` | `And`, `Or`, `Xor` |
 | `lshl`, `lshr` / `bitwise`, `ashr` / `signed` (with `shift_count_bits = 5`) | `ShiftLeft`, `ShiftRight`, `ArithmeticShiftRight` |
 
+The [Wave32 VOP2 select and carry forms](vector-vcc.md) use `vop2_vcc` with
+the general SRC0 domain and an implicit VCC input. The generator checks the
+direction of each fieldless VCC operand in the pinned XML. The three arithmetic
+forms also declare a lane-mask output and use the same reverse-source mechanism
+as the no-carry subtraction.
+
 `vop2_vgpr2` is the VGPR-only subset (SRC0 256-511) that the hand-written decoder
 accepted for `v_and_b32`, `v_or_b32`, `v_xor_b32`, `v_lshlrev_b32`, `v_lshrrev_b32`
 and `v_ashrrev_i32` before they moved into the registry (#215 M27); widening them
@@ -176,9 +190,12 @@ to `vop2_vgpr` would be a behaviour change and needs its own oracle. The three
 shifts declare `source_order = "reversed"` (D = S1 shifted by S0[4:0]), so the
 generator checks the XML's unsigned count format on SRC0, not VSRC1.
 
-VOPC compares (operand rule `vopc_vcc`, kind `vector_compare`: SRC0 a
-`vector_source` as for VOP2, VSRC1 a VGPR, destination implicitly `vcc_lo`)
-take the same `relation` and primitive as SOPC compares, but declare
+VOPC compares (kind `vector_compare`) write `vcc_lo`. The 32-bit rule
+`vopc_vcc` accepts a `vector_source` as for VOP2 and a VGPR. The 16-bit rule
+`vopc_vcc_half` reads the low half of the same source types and rejects
+literals (guide sections 6.2, 6.2.5 and 6.8). The 64-bit rule
+`vopc_vcc_pair` accepts a VGPR pair, an even normal SGPR pair or an inline
+integer as SRC0 and a VGPR pair as VSRC1. All three declare a `relation`,
 `scc = "unchanged"`, `vcc = "lane_mask"` and `wave = "wave32"`. The XML's implicit
 64-bit VCC output must be present and is accounted for by `lane_mask`. Signedness
 still matters for `eq` and `lg`, because the MSL lowering casts signed operands.
@@ -202,6 +219,17 @@ The XML must give SIMM16 as 16-bit `FMT_NUM_I16` (`FMT_NUM_U16` for `unsigned`).
 The word never takes a literal dword. The details are in
 [scalar-immediate.md](scalar-immediate.md).
 
+The SOPP control rules (AMD RDNA 2 ISA guide §§12.5 and 13.1.5) generate
+`SoppControlOp` for the existing Wave32 compute subset. `sopp_end` accepts
+`s_endpgm` with zero in SIMM16. `sopp_wait` accepts only `s_waitcnt vmcnt(0)`
+(`0x3f70`), completing a pending vector load. `sopp_branch` accepts
+`s_branch`, `s_cbranch_scc0`, `s_cbranch_vccz` and `s_cbranch_execz` with a
+nonnegative signed SIMM16 displacement in dwords from the next instruction.
+The decoder and compiler require a valid target boundary. The conditional
+branches read SCC, VCC_LO or EXEC_LO without writing those registers.
+Other SOPP forms, including `s_nop`, the nonzero branches, `s_sendmsg`,
+`s_trap`, `s_sethalt` and `s_setprio`, remain unsupported.
+
 Behaviour is chosen only from these declared fields, never from the mnemonic.
 
 ## What the validator checks
@@ -211,8 +239,9 @@ vocabularies above, it rejects:
 
 - contradictions: a declared `scc` or `carry_in` that the primitive does not
   have, `bitwise` on an arithmetic operation or the reverse;
-- VOPC compares whose opcode is not the group base (128 for `signed`, 192
-  for `unsigned`) plus the relation's offset in guide Table 59 (F 0, LT 1,
+- VOPC compares whose opcode is not the group base (128 and 192 for signed and
+  unsigned 32-bit forms, 136 and 168 for 16-bit forms, 160 and 224 for 64-bit
+  forms) plus the relation's offset in guide Table 59 (F 0, LT 1,
   EQ 2, LE 3, GT 4, LG/NE 5, GE 6, T 7), and a `lane_mask` form whose XML
   does not have exactly one implicit VCC operand that is written and not read;
 - duplicates: the same `name`, the same `(family, opcode)`, or the same

@@ -94,6 +94,35 @@ pub enum Operation {
     Move,
     /// SOPK: SDST receives the sign-extended SIMM16 when SCC is set.
     ConditionalMove,
+    /// Terminate the program.
+    EndProgram,
+    /// Unconditional PC-relative branch.
+    Branch,
+    /// Branch when SCC is clear.
+    BranchSccZero,
+    /// Branch when VCC is zero.
+    BranchVccZero,
+    /// Branch when EXEC is zero.
+    BranchExecZero,
+    /// Complete an outstanding vector load.
+    WaitLoad,
+    /// Swap the two old per-lane VGPR values (guide 12.8).
+    Swap,
+}
+
+/// Per-lane integer operation with one input and one result.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VectorUnary {
+    /// Bitwise complement.
+    Not,
+    /// Reverse bit order.
+    ReverseBits,
+    /// Count leading zeros, or return all ones for zero.
+    FindHighUnsigned,
+    /// Count trailing zeros, or return all ones for zero.
+    FindLow,
+    /// Count leading sign bits, or return all ones if every bit matches.
+    FindHighSigned,
 }
 
 /// The per-lane integer operation a vector form lowers to. One reusable MSL
@@ -148,13 +177,35 @@ pub enum Signedness {
     Bitwise,
 }
 
-/// Whether the operation reads SCC.
+/// Per-lane VOP2 operation selected by the semantic registry.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VectorLowering {
+    /// Two explicit operands, with no implicit lane input.
+    Binary(VectorBinary),
+    /// Two explicit operands and the lane's VCC bit.
+    Vcc(VectorVcc),
+}
+
+/// VOP2 primitives with an implicit per-lane VCC input.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum VectorVcc {
+    /// Choose S1 when the VCC bit is set, otherwise S0.
+    Select,
+    /// Unsigned addition with carry-in and carry-out.
+    AddCarry,
+    /// Unsigned subtraction with borrow-in and borrow-out.
+    SubtractBorrow,
+}
+
+/// Implicit condition or carry input.
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum CarryIn {
-    /// SCC is not read.
+    /// No implicit condition or carry input.
     None,
     /// SCC as carry-in (add), borrow-in (sub) or the select condition (select).
     Scc,
+    /// Per-lane Wave32 VCC_LO bit.
+    Vcc,
 }
 
 /// What a form writes to SCC.
@@ -208,6 +259,9 @@ pub enum OperandRule {
     /// SOP1 unary: SDST is s0-s105; SSRC0 is s0-s105, an inline integer -16..64 or
     /// a literal word. Everything else is rejected as unsupported.
     Sop1Sgpr,
+    /// SOP1 move: the same sources as Sop1Sgpr, with VCC and EXEC halves
+    /// also allowed as explicit destinations.
+    Sop1Move,
     /// SOPK integer: SDST is s0-s105 and, except for compares, written (never s0-s7,
     /// which hold resource descriptors); SIMM16 is the 16-bit immediate. The word
     /// never takes a literal. Everything else is rejected as unsupported.
@@ -215,10 +269,21 @@ pub enum OperandRule {
     /// SOPK integer compare: SDST (s0-s105) is the left operand, SIMM16 the right
     /// (sign-extended for `_i32`, zero-extended for `_u32`); only SCC is written.
     SopkCompare,
+    /// SOPP termination with zero in the reserved immediate field.
+    SoppEnd,
+    /// SOPP branch with a signed dword displacement from the next instruction.
+    SoppBranch,
+    /// SOPP wait with exactly vmcnt(0) and the other counters disabled.
+    SoppWait,
     /// VOPC vector compare: the destination is `vcc_lo` (Wave32); SRC0 is a VGPR,
     /// s0-s105, `vcc_lo`, an inline integer -16..64 or a literal word; VSRC1 is a
     /// VGPR. Everything else is rejected as unsupported.
     VopcVcc,
+    /// Wave32 VOPC with a VGPR pair, even normal SGPR pair or inline integer
+    /// as SRC0 and a VGPR pair as VSRC1. The destination is `vcc_lo`.
+    VopcVccPair,
+    /// VOPC with low-half operands and no literal selector.
+    VopcVccHalf,
     /// VOP3 encoding of a VOP2 vector form: VDST is v0-v255, SRC0 and SRC1 are
     /// VGPRs, no input or output modifiers, SRC2 unused. Everything else is
     /// rejected as unsupported.
@@ -227,9 +292,15 @@ pub enum OperandRule {
     /// integer -16..64 or a literal word; VSRC1 is a VGPR. Everything else is
     /// rejected as unsupported.
     Vop2Vgpr,
+    /// VOP2 general SRC0 and VGPR VSRC1 with an implicit VCC_LO input.
+    Vop2Vcc,
     /// VOP2 vector, VGPR sources only: VDST is v0-v255; SRC0 and VSRC1 are VGPRs.
     /// Everything else (SGPR, inline, literal SRC0) is rejected as unsupported.
     Vop2Vgpr2,
+    /// VOP1 unary: VGPR VDST and the same SRC0 domain as VOP2.
+    Vop1Vgpr,
+    /// VOP1 swap: VDST and SRC0 each read and write a VGPR.
+    Vop1Swap,
 }
 
 /// Evidence a form needs before it counts as verified.

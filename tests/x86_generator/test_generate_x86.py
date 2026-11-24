@@ -67,6 +67,24 @@ class GenerateX86(unittest.TestCase):
         self.rejects(self.form('op = "movq"\nmap = "0f"\nprefix = "66"\nopcode = 0xF0\nenc = "xmm_rm"\nsize = "x"\nsrc = "q"\nunaligned = true'), "alignment applies")
         self.rejects(self.form('op = "nop"\nprefix = "66"\nopcode = 0xD7\nenc = "none"\nsize = "n"'), "map 0f")
 
+    def test_lock_needs_a_memory_destination(self):
+        # Not a form without ModRM, not one whose ModRM operand is the source,
+        # and not one that takes only a register.
+        message = "LOCK needs a memory destination"
+        self.rejects(self.form('op = "nop"\nopcode = 0xD7\nenc = "none"\nsize = "n"\nlock = true'), message)
+        self.rejects(self.form('op = "mov"\nopcode = 0xD7\nenc = "reg_rm"\nsize = "v"\nlock = true'), message)
+        self.rejects(self.form('op = "xadd"\nopcode = 0xD7\nenc = "rm_reg"\nsize = "v"\nregister_only = true\nlock = true'), message)
+
+    def test_only_xadd_and_cmpxchg_are_lockable(self):
+        _, forms = generate_x86.load(REGISTRY)
+        self.assertEqual({form["op"] for form in forms if form.get("lock")}, {"cmpxchg", "xadd"})
+
+    def test_string_forms_are_movs_and_stos_without_operands(self):
+        _, forms = generate_x86.load(REGISTRY)
+        self.assertEqual({form["op"] for form in forms if form["enc"] == "string"}, {"movs", "stos"})
+        self.rejects(self.form('op = "movs"\nopcode = 0xD7\nenc = "string"\nsize = "b"\nimm = "ib"'), "not valid for string")
+        self.rejects(self.form('op = "movs"\nopcode = 0xD7\nenc = "string"\nsize = "b"\nlock = true'), "LOCK needs a memory destination")
+
     def test_unknown_vocabulary_is_rejected(self):
         self.rejects(self.form('op = "frob"\nopcode = 0xD7\nenc = "none"\nsize = "n"'), "unknown op")
         self.rejects(self.form('op = "nop"\nopcode = 0xD7\nenc = "none"\nsize = "z"'), "unknown size")

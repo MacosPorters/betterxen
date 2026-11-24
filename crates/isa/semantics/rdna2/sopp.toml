@@ -1,0 +1,123 @@
+# Existing gfx1030 compute controls, AMD RDNA 2 ISA guide §12.5.
+
+[operand_rules.sopp_end]
+family = "SOPP"
+src = []
+max_literals = 0
+unsupported = []
+immediate = 0
+
+[operand_rules.sopp_branch]
+family = "SOPP"
+src = [{ field = "SIMM16", class = "label" }]
+max_literals = 0
+unsupported = []
+
+[operand_rules.sopp_wait]
+family = "SOPP"
+src = [{ field = "SIMM16", class = "waitcnt" }]
+max_literals = 0
+unsupported = []
+immediate = 0x3f70
+
+[[form]]
+name = "S_ENDPGM"
+family = "SOPP"
+opcode = 1
+variant = "EndProgram"
+operation = "end_program"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "wave32"
+operands = "sopp_end"
+spec = [{ document = "guide", section = "12.5", page = 124 }, { document = "guide", section = "13.1.5", page = 245 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_BRANCH"
+family = "SOPP"
+opcode = 2
+variant = "Branch"
+operation = "branch"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "wave32"
+operands = "sopp_branch"
+spec = [{ document = "guide", section = "12.5", page = 124 }, { document = "guide", section = "13.1.5", page = 245 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CBRANCH_SCC0"
+family = "SOPP"
+opcode = 4
+variant = "BranchSccZero"
+operation = "branch_scc_zero"
+signedness = "signed"
+carry_in = "scc"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "wave32"
+operands = "sopp_branch"
+spec = [{ document = "guide", section = "12.5", page = 124 }, { document = "guide", section = "13.1.5", page = 245 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CBRANCH_VCCZ"
+family = "SOPP"
+opcode = 6
+variant = "BranchVccZero"
+operation = "branch_vcc_zero"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "wave32"
+operands = "sopp_branch"
+spec = [{ document = "guide", section = "12.5", page = 124 }, { document = "guide", section = "13.1.5", page = 245 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_CBRANCH_EXECZ"
+family = "SOPP"
+opcode = 8
+variant = "BranchExecZero"
+operation = "branch_exec_zero"
+signedness = "signed"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "wave32"
+operands = "sopp_branch"
+spec = [{ document = "guide", section = "12.5", page = 125 }, { document = "guide", section = "13.1.5", page = 245 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_WAITCNT"
+family = "SOPP"
+opcode = 12
+variant = "WaitLoad"
+operation = "wait_load"
+signedness = "bitwise"
+carry_in = "none"
+width = 32
+scc = "unchanged"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "wave32"
+operands = "sopp_wait"
+spec = [{ document = "guide", section = "12.5", page = 125 }, { document = "guide", section = "13.1.5", page = 245 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
