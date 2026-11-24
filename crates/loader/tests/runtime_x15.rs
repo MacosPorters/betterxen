@@ -1106,6 +1106,14 @@ fn test_guest_crt_wide_strings_use_16_bit_units() {
             let result = call_service_fixture(&state, module, "wcspbrk", &[slot, set]);
             assert_eq!(result.execution.final_state.get(Register::Rax), expected);
         }
+        for (haystack, needle, expected) in [
+            (slot, slot + 2, slot),
+            (slot, slot + 8, slot),
+            (slot + 8, slot, 0),
+        ] {
+            let result = call_service_fixture(&state, module, "wcsstr", &[haystack, needle]);
+            assert_eq!(result.execution.final_state.get(Register::Rax), expected);
+        }
     }
 }
 

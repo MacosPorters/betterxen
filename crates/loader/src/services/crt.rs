@@ -248,20 +248,11 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strncat", |args, _, memory| {
         append_string(memory, args.rcx, args.rdx, args.r8)
     });
-    registry.register(UCRT, "strstr", |args, _, memory| {
-        if args.rcx == 0 || args.rdx == 0 {
-            return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
-        }
-        let needle = read_c_bytes(memory, args.rdx)?;
-        if needle.is_empty() {
-            return Ok(args.rcx);
-        }
-        let haystack = read_c_bytes(memory, args.rcx)?;
-        Ok(haystack
-            .windows(needle.len())
-            .position(|window| window == needle)
-            .map_or(0, |index| args.rcx + index as u64))
-    });
+    for (symbol, unit) in [("strstr", StringUnit::Byte), ("wcsstr", StringUnit::Wide)] {
+        registry.register(UCRT, symbol, move |args, _, memory| {
+            find_substring(memory, args.rcx, args.rdx, unit)
+        });
+    }
     registry.register(UCRT, "strspn", |args, _, memory| {
         span_length(memory, args.rcx, args.rdx, true)
     });
@@ -306,25 +297,55 @@ pub(super) fn register(registry: &mut ImportRegistry) {
         find_wide(memory, args.rcx, args.rdx as u16, false)
     });
     for symbol in [
-        "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "strspn", "strcspn",
-        "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr", "strtok", "strpbrk", "wcsspn",
-        "wcscspn", "wcspbrk",
+        "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "wcsstr", "strspn",
+        "strcspn", "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr", "strtok", "strpbrk",
+        "wcsspn", "wcscspn", "wcspbrk",
     ] {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
     }
 }
 
-fn read_c_bytes(memory: &GuestMemory, address: u64) -> Result<Vec<u8>, ExitReason> {
-    let mut bytes = Vec::new();
-    for index in 0..SCAN_BUDGET {
-        let byte = memory
-            .read_u8(address + index)
-            .map_err(ExitReason::MemoryFault)?;
-        if byte == 0 {
-            return Ok(bytes);
+fn find_substring(
+    memory: &GuestMemory,
+    haystack: u64,
+    needle: u64,
+    unit: StringUnit,
+) -> Result<u64, ExitReason> {
+    if haystack == 0 || needle == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    let length = string_length(memory, needle, u64::MAX, unit)?;
+    if length == 0 {
+        return Ok(haystack);
+    }
+    let pattern = (0..length)
+        .map(|offset| unit.read(memory, needle, offset))
+        .collect::<Result<Vec<_>, _>>()?;
+    // Prefix lengths avoid rescanning repeated substrings in guest memory.
+    let mut prefix = vec![0usize; pattern.len()];
+    for index in 1..pattern.len() {
+        let mut matched = prefix[index - 1];
+        while matched != 0 && pattern[index] != pattern[matched] {
+            matched = prefix[matched - 1];
         }
-        bytes.push(byte);
+        prefix[index] = matched + usize::from(pattern[index] == pattern[matched]);
+    }
+    let mut matched = 0;
+    for offset in 0..(SCAN_BUDGET / unit.width()) {
+        let current = unit.read(memory, haystack, offset)?;
+        if current == 0 {
+            return Ok(0);
+        }
+        while matched != 0 && current != pattern[matched] {
+            matched = prefix[matched - 1];
+        }
+        if current == pattern[matched] {
+            matched += 1;
+            if matched == pattern.len() {
+                return Ok(haystack + (offset + 1 - length) * unit.width());
+            }
+        }
     }
     Err(ExitReason::IllegalInstruction(0xFE))
 }
@@ -1073,4 +1094,22 @@ fn strtok_keeps_independent_cursors_and_accepts_new_delimiters() {
     assert_eq!(tokenize(&mut memory, 1, 0, 0x1048).unwrap(), 0x1005);
     assert_eq!(tokenize(&mut memory, 1, 0, 0x1048).unwrap(), 0);
     assert_eq!(tokenize(&mut memory, 2, 0, 0x1040).unwrap(), 0);
+}
+
+#[cfg(test)]
+#[test]
+fn substring_search_handles_overlapping_prefixes_and_stops_at_first_match() {
+    use crate::memory::MemoryPermissions;
+
+    let mut memory = GuestMemory::new();
+    memory
+        .map_region_with_data(0x1000, 7, MemoryPermissions::READ_ONLY, b"aaaaaab")
+        .unwrap();
+    memory
+        .map_region_with_data(0x2000, 5, MemoryPermissions::READ_ONLY, b"aaab\0")
+        .unwrap();
+    assert_eq!(
+        find_substring(&memory, 0x1000, 0x2000, StringUnit::Byte).unwrap(),
+        0x1003
+    );
 }
