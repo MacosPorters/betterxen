@@ -995,6 +995,10 @@ fn every_declared_form_is_executed_by_a_fixture() {
     let separate = [
         Op::Ldmxcsr,
         Op::Jcc,
+        Op::Loop,
+        Op::Loope,
+        Op::Loopne,
+        Op::Jrcxz,
         Op::Jmp,
         Op::Call,
         Op::Ret,

@@ -88,6 +88,11 @@ leave = { ref = "sdm LEAVE" }
 call = { terminator = true, ref = "sdm CALL" }
 jmp = { terminator = true, ref = "sdm JMP" }
 jcc = { reads = "cf zf sf of pf", terminator = true, ref = "sdm Jcc" }
+# The count is RCX: the address-size prefix that would select ECX is rejected.
+loopne = { reads = "zf", terminator = true, ref = "sdm LOOP/LOOPcc" }
+loope = { reads = "zf", terminator = true, ref = "sdm LOOP/LOOPcc" }
+loop = { terminator = true, ref = "sdm LOOP/LOOPcc" }
+jrcxz = { terminator = true, ref = "sdm Jcc" }
 ret = { terminator = true, ref = "sdm RET" }
 nop = { ref = "sdm NOP" }
 hlt = { terminator = true, ref = "sdm HLT" }
@@ -560,6 +565,34 @@ op = "leave"
 opcode = 0xC9
 enc = "none"
 size = "q"
+
+[[form]]
+op = "loopne"
+opcode = 0xE0
+enc = "rel"
+size = "n"
+imm = "rel8"
+
+[[form]]
+op = "loope"
+opcode = 0xE1
+enc = "rel"
+size = "n"
+imm = "rel8"
+
+[[form]]
+op = "loop"
+opcode = 0xE2
+enc = "rel"
+size = "n"
+imm = "rel8"
+
+[[form]]
+op = "jrcxz"
+opcode = 0xE3
+enc = "rel"
+size = "n"
+imm = "rel8"
 
 [[form]]
 op = "call"

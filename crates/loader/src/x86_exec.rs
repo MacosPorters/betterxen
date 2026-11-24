@@ -599,6 +599,26 @@ pub fn execute(
                 next = insn.imm;
             }
         }
+        // The count is RCX, decremented without changing any flag; LOOPE and
+        // LOOPNE also test ZF (Intel SDM Vol. 2A, LOOP/LOOPcc).
+        Op::Loop | Op::Loope | Op::Loopne => {
+            let count = cpu.gpr[RCX].wrapping_sub(1);
+            cpu.gpr[RCX] = count;
+            let zf_holds = match insn.op {
+                Op::Loope => cpu.flags.zf,
+                Op::Loopne => !cpu.flags.zf,
+                _ => true,
+            };
+            if count != 0 && zf_holds {
+                next = insn.imm;
+            }
+        }
+        // JRCXZ reads RCX and changes nothing (Intel SDM Vol. 2A, Jcc).
+        Op::Jrcxz => {
+            if cpu.gpr[RCX] == 0 {
+                next = insn.imm;
+            }
+        }
         Op::Ret => {
             let sp = cpu.gpr[RSP];
             next = read_mem(memory, sp, 8)?;

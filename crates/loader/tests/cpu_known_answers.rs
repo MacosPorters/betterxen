@@ -1082,6 +1082,8 @@ cmov_all_unsigned_below_signed_greater: rax=1 rbx=80000000 => rcx=1 r8=1 r9=0 r1
   b800000000 e305 b801000000 90
   SDM 2A Jcc
 jrcxz_tests_all_64_bits: rcx=100000000 => rax=1 f=*
+jrcxz_sees_bit_63: rcx=8000000000000000 => rax=1 f=*
+jrcxz_taken_at_zero_keeps_rcx: rcx=0 => rax=0 rcx=0 f=*
 @ mov eax, 0; jecxz 1f; mov eax, 1; 1: nop
   b800000000 67e305 b801000000 90
   SDM 2A Jcc
@@ -1094,6 +1096,24 @@ loop_decrements_rcx_without_flags: rax=0 rcx=3 => rax=3 rcx=0 f=*
   488d4001 e0fa
   SDM 2A LOOP
 loopne_stops_on_zero_flag: rax=0 rcx=5 f=Z => rax=1 rcx=4 f=*
+@ mov eax, 0; loop 1f; mov eax, 1; 1: nop
+  b800000000 e205 b801000000 90
+  SDM 2A LOOP
+loop_from_zero_wraps_and_branches: rcx=0 => rax=0 rcx=ffffffffffffffff f=*
+loop_at_one_falls_through: rcx=1 => rax=1 rcx=0 f=*
+loop_counts_all_64_bits: rcx=100000000 => rax=0 rcx=ffffffff f=*
+@ mov eax, 0; loope 1f; mov eax, 1; 1: nop
+  b800000000 e105 b801000000 90
+  SDM 2A LOOP
+loope_taken_with_zf: rcx=2 f=Z => rax=0 rcx=1 f=*
+loope_not_taken_without_zf: rcx=2 f=CPASO => rax=1 rcx=1 f=*
+loope_count_expires_with_zf: rcx=1 f=Z => rax=1 rcx=0 f=*
+@ mov eax, 0; loopne 1f; mov eax, 1; 1: nop
+  b800000000 e005 b801000000 90
+  SDM 2A LOOP
+loopne_taken_without_zf: rcx=2 f=CPASO => rax=0 rcx=1 f=*
+loopne_not_taken_with_zf: rcx=2 f=Z => rax=1 rcx=1 f=*
+loopne_count_expires_without_zf: rcx=1 => rax=1 rcx=0 f=*
 ";
 
 const STACK_AND_CALLS: &str = r"
@@ -2721,7 +2741,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("haddps_hsubpd_addsubps", 0),
     ("insertps_zero_mask", 0),
     ("jecxz_tests_low_32_bits", 1),
-    ("jrcxz_tests_all_64_bits", 1),
     ("lahf", 0),
     ("lahf_zero", 0),
     ("lea64_addr32_truncates_effective_address", 0),
@@ -2729,8 +2748,6 @@ const UNSUPPORTED: &[(&str, usize)] = &[
     ("lodsd_zero_extends", 1),
     ("lodsd_zero_extends_df_clear", 0),
     ("lodsw_preserves_upper48", 1),
-    ("loop_decrements_rcx_without_flags", 1),
-    ("loopne_stops_on_zero_flag", 1),
     ("maskmovdqu_selects_bytes", 0),
     ("mov_moffs64_load", 0),
     ("mov_moffs8_store", 0),
