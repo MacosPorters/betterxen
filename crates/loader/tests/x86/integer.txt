@@ -1034,6 +1034,7 @@ f8 | clc
 f9 | stc
 f5 | cmc
 90 | nop
+0f a2 | cpuid
 0f 1f 40 08 | nop dword ptr [rax + 8]
 f3 90 | pause
 41 51 | push r9

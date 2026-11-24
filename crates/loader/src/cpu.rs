@@ -123,6 +123,35 @@ impl CpuState {
     }
 }
 
+/// CPUID leaf 1, EDX: CMOVcc.
+pub const CPUID_CMOV: u32 = 1 << 15;
+/// CPUID leaf 1, ECX: POPCNT.
+pub const CPUID_POPCNT: u32 = 1 << 23;
+/// CPUID leaf 0x8000_0001, ECX: LZCNT.
+pub const CPUID_LZCNT: u32 = 1 << 5;
+/// CPUID leaf 0x8000_0001, EDX: 64-bit mode.
+pub const CPUID_LONG_MODE: u32 = 1 << 29;
+
+/// What the guest's CPUID returns in EAX, EBX, ECX and EDX.
+///
+/// The table is fixed and never reads the host. It names a synthetic
+/// processor, not an Intel or AMD product, and sets a feature bit only when
+/// every instruction of that feature is implemented. A leaf that is not
+/// listed returns zeros.
+pub fn cpuid(leaf: u32, _subleaf: u32) -> [u32; 4] {
+    let word = |text: &[u8; 4]| u32::from_le_bytes(*text);
+    match leaf {
+        // Highest basic leaf, then "Xenora guest" in EBX, EDX, ECX.
+        0 => [1, word(b"Xeno"), word(b"uest"), word(b"ra g")],
+        // No family, model or stepping: this is no shipped processor.
+        1 => [0, 0, CPUID_POPCNT, CPUID_CMOV],
+        // Highest extended leaf.
+        0x8000_0000 => [0x8000_0001, 0, 0, 0],
+        0x8000_0001 => [0, 0, CPUID_LZCNT, CPUID_LONG_MODE],
+        _ => [0; 4],
+    }
+}
+
 /// Termination reason for guest execution.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum ExitReason {

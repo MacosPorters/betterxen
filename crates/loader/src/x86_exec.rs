@@ -10,7 +10,7 @@
 //! the state unchanged. Flags that the architecture leaves undefined keep their
 //! previous value, which is permitted but not something guests may rely on.
 
-use crate::cpu::{CpuState, ExitReason, RFlags, Register};
+use crate::cpu::{CpuState, ExitReason, RFlags, Register, cpuid};
 use crate::memory::GuestMemory;
 use crate::x86_decode::{Encoding, Insn, MemOperand, RegOperand, RmOperand, Segment};
 use crate::x86_simd;
@@ -19,6 +19,7 @@ use crate::x86_table::Op;
 const RAX: usize = Register::Rax as usize;
 const RCX: usize = Register::Rcx as usize;
 const RDX: usize = Register::Rdx as usize;
+const RBX: usize = Register::Rbx as usize;
 const RSP: usize = Register::Rsp as usize;
 const RBP: usize = Register::Rbp as usize;
 
@@ -573,6 +574,14 @@ pub fn execute(
             cpu.gpr[RSP] = sp.wrapping_add(8).wrapping_add(insn.imm);
         }
         Op::Nop => {}
+        Op::Cpuid => {
+            // The leaf is EAX and the subleaf ECX. Each result is a 32-bit
+            // register write, so the upper halves are cleared.
+            let values = cpuid(cpu.gpr[RAX] as u32, cpu.gpr[RCX] as u32);
+            for (register, value) in [RAX, RBX, RCX, RDX].into_iter().zip(values) {
+                cpu.gpr[register] = u64::from(value);
+            }
+        }
         Op::Clc => cpu.flags.cf = false,
         Op::Stc => cpu.flags.cf = true,
         Op::Cmc => cpu.flags.cf = !cpu.flags.cf,
