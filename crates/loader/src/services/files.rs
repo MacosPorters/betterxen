@@ -1254,6 +1254,39 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         Ok(1)
     });
 
+    let times = Arc::clone(state);
+    registry.register(KERNEL32, "SetFileTime", move |args, cpu, memory| {
+        let objects = times.objects.lock().expect("guest object state");
+        let Some(GuestObject::File(file)) = objects.handles.get(&args.rcx) else {
+            return times.fail(cpu.gs_base, ERROR_INVALID_HANDLE, 0);
+        };
+        if file.access & WRITE == 0 {
+            return times.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
+        }
+        let mut values = [0; 3];
+        for (slot, address) in values.iter_mut().zip([args.rdx, args.r8, args.r9]) {
+            if address != 0 {
+                match memory.read_u64(address) {
+                    Ok(value) => *slot = value,
+                    Err(_) => return times.fail(cpu.gs_base, ERROR_NOACCESS, 0),
+                }
+            }
+        }
+        if values == [0; 3] {
+            return Ok(1);
+        }
+        let Some(host) = &file.host else {
+            return times.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
+        };
+        if values[0] != 0 || values[1..].contains(&u64::MAX) {
+            return times.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
+        }
+        match host_files::set_open_file_times(&host.file, values[1], values[2]) {
+            Ok(()) => Ok(1),
+            Err(error) => times.fail(cpu.gs_base, host_files::win32_error(&error), 0),
+        }
+    });
+
     let file_type = Arc::clone(state);
     registry.register(KERNEL32, "GetFileType", move |args, cpu, _| {
         const FILE_TYPE_DISK: u64 = 1;
@@ -1486,6 +1519,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "GetFileSizeEx",
         "GetFileType",
         "GetFileTime",
+        "SetFileTime",
         "FlushFileBuffers",
         "ReadFile",
         "WriteFile",

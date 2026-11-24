@@ -133,6 +133,7 @@ pub(super) fn win32_error(error: &io::Error) -> u32 {
         Some(libc::ENOSPC | libc::EDQUOT | libc::EFBIG) => ERROR_DISK_FULL,
         Some(libc::ENOTEMPTY) => ERROR_DIR_NOT_EMPTY,
         Some(libc::ENAMETOOLONG) => ERROR_FILENAME_EXCED_RANGE,
+        Some(libc::EINVAL) => 87, // ERROR_INVALID_PARAMETER
         Some(libc::ENOMEM) => ERROR_NOT_ENOUGH_MEMORY,
         Some(libc::EIO) => ERROR_IO_DEVICE,
         _ => ERROR_GEN_FAILURE,
@@ -221,6 +222,32 @@ fn status(fd: BorrowedFd<'_>) -> io::Result<libc::stat> {
 
 pub(super) fn open_file_times(file: &File) -> io::Result<[u64; 3]> {
     status(file.as_fd()).map(|status| file_times(&status))
+}
+
+pub(super) fn set_open_file_times(file: &File, accessed: u64, modified: u64) -> io::Result<()> {
+    use std::fs::FileTimes;
+    use std::time::{Duration, SystemTime, UNIX_EPOCH};
+
+    fn system_time(ticks: u64) -> io::Result<SystemTime> {
+        const UNIX_EPOCH_TICKS: u64 = 116_444_736_000_000_000;
+        let delta = ticks.abs_diff(UNIX_EPOCH_TICKS);
+        let duration = Duration::new(delta / 10_000_000, (delta % 10_000_000) as u32 * 100);
+        let result = if ticks >= UNIX_EPOCH_TICKS {
+            UNIX_EPOCH.checked_add(duration)
+        } else {
+            UNIX_EPOCH.checked_sub(duration)
+        };
+        result.ok_or_else(|| io::Error::from_raw_os_error(libc::EINVAL))
+    }
+
+    let mut times = FileTimes::new();
+    if accessed != 0 {
+        times = times.set_accessed(system_time(accessed)?);
+    }
+    if modified != 0 {
+        times = times.set_modified(system_time(modified)?);
+    }
+    file.set_times(times)
 }
 
 /// Check that an opened descriptor is still the object the listing reported.

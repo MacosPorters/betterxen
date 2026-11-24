@@ -31,6 +31,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (FILE_API, "GetFileSize"),
     (FILE_API, "GetFileType"),
     (FILE_API, "GetFileTime"),
+    (FILE_API, "SetFileTime"),
     (KERNEL32, "GetFileSizeEx"),
     (FILE_API, "FlushFileBuffers"),
     (KERNEL32, "SetFilePointerEx"),
@@ -157,6 +158,39 @@ fn found_name(guest: &Guest) -> String {
 
 fn symlink(target: &Path, link: &Path) {
     std::os::unix::fs::symlink(target, link).unwrap();
+}
+
+#[test]
+fn guest_sets_mounted_write_time_by_handle() {
+    let tree = Tree::new("set-filetime");
+    let root = tree.path("root");
+    std::fs::create_dir_all(&root).unwrap();
+    std::fs::write(root.join("Times.dat"), b"unchanged").unwrap();
+    let mount = HostMount::new('D', &root, true).unwrap();
+    let mut guest = guest_with(vec![mount]);
+    let name = r"D:\Times.dat";
+    let readonly = open(&mut guest, name, GENERIC_READ, 0, OPEN_EXISTING);
+    assert_ne!(readonly, INVALID);
+    assert_eq!(guest.call("SetFileTime", &[readonly, 0, 0, COUNT]), 0);
+    assert_eq!(guest.error(), 5);
+    assert_eq!(guest.call("CloseHandle", &[readonly]), 1);
+
+    let handle = open(&mut guest, name, GENERIC_READ | GENERIC_WRITE, 0, OPEN_EXISTING);
+    assert_ne!(handle, INVALID);
+    assert_eq!(guest.call("GetFileTime", &[handle, 0, BUFFER, 0]), 1);
+    let accessed = guest.u64_at(BUFFER);
+    let modified = 133_444_736_012_345_678;
+    guest.memory.write_u64(COUNT, modified).unwrap();
+    assert_eq!(guest.call("SetFileTime", &[handle, 0, 0, COUNT]), 1);
+    assert_eq!(guest.call("GetFileTime", &[handle, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(guest.u64_at(BUFFER), accessed);
+    assert_eq!(guest.u64_at(BUFFER + 8), modified);
+    assert_eq!(guest.call("SetFileTime", &[handle, 0, COUNT, 1]), 0);
+    assert_eq!(guest.error(), 998);
+    assert_eq!(guest.call("GetFileTime", &[handle, 0, BUFFER, 0]), 1);
+    assert_eq!(guest.u64_at(BUFFER), accessed);
+    assert_eq!(guest.call("CloseHandle", &[handle]), 1);
+    assert_eq!(std::fs::read(root.join("Times.dat")).unwrap(), b"unchanged");
 }
 
 #[test]
