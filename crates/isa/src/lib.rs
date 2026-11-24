@@ -207,8 +207,9 @@ pub enum Instruction {
         src: u8,
         simm16: u16,
     },
-    /// VOPC 32-bit integer compare writing a Wave32 mask to `vcc_lo`.
-    /// `src0` is a VGPR, `s0-s105`, `vcc_lo`, an inline integer or a literal.
+    /// VOPC integer compare writing a Wave32 mask to `vcc_lo`.
+    /// For 64-bit forms register operands name pair bases and the immediate
+    /// contains the low word of a sign-extended inline integer.
     VectorCompare {
         op: VectorCompareOp,
         src0: VectorSource,
@@ -363,6 +364,19 @@ impl fmt::Display for Instruction {
             }
             Self::ScalarImmediateCompare { src, simm16, .. } => {
                 write!(formatter, " s{src}, {simm16:#x}")
+            }
+            Self::VectorCompare { op, src0, src1 } if op.semantics().width == 64 => {
+                formatter.write_str(" vcc_lo, ")?;
+                match src0 {
+                    VectorSource::Register(base) => {
+                        write!(formatter, "v[{base}:{}]", u16::from(base) + 1)?;
+                    }
+                    VectorSource::Scalar(base) => {
+                        write!(formatter, "s[{base}:{}]", u16::from(base) + 1)?;
+                    }
+                    VectorSource::Immediate(bits) => write!(formatter, "{}", bits as i32)?,
+                }
+                write!(formatter, ", v[{src1}:{}]", u16::from(src1) + 1)
             }
             Self::VectorCompare { src0, src1, .. } => {
                 write!(formatter, " vcc_lo, {src0}, v{src1}")

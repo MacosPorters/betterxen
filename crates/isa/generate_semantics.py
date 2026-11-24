@@ -76,10 +76,9 @@ RELATIONS = {
 }
 # F and T exist only as VOPC compares (guide Table 59 offsets 0 and 7).
 VECTOR_ONLY_RELATIONS = {"f", "t"}
-# Guide 12.9 Table 59 and Table 61: a 32-bit integer VOPC compare's opcode is
-# its group base (128 for _I32, 192 for _U32) plus its relation's offset. This
-# is the guide's opcode layout, not a reading of the mnemonic.
-VOPC_INTEGER_BASES = {"signed": 128, "unsigned": 192}
+# Guide 12.9 Tables 59 and 61: integer VOPC opcodes are the group base
+# for the operand width and signedness plus the relation offset.
+VOPC_INTEGER_BASES = {32: {"signed": 128, "unsigned": 192}, 64: {"signed": 160, "unsigned": 224}}
 VOPC_RELATION_OFFSETS = {"f": 0, "lt": 1, "eq": 2, "le": 3, "gt": 4, "lg": 5, "ge": 6, "t": 7}
 # (relation, signedness) -> primitive. Equality does not depend on signedness,
 # so both declared signednesses of EQ and LG share one primitive.
@@ -164,7 +163,6 @@ PINNED_DOCUMENTS = {
         "file": "amdgpu_isa_rdna2.xml",
     },
 }
-WIDTHS = {32}
 
 # (operation, signedness) -> (required SCC effect, primitive, takes carry-in).
 # A form whose declaration is not a row here has no primitive and is rejected.
@@ -400,6 +398,24 @@ OPERAND_RULES = {
             "src_special",
         },
         "kind": "vector_compare",
+    },
+    "vopc_vcc_pair": {
+        "rust": "VopcVccPair",
+        "enum": "VectorCompareOp",
+        "shape": {
+            "family": "VOPC",
+            "src": [
+                {"field": "SRC0", "class": "vector_pair_or_inline_integer"},
+                {"field": "VSRC1", "class": "vgpr_pair"},
+            ],
+            "max_literals": 0,
+        },
+        "unsupported": {
+            "src_vcc", "src_literal", "src_exec", "src_m0", "src_ttmp", "src_null",
+            "src_float_inline", "src_special",
+        },
+        "kind": "vector_compare",
+        "width": 64,
     },
     "vop3_vgpr2": {
         "rust": "Vop3Vgpr2",
@@ -701,7 +717,11 @@ def _check_xml(form, rule, snapshot, errors):
         elif type(bits) is int:
             if data_format != f"FMT_NUM_I{bits}":
                 errors.append(f"{label}: {field} has XML format {data_format}, not FMT_NUM_I{bits}")
-        elif is_source and data_format not in SOURCE_FORMATS.get(form["signedness"], ()):
+        elif is_source and data_format not in (
+            {f"FMT_NUM_{'I' if form['signedness'] == 'signed' else 'U'}64"}
+            if form["operands"] == "vopc_vcc_pair"
+            else SOURCE_FORMATS.get(form["signedness"], ())
+        ):
             errors.append(
                 f"{label}: signedness {form['signedness']} contradicts XML format {data_format}"
             )
@@ -782,7 +802,8 @@ def validate(registry, snapshot):
             )
         if form["exec"] != "unchanged":
             errors.append(f"{label}: exec {form['exec']} has no contract (requires unchanged)")
-        if type(form["width"]) is not int or form["width"] not in WIDTHS:
+        expected_width = (_implemented_rule(form) or {}).get("width", 32)
+        if type(form["width"]) is not int or form["width"] != expected_width:
             errors.append(f"{label}: width {form['width']} is not supported")
         for key, value in (
             ("name", form["name"]),
@@ -848,7 +869,7 @@ def validate(registry, snapshot):
                         f"{expected} (guide 13.1.2), not {form['opcode']}"
                     )
             elif _rule_kind(form) == "vector_compare":
-                base = VOPC_INTEGER_BASES.get(form["signedness"])
+                base = VOPC_INTEGER_BASES.get(expected_width, {}).get(form["signedness"])
                 expected = None if base is None else base + VOPC_RELATION_OFFSETS[relation]
                 if form["opcode"] != expected:
                     errors.append(
@@ -1562,6 +1583,7 @@ def _render_enum(rule_name, forms, snapshot, positions):
         out += ["        }", "    }"]
     if kind in ("compare", "vector_compare"):
         result = "SCC" if kind == "compare" else "per-lane result"
+        has_pairs = any(form["width"] == 64 for form in forms)
         out += [
             "",
             "    /// The relation tested, with S0 on the left.",
@@ -1578,11 +1600,27 @@ def _render_enum(rule_name, forms, snapshot, positions):
             "",
             f"    /// The {result}: whether the relation holds for S0 and S1.",
             "    pub const fn test(self, src0: u32, src1: u32) -> bool {",
-            "        match self {",
         ]
+        if has_pairs:
+            out += [
+                "        self.test_bits(src0 as u64, src1 as u64)",
+                "    }",
+                "",
+                "    /// Test raw operand bits at the width declared by this VOPC form.",
+                "    pub const fn test_bits(self, src0: u64, src1: u64) -> bool {",
+            ]
+        out += ["        match self {"]
         for form in forms:
-            function = COMPARE_PRIMITIVES[(form[RELATION_KEY], form["signedness"])]
-            out.append(f"            Self::{form['variant']} => primitive::{function}(src0, src1),")
+            relation = form[RELATION_KEY]
+            if form["width"] == 64 and relation not in VECTOR_ONLY_RELATIONS:
+                symbol = {"lt": "<", "eq": "==", "le": "<=", "gt": ">", "lg": "!=", "ge": ">="}[relation]
+                left, right = ("(src0 as i64)", "(src1 as i64)") if form["signedness"] == "signed" else ("src0", "src1")
+                expression = f"{left} {symbol} {right}"
+            else:
+                function = COMPARE_PRIMITIVES[(relation, form["signedness"])]
+                args = "src0 as u32, src1 as u32" if has_pairs else "src0, src1"
+                expression = f"primitive::{function}({args})"
+            out.append(f"            Self::{form['variant']} => {expression},")
         out += ["        }", "    }", "}"]
         return out
     out += [

@@ -11,9 +11,9 @@
 //! 6.2 (Table 20 and 6.2.1), 6.2.5, 6.8 and 9.1. Nothing here comes from the
 //! ISA crate, the semantic registry, the decoder or the shader compiler. Every
 //! case runs on the reference interpreter `xenora_ref` and on the second
-//! interpreter `independent_ref`. The ignored native Metal test needs the
-//! translator's 16- and 64-bit forms; until then a CPU test checks that the
-//! production compiler rejects all 28.
+//! interpreter `independent_ref`. The native Metal gate includes the 64-bit
+//! cases. The 16-bit Metal cases remain skipped while the compiler rejects
+//! those forms.
 //!
 //! Readings of the guide (not hardware evidence):
 //! - Table 59: offsets F 0, LT 1, EQ 2, LE 3, GT 4, LG/NE 5, GE 6, TRU 7 with
@@ -1169,24 +1169,58 @@ fn vopc_wide_outside_the_contract_are_rejected() {
 }
 
 #[test]
-fn production_compiler_still_rejects_the_wide_compares() {
-    // docs/shaders/vector-compare.md 2a: the oracle runs ahead of the
-    // translator, which rejects all 28 forms at the compare until it
-    // implements them. This test fails once it does; then the Metal test
-    // below takes over.
-    for form in forms() {
-        let (setup, other) = if form.bits == 64 {
-            (lane_pair(7), 4)
-        } else {
-            (vmov(3, 7).to_vec(), 3)
-        };
-        let (code, offset) = program(&setup, None, &[vopc(form.op, vgpr(1), other)], &[]);
-        let at = match compile(Architecture::Gfx1030, &code) {
-            Err(CompileError::Decode(error)) => error.offset,
-            Err(CompileError::Verify { offset, .. }) => offset,
-            other => panic!("compiler accepted {}: {other:?}", form.name),
-        };
-        assert_eq!(at, offset, "compiler rejected {} elsewhere", form.name);
+fn production_compiler_still_rejects_the_16_bit_compares() {
+    for form in forms().into_iter().filter(|form| form.bits == 16) {
+        let (code, offset) = program(&vmov(3, 7), None, &[vopc(form.op, vgpr(1), 3)], &[]);
+        assert_compiler_rejected_at(form.name, &code, offset);
+    }
+}
+
+fn assert_compiler_rejected_at(label: &str, code: &[u8], offset: usize) {
+    let at = match compile(Architecture::Gfx1030, code) {
+        Err(CompileError::Decode(error)) => error.offset,
+        Err(CompileError::Verify { offset, .. }) => offset,
+        other => panic!("compiler did not reject {label}: {other:?}"),
+    };
+    assert_eq!(at, offset, "compiler rejected {label} elsewhere");
+}
+
+fn cases_at_width(bits: u32) -> Vec<Case> {
+    let suffix = bits.to_string();
+    checked_cases()
+        .into_iter()
+        .filter(|case| case.form.ends_with(&suffix))
+        .collect()
+}
+
+fn check_compiler_rejections(bits: u32) {
+    let suffix = bits.to_string();
+    for (label, code, offset) in rejections() {
+        if label.split_once(' ').unwrap().0.ends_with(&suffix) {
+            assert_compiler_rejected_at(&label, &code, offset);
+        }
+    }
+}
+
+#[test]
+fn production_compiler_lowers_the_64_bit_compares() {
+    let cases = cases_at_width(64);
+    harness::check_reference(&cases).assert_none("64-bit compare compilation and reference");
+    check_compiler_rejections(64);
+    eprintln!("vopc64: {} compiler acceptance cases", cases.len());
+}
+
+#[test]
+fn production_compiler_emits_signed_and_unsigned_64_bit_relations() {
+    for (name, signed) in [("v_cmp_lt_i64", true), ("v_cmp_lt_u64", false)] {
+        let code = code(&lane_pair(7), None, &[vopc(form(name).op, 193, 4)]);
+        let shader = compile(Architecture::Gfx1030, &code).unwrap();
+        assert_eq!(
+            shader.msl.matches("as_type<long>(").count(),
+            if signed { 2 } else { 0 }
+        );
+        assert_eq!(shader.msl.matches("<< 32u").count(), 2);
+        assert!(shader.disassembly.contains("vcc_lo, -1, v[4:5]"));
     }
 }
 
@@ -1204,6 +1238,7 @@ fn pair_halves_are_checked_without_active_lanes() {
             let (code, offset) = program(&lane_pair(7), Some(0xffff_ff80), &compare, &[]);
             let label = format!("{} v2 uninitialized in {slot}, no active lane", form.name);
             assert_rejected_at(&label, &code, offset, input);
+            assert_compiler_rejected_at(&label, &code, offset);
             n += 1;
         }
     }
@@ -1227,23 +1262,26 @@ fn neighbouring_compares_stay_unsupported() {
 }
 
 #[test]
-#[ignore = "requires a native Metal device with API and shader validation, and the translator's 16- and 64-bit forms (skipped by scripts/test-gpu.sh until then)"]
-fn vopc_wide_match_the_guide_on_native_metal() {
+#[ignore = "requires a native Metal device with API and shader validation"]
+fn vopc64_match_the_guide_on_native_metal() {
+    check_native_metal(64);
+}
+
+#[test]
+#[ignore = "requires the translator's 16-bit forms and native Metal validation"]
+fn vopc16_match_the_guide_on_native_metal() {
+    check_compiler_rejections(16);
+    check_native_metal(16);
+}
+
+fn check_native_metal(bits: u32) {
     assert_eq!(std::env::var("MTL_DEBUG_LAYER").as_deref(), Ok("1"));
     assert_eq!(std::env::var("MTL_SHADER_VALIDATION").as_deref(), Ok("1"));
-    for (label, code, offset) in rejections() {
-        let at = match compile(Architecture::Gfx1030, &code) {
-            Err(CompileError::Decode(error)) => error.offset,
-            Err(CompileError::Verify { offset, .. }) => offset,
-            other => panic!("compiler did not reject {label}: {other:?}"),
-        };
-        assert_eq!(at, offset, "compiler rejected {label} elsewhere");
-    }
-    let cases = checked_cases();
+    let cases = cases_at_width(bits);
     let (failures, programs) = harness::check_metal(&cases);
     failures.assert_none("native Metal disagrees with the guide");
     eprintln!(
-        "vopc_wide: {} Metal cases in {programs} programs",
+        "vopc{bits}: {} Metal cases in {programs} programs",
         cases.len()
     );
 }

@@ -56,4 +56,4 @@ cargo test --locked -p xenora-semantic-review --no-run
 # Oracles whose translator side has not landed are skipped by name until it does
 # (#215: the PR that translates the forms removes its skip).
 timeout 120s cargo test --locked -p xenora-semantic-review -- --ignored --nocapture --test-threads=1 \
-    --skip vopc_wide_match_the_guide_on_native_metal
+    --skip vopc16_match_the_guide_on_native_metal

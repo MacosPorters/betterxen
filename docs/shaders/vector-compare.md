@@ -75,14 +75,14 @@ stream carries no wave-size declaration (the VOPC word has no wave-size field),
 so every caller of the translator and the reference establishes Wave32 by
 using this ABI; there is no Wave64 entry point to reject.
 
-### 2a. 16-bit and 64-bit compares (reference interpreters only)
+### 2a. 16-bit and 64-bit compares
 
 The reference (`crates/ref`) and the second interpreter
 (`tests/validation/independent_ref.rs`) also accept the `_e32` forms
 `v_cmp_{lt,eq,le,gt,ne,ge}_{i16,u16}` (opcodes 137-142, 169-174) and
 `v_cmp_{f,lt,eq,le,gt,ne,ge,t}_{i64,u64}` (160-167, 224-231). The decoder and
-the translator still reject them (section 4); these forms have an oracle
-but no translation yet.
+translator support the 64-bit forms through the `vopc_vcc_pair` operand rule.
+The 16-bit forms are available only in the interpreters.
 
 - 16-bit forms read bits 15:0 of each 32-bit source and ignore bits 31:16
   (an inference from guide 6.2, 6.2.5 and 6.8: only SDWA selects a half).
@@ -124,8 +124,8 @@ this wave (all 32 except in a final partial wave, see 7). As an unsigned
 - V_CMPX_* (writes EXEC: divergent execution; needs its own contract).
 - The VOP3 encoding of any compare (arbitrary SGPR destination, modifiers).
 - SDWA and DPP forms; float compares; v_cmp_class.
-- 16-bit and 64-bit compares in the decoder and translator (the reference
-  interpreters accept the subset in 2a).
+- 16-bit compares in the decoder and translator (the reference interpreters
+  accept the subset in 2a).
 - SRC0 inline float constants (240-248), SGPRs other than s0-s106, TTMPs,
   M0, EXEC_LO/HI, VCC_HI, SCC/VCCZ/EXECZ selectors, LDS direct.
 - A normal-SGPR SRC0 without a known value, when EXEC_LO != 0.
@@ -148,14 +148,15 @@ Acceptance rules for one compare:
   or VCC state), and VCC_LO becomes known 0.
 - EXEC_LO != 0: VSRC1 and a VGPR SRC0 must be initialized and not pending a
   load; a normal-SGPR SRC0 must be known; a `vcc_lo` SRC0 must be known or
-  lane-derived (uninitialized is rejected). VCC_LO becomes lane-derived.
+  lane-derived (uninitialized is rejected). The 64-bit forms check both words
+  of each register pair. VCC_LO becomes lane-derived.
 
 While VCC_LO is lane-derived it may be read only by:
 
 1. `s_cbranch_vccz` (6);
 2. `v_mov_b32_e32 vD, vcc_lo`, which writes the 32-bit mask into vD of active
    lanes (inactive lanes keep vD, as for any partial-EXEC move);
-3. SRC0 of a supported compare (`v_cmp_* vcc_lo, vcc_lo, vN`), which reads the
+3. SRC0 of a supported 32-bit compare (`v_cmp_* vcc_lo, vcc_lo, vN`), which reads the
    old VCC_LO in every active lane before the new value is written.
 4. SRC0 of a registry VOP2 integer form (for example
    `v_add_nc_u32_e32 vD, vcc_lo, vN`), which reads the 32-bit mask in every
@@ -252,10 +253,14 @@ programs, plus 2 mask-chain programs (252 in all), and the F/T fixture (253) mat
 run in `vopc_f_t_match_the_guide_on_native_metal`.
 
 The 16-bit and 64-bit oracle (`tests/validation/tests/vopc_wide.rs`) checks
-6,212 lane cases on both reference interpreters, plus 1,208 rejections and the
-13 neighbouring opcodes, and that the production compiler still rejects all 28
-forms. Its native Metal test stays ignored (and skipped by `scripts/test-gpu.sh`)
-until the translator implements these forms. Deliberately broken copies of both
+6,212 cases on both reference interpreters, plus 1,208 rejections and 13
+neighbouring opcodes. CPU tests check compilation of the 4,640 64-bit cases
+and rejection of out-of-contract 64-bit operands and all 12 16-bit forms.
+The LLVM-assembled `fixtures/rdna2/vector-compare-64.s` covers all sixteen
+64-bit opcodes in the decoder's fixture inventory.
+`scripts/test-gpu.sh` includes `vopc64_match_the_guide_on_native_metal` and
+skips `vopc16_match_the_guide_on_native_metal`. On a local Apple M5 under API and
+shader validation, all 4,640 64-bit cases (3,818 programs) agree; acceptance is pending. Deliberately broken copies of both
 interpreters (16-bit reads of 32 bits, swapped pair halves, zero-extended
 inline integers, flipped signedness, reads under empty EXEC and others) each
 fail it.
@@ -268,14 +273,14 @@ the translator with a stale VCC under empty EXEC (CPU), and, on Metal, with
 swapped signedness, without the EXEC mask, without the absent-lane bound
 (shader validation aborts on the out-of-range read) or with an inverted join.
 
-Evidence class: agreement with a specification-derived reference, run
-locally on Apple M5 Pro. It is not agreement with RDNA 2 or Xbox hardware.
+The 32-bit readback evidence is local agreement with a specification-derived
+reference on Apple M5 Pro. The 64-bit compiler evidence is CPU-only.
+There is no RDNA 2 or Xbox hardware evidence.
 
 ## 10. Limitations
 
-- Wave32 only. No `v_cmpx`, VOP3, SDWA, DPP or float compares. 16-bit and
-  64-bit compares exist only in the reference interpreters (2a); native Metal
-  agreement for them is not shown.
+- Wave32 only. No `v_cmpx`, VOP3, SDWA, DPP or float compares. The 16-bit
+  compares are available only in the reference interpreters (2a).
 - A lane-derived VCC_LO cannot reach EXEC or any scalar instruction, so there
   is no divergent execution. That needs its own contract.
 - The skipped region of a runtime `s_cbranch_vccz` holds only integer vector
