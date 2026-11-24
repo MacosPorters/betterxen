@@ -190,6 +190,107 @@ pub(super) fn register(registry: &mut ImportRegistry) {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
     }
+
+    registry.register(UCRT, "memchr", |args, _, memory| {
+        if args.r8 == 0 {
+            return Ok(0);
+        }
+        let mut buffer = transfer_buffer(args.r8, 0)?;
+        memory
+            .read_bytes(args.rcx, &mut buffer)
+            .map_err(ExitReason::MemoryFault)?;
+        Ok(buffer
+            .iter()
+            .position(|&byte| byte == args.rdx as u8)
+            .map_or(0, |index| args.rcx + index as u64))
+    });
+
+    registry.register(UCRT, "strcpy", |args, _, memory| {
+        copy_string(memory, args.rcx, args.rdx, u64::MAX, true)
+    });
+    registry.register(UCRT, "strncpy", |args, _, memory| {
+        copy_string(memory, args.rcx, args.rdx, args.r8, false)
+    });
+    registry.register(UCRT, "strcat", |args, _, memory| {
+        append_string(memory, args.rcx, args.rdx, u64::MAX)
+    });
+    registry.register(UCRT, "strncat", |args, _, memory| {
+        append_string(memory, args.rcx, args.rdx, args.r8)
+    });
+    for symbol in ["memchr", "strcpy", "strncpy", "strcat", "strncat"] {
+        registry.alias(CRT_STRING_API, UCRT, symbol);
+        registry.set_status(UCRT, symbol, ServiceStatus::Partial);
+    }
+}
+
+fn copy_string(
+    memory: &mut GuestMemory,
+    dest: u64,
+    source: u64,
+    limit: u64,
+    always_terminate: bool,
+) -> Result<u64, ExitReason> {
+    if dest == 0 || source == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    if limit == 0 {
+        return Ok(dest);
+    }
+    let mut copied = Vec::new();
+    let scan = limit.min(SCAN_BUDGET);
+    for index in 0..scan {
+        let byte = memory
+            .read_u8(source + index)
+            .map_err(ExitReason::MemoryFault)?;
+        copied.push(byte);
+        if byte == 0 {
+            break;
+        }
+        if !always_terminate && copied.len() as u64 == limit {
+            break;
+        }
+    }
+    if always_terminate && copied.last().copied() != Some(0) {
+        return Err(ExitReason::IllegalInstruction(0xFE));
+    }
+    if !always_terminate && (copied.len() as u64) < limit {
+        copied.resize(limit as usize, 0);
+    }
+    memory
+        .write_bytes(dest, &copied)
+        .map_err(ExitReason::MemoryFault)?;
+    Ok(dest)
+}
+
+fn append_string(
+    memory: &mut GuestMemory,
+    dest: u64,
+    source: u64,
+    limit: u64,
+) -> Result<u64, ExitReason> {
+    let end = string_length(memory, dest, SCAN_BUDGET, StringUnit::Byte)?;
+    if limit == 0 {
+        memory
+            .write_u8(dest + end, 0)
+            .map_err(ExitReason::MemoryFault)?;
+        return Ok(dest);
+    }
+    let mut extra = Vec::new();
+    let scan = limit.min(SCAN_BUDGET);
+    for index in 0..scan {
+        let byte = memory
+            .read_u8(source + index)
+            .map_err(ExitReason::MemoryFault)?;
+        if byte == 0 {
+            break;
+        }
+        extra.push(byte);
+    }
+    extra.push(0);
+    memory
+        .write_bytes(dest + end, &extra)
+        .map_err(ExitReason::MemoryFault)?;
+    Ok(dest)
 }
 
 const ENOMEM: u32 = 12;
@@ -450,4 +551,45 @@ fn errno_isolated_by_guest_teb_on_one_host_thread() {
     assert_eq!(memory.read_u32(second_slot).unwrap(), ENOMEM);
     assert_eq!(call("_errno", &mut first, &mut memory), first_slot);
     assert_eq!(memory.read_u32(first_slot).unwrap(), 23);
+}
+
+#[cfg(test)]
+#[test]
+fn strcpy_strncpy_strcat_and_memchr_operate_on_guest_memory() {
+    use crate::cpu::{CpuState, Register};
+    use crate::import_table::ImportName;
+
+    let mut registry = ImportRegistry::new();
+    register(&mut registry);
+    let mut memory = GuestMemory::new();
+    let mut cpu = CpuState::default();
+    let call = |symbol: &str, args: [u64; 3], cpu: &mut CpuState, memory: &mut GuestMemory| {
+        cpu.set(Register::Rcx, args[0]);
+        cpu.set(Register::Rdx, args[1]);
+        cpu.set(Register::R8, args[2]);
+        let service = registry
+            .resolve(UCRT, &ImportName::Name(symbol.to_owned()))
+            .unwrap();
+        (service.handler)(&Win64Args::new(cpu), cpu, memory).unwrap()
+    };
+    let dest = memory.map_heap_allocation(PROCESS_HEAP, 16).unwrap();
+    let source = memory.map_heap_allocation(PROCESS_HEAP, 8).unwrap();
+    memory.write_bytes(source, b"ab\0").unwrap();
+    assert_eq!(call("strcpy", [dest, source, 0], &mut cpu, &mut memory), dest);
+    let mut out = [0u8; 3];
+    memory.read_bytes(dest, &mut out).unwrap();
+    assert_eq!(&out, b"ab\0");
+    assert_eq!(
+        call("memchr", [dest, u64::from(b'b'), 3], &mut cpu, &mut memory),
+        dest + 1
+    );
+    assert_eq!(call("strncpy", [dest, source, 4], &mut cpu, &mut memory), dest);
+    let mut padded = [0u8; 4];
+    memory.read_bytes(dest, &mut padded).unwrap();
+    assert_eq!(&padded, b"ab\0\0");
+    memory.write_bytes(dest, b"x\0").unwrap();
+    assert_eq!(call("strcat", [dest, source, 0], &mut cpu, &mut memory), dest);
+    let mut joined = [0u8; 4];
+    memory.read_bytes(dest, &mut joined).unwrap();
+    assert_eq!(&joined, b"xab\0");
 }

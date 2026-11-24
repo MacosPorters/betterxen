@@ -175,7 +175,8 @@ and [virtual release](https://learn.microsoft.com/windows/win32/api/memoryapi/nf
 
 ### CRT strings and byte memory
 
-The standard registry provides `strlen` and `strnlen` under UCRT and the CRT
+The standard registry provides `strlen`, `strnlen`, `strcpy`, `strncpy`,
+`strcat`, `strncat` and `memchr` under UCRT and the CRT
 string API set. They count bytes using checked guest memory. The scan stops at
 a null byte or the requested bound for `strnlen`. A scan that would continue
 past 1 MiB reports an unsupported-service fault. See the

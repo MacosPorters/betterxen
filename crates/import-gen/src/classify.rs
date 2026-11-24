@@ -215,26 +215,15 @@ impl SymbolDb {
         for module in [m, "ucrtbase.dll"] {
             for symbol in [
                 "strlen", "strnlen", "strcmp", "strncmp", "wcslen", "wcsnlen", "wcscmp", "wcsncmp",
-                "memset", "memcpy", "memmove", "memcmp",
-            ] {
-                self.ins(module, symbol, Classification::StandardService);
-            }
-        }
-        for module in [m, "ucrtbase.dll"] {
-            for symbol in [
-                "isalnum", "isalpha", "isdigit", "islower", "isspace", "isxdigit", "isupper",
-                "isprint", "iscntrl", "ispunct", "tolower", "toupper",
+                "memset", "memcpy", "memmove", "memcmp", "memchr", "strcpy", "strncpy", "strcat",
+                "strncat", "isalnum", "isalpha", "isdigit", "islower", "isspace", "isxdigit",
+                "isupper", "isprint", "iscntrl", "ispunct", "tolower", "toupper",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
         for (sym, libc) in &[
-            ("memchr", "memchr"),
-            ("strcat", "strcat"),
-            ("strcpy", "strcpy"),
             ("strcspn", "strcspn"),
-            ("strncat", "strncat"),
-            ("strncpy", "strncpy"),
             ("strpbrk", "strpbrk"),
             ("strspn", "strspn"),
             ("strstr", "strstr"),
