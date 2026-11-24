@@ -420,6 +420,12 @@ impl GuestMemory {
     /// byte must be mapped and every region must grant `required` (`None` bypasses
     /// permission checks for the loader). The whole range is checked before any byte
     /// is copied, so a failed access never partially reads or writes.
+    ///
+    /// A failed access reports the lowest address it may not touch, which is the
+    /// start of the access only when its first byte fails. An access that begins in
+    /// a mapped page and runs into an unmapped or forbidden one therefore reports
+    /// the first byte of that page, as an x86 page fault reports the linear address
+    /// that could not be translated or accessed.
     fn resolve(
         &self,
         address: u64,
@@ -453,7 +459,10 @@ impl GuestMemory {
                 Some(_) => region.permissions.execute,
             };
             if let (false, Some(required)) = (permitted, required) {
-                return Err(MemoryError::PermissionViolation { address, required });
+                return Err(MemoryError::PermissionViolation {
+                    address: cursor,
+                    required,
+                });
             }
             let take = (end.min(region_end) - cursor) as usize;
             pieces.push((index, (cursor - region.base) as usize, take));
@@ -462,7 +471,7 @@ impl GuestMemory {
                 return Ok(pieces);
             }
         }
-        Err(MemoryError::UnmappedAddress(address))
+        Err(MemoryError::UnmappedAddress(cursor))
     }
 
     fn read_checked(

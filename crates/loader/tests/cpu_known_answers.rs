@@ -1532,7 +1532,7 @@ jump_to_unmapped_faults_at_target: rbx=U => rax=1 rip=U f=* ! PFX U
 jump_to_data_page_faults_at_target: rbx=D+40 => rip=D+40 f=* ! PFX D+40
 ";
 
-const DEFECT_STRADDLING_FAULT_ADDRESS: &str = r"
+const STRADDLING_FAULT_ADDRESS: &str = r"
 @ mov rcx, [rsi-4]
   !488b4efc
   SDM 3A 5.7 (the address with no translation); 3A 7.15 Interrupt 14
@@ -2675,10 +2675,7 @@ const GROUPS: &[(&str, &str)] = &[
     ("decoding", DECODING),
     ("fences", FENCES),
     ("memory_faults", MEMORY_FAULTS),
-    (
-        "defect_straddling_fault_address",
-        DEFECT_STRADDLING_FAULT_ADDRESS,
-    ),
+    ("straddling_fault_address", STRADDLING_FAULT_ADDRESS),
     ("defect_noncanonical_address", DEFECT_NONCANONICAL_ADDRESS),
     ("packed_integer_sse2", PACKED_INTEGER_SSE2),
     ("packed_integer_beyond_sse2", PACKED_INTEGER_BEYOND_SSE2),
@@ -3466,9 +3463,8 @@ fn memory_faults() {
 }
 
 #[test]
-#[ignore = "known defect (#155): a page-crossing fault reports the start of the access"]
-fn defect_straddling_fault_address() {
-    check_group(DEFECT_STRADDLING_FAULT_ADDRESS);
+fn straddling_fault_address() {
+    check_group(STRADDLING_FAULT_ADDRESS);
 }
 
 #[test]
