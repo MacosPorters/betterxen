@@ -690,16 +690,19 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         };
         let formatted = format_into(memory, args, args.rcx, 1)?;
         let count = formatted.len() as u64;
-        with_stream(&printf, memory, stdout, |stream, _| {
+        let writable = with_stream(&printf, memory, stdout, |stream, _| {
             if !stream.writable {
                 stream.error = true;
-                set_errno(memory, cpu.gs_base, EINVAL)?;
-                return Ok(u64::from(u32::MAX));
+                return Ok(false);
             }
             // stdout discards payload and reports the formatted length.
-            let _ = stream;
-            Ok(count)
-        })
+            Ok(true)
+        })?;
+        if !writable {
+            set_errno(memory, cpu.gs_base, EINVAL)?;
+            return Ok(u64::from(u32::MAX));
+        }
+        Ok(count)
     });
 
     for symbol in [
