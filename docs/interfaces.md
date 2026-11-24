@@ -364,8 +364,11 @@ security-review and implementation-review agents (not a human audit).
   operation resolves the guest path from that descriptor one component at a
   time with `openat` and `O_NOFOLLOW`. `.` and `..` components, device names,
   Windows-invalid characters and drive-relative paths are rejected. Names
-  match the host listing ignoring ASCII case. Two host entries that differ
-  only by case are refused as ambiguous.
+  match the host listing ignoring ASCII case. Two host entries that match
+  the same name under this rule are refused as ambiguous. Non-ASCII letters
+  must match the spelling in the listing. If the host filesystem treats a
+  different spelling as a collision, exclusive file creation returns
+  `ERROR_FILE_EXISTS` and directory creation returns `ERROR_ALREADY_EXISTS`.
 - **Hidden entries.** The guest cannot see or open symbolic links, devices,
   sockets, FIFOs, non-UTF-8 names, or regular files with more than one hard
   link. Hiding multiply linked files prevents a hard link from aliasing a

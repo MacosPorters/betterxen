@@ -253,7 +253,14 @@ fn change_host_namespace(
     use host_files::Kind::{Directory, File};
     let result = match (change, entry) {
         (HostChange::CreateDirectory, Some(_)) => return state.fail(teb, ALREADY_EXISTS, 0),
-        (HostChange::CreateDirectory, None) => host_files::create_directory(&parent, &name),
+        (HostChange::CreateDirectory, None) => {
+            match host_files::create_directory(&parent, &name) {
+                Err(error) if error.raw_os_error() == Some(libc::EEXIST) => {
+                    return state.fail(teb, ALREADY_EXISTS, 0);
+                }
+                result => result,
+            }
+        }
         (_, None) => return state.fail(teb, FILE_NOT_FOUND, 0),
         (HostChange::RemoveDirectory, Some(entry)) if entry.kind == File => {
             return state.fail(teb, ERROR_DIRECTORY, 0);

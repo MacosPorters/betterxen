@@ -150,6 +150,48 @@ fn symlink(target: &Path, link: &Path) {
 }
 
 #[test]
+fn host_mount_non_ascii_spelling_and_native_create_collisions() {
+    let tree = Tree::new("non-ascii-case");
+    let root = tree.path("root");
+    std::fs::create_dir_all(root.join("Över")).unwrap();
+    std::fs::write(root.join("État.txt"), b"original").unwrap();
+    let file_collision = root.join("état.txt").exists();
+    let directory_collision = root.join("över").exists();
+    let mount = HostMount::new('D', &root, true).unwrap();
+    let mut guest = guest_with(vec![mount]);
+
+    let file = open(&mut guest, r"D:\ÉTAT.TXT", GENERIC_READ, 0, OPEN_EXISTING);
+    assert_ne!(file, INVALID);
+    assert_eq!(read(&mut guest, file, 8).unwrap(), b"original");
+    assert_eq!(guest.call("CloseHandle", &[file]), 1);
+    assert_eq!(
+        open(&mut guest, r"D:\état.txt", GENERIC_READ, 0, OPEN_EXISTING),
+        INVALID
+    );
+    assert_eq!(guest.error(), 2);
+
+    let file = open(&mut guest, r"D:\état.txt", GENERIC_WRITE, 0, CREATE_NEW);
+    if file_collision {
+        assert_eq!(file, INVALID);
+        assert_eq!(guest.error(), 80);
+    } else {
+        assert_ne!(file, INVALID);
+        assert_eq!(guest.call("CloseHandle", &[file]), 1);
+    }
+    assert_eq!(std::fs::read(root.join("État.txt")).unwrap(), b"original");
+
+    let created = path_call(&mut guest, "CreateDirectoryW", r"D:\över");
+    if directory_collision {
+        assert_eq!(created, 0);
+        assert_eq!(guest.error(), 183);
+    } else {
+        assert_eq!(created, 1);
+        assert!(root.join("över").is_dir());
+    }
+    assert!(root.join("Över").is_dir());
+}
+
+#[test]
 fn read_only_mounts_serve_files_without_escaping_the_root() {
     let tree = Tree::new("read-only");
     std::fs::create_dir_all(tree.path("root/Data")).unwrap();
