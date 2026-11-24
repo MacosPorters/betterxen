@@ -8,6 +8,7 @@ mod graphics;
 pub use graphics::{PIXEL_ENTRY_POINT, VERTEX_ENTRY_POINT, compile_graphics};
 
 pub use xenora_decoder::Architecture;
+use xenora_decoder::SoppControlOp;
 use xenora_decoder::{
     DecodeError, DecodedInstruction, Instruction, ScalarSource, ScalarSource64, ScalarUnaryOp,
     VectorAluOp, VectorAluVop3Op, VectorBinary, VectorCompareOp, VectorSource, VectorUnary,
@@ -656,18 +657,18 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
     // contract, even when a known branch skips it.
     for (index, instruction) in decoded.iter().enumerate() {
         let offset = instruction.offset;
+        if let Some(target) = instruction.branch_target()
+            && (target <= offset
+                || decoded
+                    .binary_search_by_key(&target, |instruction| instruction.offset)
+                    .is_err())
+        {
+            return Err(CompileError::Verify {
+                offset,
+                reason: "branch target must be a forward instruction boundary",
+            });
+        }
         let reason = match instruction.instruction {
-            Instruction::Branch { target }
-            | Instruction::BranchSccZero { target }
-            | Instruction::BranchExecZero { target }
-            | Instruction::BranchVccZero { target }
-                if target <= offset
-                    || decoded
-                        .binary_search_by_key(&target, |instruction| instruction.offset)
-                        .is_err() =>
-            {
-                "branch target must be a forward instruction boundary"
-            }
             Instruction::BufferLoadDword {
                 index, resource, ..
             } if (index, resource) != (0, 0) => "unsupported resource or buffer index",
@@ -845,12 +846,6 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 stored = true;
                 store_pending = true;
                 (None, Op::Store(read(data)?))
-            }
-            Instruction::WaitLoad => {
-                if let Some((register, value)) = pending_load.take() {
-                    registers[register] = Some(value);
-                }
-                continue;
             }
             Instruction::WaitStore => {
                 store_pending = false;
@@ -1114,43 +1109,66 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 lane_vcc = Some(mask);
                 continue;
             }
-            Instruction::BranchVccZero { target } if let Some(mask) = lane_vcc => {
-                if pending_load.is_some() {
-                    return Err(error(
-                        "a runtime s_cbranch_vccz requires no outstanding vector load",
-                    ));
-                }
-                region = Some((target, mask, registers));
-                (None, Op::RuntimeBranch { mask, target })
-            }
-            Instruction::BranchSccZero { target }
-            | Instruction::BranchExecZero { target }
-            | Instruction::BranchVccZero { target } => {
-                let taken = match instruction.instruction {
-                    Instruction::BranchSccZero { .. } => {
-                        !scc.ok_or_else(|| error("conditional branch reads uninitialized SCC"))?
+            Instruction::Branch { .. }
+            | Instruction::BranchSccZero { .. }
+            | Instruction::BranchExecZero { .. }
+            | Instruction::BranchVccZero { .. }
+            | Instruction::WaitLoad
+            | Instruction::EndProgram => {
+                match instruction
+                    .instruction
+                    .sopp_control()
+                    .expect("decoded SOPP control")
+                {
+                    SoppControlOp::WaitLoad => {
+                        if let Some((register, value)) = pending_load.take() {
+                            registers[register] = Some(value);
+                        }
+                        continue;
                     }
-                    Instruction::BranchVccZero { .. } => {
-                        scalars[106]
-                            .ok_or_else(|| error("conditional branch reads uninitialized VCC_LO"))?
-                            == 0
+                    SoppControlOp::EndProgram => {
+                        if !stored || store_pending || pending_load.is_some() {
+                            return Err(error(
+                                "termination requires one completed store and no pending loads",
+                            ));
+                        }
+                        return Ok(operations);
                     }
-                    _ => exec == 0,
-                };
-                if taken {
-                    skip_before = target;
+                    op => {
+                        let target = instruction.branch_target().expect("decoded SOPP branch");
+                        if op == SoppControlOp::BranchVccZero
+                            && let Some(mask) = lane_vcc
+                        {
+                            if pending_load.is_some() {
+                                return Err(error(
+                                    "a runtime s_cbranch_vccz requires no outstanding vector load",
+                                ));
+                            }
+                            region = Some((target, mask, registers));
+                            (None, Op::RuntimeBranch { mask, target })
+                        } else {
+                            let taken = match op {
+                                SoppControlOp::Branch => true,
+                                SoppControlOp::BranchSccZero => !scc.ok_or_else(|| {
+                                    error("conditional branch reads uninitialized SCC")
+                                })?,
+                                SoppControlOp::BranchVccZero => {
+                                    scalars[106].ok_or_else(|| {
+                                        error("conditional branch reads uninitialized VCC_LO")
+                                    })? == 0
+                                }
+                                SoppControlOp::BranchExecZero => exec == 0,
+                                SoppControlOp::WaitLoad | SoppControlOp::EndProgram => {
+                                    unreachable!()
+                                }
+                            };
+                            if taken {
+                                skip_before = target;
+                            }
+                            (None, Op::ScalarBranch { target, taken })
+                        }
+                    }
                 }
-                (None, Op::ScalarBranch { target, taken })
-            }
-            Instruction::Branch { target } => {
-                skip_before = target;
-                (
-                    None,
-                    Op::ScalarBranch {
-                        target,
-                        taken: true,
-                    },
-                )
             }
             Instruction::VectorAlu {
                 op,
@@ -1213,14 +1231,6 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 return Err(error(
                     "graphics instruction is unsupported in a compute fixture",
                 ));
-            }
-            Instruction::EndProgram => {
-                if !stored || store_pending || pending_load.is_some() {
-                    return Err(error(
-                        "termination requires one completed store and no pending loads",
-                    ));
-                }
-                return Ok(operations);
             }
         };
         let value_bits = match operation {

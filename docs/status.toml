@@ -53,7 +53,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_waitcnt vmcnt(0)"
-encoding = "SOPP, exact immediate `0x3f70`; other counters disabled by their maximum values"
+encoding = "SOPP, exact immediate `0x3f70`; other counters disabled by their maximum values (semantic registry)"
 representation = "4 B"
 lowering = "verified load wait"
 reference = "implemented"
@@ -113,7 +113,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_endpgm"
-encoding = "SOPP, zero immediate"
+encoding = "SOPP, zero immediate (semantic registry)"
 representation = "4 B"
 lowering = "verified termination"
 reference = "implemented"
@@ -1480,7 +1480,7 @@ llvm = "assembled fixture matched"
 
 [[instruction]]
 form = "s_cbranch_scc0"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF840002`"
 lowering = "resolved conditional branch"
 reference = "implemented"
@@ -1492,7 +1492,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_branch"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF820001`"
 lowering = "resolved branch"
 reference = "implemented"
@@ -1600,7 +1600,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_cbranch_execz"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF880001`"
 lowering = "resolved Wave32 EXEC_LO zero check"
 reference = "implemented"
@@ -1612,7 +1612,7 @@ llvm = "three-way passed"
 
 [[instruction]]
 form = "s_cbranch_vccz"
-encoding = "Nonnegative signed dword displacement"
+encoding = "Nonnegative signed dword displacement (semantic registry)"
 representation = "`BF860001`"
 lowering = "resolved Wave32 VCC_LO zero check, or a wave-uniform join select after a vector compare"
 reference = "implemented"

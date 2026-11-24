@@ -1721,6 +1721,242 @@ impl ScalarImmediateOp {
     }
 }
 
+/// SOPP operations declared in the semantic registry (operand rules `sopp_branch`, `sopp_end`, `sopp_wait`).
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum SoppControlOp {
+    /// `s_endpgm` (SOPP opcode 1): bitwise end_program, SCC = unchanged.
+    EndProgram,
+    /// `s_branch` (SOPP opcode 2): signed branch, SCC = unchanged.
+    Branch,
+    /// `s_cbranch_scc0` (SOPP opcode 4): signed branch_scc_zero plus SCC, SCC = unchanged.
+    BranchSccZero,
+    /// `s_cbranch_vccz` (SOPP opcode 6): signed branch_vcc_zero, SCC = unchanged.
+    BranchVccZero,
+    /// `s_cbranch_execz` (SOPP opcode 8): signed branch_exec_zero, SCC = unchanged.
+    BranchExecZero,
+    /// `s_waitcnt` (SOPP opcode 12): bitwise wait_load, SCC = unchanged.
+    WaitLoad,
+}
+
+/// SoppControlOp by SOPP OP field value; `None` for undeclared opcodes.
+const SOPP_CONTROL_OP_BY_OPCODE: [Option<SoppControlOp>; 128] = [
+    None,
+    Some(SoppControlOp::EndProgram),
+    Some(SoppControlOp::Branch),
+    None,
+    Some(SoppControlOp::BranchSccZero),
+    None,
+    Some(SoppControlOp::BranchVccZero),
+    None,
+    Some(SoppControlOp::BranchExecZero),
+    None,
+    None,
+    None,
+    Some(SoppControlOp::WaitLoad),
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+    None,
+];
+
+impl SoppControlOp {
+    /// Every operation, in registry order.
+    pub const ALL: [Self; 6] = [
+        Self::EndProgram,
+        Self::Branch,
+        Self::BranchSccZero,
+        Self::BranchVccZero,
+        Self::BranchExecZero,
+        Self::WaitLoad,
+    ];
+
+    /// Selects the operation from a first instruction word: the SOPP encoding
+    /// bits (mask 0xff80_0000) and then the OP field (bits 16-22).
+    pub const fn from_word(word: u32) -> Option<Self> {
+        if word & 0xff80_0000 != 0xbf80_0000 {
+            return None;
+        }
+        SOPP_CONTROL_OP_BY_OPCODE[((word >> 16) & 0x7f) as usize]
+    }
+
+    /// Lower-case mnemonic.
+    pub const fn mnemonic(self) -> &'static str {
+        match self {
+            Self::EndProgram => "s_endpgm",
+            Self::Branch => "s_branch",
+            Self::BranchSccZero => "s_cbranch_scc0",
+            Self::BranchVccZero => "s_cbranch_vccz",
+            Self::BranchExecZero => "s_cbranch_execz",
+            Self::WaitLoad => "s_waitcnt",
+        }
+    }
+
+    /// The validated registry row.
+    pub fn semantics(self) -> &'static FormSemantics {
+        &FORMS[match self {
+            Self::EndProgram => 137,
+            Self::Branch => 138,
+            Self::BranchSccZero => 139,
+            Self::BranchVccZero => 140,
+            Self::BranchExecZero => 141,
+            Self::WaitLoad => 142,
+        }]
+    }
+
+    /// Exact SIMM16 required by the fixture, or None for a displacement.
+    pub const fn required_immediate(self) -> Option<u16> {
+        match self {
+            Self::EndProgram => Some(0x0),
+            Self::Branch => None,
+            Self::BranchSccZero => None,
+            Self::BranchVccZero => None,
+            Self::BranchExecZero => None,
+            Self::WaitLoad => Some(0x3f70),
+        }
+    }
+
+    /// Constructs the existing decoded instruction, resolving a target only for a branch.
+    pub fn decode<E>(
+        self,
+        target: impl FnOnce() -> Result<usize, E>,
+    ) -> Result<crate::Instruction, E> {
+        Ok(match self {
+            Self::EndProgram => crate::Instruction::EndProgram,
+            Self::Branch => crate::Instruction::Branch { target: target()? },
+            Self::BranchSccZero => crate::Instruction::BranchSccZero { target: target()? },
+            Self::BranchVccZero => crate::Instruction::BranchVccZero { target: target()? },
+            Self::BranchExecZero => crate::Instruction::BranchExecZero { target: target()? },
+            Self::WaitLoad => crate::Instruction::WaitLoad,
+        })
+    }
+}
+
+impl crate::Instruction {
+    /// The registry operation corresponding to a decoded SOPP control.
+    pub const fn sopp_control(self) -> Option<SoppControlOp> {
+        match self {
+            Self::EndProgram => Some(SoppControlOp::EndProgram),
+            Self::Branch { .. } => Some(SoppControlOp::Branch),
+            Self::BranchSccZero { .. } => Some(SoppControlOp::BranchSccZero),
+            Self::BranchVccZero { .. } => Some(SoppControlOp::BranchVccZero),
+            Self::BranchExecZero { .. } => Some(SoppControlOp::BranchExecZero),
+            Self::WaitLoad => Some(SoppControlOp::WaitLoad),
+            _ => None,
+        }
+    }
+}
+
 /// VOP1 operations declared in the semantic registry (operand rule `vop1_swap`).
 #[derive(Clone, Copy, Debug, Eq, PartialEq)]
 pub enum VectorSwapOp {
@@ -3302,13 +3538,13 @@ impl VectorAluVop3Op {
     /// The validated registry row of this encoding.
     pub fn semantics(self) -> &'static FormSemantics {
         &FORMS[match self {
-            Self::AddNcU32 => 137,
+            Self::AddNcU32 => 143,
         }]
     }
 }
 
 /// Identity of every registry form and encoding variant, in registry order.
-pub const FORM_IDS: [(&str, EncodingFamily); 138] = [
+pub const FORM_IDS: [(&str, EncodingFamily); 144] = [
     ("S_ADD_U32", EncodingFamily::Sop2),
     ("S_SUB_U32", EncodingFamily::Sop2),
     ("S_ADD_I32", EncodingFamily::Sop2),
@@ -3446,11 +3682,17 @@ pub const FORM_IDS: [(&str, EncodingFamily); 138] = [
     ("V_CMP_T_I64", EncodingFamily::Vopc),
     ("V_CMP_F_U64", EncodingFamily::Vopc),
     ("V_CMP_T_U64", EncodingFamily::Vopc),
+    ("S_ENDPGM", EncodingFamily::Sopp),
+    ("S_BRANCH", EncodingFamily::Sopp),
+    ("S_CBRANCH_SCC0", EncodingFamily::Sopp),
+    ("S_CBRANCH_VCCZ", EncodingFamily::Sopp),
+    ("S_CBRANCH_EXECZ", EncodingFamily::Sopp),
+    ("S_WAITCNT", EncodingFamily::Sopp),
     ("V_ADD_NC_U32", EncodingFamily::Vop3),
 ];
 
 /// One validated row per registry form, in registry order.
-pub static FORMS: [FormSemantics; 138] = [
+pub static FORMS: [FormSemantics; 144] = [
     FormSemantics {
         name: "S_ADD_U32",
         family: EncodingFamily::Sop2,
@@ -6327,6 +6569,132 @@ pub static FORMS: [FormSemantics; 138] = [
         operands: OperandRule::VopcVccPair,
         spec: &[SpecRef { document: Document::Guide, section: "12.9", page: 150 }, SpecRef { document: Document::Guide, section: "3.9", page: 19 }],
         verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal],
+    },
+    FormSemantics {
+        name: "S_ENDPGM",
+        family: EncodingFamily::Sopp,
+        opcode: 1,
+        operation: Operation::EndProgram,
+        signedness: Signedness::Bitwise,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Wave32,
+        operands: OperandRule::SoppEnd,
+        spec: &[SpecRef { document: Document::Guide, section: "12.5", page: 124 }, SpecRef { document: Document::Guide, section: "13.1.5", page: 245 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_BRANCH",
+        family: EncodingFamily::Sopp,
+        opcode: 2,
+        operation: Operation::Branch,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Wave32,
+        operands: OperandRule::SoppBranch,
+        spec: &[SpecRef { document: Document::Guide, section: "12.5", page: 124 }, SpecRef { document: Document::Guide, section: "13.1.5", page: 245 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CBRANCH_SCC0",
+        family: EncodingFamily::Sopp,
+        opcode: 4,
+        operation: Operation::BranchSccZero,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::Scc,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Wave32,
+        operands: OperandRule::SoppBranch,
+        spec: &[SpecRef { document: Document::Guide, section: "12.5", page: 124 }, SpecRef { document: Document::Guide, section: "13.1.5", page: 245 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CBRANCH_VCCZ",
+        family: EncodingFamily::Sopp,
+        opcode: 6,
+        operation: Operation::BranchVccZero,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Wave32,
+        operands: OperandRule::SoppBranch,
+        spec: &[SpecRef { document: Document::Guide, section: "12.5", page: 124 }, SpecRef { document: Document::Guide, section: "13.1.5", page: 245 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_CBRANCH_EXECZ",
+        family: EncodingFamily::Sopp,
+        opcode: 8,
+        operation: Operation::BranchExecZero,
+        signedness: Signedness::Signed,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Wave32,
+        operands: OperandRule::SoppBranch,
+        spec: &[SpecRef { document: Document::Guide, section: "12.5", page: 125 }, SpecRef { document: Document::Guide, section: "13.1.5", page: 245 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
+    },
+    FormSemantics {
+        name: "S_WAITCNT",
+        family: EncodingFamily::Sopp,
+        opcode: 12,
+        operation: Operation::WaitLoad,
+        signedness: Signedness::Bitwise,
+        carry_in: CarryIn::None,
+        width: 32,
+        shift_count_bits: 0,
+        shift_amount: 0,
+        swap_sources: false,
+        source_bits: 32,
+        relation: None,
+        scc: SccEffect::Unchanged,
+        vcc: MaskEffect::Unchanged,
+        exec: MaskEffect::Unchanged,
+        wave: Wave::Wave32,
+        operands: OperandRule::SoppWait,
+        spec: &[SpecRef { document: Document::Guide, section: "12.5", page: 125 }, SpecRef { document: Document::Guide, section: "13.1.5", page: 245 }],
+        verify: &[Evidence::Reference, Evidence::Independent, Evidence::Metal, Evidence::LlvmEncoding],
     },
     FormSemantics {
         name: "V_ADD_NC_U32",
