@@ -10,7 +10,7 @@ This file is the pick-up brief for the next agent continuing the system-runtime 
 
 ## One-line status
 
-Active branch `feat/system-runtime-expansion` is pushed to tip **`8a677bc`**. PR **#312** is open with **CHANGES_REQUESTED** (elforeign blocking items addressed on tip; awaiting re-review). PR **#316** still **CHANGES_REQUESTED** (fuzz harness fix already replied; awaiting maintainer re-review). Keep expanding runtime **unless** new PR feedback appears — then switch to feedback first.
+Active branch `feat/system-runtime-expansion` is pushed to tip **`36f9b1c`** (handoff doc). Review-fix tip for elforeign is **`8a677bc`**. PR **#312** is open with **CHANGES_REQUESTED** (blocking items addressed; awaiting re-review). PR **#316** still **CHANGES_REQUESTED** (fuzz harness fix already replied; awaiting maintainer re-review). Keep expanding runtime **unless** new PR feedback appears — then switch to feedback first.
 
 ---
 
@@ -22,7 +22,7 @@ Active branch `feat/system-runtime-expansion` is pushed to tip **`8a677bc`**. PR
 | Fork remote | `fork` → `https://github.com/soggyramennoodle/Xenora.git` |
 | Upstream remote | `origin` → `https://github.com/ranveersoni98/Xenora.git` |
 | Active branch | `feat/system-runtime-expansion` (tracks `fork/feat/system-runtime-expansion`) |
-| Tip (handoff) | `8a677bc` — *Drop dead AT_EMPTY_PATH unlink and document name-based remove limits.* |
+| Tip (handoff) | `36f9b1c` — *Document system-runtime handoff for the next agent.* (review-fix parent: `8a677bc`) |
 | Upstream `main` at handoff | `d7f7d58` (merged into the branch) |
 | Toolchain | `CARGO_HOME=/Volumes/SSD/xenora-toolchain/cargo` `RUSTUP_HOME=/Volumes/SSD/xenora-toolchain/rustup` put `…/cargo/bin` on `PATH` |
 | Prompt / brief | `/Users/therealabeeb/Downloads/gta6 prompt 1 6.2 sol low.txt` (ownership of Win32/CRT/runtime lane — **not finished**) |
