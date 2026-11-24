@@ -281,9 +281,11 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strtok", |args, cpu, memory| {
         tokenize(memory, cpu.gs_base, args.rcx, args.rdx)
     });
-    registry.register(UCRT, "strtok_s", |args, cpu, memory| {
-        tokenize_s(memory, cpu.gs_base, args.rcx, args.rdx, args.r8)
-    });
+    for (symbol, unit) in [("strtok_s", StringUnit::Byte), ("wcstok_s", StringUnit::Wide)] {
+        registry.register(UCRT, symbol, move |args, cpu, memory| {
+            tokenize_s(memory, cpu.gs_base, args.rcx, args.rdx, args.r8, unit)
+        });
+    }
     registry.register(UCRT, "wcstok", |args, _, memory| {
         tokenize_wide(memory, args.rcx, args.rdx, args.r8)
     });
@@ -305,7 +307,7 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     for symbol in [
         "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "wcsstr", "strspn",
         "strcspn", "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr", "strtok", "strpbrk",
-        "wcsspn", "wcscspn", "wcspbrk", "wcstok", "strtok_s",
+        "wcsspn", "wcscspn", "wcspbrk", "wcstok", "strtok_s", "wcstok_s",
     ] {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
@@ -591,6 +593,7 @@ fn tokenize_s(
     input: u64,
     delimiters: u64,
     context: u64,
+    unit: StringUnit,
 ) -> Result<u64, ExitReason> {
     if delimiters == 0 || context == 0 {
         set_errno(memory, teb, EINVAL)?;
@@ -605,19 +608,30 @@ fn tokenize_s(
         set_errno(memory, teb, EINVAL)?;
         return Ok(0);
     }
-    let present = byte_set(memory, delimiters)?;
-    let (token, position, split) =
-        locate_token(memory, cursor, StringUnit::Byte, |byte| present[byte])?;
+    let (token, position, split) = match unit {
+        StringUnit::Byte => {
+            let present = byte_set(memory, delimiters)?;
+            locate_token(memory, cursor, unit, |byte| present[byte])?
+        }
+        StringUnit::Wide => {
+            let present = wide_set(memory, delimiters)?;
+            locate_token(memory, cursor, unit, |value| {
+                present[value / 64] & (1 << (value % 64)) != 0
+            })?
+        }
+    };
     memory
         .check_write(context, 8)
         .map_err(ExitReason::MemoryFault)?;
     let next = if split {
         let next = position
-            .checked_add(1)
+            .checked_add(unit.width())
             .ok_or(ExitReason::MemoryFault(MemoryError::Overflow))?;
-        memory
-            .write_u8(position, 0)
-            .map_err(ExitReason::MemoryFault)?;
+        match unit {
+            StringUnit::Byte => memory.write_u8(position, 0),
+            StringUnit::Wide => memory.write_u16(position, 0),
+        }
+        .map_err(ExitReason::MemoryFault)?;
         next
     } else {
         position
@@ -1260,30 +1274,33 @@ fn strtok_s_keeps_context_and_errno_separate() {
     memory.write_bytes(0x1000, b",a,b;c\0").unwrap();
     memory.write_bytes(0x1010, b"x,y\0").unwrap();
     memory.write_bytes(0x1020, b",\0;\0").unwrap();
+    let call = |memory: &mut GuestMemory, input, delimiters, context| {
+        tokenize_s(memory, 0, input, delimiters, context, StringUnit::Byte).unwrap()
+    };
     let errno = memory.crt_errno_address(0).unwrap();
-    assert_eq!(tokenize_s(&mut memory, 0, 0, 0x1020, 0x1040).unwrap(), 0);
+    assert_eq!(call(&mut memory, 0, 0x1020, 0x1040), 0);
     assert_eq!(memory.read_u32(errno).unwrap(), EINVAL);
     memory.write_u32(errno, 0).unwrap();
     assert_eq!(
-        tokenize_s(&mut memory, 0, 0x1000, 0x1020, 0x1040).unwrap(),
+        call(&mut memory, 0x1000, 0x1020, 0x1040),
         0x1001
     );
     assert_eq!(
-        tokenize_s(&mut memory, 0, 0x1010, 0x1020, 0x1048).unwrap(),
+        call(&mut memory, 0x1010, 0x1020, 0x1048),
         0x1010
     );
     assert_eq!(
-        tokenize_s(&mut memory, 0, 0, 0x1022, 0x1040).unwrap(),
+        call(&mut memory, 0, 0x1022, 0x1040),
         0x1003
     );
     assert_eq!(
-        tokenize_s(&mut memory, 0, 0, 0x1022, 0x1040).unwrap(),
+        call(&mut memory, 0, 0x1022, 0x1040),
         0x1005
     );
     assert_eq!(memory.read_u64(0x1040).unwrap(), 0x1006);
-    assert_eq!(tokenize_s(&mut memory, 0, 0, 0x1022, 0x1040).unwrap(), 0);
+    assert_eq!(call(&mut memory, 0, 0x1022, 0x1040), 0);
     assert_eq!(
-        tokenize_s(&mut memory, 0, 0, 0x1020, 0x1048).unwrap(),
+        call(&mut memory, 0, 0x1020, 0x1048),
         0x1012
     );
     assert_eq!(memory.read_u32(errno).unwrap(), 0);

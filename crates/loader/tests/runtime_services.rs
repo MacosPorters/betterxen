@@ -377,6 +377,34 @@ fn call_tokenization_import(
 }
 
 #[test]
+fn guest_wcstok_s_resumes_in_wide_units_and_sets_errno() {
+    let (mut engine, mut memory) = tokenization_guest("wcstok_s");
+    let input = SCRATCH;
+    let delimiters = SCRATCH + 32;
+    let context = SCRATCH + 64;
+    for (index, value) in [0x2603, 0x03bb, 0x2603, 0x03bc, 0].into_iter().enumerate() {
+        memory.write_u16(input + 2 * index as u64, value).unwrap();
+    }
+    memory.write_u16(delimiters, 0x2603).unwrap();
+
+    let mut call = |memory: &mut GuestMemory, slot, args| {
+        call_tokenization_import(&mut engine, memory, slot, args)
+    };
+    let errno = call(&mut memory, 2, [0; 3]);
+    assert_eq!(call(&mut memory, 1, [0, delimiters, context]), 0);
+    assert_eq!(memory.read_u32(errno).unwrap(), 22);
+    memory.write_u32(errno, 0).unwrap();
+
+    assert_eq!(call(&mut memory, 0, [input, delimiters, context]), input + 2);
+    assert_eq!(memory.read_u16(input + 4).unwrap(), 0);
+    assert_eq!(memory.read_u64(context).unwrap(), input + 6);
+    assert_eq!(call(&mut memory, 1, [0, delimiters, context]), input + 6);
+    assert_eq!(call(&mut memory, 1, [0, delimiters, context]), 0);
+    assert_eq!(memory.read_u64(context).unwrap(), input + 8);
+    assert_eq!(memory.read_u32(errno).unwrap(), 0);
+}
+
+#[test]
 fn guest_wcstok_resumes_from_its_win64_context_argument() {
     let (mut engine, mut memory) = tokenization_guest("wcstok");
     let input = SCRATCH;
