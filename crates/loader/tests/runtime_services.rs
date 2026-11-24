@@ -335,6 +335,63 @@ fn system_time_comes_from_the_injected_clock() {
 }
 
 #[test]
+fn guest_wcstok_resumes_from_its_win64_context_argument() {
+    let image = build(&[
+        ("ucrtbase.dll", Symbol::Name("wcstok")),
+        ("api-ms-win-crt-string-l1-1-0.dll", Symbol::Name("wcstok")),
+    ]);
+    let pe = ParsedPe::parse(&image.bytes).unwrap();
+    let mut memory = pe.load_into_memory(&image.bytes).unwrap().memory;
+    memory
+        .map_region(SCRATCH, 4096, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    memory
+        .map_region(STACK, 4096, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    let (mut registry, _) = standard(0);
+    assert_eq!(
+        registry
+            .bind_imports(&pe, &image.bytes, BASE, &mut memory)
+            .unwrap(),
+        2
+    );
+    let mut engine = DbtEngine::new(256 * 1024).unwrap();
+    engine.set_import_registry(registry);
+    let input = SCRATCH;
+    let separators = SCRATCH + 32;
+    let context = SCRATCH + 64;
+    let write = |memory: &mut GuestMemory, at, text: &str| {
+        let data: Vec<_> = text
+            .encode_utf16()
+            .chain([0])
+            .flat_map(u16::to_le_bytes)
+            .collect();
+        memory.write_bytes(at, &data).unwrap();
+    };
+    write(&mut memory, input, "☃λ☃μ;ν");
+    write(&mut memory, separators, "☃");
+    let mut call = |memory: &mut GuestMemory, alias: bool, text| {
+        let entry = BASE + u64::from(CODE_RVA) + 16 * u64::from(alias);
+        let mut cpu = CpuState::new(entry, STACK_TOP);
+        cpu.set(Register::Rcx, text);
+        cpu.set(Register::Rdx, separators);
+        cpu.set(Register::R8, context);
+        let result = engine.run(&mut cpu, memory, 8);
+        assert_eq!(result.exit_reason, ExitReason::Halt);
+        cpu.get(Register::Rax)
+    };
+    assert_eq!(call(&mut memory, false, input), input + 2);
+    assert_eq!(memory.read_u16(input + 4).unwrap(), 0);
+    assert_eq!(memory.read_u64(context).unwrap(), input + 6);
+    write(&mut memory, separators, ";");
+    assert_eq!(call(&mut memory, true, 0), input + 6);
+    assert_eq!(memory.read_u16(input + 8).unwrap(), 0);
+    assert_eq!(call(&mut memory, false, 0), input + 10);
+    assert_eq!(memory.read_u64(context).unwrap(), 0);
+    assert_eq!(call(&mut memory, true, 0), 0);
+}
+
+#[test]
 fn guest_udp_loopback_delivers_datagrams_through_bound_imports() {
     let symbols = [
         "WSAStartup",
