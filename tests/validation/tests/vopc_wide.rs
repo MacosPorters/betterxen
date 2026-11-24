@@ -11,9 +11,7 @@
 //! 6.2 (Table 20 and 6.2.1), 6.2.5, 6.8 and 9.1. Nothing here comes from the
 //! ISA crate, the semantic registry, the decoder or the shader compiler. Every
 //! case runs on the reference interpreter `xenora_ref` and on the second
-//! interpreter `independent_ref`. The native Metal gate includes the 64-bit
-//! cases. The 16-bit Metal cases remain skipped while the compiler rejects
-//! those forms.
+//! interpreter `independent_ref`. The native Metal gate includes both widths.
 //!
 //! Readings of the guide (not hardware evidence):
 //! - Table 59: offsets F 0, LT 1, EQ 2, LE 3, GT 4, LG/NE 5, GE 6, TRU 7 with
@@ -1169,10 +1167,34 @@ fn vopc_wide_outside_the_contract_are_rejected() {
 }
 
 #[test]
-fn production_compiler_still_rejects_the_16_bit_compares() {
-    for form in forms().into_iter().filter(|form| form.bits == 16) {
-        let (code, offset) = program(&vmov(3, 7), None, &[vopc(form.op, vgpr(1), 3)], &[]);
-        assert_compiler_rejected_at(form.name, &code, offset);
+fn production_compiler_lowers_the_16_bit_compares() {
+    let cases = cases_at_width(16);
+    harness::check_reference(&cases).assert_none("16-bit compare compilation and reference");
+    check_compiler_rejections(16);
+    eprintln!("vopc16: {} compiler acceptance cases", cases.len());
+}
+
+#[test]
+fn production_compiler_emits_signed_and_unsigned_low_half_relations() {
+    for (name, signed) in [("v_cmp_lt_i16", true), ("v_cmp_lt_u16", false)] {
+        let code = code(&vmov(3, 7), None, &[vopc(form(name).op, 193, 3)]);
+        let shader = compile(Architecture::Gfx1030, &code).unwrap();
+        let predicate = shader
+            .msl
+            .lines()
+            .find(|line| line.contains("uint pass = ("))
+            .unwrap();
+        let cast = if signed {
+            "as_type<short>(ushort("
+        } else {
+            "ushort("
+        };
+        assert_eq!(predicate.matches(cast).count(), 2, "{name}: {predicate}");
+        assert!(!predicate.contains(">>"), "{name}: {predicate}");
+        assert_eq!(
+            predicate.matches("as_type<short>(").count(),
+            if signed { 2 } else { 0 }
+        );
     }
 }
 
@@ -1268,7 +1290,7 @@ fn vopc64_match_the_guide_on_native_metal() {
 }
 
 #[test]
-#[ignore = "requires the translator's 16-bit forms and native Metal validation"]
+#[ignore = "requires a native Metal device with API and shader validation"]
 fn vopc16_match_the_guide_on_native_metal() {
     check_compiler_rejections(16);
     check_native_metal(16);

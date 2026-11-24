@@ -226,7 +226,17 @@ fn compare_expression(op: VectorCompareOp, left: &str, right: &str) -> String {
         CompareRelation::False => return "false".to_owned(),
         CompareRelation::True => return "true".to_owned(),
     };
-    if op.signed() && op.semantics().width == 64 {
+    if op.semantics().width == 16 {
+        // Guide §§6.2, 6.2.5 and 6.8: the e32 form reads the low half.
+        let half = |value| {
+            if op.signed() {
+                format!("as_type<short>(ushort({value}))")
+            } else {
+                format!("ushort({value})")
+            }
+        };
+        format!("{} {symbol} {}", half(left), half(right))
+    } else if op.signed() && op.semantics().width == 64 {
         format!("as_type<long>({left}) {symbol} as_type<long>({right})")
     } else if op.signed() {
         format!("as_type<int>({left}) {symbol} as_type<int>({right})")

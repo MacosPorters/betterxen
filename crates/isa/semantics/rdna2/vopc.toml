@@ -707,3 +707,268 @@ spec = [
   { document = "guide", section = "3.9", page = 19 },
 ]
 verify = ["reference", "independent", "metal"]
+
+# Wave32 16-bit integer compares (guide 12.9, Tables 59 and 61).
+[operand_rules.vopc_vcc_half]
+family = "VOPC"
+src = [
+  { field = "SRC0", class = "vector_source" },
+  { field = "VSRC1", class = "vgpr" },
+]
+# Guide 6.2, 6.2.5 and 6.8: read the low half of each source.
+max_literals = 0
+unsupported = [
+  "src_literal", "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline", "src_special",
+]
+
+[[form]]
+name = "V_CMP_LT_I16"
+family = "VOPC"
+opcode = 137
+variant = "CmpLtI16"
+operation = "compare"
+relation = "lt"
+signedness = "signed"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_EQ_I16"
+family = "VOPC"
+opcode = 138
+variant = "CmpEqI16"
+operation = "compare"
+relation = "eq"
+signedness = "signed"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_LE_I16"
+family = "VOPC"
+opcode = 139
+variant = "CmpLeI16"
+operation = "compare"
+relation = "le"
+signedness = "signed"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_GT_I16"
+family = "VOPC"
+opcode = 140
+variant = "CmpGtI16"
+operation = "compare"
+relation = "gt"
+signedness = "signed"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_NE_I16"
+family = "VOPC"
+opcode = 141
+variant = "CmpNeI16"
+operation = "compare"
+relation = "lg"
+signedness = "signed"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_GE_I16"
+family = "VOPC"
+opcode = 142
+variant = "CmpGeI16"
+operation = "compare"
+relation = "ge"
+signedness = "signed"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_LT_U16"
+family = "VOPC"
+opcode = 169
+variant = "CmpLtU16"
+operation = "compare"
+relation = "lt"
+signedness = "unsigned"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_EQ_U16"
+family = "VOPC"
+opcode = 170
+variant = "CmpEqU16"
+operation = "compare"
+relation = "eq"
+signedness = "unsigned"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_LE_U16"
+family = "VOPC"
+opcode = 171
+variant = "CmpLeU16"
+operation = "compare"
+relation = "le"
+signedness = "unsigned"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_GT_U16"
+family = "VOPC"
+opcode = 172
+variant = "CmpGtU16"
+operation = "compare"
+relation = "gt"
+signedness = "unsigned"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_NE_U16"
+family = "VOPC"
+opcode = 173
+variant = "CmpNeU16"
+operation = "compare"
+relation = "lg"
+signedness = "unsigned"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "V_CMP_GE_U16"
+family = "VOPC"
+opcode = 174
+variant = "CmpGeU16"
+operation = "compare"
+relation = "ge"
+signedness = "unsigned"
+carry_in = "none"
+width = 16
+scc = "unchanged"
+vcc = "lane_mask"
+exec = "unchanged"
+wave = "wave32"
+operands = "vopc_vcc_half"
+spec = [
+  { document = "guide", section = "12.9", page = 150 },
+  { document = "guide", section = "3.9", page = 19 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]

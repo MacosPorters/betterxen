@@ -707,6 +707,9 @@ fn vector_compare(
             return Err(unsupported(mnemonic, "invalid 64-bit compare source"));
         }
     }
+    if op.semantics().width == 16 && first & 0x1ff == 255 {
+        return Err(unsupported(mnemonic, "literal in 16-bit compare"));
+    }
     let (src0, len) = vector_src0(first, bytes, mnemonic)?;
     Ok((Instruction::VectorCompare { op, src0, src1 }, len))
 }

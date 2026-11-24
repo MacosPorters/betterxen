@@ -91,7 +91,11 @@ RELATIONS = {
 VECTOR_ONLY_RELATIONS = {"f", "t"}
 # Guide 12.9 Tables 59 and 61: integer VOPC opcodes are the group base
 # for the operand width and signedness plus the relation offset.
-VOPC_INTEGER_BASES = {32: {"signed": 128, "unsigned": 192}, 64: {"signed": 160, "unsigned": 224}}
+VOPC_INTEGER_BASES = {
+    16: {"signed": 136, "unsigned": 168},
+    32: {"signed": 128, "unsigned": 192},
+    64: {"signed": 160, "unsigned": 224},
+}
 VOPC_RELATION_OFFSETS = {"f": 0, "lt": 1, "eq": 2, "le": 3, "gt": 4, "lg": 5, "ge": 6, "t": 7}
 # (relation, signedness) -> primitive. Equality does not depend on signedness,
 # so both declared signednesses of EQ and LG share one primitive.
@@ -453,6 +457,26 @@ OPERAND_RULES = {
         },
         "kind": "vector_compare",
     },
+    "vopc_vcc_half": {
+        "rust": "VopcVccHalf",
+        "enum": "VectorCompareOp",
+        "shape": {
+            "family": "VOPC",
+            "src": [
+                {"field": "SRC0", "class": "vector_source"},
+                {"field": "VSRC1", "class": "vgpr"},
+            ],
+            "max_literals": 0,
+        },
+        # The destination is implicitly vcc_lo; the decoder rejects these SRC0
+        # selectors (the same vector_source as VOP2).
+        "unsupported": {
+            "src_literal", "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline",
+            "src_special",
+        },
+        "kind": "vector_compare",
+        "width": 16,
+    },
     "vopc_vcc_pair": {
         "rust": "VopcVccPair",
         "enum": "VectorCompareOp",
@@ -791,8 +815,8 @@ def _check_xml(form, rule, snapshot, errors):
             if data_format != "FMT_NUM_U64":
                 errors.append(f"{label}: {field} requires XML format FMT_NUM_U64, got {data_format}")
         elif is_source and data_format not in (
-            {f"FMT_NUM_{'I' if form['signedness'] == 'signed' else 'U'}64"}
-            if form["operands"] == "vopc_vcc_pair"
+            {f"FMT_NUM_{'I' if form['signedness'] == 'signed' else 'U'}{form['width']}"}
+            if form["operands"] in ("vopc_vcc_half", "vopc_vcc_pair")
             else SOURCE_FORMATS.get(form["signedness"], ())
         ):
             errors.append(
@@ -1735,9 +1759,14 @@ def _render_enum(rule_name, forms, snapshot, positions):
         out += ["        match self {"]
         for form in forms:
             relation = form[RELATION_KEY]
-            if form["width"] == 64 and relation not in VECTOR_ONLY_RELATIONS:
+            if form["width"] in (16, 64) and relation not in VECTOR_ONLY_RELATIONS:
                 symbol = {"lt": "<", "eq": "==", "le": "<=", "gt": ">", "lg": "!=", "ge": ">="}[relation]
-                left, right = ("(src0 as i64)", "(src1 as i64)") if form["signedness"] == "signed" else ("src0", "src1")
+                width = form["width"]
+                if width == 64 and form["signedness"] == "unsigned":
+                    left, right = "src0", "src1"
+                else:
+                    cast = f"{'i' if form['signedness'] == 'signed' else 'u'}{width}"
+                    left, right = f"(src0 as {cast})", f"(src1 as {cast})"
                 expression = f"{left} {symbol} {right}"
             else:
                 function = COMPARE_PRIMITIVES[(relation, form["signedness"])]
