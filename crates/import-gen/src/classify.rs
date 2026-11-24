@@ -216,9 +216,9 @@ impl SymbolDb {
             for symbol in [
                 "strlen", "strnlen", "strcmp", "strncmp", "wcslen", "wcsnlen", "wcscmp", "wcsncmp",
                 "memset", "memcpy", "memmove", "memcmp", "memchr", "strcpy", "strncpy", "strcat",
-                "strncat", "strstr", "strspn", "strcspn", "isalnum", "isalpha", "isdigit",
-                "islower", "isspace", "isxdigit", "isupper", "isprint", "iscntrl", "ispunct",
-                "tolower", "toupper",
+                "strncat", "strstr", "strspn", "strcspn", "wcscpy", "wcsncpy", "wcscat", "wcschr",
+                "wcsrchr", "isalnum", "isalpha", "isdigit", "islower", "isspace", "isxdigit",
+                "isupper", "isprint", "iscntrl", "ispunct", "tolower", "toupper",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
@@ -226,15 +226,10 @@ impl SymbolDb {
         for (sym, libc) in &[
             ("strpbrk", "strpbrk"),
             ("strtok", "strtok"),
-            ("wcscat", "wcscat"),
-            ("wcscpy", "wcscpy"),
-            ("wcsncpy", "wcsncpy"),
             ("wcsstr", "wcsstr"),
             ("wcstok", "wcstok"),
             ("wcsspn", "wcsspn"),
             ("wcscspn", "wcscspn"),
-            ("wcsrchr", "wcsrchr"),
-            ("wcschr", "wcschr"),
             ("wcsicmp", "wcscasecmp"),
         ] {
             self.crt_native(m, sym, libc, "ISO C / POSIX — identical ABI on macOS");

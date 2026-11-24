@@ -237,8 +237,24 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strcspn", |args, _, memory| {
         span_length(memory, args.rcx, args.rdx, false)
     });
+    registry.register(UCRT, "wcscpy", |args, _, memory| {
+        copy_wide(memory, args.rcx, args.rdx, u64::MAX, true)
+    });
+    registry.register(UCRT, "wcsncpy", |args, _, memory| {
+        copy_wide(memory, args.rcx, args.rdx, args.r8, false)
+    });
+    registry.register(UCRT, "wcscat", |args, _, memory| {
+        append_wide(memory, args.rcx, args.rdx)
+    });
+    registry.register(UCRT, "wcschr", |args, _, memory| {
+        find_wide(memory, args.rcx, args.rdx as u16, true)
+    });
+    registry.register(UCRT, "wcsrchr", |args, _, memory| {
+        find_wide(memory, args.rcx, args.rdx as u16, false)
+    });
     for symbol in [
-        "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "strspn", "strcspn",
+        "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "strspn", "strcspn", "wcscpy",
+        "wcsncpy", "wcscat", "wcschr", "wcsrchr",
     ] {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
@@ -255,6 +271,106 @@ fn read_c_bytes(memory: &GuestMemory, address: u64) -> Result<Vec<u8>, ExitReaso
             return Ok(bytes);
         }
         bytes.push(byte);
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn copy_wide(
+    memory: &mut GuestMemory,
+    dest: u64,
+    source: u64,
+    limit: u64,
+    always_terminate: bool,
+) -> Result<u64, ExitReason> {
+    if dest == 0 || source == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    if limit == 0 {
+        return Ok(dest);
+    }
+    let mut words = Vec::new();
+    let scan = limit.min(SCAN_BUDGET / 2);
+    for index in 0..scan {
+        let word = memory
+            .read_u16(source + index * 2)
+            .map_err(ExitReason::MemoryFault)?;
+        words.push(word);
+        if word == 0 {
+            break;
+        }
+        if !always_terminate && words.len() as u64 == limit {
+            break;
+        }
+    }
+    if always_terminate && words.last().copied() != Some(0) {
+        return Err(ExitReason::IllegalInstruction(0xFE));
+    }
+    if !always_terminate && (words.len() as u64) < limit {
+        words.resize(limit as usize, 0);
+    }
+    let mut bytes = Vec::with_capacity(words.len() * 2);
+    for word in words {
+        bytes.extend_from_slice(&word.to_le_bytes());
+    }
+    memory
+        .write_bytes(dest, &bytes)
+        .map_err(ExitReason::MemoryFault)?;
+    Ok(dest)
+}
+
+fn append_wide(memory: &mut GuestMemory, dest: u64, source: u64) -> Result<u64, ExitReason> {
+    let end = string_length(memory, dest, SCAN_BUDGET / 2, StringUnit::Wide)?;
+    let mut words = Vec::new();
+    for index in 0..(SCAN_BUDGET / 2) {
+        let word = memory
+            .read_u16(source + index * 2)
+            .map_err(ExitReason::MemoryFault)?;
+        words.push(word);
+        if word == 0 {
+            break;
+        }
+    }
+    if words.last().copied() != Some(0) {
+        return Err(ExitReason::IllegalInstruction(0xFE));
+    }
+    let mut bytes = Vec::with_capacity(words.len() * 2);
+    for word in words {
+        bytes.extend_from_slice(&word.to_le_bytes());
+    }
+    memory
+        .write_bytes(dest + end * 2, &bytes)
+        .map_err(ExitReason::MemoryFault)?;
+    Ok(dest)
+}
+
+fn find_wide(
+    memory: &GuestMemory,
+    address: u64,
+    needle: u16,
+    first: bool,
+) -> Result<u64, ExitReason> {
+    if address == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    let mut last = None;
+    for index in 0..(SCAN_BUDGET / 2) {
+        let word = memory
+            .read_u16(address + index * 2)
+            .map_err(ExitReason::MemoryFault)?;
+        if word == needle {
+            let found = address + index * 2;
+            if first {
+                return Ok(found);
+            }
+            last = Some(found);
+        }
+        if word == 0 {
+            return Ok(if needle == 0 {
+                address + index * 2
+            } else {
+                last.unwrap_or(0)
+            });
+        }
     }
     Err(ExitReason::IllegalInstruction(0xFE))
 }
