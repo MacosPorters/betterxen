@@ -18,6 +18,7 @@ use xenora_loader::services::{MockClock, ServicesState};
 
 const KERNEL32: &str = "kernel32.dll";
 const FILE_API: &str = "api-ms-win-core-file-l1-1-0.dll";
+const UCRT: &str = "ucrtbase.dll";
 
 const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "GetLastError"),
@@ -36,6 +37,10 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "RemoveDirectoryW"),
     (KERNEL32, "DeleteFileW"),
     (KERNEL32, "MoveFileW"),
+    (UCRT, "fopen"),
+    (UCRT, "fclose"),
+    (UCRT, "fread"),
+    (UCRT, "fwrite"),
 ];
 
 const GENERIC_READ: u64 = 0x8000_0000;
@@ -343,10 +348,7 @@ fn writable_mounts_create_change_and_remove_only_inside_the_root() {
     );
     assert_ne!(truncated, INVALID);
     assert_eq!(guest.error(), 183); // ERROR_ALREADY_EXISTS
-    assert_eq!(
-        std::fs::metadata(saves.join("Slot.dat")).unwrap().len(),
-        0
-    );
+    assert_eq!(std::fs::metadata(saves.join("Slot.dat")).unwrap().len(), 0);
     assert!(write(&mut guest, truncated, b"new"));
     assert_eq!(std::fs::read(saves.join("Slot.dat")).unwrap(), b"new");
     assert_eq!(guest.call("CloseHandle", &[truncated]), 1);
@@ -643,4 +645,33 @@ fn writable_mounts_bound_how_large_guest_writes_make_files() {
         8
     );
     assert_eq!(guest.call("CloseHandle", &[file]), 1);
+}
+
+#[test]
+fn crt_fopen_writes_through_a_writable_host_mount() {
+    let tree = Tree::new("crt-fopen");
+    std::fs::create_dir_all(tree.path("root")).unwrap();
+    let mount = HostMount::new('D', &tree.path("root"), true).unwrap();
+    let mut guest = guest_with(vec![mount]);
+    let path = BUFFER;
+    let mode_w = BUFFER + 0x40;
+    let mode_r = BUFFER + 0x50;
+    let payload = BUFFER + 0x60;
+    let out = BUFFER + 0x80;
+    guest.memory.write_bytes(path, b"D:\\crt.bin\0").unwrap();
+    guest.memory.write_bytes(mode_w, b"wb\0").unwrap();
+    guest.memory.write_bytes(mode_r, b"rb\0").unwrap();
+    guest.memory.write_bytes(payload, b"stdio\0").unwrap();
+    let file = guest.call("fopen", &[path, mode_w]);
+    assert_ne!(file, 0);
+    assert_eq!(guest.call("fwrite", &[payload, 1, 5, file]), 5);
+    assert_eq!(guest.call("fclose", &[file]), 0);
+    assert_eq!(std::fs::read(tree.path("root/crt.bin")).unwrap(), b"stdio");
+    let reader = guest.call("fopen", &[path, mode_r]);
+    assert_ne!(reader, 0);
+    assert_eq!(guest.call("fread", &[out, 1, 5, reader]), 5);
+    let mut got = [0u8; 5];
+    guest.memory.read_bytes(out, &mut got).unwrap();
+    assert_eq!(&got, b"stdio");
+    assert_eq!(guest.call("fclose", &[reader]), 0);
 }

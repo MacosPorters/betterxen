@@ -187,7 +187,9 @@ The same modules expose `strcmp` and `strncmp`. These compare unsigned bytes
 and stop at the first difference, null byte, or supplied comparison bound.
 They share the 1 MiB scan budget. `wcslen`, `wcsnlen`, `wcscmp`, and
 `wcsncmp` apply the same rules to unsigned 16-bit Windows code units.
-Counts and bounds for the wide variants are in code units.
+Counts and bounds for the wide variants are in code units. `_stricmp`,
+`_strnicmp`, `_wcsicmp` and `_wcsnicmp` use the same rules with C-locale ASCII
+case folding only (`A`–`Z`); they are not Unicode case mapping.
 
 The same modules expose `memset`, `memcpy`, `memmove`, and `memcmp` for spans
 up to 1 MiB. Each nonempty span must be fully mapped with the required permissions.
@@ -225,7 +227,9 @@ whitespace, explicit bases 2–36 and automatic base selection, and writes
 the first unparsed guest address to a supplied end pointer. Overflow
 clamps the result and sets ERANGE. Scans have a 1 MiB input budget. The long-long variants and
 Microsoft's _strtoi64, _strtoui64, _wcstoi64, and _wcstoui64 apply the
-same rules with 64-bit results.
+same rules with 64-bit results. `atoi`, `atol`, `atoll`, `_atoi64`,
+`_wtoi`, `_wtol` and `_wtoi64` reuse that parser with base 10 and no end
+pointer; on Windows LLP64, `atol` matches `atoi` (32-bit `long`).
 
 ### CRT locale and formatted output
 
@@ -246,18 +250,54 @@ C-locale `ctype.h` predicates (`isalnum`, `isalpha`, `isdigit`, `islower`,
 `(null)`. Other conversions stop the guest. Transfers stay within the 1 MiB
 service budget.
 
-In-memory FILE streams implement `fopen`, `fclose`, `fread`, `fwrite`,
-`fseek`, `ftell`, `feof`, `ferror`, `rewind` and `__acrt_iob_func`. Names are
-single path components with no host mapping; up to 32 streams and 16 MiB per
-file. Stdin is empty, stdout/stderr discard writes. `printf` and `fprintf`
-use the same format subset as `sprintf` (stdout discards the payload and
-returns the length). The `__stdio_common_*` helpers remain unimplemented.
+FILE streams implement `fopen`, `fclose`, `fread`, `fwrite`, `fseek`, `ftell`,
+`feof`, `ferror`, `rewind` and `__acrt_iob_func`. Single path components (no
+separators) use an in-memory store. Paths with a mounted drive letter open
+through the same host mount policy as `CreateFileW`: the file is loaded into a
+bounded buffer (up to 16 MiB, and not past the mount's size cap), and a
+writable stream replaces the host contents on `fclose`. Up to 32 streams.
+Stdin is empty, stdout/stderr discard writes. `printf` and `fprintf` use the
+same format subset as `sprintf` (stdout discards the payload and returns the
+length). The `__stdio_common_*` helpers remain unimplemented. Concurrent host
+edits while a stream is open are not visible; this is a research subset, not
+full CRT or Win32 file semantics.
 
 ### Process environment
 
 `getenv`, `GetEnvironmentVariableA` and `GetEnvironmentVariableW` read a
-runtime-owned environment block (defaults include `OS=Windows_NT`). The host
+runtime-owned environment block (defaults include `OS=Windows_NT`).
+`_putenv` (`NAME=value`) and `SetEnvironmentVariableA` /
+`SetEnvironmentVariableW` update or delete entries in that block. The host
 process environment is not visible unless an entry is installed here.
+
+### CRT calendar time
+
+`time`, `_time64`, `gmtime_s`, `localtime_s`, `_gmtime64_s` and
+`_localtime64_s` use the injectable guest clock (the same FILETIME source as
+`GetSystemTimeAsFileTime`). There is no guest timezone database: local time
+matches UTC and `tm_isdst` is always zero. 32-bit `time` saturates at the
+2038 bounds rather than wrapping.
+
+### CRT `rand`
+
+`srand`, `rand` and `rand_s` use the publicly documented MSVC LCG
+(`seed = seed * 214013 + 2531011`, return `(seed >> 16) & 0x7fff`). The seed is
+process-wide. `rand_s` writes that 15-bit value into a guest `unsigned int`;
+it is not a CSPRNG.
+
+### Process-local Winsock UDP loopback
+
+`ws2_32.dll` exposes a process-local IPv4 UDP loopback: `WSAStartup` /
+`WSACleanup`, `socket` (AF_INET / SOCK_DGRAM / IPPROTO_UDP only),
+`closesocket`, `bind`, `connect`, `send`, `recv`, `sendto`, `recvfrom`,
+`getsockname`, `getpeername`, `getsockopt` (`SO_TYPE`, `SO_MAX_MSG_SIZE`),
+`WSAPoll`, byte-order helpers, and `inet_ntop` / `inet_pton` for IPv4.
+Datagrams stay in the runtime; nothing reaches the host network stack. Bound
+addresses report `127.0.0.1`. At most 64 sockets, 16 pending datagrams per
+socket and 65,507 bytes per datagram. `recv` / `recvfrom` are non-blocking
+(`WSAEWOULDBLOCK` when empty). `sendto` may auto-bind an ephemeral port.
+`WSAPoll` timeouts are capped at 1 second. TCP, raw sockets, IPv6 and host
+interfaces remain unsupported.
 
 ### XAsync helpers
 
@@ -277,6 +317,10 @@ case-sensitive named exports to guest service trampolines. The registry
 captures built-in bindings at standard service registration and excludes
 stubs. Missing names and unsupported ordinals fail explicitly. These APIs
 expose synthetic module handles and never load host libraries.
+`GetModuleFileNameA` / `GetModuleFileNameW` return synthetic paths:
+`C:\xenora\guest.exe` for a null handle, and
+`C:\Windows\System32\<module>` for built-in DLL handles. They do not reveal
+host filesystem paths.
 
 ### Synthetic guest files
 

@@ -1,16 +1,20 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Bounded C-locale `sprintf`/`snprintf` and an in-memory FILE stream subset.
+//! Bounded C-locale `sprintf`/`snprintf` and a FILE stream subset.
 //!
-//! Streams live entirely in the runtime: names are single path components with
-//! no directory separators or host mapping. Standard streams from
+//! Names that are a single path component (no separators) use an in-memory
+//! store. Paths with a mounted drive letter (`D:\…`) open through the host
+//! mount table: the file is read into a bounded buffer, and writable streams
+//! write the buffer back on `fclose`. Standard streams from
 //! `__acrt_iob_func` are permanent cookies (stdin empty, stdout/stderr discard).
 
-use super::ServicesState;
+use super::{ServicesState, host_files};
 use crate::cpu::ExitReason;
 use crate::imports::{ImportRegistry, ServiceStatus, Win64Args};
 use crate::memory::{GuestMemory, MemoryError, PROCESS_HEAP};
 use std::collections::BTreeMap;
+use std::fs::File;
+use std::io::{Read, Seek, SeekFrom, Write};
 use std::sync::Arc;
 
 const UCRT: &str = "ucrtbase.dll";
@@ -18,6 +22,7 @@ const STDIO_API: &str = "api-ms-win-crt-stdio-l1-1-0.dll";
 const EINVAL: u32 = 22;
 const ENOENT: u32 = 2;
 const ENOMEM: u32 = 12;
+const EACCES: u32 = 13;
 const MAX_FORMAT: usize = 4096;
 const MAX_OUTPUT: usize = 1 << 20;
 const MAX_PATH: usize = 260;
@@ -47,6 +52,16 @@ struct Stream {
     append: bool,
     eof: bool,
     error: bool,
+    /// Host file kept open so a writable stream can replace its contents on
+    /// `fclose`. Read-only host opens drop the descriptor after the initial
+    /// read into `data`.
+    host: Option<File>,
+    /// True when the stream was opened on a mounted drive (even if `host` was
+    /// dropped after a read-only load). Host-backed streams skip the in-memory
+    /// name store on `fclose`.
+    host_backed: bool,
+    dirty: bool,
+    max_bytes: usize,
 }
 
 #[derive(Default)]
@@ -95,6 +110,39 @@ fn normalize_name(raw: &[u8]) -> Result<String, u32> {
         return Err(EINVAL);
     }
     Ok(name.to_ascii_lowercase())
+}
+
+fn valid_host_component(name: &str) -> bool {
+    let device = name.split('.').next().unwrap_or_default();
+    !name.is_empty()
+        && !name.ends_with([' ', '.'])
+        && !name
+            .chars()
+            .any(|c| c.is_control() || "\\/:*?\"<>|".contains(c))
+        && !matches!(device, "con" | "prn" | "aux" | "nul")
+        && !(device.len() == 4
+            && (device.starts_with("com") || device.starts_with("lpt"))
+            && device.as_bytes()[3].is_ascii_digit())
+}
+
+/// Drive-letter guest path for a configured mount (`D:\file.txt`).
+fn host_drive_path(raw: &[u8]) -> Option<String> {
+    let path = std::str::from_utf8(raw).ok()?;
+    if path.len() < 3 || path.as_bytes()[1] != b':' {
+        return None;
+    }
+    let mut normalized = String::with_capacity(path.len());
+    for (index, ch) in path.chars().enumerate() {
+        let mapped = match ch {
+            '/' => '\\',
+            c => c,
+        };
+        if index >= 2 && mapped == '\\' && normalized.ends_with('\\') {
+            continue;
+        }
+        normalized.push(mapped);
+    }
+    Some(normalized)
 }
 
 fn parse_mode(raw: &[u8]) -> Result<(bool, bool, bool, bool), u32> {
@@ -192,6 +240,10 @@ fn ensure_std_cookies(
                 append: false,
                 eof: kind == Kind::StdIn,
                 error: false,
+                host: None,
+                host_backed: false,
+                dirty: false,
+                max_bytes: MAX_FILE_BYTES,
             },
         );
         stdio = locked;
@@ -200,6 +252,74 @@ fn ensure_std_cookies(
     stdio.stdout = cookies[1];
     stdio.stderr = cookies[2];
     Ok(())
+}
+
+fn errno_from_host(code: u32) -> u32 {
+    match code {
+        2 | 3 => ENOENT, // FILE_NOT_FOUND / PATH_NOT_FOUND
+        5 => EACCES,     // ACCESS_DENIED
+        _ => EINVAL,
+    }
+}
+
+fn open_host_stream(
+    state: &Arc<ServicesState>,
+    path: &str,
+    readable: bool,
+    writable: bool,
+    truncate: bool,
+) -> Result<(String, Vec<u8>, Option<File>, usize), u32> {
+    let resolved = match host_files::resolve(&state.mounts, path, valid_host_component) {
+        Some(Ok(resolved)) => resolved,
+        Some(Err(code)) => return Err(errno_from_host(code)),
+        None => return Err(ENOENT),
+    };
+    if writable && !resolved.mount.writable() {
+        return Err(EACCES);
+    }
+    let max_bytes = (resolved.mount.max_file_size() as usize).min(MAX_FILE_BYTES);
+    let (parent, entry) = resolved.lookup().map_err(errno_from_host)?;
+    let name = match resolved.components.last() {
+        Some(name) => name.clone(),
+        None => return Err(EINVAL),
+    };
+    if let Some(entry) = &entry
+        && entry.kind != host_files::Kind::File
+    {
+        return Err(EACCES);
+    }
+    let exists = entry.is_some();
+    if !exists && readable && !writable {
+        return Err(ENOENT);
+    }
+    let request = host_files::OpenRequest {
+        read: readable || !writable,
+        write: writable,
+        create: !exists && writable,
+    };
+    let host_name = entry
+        .as_ref()
+        .map_or(name.as_str(), |entry| entry.name.as_str());
+    let expected = entry.as_ref().map(|entry| entry.id);
+    let (mut file, _) = host_files::open_file(&parent, host_name, &request, expected)
+        .map_err(|error| errno_from_host(host_files::win32_error(&error)))?;
+    if exists && truncate {
+        file.set_len(0).map_err(|_| EACCES)?;
+    }
+    let mut data = Vec::new();
+    if !truncate {
+        file.read_to_end(&mut data).map_err(|_| EACCES)?;
+        if data.len() > max_bytes {
+            return Err(ENOMEM);
+        }
+    }
+    let host = if writable {
+        file.seek(SeekFrom::Start(0)).map_err(|_| EACCES)?;
+        Some(file)
+    } else {
+        None
+    };
+    Ok((path.to_owned(), data, host, max_bytes))
 }
 
 fn open_stream(
@@ -211,13 +331,6 @@ fn open_stream(
 ) -> Result<u64, ExitReason> {
     let path = read_c_string(memory, path, MAX_PATH)?;
     let mode = read_c_string(memory, mode, 16)?;
-    let name = match normalize_name(&path) {
-        Ok(name) => name,
-        Err(error) => {
-            set_errno(memory, teb, error)?;
-            return Ok(0);
-        }
-    };
     let (readable, writable, append, truncate) = match parse_mode(&mode) {
         Ok(mode) => mode,
         Err(error) => {
@@ -225,34 +338,63 @@ fn open_stream(
             return Ok(0);
         }
     };
+    let host_path = host_drive_path(&path);
+    let opened = if let Some(ref drive_path) = host_path {
+        match open_host_stream(state, drive_path, readable, writable, truncate) {
+            Ok(opened) => Ok(opened),
+            Err(error) => {
+                set_errno(memory, teb, error)?;
+                return Ok(0);
+            }
+        }
+    } else {
+        let name = match normalize_name(&path) {
+            Ok(name) => name,
+            Err(error) => {
+                set_errno(memory, teb, error)?;
+                return Ok(0);
+            }
+        };
+        Err(name)
+    };
+
     let mut stdio = state.stdio.lock().expect("stdio state");
     if stdio.streams.len() >= MAX_STREAMS {
         set_errno(memory, teb, ENOMEM)?;
         return Ok(0);
     }
-    let existing = stdio.files.get(&name).cloned();
-    let data = if truncate {
-        Vec::new()
-    } else if let Some(data) = existing {
-        data
-    } else if readable && !writable {
-        set_errno(memory, teb, ENOENT)?;
-        return Ok(0);
-    } else {
-        Vec::new()
+
+    let (name, data, host, host_backed, max_bytes, dirty) = match opened {
+        Ok((name, data, host, max_bytes)) => {
+            (name, data, host, true, max_bytes, truncate && writable)
+        }
+        Err(name) => {
+            let existing = stdio.files.get(&name).cloned();
+            let data = if truncate {
+                Vec::new()
+            } else if let Some(data) = existing {
+                data
+            } else if readable && !writable {
+                set_errno(memory, teb, ENOENT)?;
+                return Ok(0);
+            } else {
+                Vec::new()
+            };
+            if data.len() > MAX_FILE_BYTES {
+                set_errno(memory, teb, ENOMEM)?;
+                return Ok(0);
+            }
+            if truncate || !stdio.files.contains_key(&name) {
+                stdio.files.insert(name.clone(), Vec::new());
+            }
+            (name, data, None, false, MAX_FILE_BYTES, false)
+        }
     };
-    if data.len() > MAX_FILE_BYTES {
-        set_errno(memory, teb, ENOMEM)?;
-        return Ok(0);
-    }
     let position = if append { data.len() } else { 0 };
     let id = stdio.next_id;
     stdio.next_id = id
         .checked_add(1)
         .ok_or(ExitReason::MemoryFault(MemoryError::AllocationFailed))?;
-    if truncate || !stdio.files.contains_key(&name) {
-        stdio.files.insert(name.clone(), Vec::new());
-    }
     drop(stdio);
     let cookie = write_cookie(memory, id)?;
     let mut stdio = state.stdio.lock().expect("stdio state");
@@ -268,6 +410,10 @@ fn open_stream(
             append,
             eof: false,
             error: false,
+            host,
+            host_backed,
+            dirty,
+            max_bytes,
         },
     );
     Ok(cookie)
@@ -474,11 +620,25 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         }
         let id = read_cookie(memory, args.rcx)?;
         let mut stdio = fclose.stdio.lock().expect("stdio state");
-        let Some(stream) = stdio.streams.remove(&id) else {
+        let Some(mut stream) = stdio.streams.remove(&id) else {
             set_errno(memory, cpu.gs_base, EINVAL)?;
             return Ok(u64::from(u32::MAX));
         };
-        if stream.kind == Kind::File {
+        if stream.kind == Kind::File && stream.host_backed {
+            if stream.dirty
+                && let Some(mut file) = stream.host.take()
+            {
+                let failed = file
+                    .set_len(stream.data.len() as u64)
+                    .and_then(|_| file.seek(SeekFrom::Start(0)))
+                    .and_then(|_| file.write_all(&stream.data))
+                    .is_err();
+                if failed {
+                    set_errno(memory, cpu.gs_base, EACCES)?;
+                    return Ok(u64::from(u32::MAX));
+                }
+            }
+        } else if stream.kind == Kind::File {
             stdio.files.insert(stream.name, stream.data);
         }
         let _ = memory.release_heap_allocation(PROCESS_HEAP, args.rcx);
@@ -514,7 +674,10 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 return Ok(0);
             }
             memory
-                .write_bytes(buffer, &stream.data[stream.position..stream.position + complete])
+                .write_bytes(
+                    buffer,
+                    &stream.data[stream.position..stream.position + complete],
+                )
                 .map_err(fault)?;
             stream.position += complete;
             if stream.position >= stream.data.len() {
@@ -553,7 +716,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 .position
                 .checked_add(bytes.len())
                 .ok_or(ExitReason::IllegalInstruction(0xFE))?;
-            if end > MAX_FILE_BYTES {
+            if end > stream.max_bytes {
                 stream.error = true;
                 return Ok(0);
             }
@@ -563,6 +726,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             stream.data[stream.position..end].copy_from_slice(&bytes);
             stream.position = end;
             stream.eof = false;
+            stream.dirty = stream.host_backed;
             Ok(count)
         })
     });
@@ -613,7 +777,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
 
     let feof = Arc::clone(state);
     registry.register(UCRT, "feof", move |args, _, memory| {
-        with_stream(&feof, memory, args.rcx, |stream, _| Ok(u64::from(stream.eof)))
+        with_stream(&feof, memory, args.rcx, |stream, _| {
+            Ok(u64::from(stream.eof))
+        })
     });
 
     let ferror = Arc::clone(state);
@@ -667,7 +833,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 .position
                 .checked_add(formatted.len())
                 .ok_or(ExitReason::IllegalInstruction(0xFE))?;
-            if end > MAX_FILE_BYTES {
+            if end > stream.max_bytes {
                 stream.error = true;
                 return Ok(u64::from(u32::MAX));
             }
@@ -677,6 +843,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             stream.data[stream.position..end].copy_from_slice(&formatted);
             stream.position = end;
             stream.eof = false;
+            stream.dirty = stream.host_backed;
             Ok(count)
         })
     });
@@ -809,10 +976,19 @@ mod tests {
         );
         assert_ne!(file, 0);
         assert_eq!(
-            call(&registry, "fwrite", [payload, 1, 5, file], &mut cpu, &mut memory),
+            call(
+                &registry,
+                "fwrite",
+                [payload, 1, 5, file],
+                &mut cpu,
+                &mut memory
+            ),
             5
         );
-        assert_eq!(call(&registry, "fclose", [file, 0, 0, 0], &mut cpu, &mut memory), 0);
+        assert_eq!(
+            call(&registry, "fclose", [file, 0, 0, 0], &mut cpu, &mut memory),
+            0
+        );
         let reader = call(
             &registry,
             "fopen",
@@ -822,12 +998,114 @@ mod tests {
         );
         assert_ne!(reader, 0);
         assert_eq!(
-            call(&registry, "fread", [out, 1, 5, reader], &mut cpu, &mut memory),
+            call(
+                &registry,
+                "fread",
+                [out, 1, 5, reader],
+                &mut cpu,
+                &mut memory
+            ),
             5
         );
         let mut got = [0u8; 5];
         memory.read_bytes(out, &mut got).unwrap();
         assert_eq!(&got, b"hello");
-        assert_eq!(call(&registry, "fclose", [reader, 0, 0, 0], &mut cpu, &mut memory), 0);
+        assert_eq!(
+            call(
+                &registry,
+                "fclose",
+                [reader, 0, 0, 0],
+                &mut cpu,
+                &mut memory
+            ),
+            0
+        );
+    }
+
+    #[test]
+    fn fopen_host_mount_round_trip() {
+        let root =
+            std::env::temp_dir().join(format!("xenora-crt-stdio-host-{}", std::process::id()));
+        let _ = std::fs::remove_dir_all(&root);
+        std::fs::create_dir_all(&root).unwrap();
+        let mut state = ServicesState::new(Arc::new(MockClock::new(0)));
+        assert!(
+            state
+                .mount(host_files::HostMount::new('D', &root, true).unwrap())
+                .is_ok()
+        );
+        let state = Arc::new(state);
+        let mut registry = ImportRegistry::new();
+        register(&mut registry, &state);
+        let mut memory = GuestMemory::new();
+        let mut cpu = CpuState {
+            gs_base: 0x10000,
+            ..CpuState::default()
+        };
+        let path = memory.map_heap_allocation(PROCESS_HEAP, 32).unwrap();
+        let mode_w = memory.map_heap_allocation(PROCESS_HEAP, 8).unwrap();
+        let mode_r = memory.map_heap_allocation(PROCESS_HEAP, 8).unwrap();
+        let payload = memory.map_heap_allocation(PROCESS_HEAP, 16).unwrap();
+        let out = memory.map_heap_allocation(PROCESS_HEAP, 16).unwrap();
+        memory.write_bytes(path, b"D:\\guest.bin\0").unwrap();
+        memory.write_bytes(mode_w, b"wb\0").unwrap();
+        memory.write_bytes(mode_r, b"rb\0").unwrap();
+        memory.write_bytes(payload, b"host!\0").unwrap();
+        let file = call(
+            &registry,
+            "fopen",
+            [path, mode_w, 0, 0],
+            &mut cpu,
+            &mut memory,
+        );
+        assert_ne!(file, 0);
+        assert_eq!(
+            call(
+                &registry,
+                "fwrite",
+                [payload, 1, 5, file],
+                &mut cpu,
+                &mut memory
+            ),
+            5
+        );
+        assert_eq!(
+            call(&registry, "fclose", [file, 0, 0, 0], &mut cpu, &mut memory),
+            0
+        );
+        let on_disk = std::fs::read(root.join("guest.bin")).unwrap();
+        assert_eq!(on_disk, b"host!");
+        let reader = call(
+            &registry,
+            "fopen",
+            [path, mode_r, 0, 0],
+            &mut cpu,
+            &mut memory,
+        );
+        assert_ne!(reader, 0);
+        assert_eq!(
+            call(
+                &registry,
+                "fread",
+                [out, 1, 5, reader],
+                &mut cpu,
+                &mut memory
+            ),
+            5
+        );
+        let mut got = [0u8; 5];
+        memory.read_bytes(out, &mut got).unwrap();
+        assert_eq!(&got, b"host!");
+        assert_eq!(
+            call(
+                &registry,
+                "fclose",
+                [reader, 0, 0, 0],
+                &mut cpu,
+                &mut memory
+            ),
+            0
+        );
+        let _ = std::fs::remove_dir_all(&root);
     }
 }

@@ -15,6 +15,7 @@ mod crt_ctype;
 mod crt_env;
 mod crt_locale;
 mod crt_stdio;
+mod crt_time;
 mod events;
 mod files;
 mod gdk_async;
@@ -34,7 +35,7 @@ use crate::cpu::ExitReason;
 use crate::imports::{ImportRegistry, ServiceStatus};
 use crate::memory::{ALLOCATION_GRANULARITY, GuestMemory, MemoryError, MemoryPermissions};
 use std::collections::{BTreeMap, BTreeSet};
-use std::sync::atomic::{AtomicBool, AtomicU64, Ordering};
+use std::sync::atomic::{AtomicBool, AtomicU32, AtomicU64, Ordering};
 use std::sync::{Arc, Condvar, Mutex, OnceLock};
 use std::time::Instant;
 
@@ -212,6 +213,8 @@ pub struct ServicesState {
     locale: Mutex<crt_locale::LocaleState>,
     stdio: Mutex<crt_stdio::StdioState>,
     env: Mutex<crt_env::EnvState>,
+    /// Seed for the CRT `rand` / `srand` LCG (process-wide, like UCRT).
+    crt_rand: AtomicU32,
     winsock_changed: Condvar,
     pub next_alloc_addr: AtomicU64,
     pub graphics: Arc<Mutex<crate::graphics::GraphicsContext>>,
@@ -240,6 +243,7 @@ impl ServicesState {
             locale: Mutex::default(),
             stdio: Mutex::default(),
             env: Mutex::default(),
+            crt_rand: AtomicU32::new(1),
             winsock_changed: Condvar::new(),
             next_alloc_addr: AtomicU64::new(0x0000_0002_0000_0000), // 8GB guest heap
             graphics: Arc::new(Mutex::new(crate::graphics::GraphicsContext::new())),
@@ -410,10 +414,12 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     crt::register_heap(registry);
     crt::register_errno(registry);
     crt::register_conversions(registry);
+    crt::register_rand(registry, &state);
     crt_locale::register(registry, &state);
     crt_ctype::register(registry);
     crt_stdio::register(registry, &state);
     crt_env::register(registry, &state);
+    crt_time::register(registry, &state);
     crt_callbacks::register(registry, &state);
     heap::register(registry, &state);
 

@@ -631,10 +631,7 @@ mod tests {
             // Darwin may report ENOTDIR instead of ELOOP for
             // O_DIRECTORY|O_NOFOLLOW on a symlink.
             Err(error) => assert!(
-                matches!(
-                    error.raw_os_error(),
-                    Some(libc::ELOOP | libc::ENOTDIR)
-                ),
+                matches!(error.raw_os_error(), Some(libc::ELOOP | libc::ENOTDIR)),
                 "{error}"
             ),
         }

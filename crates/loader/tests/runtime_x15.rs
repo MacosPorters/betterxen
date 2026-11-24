@@ -2167,14 +2167,14 @@ fn test_guest_crt_long_conversions_through_iat() {
         .unwrap();
         assert_eq!(result.bound_imports, 2);
         assert_eq!(result.execution.exit_reason, ExitReason::Halt);
+        let end = result
+            .image
+            .memory
+            .read_u64(PROCESS_FIXTURE_OUTPUT)
+            .unwrap();
         (
             result.execution.final_state.get(Register::Rbx),
-            result
-                .image
-                .memory
-                .read_u64(PROCESS_FIXTURE_OUTPUT)
-                .unwrap()
-                - INPUT,
+            end.saturating_sub(INPUT),
             result
                 .image
                 .memory
@@ -2230,6 +2230,21 @@ fn test_guest_crt_long_conversions_through_iat() {
     for symbol in ["wcstoll", "wcstoull", "_wcstoi64", "_wcstoui64"] {
         assert_eq!(run(symbol, &wide, 10), (4_294_967_296, 20, 0));
     }
+    // atoi family: fixed base 10 and no end pointer. Reuse the IAT fixture but
+    // only check the returned integer (the end slot is not written).
+    let atoi = |symbol, input: &[u8]| run(symbol, input, 10).0;
+    assert_eq!(atoi("atoi", b" -42x\0"), u64::from((-42i32) as u32));
+    assert_eq!(atoi("atol", b"2147483647\0"), i32::MAX as u64);
+    assert_eq!(atoi("atoll", b"9223372036854775807\0"), i64::MAX as u64);
+    assert_eq!(atoi("_atoi64", b"-9223372036854775808\0"), i64::MIN as u64);
+    let wide = " -7"
+        .encode_utf16()
+        .chain([0])
+        .flat_map(u16::to_le_bytes)
+        .collect::<Vec<_>>();
+    assert_eq!(atoi("_wtoi", &wide), u64::from((-7i32) as u32));
+    assert_eq!(atoi("_wtol", &wide), u64::from((-7i32) as u32));
+    assert_eq!(atoi("_wtoi64", &wide), (-7i64) as u64);
 }
 
 #[test]
