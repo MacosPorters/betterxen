@@ -96,7 +96,7 @@ def cases():
     out += ["mov ah, bl", "mov dl, ch", "mov bh, 0x21", "xchg ah, bl", "mov sil, dil",
             "movabs r15, 0x8877665544332211", "mov rcx, -2", "bswap ebx", "bswap r9",
             "cbw", "cwde", "cdqe", "cwd", "cdq", "cqo", "clc", "stc", "cmc", "nop", "cpuid",
-            "nop dword ptr [rax + 8]", "pause", "push r9", "push rbx", "push -5", "push 0x12345678",
+            "nop dword ptr [rax + 8]", "pause", "lfence", "mfence", "sfence", "push r9", "push rbx", "push -5", "push 0x12345678",
             f"push {mem(64)}", "pop rbx", "pop r12", f"pop {mem(64)}", "leave"]
     # The accumulator short form of XCHG: 91..97, and 90 with REX.B.
     for index in range(1, 16):

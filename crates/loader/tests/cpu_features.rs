@@ -199,15 +199,15 @@ fn reported_features_have_all_their_instructions_in_the_fixtures() {
 fn unreported_features_each_have_an_instruction_that_is_refused() {
     // (feature, leaf, result register, bit, an instruction of that feature)
     let witnesses: &[(&str, u32, usize, u32, &[u8])] = &[
-        ("FPU", 1, EDX, 0, &[0xD9, 0xE8]),              // fld1
-        ("TSC", 1, EDX, 4, &[0x0F, 0x31]),              // rdtsc
-        ("CX8", 1, EDX, 8, &[0x0F, 0xC7, 0x0E]),        // cmpxchg8b [rsi]
-        ("CLFSH", 1, EDX, 19, &[0x0F, 0xAE, 0x3E]),     // clflush [rsi]
-        ("MMX", 1, EDX, 23, &[0x0F, 0x77]),             // emms
-        ("FXSR", 1, EDX, 24, &[0x0F, 0xAE, 0x06]),      // fxsave [rsi]
-        ("SSE", 1, EDX, 25, &[0x0F, 0x52, 0xC1]),       // rsqrtps xmm0, xmm1
-        ("SSE2", 1, EDX, 26, &[0x0F, 0xAE, 0xF0]),      // mfence
-        ("SSE3", 1, ECX, 0, &[0xF2, 0x0F, 0x7C, 0xC1]), // haddps xmm0, xmm1
+        ("FPU", 1, EDX, 0, &[0xD9, 0xE8]),               // fld1
+        ("TSC", 1, EDX, 4, &[0x0F, 0x31]),               // rdtsc
+        ("CX8", 1, EDX, 8, &[0x0F, 0xC7, 0x0E]),         // cmpxchg8b [rsi]
+        ("CLFSH", 1, EDX, 19, &[0x0F, 0xAE, 0x3E]),      // clflush [rsi]
+        ("MMX", 1, EDX, 23, &[0x0F, 0x77]),              // emms
+        ("FXSR", 1, EDX, 24, &[0x0F, 0xAE, 0x06]),       // fxsave [rsi]
+        ("SSE", 1, EDX, 25, &[0x0F, 0x52, 0xC1]),        // rsqrtps xmm0, xmm1
+        ("SSE2", 1, EDX, 26, &[0x66, 0x0F, 0xF7, 0xC1]), // maskmovdqu xmm0, xmm1
+        ("SSE3", 1, ECX, 0, &[0xF2, 0x0F, 0x7C, 0xC1]),  // haddps xmm0, xmm1
         (
             "PCLMULQDQ",
             1,
@@ -222,17 +222,17 @@ fn unreported_features_each_have_an_instruction_that_is_refused() {
         ("SSE4.2", 1, ECX, 20, &[0xF2, 0x0F, 0x38, 0xF1, 0xC1]), // crc32 eax, ecx
         ("MOVBE", 1, ECX, 22, &[0x0F, 0x38, 0xF0, 0x06]), // movbe eax, [rsi]
         ("AESNI", 1, ECX, 25, &[0x66, 0x0F, 0x38, 0xDC, 0xC1]), // aesenc xmm0, xmm1
-        ("XSAVE", 1, ECX, 26, &[0x0F, 0x01, 0xD0]),     // xgetbv
-        ("AVX", 1, ECX, 28, &[0xC5, 0xF4, 0x58, 0xC2]), // vaddps ymm0, ymm1, ymm2
+        ("XSAVE", 1, ECX, 26, &[0x0F, 0x01, 0xD0]),      // xgetbv
+        ("AVX", 1, ECX, 28, &[0xC5, 0xF4, 0x58, 0xC2]),  // vaddps ymm0, ymm1, ymm2
         ("F16C", 1, ECX, 29, &[0xC4, 0xE2, 0x79, 0x13, 0xC1]), // vcvtph2ps xmm0, xmm1
-        ("RDRAND", 1, ECX, 30, &[0x0F, 0xC7, 0xF0]),    // rdrand eax
+        ("RDRAND", 1, ECX, 30, &[0x0F, 0xC7, 0xF0]),     // rdrand eax
         ("BMI1", 7, EBX, 3, &[0xC4, 0xE2, 0x70, 0xF2, 0xC2]), // andn eax, ecx, edx
-        ("AVX2", 7, EBX, 5, &[0xC5, 0xF5, 0xFE, 0xC2]), // vpaddd ymm0, ymm1, ymm2
+        ("AVX2", 7, EBX, 5, &[0xC5, 0xF5, 0xFE, 0xC2]),  // vpaddd ymm0, ymm1, ymm2
         ("BMI2", 7, EBX, 8, &[0xC4, 0xE2, 0x73, 0xF6, 0xC2]), // mulx eax, ecx, edx
-        ("RDSEED", 7, EBX, 18, &[0x0F, 0xC7, 0xF8]),    // rdseed eax
+        ("RDSEED", 7, EBX, 18, &[0x0F, 0xC7, 0xF8]),     // rdseed eax
         ("ADX", 7, EBX, 19, &[0x66, 0x0F, 0x38, 0xF6, 0xC1]), // adcx eax, ecx
-        ("SHA", 7, EBX, 29, &[0x0F, 0x38, 0xC9, 0xC1]), // sha1msg1 xmm0, xmm1
-        ("LAHF/SAHF", 0x8000_0001, ECX, 0, &[0x9F]),    // lahf
+        ("SHA", 7, EBX, 29, &[0x0F, 0x38, 0xC9, 0xC1]),  // sha1msg1 xmm0, xmm1
+        ("LAHF/SAHF", 0x8000_0001, ECX, 0, &[0x9F]),     // lahf
         ("PREFETCHW", 0x8000_0001, ECX, 8, &[0x0F, 0x0D, 0x0E]), // prefetchw [rsi]
         ("SYSCALL/SYSRET", 0x8000_0001, EDX, 11, &[0x48, 0x0F, 0x07]), // sysretq
         ("RDTSCP", 0x8000_0001, EDX, 27, &[0x0F, 0x01, 0xF9]), // rdtscp

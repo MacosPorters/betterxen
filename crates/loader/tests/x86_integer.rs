@@ -738,7 +738,8 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             m.flags.cf = !m.flags.cf;
             Outcome::Done(none)
         }
-        "nop" | "pause" => Outcome::Done(none),
+        // The fences order memory accesses and compute nothing.
+        "nop" | "pause" | "lfence" | "mfence" | "sfence" => Outcome::Done(none),
         "cpuid" => {
             // Xenora's guest CPUID contract, restated: the vendor "Xenora guest"
             // and the four features whose every instruction exists, CMOV and
@@ -1234,6 +1235,8 @@ fn undeclared_and_ambiguous_encodings_are_rejected() {
         &[0x66, 0x63, 0xC1],       // 16-bit movsxd
         &[0xF3, 0x41, 0x90],       // F3 on xchg r8, rax
         &[0x8D, 0xC0],             // lea with a register operand
+        &[0x0F, 0xAE, 0x2E],       // 0F AE /5 with a memory operand
+        &[0x0F, 0xAE, 0x36],       // 0F AE /6 with a memory operand
         &[0x0F, 0xA3, 0x06],       // bt [rsi], eax
         &[0xC6, 0xC8, 0x01],       // C6 /1
         &[0xFF, 0xF8],             // FF /7

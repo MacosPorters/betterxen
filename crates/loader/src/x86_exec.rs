@@ -603,6 +603,10 @@ pub fn execute(
             cpu.gpr[RSP] = sp.wrapping_add(8).wrapping_add(insn.imm);
         }
         Op::Nop => {}
+        // Every load and store of an instruction completes before the next
+        // instruction starts, on one host thread, so guest accesses are already
+        // totally ordered and a fence has nothing further to enforce.
+        Op::Lfence | Op::Mfence | Op::Sfence => {}
         Op::Cpuid => {
             // The leaf is EAX and the subleaf ECX. Each result is a 32-bit
             // register write, so the upper halves are cleared.

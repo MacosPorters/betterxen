@@ -1365,6 +1365,33 @@ mov_moffs8_store: rax=77 m0=00000000 => m0=00000077 f=*
 thirteen_byte_fs_add_imm32: rax=10 rbx=8 fs120=0000000000000000 => fs120=4433221100000000 f=cPazso
 ";
 
+/// Single-thread baseline for the fences (#199). Each engine completes every
+/// load and store of an instruction before the next instruction starts, so the
+/// cases only require that a fence changes nothing and that accesses on either
+/// side of it happen in program order. Nothing here involves a second thread.
+const FENCES: &str = r"
+@ mov [rdi], rax; mfence; mov rbx, [rdi]
+  488907 0faef0 488b1f
+  SDM 2B MFENCE
+mfence_store_is_visible_to_a_later_load: rdi=D rax=1122334455667788 m0=0000000000000000 => rbx=1122334455667788 m0=8877665544332211 f=*
+@ mov [rdi], rax; sfence; mov rbx, [rdi+8]
+  488907 0faef8 488b5f08
+  SDM 2B SFENCE
+sfence_after_a_store_keeps_other_memory: rdi=D rax=1 m0=0000000000000000 m8=aabbccddeeff0011 => rbx=1100ffeeddccbbaa m0=0100000000000000 f=*
+@ mov rbx, [rdi]; lfence; mov [rdi], rax
+  488b1f 0faee8 488907
+  SDM 2B LFENCE
+lfence_load_precedes_a_later_store: rdi=D rax=5 m0=0200000000000000 => rbx=2 m0=0500000000000000 f=*
+@ mfence; lfence; sfence
+  0faef0 0faee8 0faef8
+  SDM 2B MFENCE; 2B LFENCE; 2B SFENCE
+fences_change_no_register_or_flag: rax=1122334455667788 rbx=99aabbccddeeff00 => f=*
+@ .byte 0x0f,0xae,0xf5; .byte 0x0f,0xae,0xeb; .byte 0x0f,0xae,0xff
+  0faef5 0faeeb 0faeff
+  SDM 2B MFENCE; 2B LFENCE; 2B SFENCE (the r/m field is ignored)
+fences_ignore_the_rm_field: rax=1122334455667788 => f=*
+";
+
 const MEMORY_FAULTS: &str = r"
 @ mov r8d, 1; add al, bl; mov rcx, [rsi]; mov r9d, 2
   41b801000000 00d8 !488b0e 41b902000000
@@ -2646,6 +2673,7 @@ const GROUPS: &[(&str, &str)] = &[
     ("strings", STRINGS),
     ("fs_gs", FS_GS),
     ("decoding", DECODING),
+    ("fences", FENCES),
     ("memory_faults", MEMORY_FAULTS),
     (
         "defect_straddling_fault_address",
@@ -3426,6 +3454,11 @@ fn fs_gs() {
 #[test]
 fn decoding() {
     check_group(DECODING);
+}
+
+#[test]
+fn fences() {
+    check_group(FENCES);
 }
 
 #[test]
