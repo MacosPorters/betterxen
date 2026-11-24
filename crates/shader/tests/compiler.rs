@@ -391,3 +391,17 @@ fn vector_compares_lower_to_per_thread_wave_masks_and_selects() {
         include_str!("../../../fixtures/golden/vector-compare.metal")
     );
 }
+
+#[test]
+fn scalar_logic_b64_fixture_matches_goldens() {
+    let code = include_bytes!("../../../fixtures/rdna2/scalar-logic-b64.bin");
+    let compiled = compile(Architecture::Gfx1030, code).unwrap();
+    assert_eq!(
+        compiled.ir,
+        include_str!("../../../fixtures/golden/scalar-logic-b64.ir")
+    );
+    assert_eq!(
+        compiled.msl,
+        include_str!("../../../fixtures/golden/scalar-logic-b64.metal")
+    );
+}

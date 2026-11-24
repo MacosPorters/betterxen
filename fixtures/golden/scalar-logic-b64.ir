@@ -1,0 +1,5 @@
+0000: t0 = load.u32 input[index]
+0034: branch.uniform 0x0040 taken=false
+009c: t2 = const.u32 0xedcba986
+00a0: t3 = xor.b32 t0, t2
+00a4: store.u32 output[index], t3

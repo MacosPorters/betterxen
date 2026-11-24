@@ -19,8 +19,8 @@ pub use rdna2::{
     V_MOV_B32, V_MUL_F32, V_OR_B32, V_XOR_B32,
 };
 pub use semantics_gen::{
-    ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp, ScalarUnaryOp,
-    VectorAluOp, VectorAluVop3Op, VectorCompareOp,
+    ScalarAlu64Op, ScalarAluOp, ScalarCompareOp, ScalarImmediateCompareOp, ScalarImmediateOp,
+    ScalarUnaryOp, VectorAluOp, VectorAluVop3Op, VectorCompareOp,
 };
 
 /// SGPR index of `vcc_lo`, the Wave32 vector condition code.
@@ -89,6 +89,27 @@ impl fmt::Display for ScalarSource {
         match *self {
             Self::Register(register) => write!(formatter, "s{register}"),
             Self::Immediate(value) => match value as i32 {
+                integer @ -16..=64 => write!(formatter, "{integer}"),
+                _ => write!(formatter, "0x{value:x}"),
+            },
+        }
+    }
+}
+
+/// A scalar 64-bit source.
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+pub enum ScalarSource64 {
+    /// The even base of an SGPR pair, low word first.
+    RegisterPair(u8),
+    /// Inline integer or expanded literal bits.
+    Immediate(u64),
+}
+
+impl fmt::Display for ScalarSource64 {
+    fn fmt(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match *self {
+            Self::RegisterPair(base) => write!(formatter, "s[{base}:{}]", base + 1),
+            Self::Immediate(value) => match value as i64 {
                 integer @ -16..=64 => write!(formatter, "{integer}"),
                 _ => write!(formatter, "0x{value:x}"),
             },
@@ -171,6 +192,13 @@ pub enum Instruction {
         op: ScalarUnaryOp,
         dst: u8,
         src: ScalarSource,
+    },
+    /// SOP2 64-bit logic writing an even SGPR pair and setting SCC.
+    ScalarAlu64 {
+        op: ScalarAlu64Op,
+        dst: u8,
+        src0: ScalarSource64,
+        src1: ScalarSource64,
     },
     /// SOP2 32-bit integer operation writing a normal SGPR (s0-s105) and, for
     /// most operations, SCC; `s_cselect_b32` also reads SCC.
@@ -284,6 +312,7 @@ impl Instruction {
             Self::VectorAluVop3 { op, .. } => op.assembly_name(),
             Self::ScalarMoveB32 { .. } => "s_mov_b32",
             Self::ScalarUnary { op, .. } => op.mnemonic(),
+            Self::ScalarAlu64 { op, .. } => op.mnemonic(),
             Self::ScalarAlu { op, .. } => op.mnemonic(),
             Self::ScalarCompare { op, .. } => op.mnemonic(),
             Self::ScalarImmediate { op, .. } => op.mnemonic(),
@@ -343,6 +372,11 @@ impl fmt::Display for Instruction {
             }
             Self::ScalarMoveB32 { dst, src } | Self::ScalarUnary { dst, src, .. } => {
                 write!(formatter, " {}, {src}", ScalarDestination(dst))
+            }
+            Self::ScalarAlu64 {
+                dst, src0, src1, ..
+            } => {
+                write!(formatter, " s[{dst}:{}], {src0}, {src1}", dst + 1)
             }
             Self::ScalarAlu {
                 dst, src0, src1, ..

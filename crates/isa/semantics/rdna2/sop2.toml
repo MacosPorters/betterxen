@@ -22,6 +22,23 @@ unsupported = [
 ]
 
 
+[operand_rules.sop2_sgpr_pair]
+family = "SOP2"
+dst = { field = "SDST", class = "sgpr_pair", min = 0, max = 104 }
+src = [
+  { field = "SSRC0", class = "scalar_source64" },
+  { field = "SSRC1", class = "scalar_source64" },
+]
+# Even SGPR pairs, inline integers -16..64, or one zero-extended literal word.
+max_literals = 1
+# Encodings this rule rejects, so they stay unsupported rather than guessed.
+unsupported = [
+  "dst_vcc", "dst_exec", "dst_ttmp", "dst_m0", "dst_null",
+  "src_vcc", "src_exec", "src_m0", "src_ttmp", "src_float_inline",
+  "src_special", "two_literals", "dst_odd_pair", "src_odd_pair",
+]
+
+
 [[form]]
 name = "S_ADD_U32"
 family = "SOP2"
@@ -160,6 +177,27 @@ spec = [{ document = "guide", section = "12.1", page = 102 }]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 [[form]]
+name = "S_AND_B64"
+family = "SOP2"
+opcode = 15
+variant = "AndB64"
+operation = "and"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 103 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
 name = "S_OR_B32"
 family = "SOP2"
 opcode = 16
@@ -177,6 +215,27 @@ spec = [{ document = "guide", section = "12.1", page = 102 }]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 [[form]]
+name = "S_OR_B64"
+family = "SOP2"
+opcode = 17
+variant = "OrB64"
+operation = "or"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 103 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
 name = "S_XOR_B32"
 family = "SOP2"
 opcode = 18
@@ -191,6 +250,27 @@ exec = "unchanged"
 wave = "any"
 operands = "sop2_sgpr"
 spec = [{ document = "guide", section = "12.1", page = 102 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_XOR_B64"
+family = "SOP2"
+opcode = 19
+variant = "XorB64"
+operation = "xor"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 103 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 # ---- Stage C: further SOP2 logical and shift forms (#215) ----
@@ -214,6 +294,27 @@ spec = [{ document = "guide", section = "12.1", page = 103 }]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 [[form]]
+name = "S_ANDN2_B64"
+family = "SOP2"
+opcode = 21
+variant = "Andn2B64"
+operation = "andn2"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 103 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
 name = "S_ORN2_B32"
 family = "SOP2"
 opcode = 22
@@ -228,6 +329,27 @@ exec = "unchanged"
 wave = "any"
 operands = "sop2_sgpr"
 spec = [{ document = "guide", section = "12.1", page = 103 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_ORN2_B64"
+family = "SOP2"
+opcode = 23
+variant = "Orn2B64"
+operation = "orn2"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 103 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 [[form]]
@@ -248,6 +370,27 @@ spec = [{ document = "guide", section = "12.1", page = 104 }]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 [[form]]
+name = "S_NAND_B64"
+family = "SOP2"
+opcode = 25
+variant = "NandB64"
+operation = "nand"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 104 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
 name = "S_NOR_B32"
 family = "SOP2"
 opcode = 26
@@ -265,6 +408,27 @@ spec = [{ document = "guide", section = "12.1", page = 104 }]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 [[form]]
+name = "S_NOR_B64"
+family = "SOP2"
+opcode = 27
+variant = "NorB64"
+operation = "nor"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 104 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
 name = "S_XNOR_B32"
 family = "SOP2"
 opcode = 28
@@ -279,6 +443,27 @@ exec = "unchanged"
 wave = "any"
 operands = "sop2_sgpr"
 spec = [{ document = "guide", section = "12.1", page = 104 }]
+verify = ["reference", "independent", "metal", "llvm_encoding"]
+
+[[form]]
+name = "S_XNOR_B64"
+family = "SOP2"
+opcode = 29
+variant = "XnorB64"
+operation = "xnor"
+signedness = "bitwise"
+carry_in = "none"
+width = 64
+scc = "nonzero"
+vcc = "unchanged"
+exec = "unchanged"
+wave = "any"
+operands = "sop2_sgpr_pair"
+spec = [
+  { document = "guide", section = "12.1", page = 104 },
+  { document = "guide", section = "5.2", page = 33 },
+  { document = "guide", section = "6.2.1", page = 43 },
+]
 verify = ["reference", "independent", "metal", "llvm_encoding"]
 
 [[form]]

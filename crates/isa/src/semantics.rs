@@ -202,6 +202,8 @@ pub enum OperandRule {
     /// SOP2: SDST is s0-s105; SSRC0/SSRC1 are s0-s105, inline integers -16..64
     /// or one literal word. Everything else is rejected as unsupported.
     Sop2Sgpr,
+    /// SOP2: even normal SGPR pairs, inline integers or one zero-extended literal word.
+    Sop2SgprPair,
     /// SOPC: no destination; SSRC0/SSRC1 as for SOP2 sources (s0-s105, inline
     /// integers -16..64 or one literal word). Everything else is rejected.
     SopcScalar,

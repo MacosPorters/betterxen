@@ -164,7 +164,10 @@ PINNED_DOCUMENTS = {
         "file": "amdgpu_isa_rdna2.xml",
     },
 }
-WIDTHS = {32}
+WIDE_LOGICAL_PRIMITIVES = {
+    operation: ("nonzero", f"{operation}_nonzero_b64", False)
+    for operation in ("and", "or", "xor", "andn2", "orn2", "nand", "nor", "xnor")
+}
 
 # (operation, signedness) -> (required SCC effect, primitive, takes carry-in).
 # A form whose declaration is not a row here has no primitive and is rejected.
@@ -257,7 +260,7 @@ UNSUPPORTED_COMBOS = {
 # which SOP2 groups under src_vcc and src_special).
 # VOP3 rules also name source classes and encoding fields they refuse.
 VOP3_COMBOS = {"src_sgpr", "src_inline", "src_literal", "modifiers", "src2"}
-ALL_COMBOS = UNSUPPORTED_COMBOS | {"src_vcc_hi", "src_null"} | VOP3_COMBOS
+ALL_COMBOS = UNSUPPORTED_COMBOS | {"src_vcc_hi", "src_null"} | VOP3_COMBOS | {"dst_odd_pair", "src_odd_pair"}
 OPERAND_RULES = {
     "sop2_sgpr": {
         "rust": "Sop2Sgpr",
@@ -274,6 +277,21 @@ OPERAND_RULES = {
         # Every one of these is rejected by the decoder's SOP2 operand checks.
         "unsupported": UNSUPPORTED_COMBOS,
         "kind": "alu",
+    },
+    "sop2_sgpr_pair": {
+        "rust": "Sop2SgprPair",
+        "enum": "ScalarAlu64Op",
+        "shape": {
+            "family": "SOP2",
+            "dst": {"field": "SDST", "class": "sgpr_pair", "min": 0, "max": 104},
+            "src": [
+                {"field": "SSRC0", "class": "scalar_source64"},
+                {"field": "SSRC1", "class": "scalar_source64"},
+            ],
+            "max_literals": 1,
+        },
+        "unsupported": UNSUPPORTED_COMBOS | {"dst_odd_pair", "src_odd_pair"},
+        "kind": "alu64",
     },
     "sopc_scalar": {
         "rust": "SopcScalar",
@@ -647,6 +665,9 @@ def _check_xml(form, rule, snapshot, errors):
         elif type(bits) is int:
             if data_format != f"FMT_NUM_I{bits}":
                 errors.append(f"{label}: {field} has XML format {data_format}, not FMT_NUM_I{bits}")
+        elif _rule_kind(form) == "alu64":
+            if data_format != "FMT_NUM_U64":
+                errors.append(f"{label}: {field} requires XML format FMT_NUM_U64, got {data_format}")
         elif is_source and data_format not in SOURCE_FORMATS.get(form["signedness"], ()):
             errors.append(
                 f"{label}: signedness {form['signedness']} contradicts XML format {data_format}"
@@ -728,7 +749,8 @@ def validate(registry, snapshot):
             )
         if form["exec"] != "unchanged":
             errors.append(f"{label}: exec {form['exec']} has no contract (requires unchanged)")
-        if type(form["width"]) is not int or form["width"] not in WIDTHS:
+        width = 64 if _rule_kind(form) == "alu64" else 32
+        if type(form["width"]) is not int or form["width"] != width:
             errors.append(f"{label}: width {form['width']} is not supported")
         for key, value in (
             ("name", form["name"]),
@@ -813,6 +835,10 @@ def validate(registry, snapshot):
                 errors.append(f"{label}: {RELATION_KEY} on a non-compare operation")
             lowering = VECTOR_PRIMITIVES.get((form["operation"], form["signedness"]))
             primitive = None if lowering is None else ("unchanged", lowering, False)
+        elif _rule_kind(form) == "alu64":
+            if RELATION_KEY in form:
+                errors.append(f"{label}: {RELATION_KEY} on a non-compare operation")
+            primitive = WIDE_LOGICAL_PRIMITIVES.get(form["operation"])
         else:
             if RELATION_KEY in form:
                 errors.append(f"{label}: {RELATION_KEY} on a non-compare operation")
@@ -842,6 +868,7 @@ def validate(registry, snapshot):
             else "unary" if form["operation"] in UNARY
             else "vector" if _rule_kind(form) == "vector" and form["operation"] not in UNARY
             else "immediate" if _rule_kind(form) == "immediate"
+            else "alu64" if _rule_kind(form) == "alu64"
             else "alu"
         ):
             errors.append(f"{label}: operation {form['operation']} does not fit rule {form['operands']}")
@@ -1493,6 +1520,18 @@ def _render_enum(rule_name, forms, snapshot, positions):
         ]
         for form in forms:
             function = COMPARE_PRIMITIVES[(form[RELATION_KEY], form["signedness"])]
+            out.append(f"            Self::{form['variant']} => primitive::{function}(src0, src1),")
+        out += ["        }", "    }", "}"]
+        return out
+    if kind == "alu64":
+        out += [
+            "",
+            "    /// The full-width result and new SCC.",
+            "    pub const fn evaluate(self, src0: u64, src1: u64) -> (u64, bool) {",
+            "        match self {",
+        ]
+        for form in forms:
+            _, function, _ = WIDE_LOGICAL_PRIMITIVES[form["operation"]]
             out.append(f"            Self::{form['variant']} => primitive::{function}(src0, src1),")
         out += ["        }", "    }", "}"]
         return out

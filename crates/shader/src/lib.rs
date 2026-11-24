@@ -9,8 +9,8 @@ pub use graphics::{PIXEL_ENTRY_POINT, VERTEX_ENTRY_POINT, compile_graphics};
 
 pub use xenora_decoder::Architecture;
 use xenora_decoder::{
-    DecodeError, DecodedInstruction, Instruction, ScalarSource, VectorAluOp, VectorAluVop3Op,
-    VectorBinary, VectorCompareOp, VectorSource,
+    DecodeError, DecodedInstruction, Instruction, ScalarSource, ScalarSource64, VectorAluOp,
+    VectorAluVop3Op, VectorBinary, VectorCompareOp, VectorSource,
 };
 
 /// SGPR index of `vcc_lo`.
@@ -878,6 +878,29 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                 if let Some(flag) = flag {
                     scc = Some(flag);
                 }
+                continue;
+            }
+            Instruction::ScalarAlu64 {
+                op,
+                dst,
+                src0,
+                src1,
+            } => {
+                if dst < 8 {
+                    return Err(error("scalar ALU would modify a resource descriptor"));
+                }
+                let read_pair = |source| match source {
+                    ScalarSource64::Immediate(value) => Ok(value),
+                    ScalarSource64::RegisterPair(base) => {
+                        let low = read_scalar(ScalarSource::Register(base))?;
+                        let high = read_scalar(ScalarSource::Register(base + 1))?;
+                        Ok(u64::from(low) | (u64::from(high) << 32))
+                    }
+                };
+                let (value, flag) = op.evaluate(read_pair(src0)?, read_pair(src1)?);
+                scalars[usize::from(dst)] = Some(value as u32);
+                scalars[usize::from(dst) + 1] = Some((value >> 32) as u32);
+                scc = Some(flag);
                 continue;
             }
             Instruction::ScalarAlu {

@@ -63,6 +63,8 @@ pub enum Op {
     WideCompare(Comparison, CompareWidth, CompareSource, u8),
     /// SOP2 operation writing an SGPR and SCC.
     Scalar(ScalarAlu, u8, Source, Source),
+    /// SOP2 logical operation writing two scalar words and SCC.
+    ScalarLogicPair(ScalarAlu, u8, [Source; 2], [Source; 2]),
     /// SOPC `s_cmp_eq_{i32,u32}` (opcodes 0 and 6, identical per guide 12.4).
     CompareEqual(Source, Source),
     /// The other SOPC 32-bit integer compares (opcodes 1-5 and 7-11), writing
@@ -634,11 +636,13 @@ pub fn decode(code: &[u8]) -> Result<Vec<DecodedInstruction>, ReferenceError> {
                     && low & 0x7f <= 105
                     && matches!(
                         (high & 0x3f) << 1 | low >> 7,
-                        0..=10 | 14 | 16 | 18 | 20 | 22 | 24 | 26 | 28 | 30 | 32 | 34
+                        0..=10 | 14..=30 | 32 | 34
                             | 36 | 38..=40 | 44 | 46..=49 | 53 | 54
                     ) =>
             {
-                let kind = match (high & 0x3f) << 1 | low >> 7 {
+                let opcode = (high & 0x3f) << 1 | low >> 7;
+                let wide = (15..=29).contains(&opcode) && opcode % 2 == 1;
+                let kind = match opcode {
                     0 => ScalarAlu::Add,
                     1 => ScalarAlu::Subtract,
                     2 => ScalarAlu::AddSigned,
@@ -650,14 +654,14 @@ pub fn decode(code: &[u8]) -> Result<Vec<DecodedInstruction>, ReferenceError> {
                     8 => ScalarAlu::Maximum { signed: true },
                     9 => ScalarAlu::Maximum { signed: false },
                     10 => ScalarAlu::Select,
-                    14 => ScalarAlu::And,
-                    16 => ScalarAlu::Or,
-                    18 => ScalarAlu::Xor,
-                    20 => ScalarAlu::AndNot,
-                    22 => ScalarAlu::OrNot,
-                    24 => ScalarAlu::Nand,
-                    26 => ScalarAlu::Nor,
-                    28 => ScalarAlu::Xnor,
+                    14 | 15 => ScalarAlu::And,
+                    16 | 17 => ScalarAlu::Or,
+                    18 | 19 => ScalarAlu::Xor,
+                    20 | 21 => ScalarAlu::AndNot,
+                    22 | 23 => ScalarAlu::OrNot,
+                    24 | 25 => ScalarAlu::Nand,
+                    26 | 27 => ScalarAlu::Nor,
+                    28 | 29 => ScalarAlu::Xnor,
                     30 => ScalarAlu::ShiftLeft,
                     32 => ScalarAlu::ShiftRight,
                     34 => ScalarAlu::ArithmeticShiftRight,
@@ -670,12 +674,23 @@ pub fn decode(code: &[u8]) -> Result<Vec<DecodedInstruction>, ReferenceError> {
                     53 => ScalarAlu::MultiplyHigh { signed: false },
                     _ => ScalarAlu::MultiplyHigh { signed: true },
                 };
-                let (left, left_length) = decode_scalar(*left, tail, offset)?;
-                let (right, right_length) = decode_scalar(*right, tail, offset)?;
-                (
-                    Op::Scalar(kind, low & 0x7f, left, right),
-                    left_length.max(right_length),
-                )
+                let dst = low & 0x7f;
+                let (lhs, left_length) = decode_scalar(*left, tail, offset)?;
+                let (rhs, right_length) = decode_scalar(*right, tail, offset)?;
+                let op = if wide {
+                    if !dst.is_multiple_of(2) {
+                        return Err(error(offset, "unaligned scalar destination pair"));
+                    }
+                    Op::ScalarLogicPair(
+                        kind,
+                        dst,
+                        scalar_pair(lhs, *left, offset)?,
+                        scalar_pair(rhs, *right, offset)?,
+                    )
+                } else {
+                    Op::Scalar(kind, dst, lhs, rhs)
+                };
+                (op, left_length.max(right_length))
             }
             [lo, hi, opcode @ (0x82 | 0x84 | 0x86 | 0x88), 0xbf, ..] => {
                 let words = i16::from_le_bytes([*lo, *hi]);
@@ -844,6 +859,18 @@ pub fn decode(code: &[u8]) -> Result<Vec<DecodedInstruction>, ReferenceError> {
         }
     }
     Ok(program)
+}
+
+// Guide 3.6.3 and 5.2: low SGPR first. U64 literal fields in the XML
+// use unsigned expansion (guide 6.2.1); negative inline values retain their sign.
+fn scalar_pair(low: Source, selector: u8, offset: usize) -> Result<[Source; 2], ReferenceError> {
+    let high = match low {
+        Source::Register(base) if base.is_multiple_of(2) => Source::Register(base + 1),
+        Source::Register(_) => return Err(error(offset, "unaligned scalar source pair")),
+        Source::Immediate(_) if (193..=208).contains(&selector) => Source::Immediate(u32::MAX),
+        Source::Immediate(_) => Source::Immediate(0),
+    };
+    Ok([low, high])
 }
 
 fn decode_scalar(
@@ -1238,6 +1265,29 @@ fn execute_wave(program: &[DecodedInstruction], input: &[u32]) -> Result<Vec<u32
                         scalars[usize::from(dst)] = Some(value);
                     }
                 }
+            }
+            Op::ScalarLogicPair(kind, dst, lhs, rhs) => {
+                if dst < 8 {
+                    return Err(error(offset, "write to a reserved resource SGPR"));
+                }
+                // Each dword uses the same boolean equation (guide 12.1).
+                // Evaluate both before writing, since either pair may alias SDST.
+                let logic = |a: u32, b: u32| match kind {
+                    ScalarAlu::And => a & b,
+                    ScalarAlu::Or => a | b,
+                    ScalarAlu::Xor => a ^ b,
+                    ScalarAlu::AndNot => a & !b,
+                    ScalarAlu::OrNot => a | !b,
+                    ScalarAlu::Nand => !(a & b),
+                    ScalarAlu::Nor => !(a | b),
+                    ScalarAlu::Xnor => !(a ^ b),
+                    _ => unreachable!("only SOP2 logical opcodes decode as pairs"),
+                };
+                let low = logic(read_scalar(lhs[0])?, read_scalar(rhs[0])?);
+                let high = logic(read_scalar(lhs[1])?, read_scalar(rhs[1])?);
+                scalars[usize::from(dst)] = Some(low);
+                scalars[usize::from(dst) + 1] = Some(high);
+                scc = Some(low != 0 || high != 0);
             }
             Op::Scalar(kind, dst, lhs, rhs) => {
                 if dst < 8 {

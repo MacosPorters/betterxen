@@ -548,10 +548,10 @@ fn unsupported_sop2_arith_operands_are_rejected() {
 #[test]
 fn other_sop2_opcodes_stay_unsupported() {
     // Every SOP2 opcode (0-95; 96 and up are other encodings) except the
-    // earlier stages' forms (0-5 and the even opcodes 14-34) and these
+    // earlier stages' forms (0-5, 14-30, 32, 34) and these
     // sixteen. Sources and destination are aligned pairs, all initialized, so
     // a 64-bit form would read and write only set registers.
-    let earlier = (0..=5).chain((14..=34).step_by(2));
+    let earlier = (0..=5).chain(14..=30).chain([32, 34]);
     let supported: Vec<u32> = FORMS
         .iter()
         .map(|&(form, _)| form as u32)
