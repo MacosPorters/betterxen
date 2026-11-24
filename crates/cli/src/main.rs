@@ -288,7 +288,7 @@ fn run_imports_generate_cli(args: &[String]) -> ExitCode {
         }
     }
 
-    let records = if let Some(ref pe) = pe_path {
+    let mut records = if let Some(ref pe) = pe_path {
         println!("Extracting imports from PE executable: {pe}");
         let bytes = match std::fs::read(pe) {
             Ok(b) => b,
@@ -311,6 +311,10 @@ fn run_imports_generate_cli(args: &[String]) -> ExitCode {
             .map(|imp| xenora_import_gen::ImportRecord {
                 module: imp.dll,
                 symbol: imp.symbol,
+                ordinal: match imp.import_name {
+                    xenora_loader::import_table::ImportName::Ordinal(ordinal) => Some(ordinal),
+                    xenora_loader::import_table::ImportName::Name(_) => None,
+                },
                 iat_rva: imp.iat_rva as u64,
             })
             .collect::<Vec<_>>()
@@ -329,15 +333,22 @@ fn run_imports_generate_cli(args: &[String]) -> ExitCode {
         return ExitCode::from(2);
     };
 
+    records.sort();
+    records.dedup();
     println!("Total imports extracted: {}", records.len());
     let db = xenora_import_gen::SymbolDb::builtin();
     let manifest = xenora_import_gen::Manifest::build(&records, &db);
     let summary = manifest.summary();
 
-    println!("Classification summary:");
+    println!("Catalog classification by import slot:");
     for (tier, count) in &summary {
         let pct = (*count as f64 / records.len() as f64 * 100.0) as u32;
         println!("  - {tier}: {count} ({pct}%)");
+    }
+
+    println!("Emitted disposition by distinct import:");
+    for (disposition, count) in manifest.emission_summary() {
+        println!("  - {disposition}: {count}");
     }
 
     let files = xenora_import_gen::generate(&manifest, &db);
@@ -417,6 +428,7 @@ fn run_imports_sync(
     use std::collections::{BTreeMap, BTreeSet};
     use std::sync::Arc;
     use xenora_loader::ImportRegistry;
+    use xenora_loader::import_table::ImportName;
     use xenora_loader::imports::ServiceStatus;
     use xenora_loader::services::{MockClock, ServicesState, register_standard_services};
 
@@ -441,7 +453,11 @@ fn run_imports_sync(
     let mut total = 0usize;
     let mut counts: BTreeMap<&'static str, usize> = BTreeMap::new();
 
-    for line in csv_text.lines().skip(1) {
+    let mut lines = csv_text.lines();
+    let has_import_kind = lines
+        .next()
+        .is_some_and(|header| header.ends_with(",import_kind"));
+    for line in lines {
         // Format: "module","symbol",0xRVA,category,registered,status,is_alias,"canonical",priority,cluster
         // We re-query the live registry rather than trusting cached status.
         let fields: Vec<&str> = line.splitn(10, ',').collect();
@@ -454,7 +470,15 @@ fn run_imports_sync(
             continue;
         }
 
-        let binding = registry.binding(&module, &symbol);
+        let name = if has_import_kind && line.ends_with(",ordinal") {
+            let Some(ordinal) = symbol.strip_prefix("Ordinal#").and_then(|n| n.parse().ok()) else {
+                continue;
+            };
+            ImportName::Ordinal(ordinal)
+        } else {
+            ImportName::Name(symbol.clone())
+        };
+        let binding = registry.resolve(&module, &name);
         let is_registered = binding.is_some();
         let status = binding.map(|b| b.status);
 

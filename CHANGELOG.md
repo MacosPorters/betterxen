@@ -16,6 +16,7 @@ remains unsupported.
 
 ### Added
 - Added the VOP3A (`_e64`) encodings of eleven gfx1030 VOP2 integer forms (`v_mul_{i32_i24,hi_i32_i24,u32_u24,hi_u32_u24}`, `v_{min,max}_{i32,u32}`, `v_xnor_b32`, `v_sub_nc_u32`, `v_subrev_nc_u32`) and of the sixteen Wave32 integer compares (explicit SGPR mask destination, `s_cbranch_vccz` through `vcc_lo`, a translation error for reads of runtime-only SGPR results) as semantic-registry encoding variants, with VGPR sources only. New fixtures `vop3-integer` and `vop3-compare` with IR and MSL goldens, and an independent guide-derived oracle (`tests/validation/tests/vop3_{integer,compare}.rs`) that agrees on both reference interpreters and on native Metal. Part of #215.
+- Added an independent guide-derived oracle for the Wave32 16-bit (`v_cmp_{lt..ge}_{i16,u16}_e32`) and 64-bit (`v_cmp_{f..t}_{i64,u64}_e32`) integer compares in the reference and the second interpreter (6,212 lane cases, 1,208 rejections; contract in `docs/shaders/vector-compare.md` section 2a). The decoder and translator still reject these forms, and native Metal agreement is not yet shown. Part of #215.
 - Added `python3 -m qa rdna2 rank` to the read-only RDNA2 planner: it groups undeclared gfx1030 forms by the piece of work that would unlock them (an encoding variant of a declared form, a new operand rule, or a new primitive, from XML identity and operand shape only) and ranks the groups by forms per estimated cost, excluding claimed scopes, with `--no-float` to leave out floating-point groups until the FP contract exists (part of #215).
 - Added authoritative read-only x86-64 CPU inventory CLI (`python3 -m qa cpu-inventory`) over `crates/loader/x86/instructions.toml` via `generate_x86.load`, with opcode-map/prefix/operand summaries, native vs shared-semantic operation partitions from `dbt.rs`, fixture mnemonic evidence and a separate unsupported catalog. Does not count candidates as implemented. Covered by `tests/qa/test_cpu_inventory.py`.
 - Added typed runtime inventory CLI (`python3 -m qa runtime-inventory`) over `crates/loader/runtime/services.txt`, reporting implemented/partial/stub services separately from API-set aliases and leaving independently-verified empty unless recorded. Covered by `tests/qa/test_runtime_inventory.py`.
@@ -38,6 +39,66 @@ remains unsupported.
 - Moved the twelve Wave32 VOPC integer compares from #239 into the semantic registry (operand rule `vopc_vcc`, `vcc = "lane_mask"`, `wave = "wave32"`) with no behaviour change, and added `v_cmp_f_i32`, `v_cmp_t_i32`, `v_cmp_f_u32` and `v_cmp_t_u32` as registry forms under the same Wave32 VCC/EXEC contract, verified by an independent guide-derived oracle (`tests/validation/tests/vopc_f_t.rs`), a new LLVM-assembled fixture and native Metal (part of #215). `v_cmpx_*`, the VOP3 encoding and Wave64 stay unsupported.
 - Split the gfx1030 semantic registry into one file per encoding family (`crates/isa/semantics/rdna2/{sop2,sopc,sop1,vop2,vopc,vop3}.toml`, included in order by `rdna2.toml`; the split left the generated tables byte-identical), and added registry encoding variants: another encoding of a declared form is pure data. `v_add_nc_u32_e64` is now the first VOP3 variant of `v_add_nc_u32` (operand rule `vop3_vgpr2`), replacing its hand-written decoder and instruction with no behaviour change (part of #215).
 - Added sixteen gfx1030 SOP2 integer forms through the semantic registry: `s_min_i32`, `s_min_u32`, `s_max_i32`, `s_max_u32`, `s_cselect_b32`, `s_bfm_b32`, `s_mul_i32`, `s_bfe_u32`, `s_bfe_i32`, `s_absdiff_i32`, `s_lshl1_add_u32` to `s_lshl4_add_u32`, `s_mul_hi_u32` and `s_mul_hi_i32` (AMD guide section 12.1). Min and max set SCC from the strict compare (a tie gives S1 and SCC 0), `s_cselect_b32` reads SCC and is refused when SCC is unset, and BFM, MUL, MUL_HI and CSELECT leave SCC unchanged. The registry gained these primitives, a `selected_src0` SCC effect, the select's SCC input and a declared `shift_amount` for the shift-and-add forms; `ScalarAluOp::evaluate` now returns an optional SCC. Both reference interpreters, written separately from the guide, run the same sixteen forms and are checked against 21,070 guide-derived cases on both CPU interpreters and on native Metal; 597 rejected programs are refused by both interpreters and by the compiler. A new LLVM-assembled fixture covers all sixteen. Part of #215.
+
+- Added guest mutexes, critical sections, SRW locks, condition variables, synchronous one-time initialization, interlocked SLists, and TLS and FLS slots. Ownership is per guest thread (TEB). Calls that would have to block stop the guest with an explicit runtime-limit fault, because there is no guest scheduler yet. An original PE32+ fixture calls every service through its import table, using two guest TEBs. See `docs/interfaces.md`.
+
+- Added guest system information, memory status, calendar time conversion, interrupt time and sleeping. The guest sees a configurable simulated machine (`GuestSystemProfile`, one processor by default), kept separate from the detected host hardware (`HostCapabilities`). Sleeping goes through the injectable clock, so tests advance time deterministically. An original PE32+ fixture verifies `SYSTEM_INFO`, `MEMORYSTATUSEX` and `SYSTEMTIME` layouts and leap-year handling against dates computed independently.
+
+- Added services that call guest code and continue when it returns. The import dispatcher can run a sequence of guest callbacks on a checked stack frame, verifying the Win64 nonvolatile registers after each one. The CRT uses this for `qsort`, `qsort_s`, `bsearch`, `bsearch_s`, `_initterm`, `_initterm_e`, onexit tables, `atexit` and `_cexit`. Kernel32 uses it for `InitOnceExecuteOnce` and `FlsFree` cleanup callbacks. Original guest comparators and initializers in a PE32+ fixture verify ordering, stop-on-failure and register preservation.
+
+- Fixed the import generator classifying the synchronization API-set entries for `CreateSemaphoreA`, `CreateSemaphoreW` and `ReleaseSemaphore` as stubs, which overrode the runtime handlers. A CLI test now checks that every generator entry marked as a standard service resolves to a registered, non-stub loader handler.
+
+- Added guest module lookup and named symbol resolution for built-in Kernel32 and UCRT services.
+
+- Added same-process guest file handle duplication with a shared file position.
+
+- Added guest file and directory enumeration with typed search handles.
+
+- Added closed-file moves and file and directory attribute queries on the synthetic guest drive.
+
+- Added nested guest directories and checked file deletion on the synthetic drive.
+
+- Added file seeking and end-of-file resizing on the synthetic guest drive.
+
+- Added a bounded synthetic guest drive with synchronous file open, read, write, and size queries.
+
+- Added unnamed guest semaphores with checked release and immediate mixed-object waits.
+
+- Added non-alertable extended event waits through both Win64 wait APIs.
+
+- Added immediate wait-any and wait-all for guest event handles.
+
+- Added guest CRT signed and unsigned 64-bit conversions for narrow and wide strings.
+
+- Added bounded guest CRT long-integer parsing for byte and wide strings.
+
+- Added guest CRT errno accessors and allocation failure reporting for the synthetic main thread.
+
+- Added guest CRT allocation, zeroed array allocation, resizing, and release.
+
+- Added private guest heap creation and destruction with per-heap allocation ownership.
+
+- Added default guest heap reallocation with data preservation and an in-place-only option.
+
+- Added the synthetic default process heap with allocation, size queries, and release.
+
+- Added Win64 signatures for wide-string length and comparison and overlapping byte moves to the import catalog.
+
+- Added guest CRT wide-string length and comparison using Windows 16-bit code units.
+
+- Added checked guest CRT byte string comparison with `strcmp` and `strncmp`.
+
+- Added bounded guest CRT byte fill, copy, move, and comparison services.
+
+- Added guest CRT string length services for UCRT and its string API set.
+
+- Added unnamed guest events with manual and automatic reset, signaling, immediate waits, and same-process handle duplication.
+
+- Added same-process duplication of synthetic thread handles with independent closure.
+- Added a rights-checked `GetThreadId` query for handles to the synthetic guest thread.
+- Added 32-bit and 64-bit millisecond uptime queries for synthetic Windows guests.
+- Added high-resolution elapsed-time queries for synthetic Windows guests through `QueryPerformanceCounter` and `QueryPerformanceFrequency`.
+
 - Added audio PCM streaming and sandboxed virtual filesystem (VFS) integration to the native application runtime (Gate 6, #284). The C interface gains audio management functions (`xenora_session_audio_init`, `xenora_session_audio_submit`, `xenora_session_audio_read`, `xenora_session_audio_status`, `xenora_session_audio_set_volume`) and virtual filesystem functions (`xenora_session_vfs_set_root`, `xenora_session_vfs_open`, `xenora_session_vfs_read`, `xenora_session_vfs_seek`, `xenora_session_vfs_close`, `xenora_session_run_audio_vfs_fixture`). The audio subsystem implements a bounded ring buffer supporting configurable sample rates, channel configurations, PCM formats (S16LE, F32LE), volume attenuation, mute, and buffer underrun tracking. The virtual filesystem operates within an explicitly configured, sandboxed directory root (`fixtures/assets`), strictly rejecting path traversal attempts (`..`, absolute paths, null bytes) and invalid or stale handles, while supporting sequential and seekable file reads (`XENORA_SEEK_SET`, `XENORA_SEEK_CUR`, `XENORA_SEEK_END`). An original PE fixture (`fixtures/pe/audio_vfs.exe`, generated by `fixtures/pe/audio_vfs.py` using only the supported ARM64 DBT instruction subset) opens `asset.bin` (generated by `fixtures/assets/generate.py`), loads a 2x2 RGBA texture and 256 PCM audio samples via VFS, initializes audio, submits the PCM audio queue, and renders the loaded texture on Metal. Verified with unit tests, four Metal acceptance tests in `crates/ffi/tests/audio_vfs.rs`, UI controls and a `--smoke-audio-vfs` CLI in `Xenora.app`.
 - Added persistent GPU resources, dynamic texture updates, and resource retirement to the native application (Gate 5, #279). The C interface gains `xenora_resource`, resource types (`XENORA_RESOURCE_TYPE_*`), `xenora_session_create_texture`, `xenora_session_update_texture`, `xenora_session_destroy_resource`, `xenora_session_resource_info`, `xenora_session_render_textured`, and `xenora_session_run_textured_fixture`. Persistent GPU resources (textures) are explicitly allocated and owned by the execution session, surviving across execution slices without re-allocation. Dynamic texture subregion updates modify GPU texture contents in-place on native Metal. Resource retirement is completion-aware: destroying a resource held by in-flight GPU execution marks it retired and safely defers destruction until in-flight work completes, while rejecting subsequent caller queries with typed error codes. An original PE fixture (`fixtures/pe/textured.exe`, generated by `fixtures/pe/textured.py` using only the supported ARM64 DBT instruction subset) creates a persistent 2x2 texture via `xenora.dll!texture_create`, renders frame 0, updates pixels via `xenora.dll!texture_update`, renders frame 1, and retires the resource via `xenora.dll!texture_destroy`. Xenora.app gains "Run textured fixture" controls and `--smoke-resources`. Six GPU acceptance tests with Metal validation verify persistent texture lifecycle across multiple frames, dynamic 1x1 and 2x1 subregion updates on native Metal, completion-aware deferred retirement, rejection of invalid/stale/double-destroyed handles, slot reuse across 200 cycles without leaking, and full guest fixture execution. Wired acceptance tests into `scripts/test-gpu.sh`.
 - Added interactive guest execution with dynamic input handling and rendering to the native application (Gate 4, #276). The C interface gains `xenora_session_start_interactive_loop`, `xenora_session_send_input`, `xenora_session_queue_input`, and `xenora_session_get_recorded_frame`, along with input masks (`XENORA_INPUT_*`) and `xenora_input_state`. The original interactive guest fixture (`fixtures/pe/interactive.exe`, generated by `fixtures/pe/interactive.py` using only the supported ARM64 DBT instruction subset) polls host input via `xenora.dll!input_poll` and steers its rendered column position (0..3) on native Metal. Xenora.app gains interactive frame-loop controls ("Interactive (300 frames)", "◀ Left", "▶ Right", "Release") and `--smoke-interactive`. Four GPU acceptance tests with Metal validation verify that input events drive guest state and pixel geometry, deterministic input replay reproduces identical frame sequences across multiple sessions, key release and focus loss cleanly hold position without stuck keys, and destroying an interactive session joins promptly. Wired the interactive tests into `scripts/test-gpu.sh`.
@@ -123,6 +184,10 @@ remains unsupported.
 - Fixed 32-bit guest stores and loads in the native DBT (MOV 89/8B and C7 /0), which accessed eight bytes: stores overwrote the next four guest bytes and accesses at the end of a mapping faulted. RIP-relative operands of byte moves and extensions, which were read as RBP-relative, and LEA with a segment prefix, which added the segment base, are fixed too.
 - Fixed an x86 prefix-length test that read an untracked fuzz artifact and so failed on every fresh checkout; its input is now inline.
 - Fixed agent-queue `apply_actions` crashing on comment-only decisions (claim refusals) by skipping no-op `gh issue edit` calls; accept `summary --now` after the subcommand; grant the audit job `pull-requests: read` so live audits can list open PRs (issue #180).
+
+- Generated CRT adapters now report unsupported calls when the required guest ABI or runtime behavior is missing.
+
+- Win64 service argument decoding reports a guest memory error when a stack argument offset overflows.
 
 - Fixed `xenora_isa::meta::identify` reading six VOP3 interpolation forms (`v_interp_p1_f32_e64`, `v_interp_p2_f32_e64`, `v_interp_mov_f32_e64`, `v_interp_p1ll_f16`, `v_interp_p1lv_f16`, `v_interp_p2_f16`) as 12 bytes when SRC0 is 255. In these forms SRC0 holds attribute bit-fields, not an operand selector (AMD RDNA 2 ISA guide section 10.4.2; XML operand type `OPR_ATTR`), so SRC0 = 255 no longer adds a literal word. The six corpus probes are now 8 bytes, as LLVM 23.1.6 also decodes them. The six pinned `mismatch` rows in the LLVM corpus check are gone: one now agrees fully, and five are `operand_flagged` (same instruction and length; LLVM flags an operand).
 - Updated `test_probe_static_analysis_does_not_execute_code`: the SIB store `mov [rsp + 0x20],

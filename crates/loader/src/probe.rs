@@ -11,7 +11,7 @@
 //! startup blockers.
 
 use crate::dbt::{is_native, is_translatable};
-use crate::import_table::{ImportTableError, parse_imports};
+use crate::import_table::{ImportName, ImportTableError, parse_imports};
 use crate::imports::{ImportRegistry, ServiceStatus};
 use crate::memory::MemoryPermissions;
 use crate::pe::{IMAGE_FILE_MACHINE_AMD64, PE32_PLUS_MAGIC, ParsedPe, PeError, PeSection};
@@ -596,12 +596,14 @@ pub struct TlsCensus {
 pub struct ImportedSymbol {
     pub dll: String,
     pub symbol: String,
+    pub import_name: ImportName,
     pub iat_rva: u32,
     pub category: &'static str,
     /// The standard synthetic registry has a handler for this exact key.
     pub is_supported: bool,
     pub service_status: Option<ServiceStatus>,
     pub canonical_module: Option<String>,
+    pub canonical_symbol: Option<String>,
 }
 
 impl ImportedSymbol {
@@ -978,10 +980,12 @@ pub fn probe_pe_bytes(bytes: &[u8], config: &ProbeConfig) -> Result<ProbeReport,
                 category: ProbeReport::categorize_dll(&entry.module),
                 dll: entry.module,
                 symbol: entry.name.to_string(),
+                import_name: entry.name,
                 iat_rva: entry.iat_rva,
                 is_supported: binding.is_some(),
                 service_status: binding.map(|service| service.status),
                 canonical_module: binding.map(|service| service.module.clone()),
+                canonical_symbol: binding.map(|service| service.symbol.clone()),
             }
         })
         .collect();
@@ -1138,9 +1142,9 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
 
     // 1. imports.csv
     let mut imports_csv = String::from(
-        "module,symbol_or_ordinal,iat_rva,category,registered_binding,implementation_status,is_alias,canonical_module,startup_priority,startup_cluster,trusted_runner_binding\n",
+        "module,symbol_or_ordinal,iat_rva,category,registered_binding,implementation_status,is_alias,canonical_module,startup_priority,startup_cluster,trusted_runner_binding,import_kind\n",
     );
-    let mut missing_csv = String::from("module,symbol_or_ordinal,iat_rva\n");
+    let mut missing_csv = String::from("module,symbol_or_ordinal,iat_rva,import_kind\n");
     let mut modules = BTreeSet::new();
     let mut unique_symbols = BTreeSet::new();
     let mut distinct_imports = BTreeSet::new();
@@ -1149,18 +1153,17 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
     let mut clusters = BTreeMap::<(u8, &str), (usize, usize)>::new();
     let mut aliases = 0;
     // The runner admits exactly these bytes and installs a private draw handler.
-    let trusted_fixture = bytes == include_bytes!("../../../fixtures/pe/trusted-runner.exe");
+    let trusted_fixture = bytes == include_bytes!("../../../fixtures/pe/trusted-runner.exe")
+        || bytes == include_bytes!("../../../fixtures/pe/runtime-services.exe");
     let mut trusted_runner_slots = 0;
     let mut missing = 0;
     for imp in &report.imports {
         let module_key = imp.dll.to_ascii_lowercase();
         modules.insert(module_key.clone());
-        distinct_imports.insert((module_key, &imp.symbol));
-        let ordinal_scope = imp
-            .symbol
-            .starts_with("Ordinal#")
-            .then_some(imp.dll.as_str());
-        unique_symbols.insert((ordinal_scope, &imp.symbol));
+        let is_ordinal = matches!(imp.import_name, ImportName::Ordinal(_));
+        let import_kind = if is_ordinal { "ordinal" } else { "name" };
+        unique_symbols.insert((is_ordinal.then_some(module_key.clone()), &imp.import_name));
+        distinct_imports.insert((module_key, &imp.import_name));
         let module = imp.dll.replace('"', "\"\"");
         let symbol = imp.symbol.replace('"', "\"\"");
         let key = format!("\"{module}\",\"{symbol}\",0x{:08x}", imp.iat_rva);
@@ -1171,8 +1174,8 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
         let status = imp.coverage_label();
         let canonical = imp.canonical_module.as_deref().unwrap_or("");
         let is_alias = imp.canonical_module.is_some() && !imp.dll.eq_ignore_ascii_case(canonical);
-        if imp.is_supported {
-            canonical_bindings.insert((canonical, &imp.symbol));
+        if let Some(symbol) = &imp.canonical_symbol {
+            canonical_bindings.insert((canonical, symbol));
         }
         aliases += usize::from(is_alias);
         *counts.entry(status).or_default() += 1;
@@ -1183,11 +1186,11 @@ pub fn run_probe_and_export<O: AsRef<Path>>(
         let canonical = canonical.replace('"', "\"\"");
         let _ = writeln!(
             imports_csv,
-            "{key},{},{},{status},{is_alias},\"{canonical}\",{priority},{cluster},{trusted_binding}",
+            "{key},{},{},{status},{is_alias},\"{canonical}\",{priority},{cluster},{trusted_binding},{import_kind}",
             imp.category, imp.is_supported
         );
         if !imp.is_supported {
-            let _ = writeln!(missing_csv, "{key}");
+            let _ = writeln!(missing_csv, "{key},{import_kind}");
             missing += 1;
         }
     }

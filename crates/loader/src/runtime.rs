@@ -16,6 +16,7 @@ use crate::services::ServicesState;
 /// What a service may use.
 pub struct ServiceContext<'a> {
     pub state: &'a ServicesState,
+    pub teb: u64,
     pub memory: &'a mut GuestMemory,
 }
 
@@ -152,4 +153,33 @@ pub struct ServiceMetadata {
     pub failure: &'static str,
     pub reference: &'static str,
     pub tests: &'static [&'static str],
+}
+/// A 32-bit guest HRESULT returned through the Win64 integer result register.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub(crate) struct HResult(u32);
+
+impl HResult {
+    pub(crate) const OK: Self = Self(0);
+    pub(crate) const FAIL: Self = Self(0x8000_4005);
+
+    /// Convert using the Windows SDK's HRESULT_FROM_WIN32 rules.
+    pub(crate) const fn from_win32(code: u32) -> Self {
+        if (code as i32) <= 0 {
+            Self(code)
+        } else {
+            Self(0x8007_0000 | (code & 0xffff))
+        }
+    }
+
+    pub(crate) fn guest_return(self) -> u64 {
+        u64::from(self.0)
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn hresult_win32_conversion_preserves_status_bits() {
+    assert_eq!(HResult::from_win32(0), HResult::OK);
+    assert_eq!(HResult::from_win32(0x8000_4005), HResult::FAIL);
+    assert_eq!(HResult::from_win32(0x10057).guest_return(), 0x8007_0057);
 }

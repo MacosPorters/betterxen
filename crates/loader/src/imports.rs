@@ -12,6 +12,7 @@ use crate::memory::{GuestMemory, MemoryError};
 use crate::pe::ParsedPe;
 use std::collections::HashMap;
 use std::fmt;
+use std::sync::{Arc, Mutex, RwLock};
 
 /// Base virtual address range reserved for synthetic guest import dispatch trampolines.
 pub const IMPORT_TRAMPOLINE_BASE_VA: u64 = 0x0000_0007_F000_0000;
@@ -112,7 +113,10 @@ impl Win64Args {
             2 => Ok(self.r8),
             3 => Ok(self.r9),
             n => {
-                let stack_offset = 40 + ((n - 4) as u64) * 8;
+                let stack_offset = ((n - 4) as u64)
+                    .checked_mul(8)
+                    .and_then(|offset| offset.checked_add(40))
+                    .ok_or(MemoryError::Overflow)?;
                 let addr = self
                     .rsp
                     .checked_add(stack_offset)
@@ -155,11 +159,117 @@ pub struct ServiceDescriptor {
     pub status: ServiceStatus,
 }
 
+#[derive(Clone, Default)]
+pub(crate) struct DynamicTrampolines(Arc<RwLock<HashMap<u64, usize>>>);
+
+impl DynamicTrampolines {
+    pub(crate) fn revoke(&self, indices: impl Iterator<Item = usize>) {
+        let mut entries = self.0.write().expect("dynamic service trampolines");
+        for index in indices {
+            entries.remove(&trampoline_address(index));
+        }
+    }
+
+    pub(crate) fn expose(&self, index: usize) -> u64 {
+        let address = trampoline_address(index);
+        self.0
+            .write()
+            .expect("dynamic service trampolines")
+            .insert(address, index);
+        address
+    }
+
+    fn get(&self, address: u64) -> Option<usize> {
+        if address < IMPORT_TRAMPOLINE_BASE_VA {
+            return None;
+        }
+        self.0
+            .read()
+            .expect("dynamic service trampolines")
+            .get(&address)
+            .copied()
+    }
+}
+
+fn trampoline_address(index: usize) -> u64 {
+    IMPORT_TRAMPOLINE_BASE_VA + index as u64 * IMPORT_TRAMPOLINE_STRIDE
+}
+
+const CALLBACK_RETURN: u64 = IMPORT_TRAMPOLINE_BASE_VA - IMPORT_TRAMPOLINE_STRIDE;
+const MAX_CALLBACK_DEPTH: usize = 32;
+
+pub(crate) struct GuestCallback {
+    pub(crate) entry: u64,
+    pub(crate) context: u64,
+    pub(crate) cancelled: bool,
+}
+
+type CallbackDispatch = Box<
+    dyn Fn(&Win64Args, &GuestMemory) -> Result<Option<GuestCallback>, ExitReason> + Send + Sync,
+>;
+
+/// What a callback-driven service does next.
+pub(crate) enum CallbackStep {
+    /// Call guest code at `entry` with the four Win64 integer register arguments.
+    Call { entry: u64, args: [u64; 4] },
+    /// Return `value` in RAX to the service's caller.
+    Return(u64),
+}
+
+/// A service that calls guest code one or more times before it returns.
+pub(crate) trait CallbackTask: Send {
+    /// Continue after the previous guest callback returned `result` in RAX.
+    fn resume(
+        &mut self,
+        result: u64,
+        teb: u64,
+        memory: &mut GuestMemory,
+    ) -> Result<CallbackStep, ExitReason>;
+}
+
+/// How a callback-driven service begins: return at once, or call guest code
+/// and continue in a task.
+pub(crate) enum CallbackStart {
+    Return(u64),
+    Call {
+        task: Box<dyn CallbackTask>,
+        entry: u64,
+        args: [u64; 4],
+    },
+}
+
+/// Starts a callback service. The last argument is the address of 16 bytes of
+/// guest stack the service owns until it returns.
+type TaskStart = Box<
+    dyn Fn(&Win64Args, u64, &mut GuestMemory, u64) -> Result<CallbackStart, ExitReason>
+        + Send
+        + Sync,
+>;
+
+/// Stack the dispatcher reserves below the caller's return address for a
+/// callback frame: the callback's return address, its 32-byte home area,
+/// 16 bytes of service scratch and alignment padding. 72 keeps the callback
+/// entry RSP at 8 modulo 16, as after a CALL.
+const TASK_FRAME: u64 = 72;
+const TASK_SCRATCH: u64 = 40;
+
+#[derive(Clone)]
+pub(crate) struct CallbackFrame {
+    resume: u64,
+    preserved: Nonvolatile,
+    task: Option<Arc<Mutex<Box<dyn CallbackTask>>>>,
+    /// RSP to restore when a task returns to its caller.
+    after: u64,
+}
+
 /// Registry for resolving and binding import symbols to guest trampoline VAs.
 pub struct ImportRegistry {
     // (lower-case module, name) -> service index. Symbol names keep their case.
     services: HashMap<(String, ImportName), usize>,
     handlers: Vec<ServiceDescriptor>,
+    callback_dispatchers: HashMap<usize, CallbackDispatch>,
+    callback_tasks: HashMap<usize, TaskStart>,
+    dynamic_trampolines: DynamicTrampolines,
     trampoline_to_service: HashMap<u64, usize>, // Trampoline VA -> service_index
 }
 
@@ -174,7 +284,10 @@ impl ImportRegistry {
         Self {
             services: HashMap::new(),
             handlers: Vec::new(),
+            callback_dispatchers: HashMap::new(),
+            callback_tasks: HashMap::new(),
             trampoline_to_service: HashMap::new(),
+            dynamic_trampolines: DynamicTrampolines::default(),
         }
     }
 
@@ -191,8 +304,27 @@ impl ImportRegistry {
             .copied()
     }
 
-    fn service_index(&self, module: &str, symbol: &str) -> Option<usize> {
+    pub(crate) fn dynamic_trampolines(&self) -> DynamicTrampolines {
+        self.dynamic_trampolines.clone()
+    }
+
+    pub(crate) fn service_index(&self, module: &str, symbol: &str) -> Option<usize> {
         self.index(module, &ImportName::Name(symbol.to_owned()))
+    }
+
+    pub(crate) fn canonical_exports(
+        &self,
+        module: &str,
+    ) -> impl Iterator<Item = (&ImportName, usize)> {
+        self.services
+            .iter()
+            .filter_map(move |((key, name), &index)| {
+                let descriptor = &self.handlers[index];
+                (key == module
+                    && descriptor.module == *key
+                    && descriptor.status != ServiceStatus::Stub)
+                    .then_some((name, index))
+            })
     }
 
     fn check_key(module: &str, name: &ImportName) -> Result<(), RegistryError> {
@@ -334,30 +466,54 @@ impl ImportRegistry {
 
     /// Make `module` resolve `symbol` to the service registered as
     /// `target!symbol`, sharing its trampoline.
+    pub(crate) fn alias(&mut self, module: &str, target: &str, symbol: &str) {
+        self.try_alias(module, target, symbol)
+            .expect("valid built-in service alias");
+    }
+
     pub fn try_alias(
         &mut self,
         module: &str,
         target: &str,
         symbol: &str,
     ) -> Result<(), RegistryError> {
-        let name = ImportName::Name(symbol.to_owned());
-        Self::check_key(module, &name)?;
-        let index = self
-            .index(target, &name)
-            .ok_or_else(|| RegistryError::UnknownTarget {
-                module: target.to_owned(),
-                symbol: symbol.to_owned(),
-            })?;
+        self.alias_key(module, target, symbol, ImportName::Name(symbol.to_owned()))
+    }
+
+    /// Publish a documented ordinal for a named export in its canonical module.
+    pub fn try_ordinal_alias(
+        &mut self,
+        module: &str,
+        symbol: &str,
+        ordinal: u16,
+    ) -> Result<(), RegistryError> {
+        self.alias_key(module, module, symbol, ImportName::Ordinal(ordinal))
+    }
+
+    fn alias_key(
+        &mut self,
+        module: &str,
+        target: &str,
+        symbol: &str,
+        key: ImportName,
+    ) -> Result<(), RegistryError> {
+        Self::check_key(module, &key)?;
+        let index =
+            self.service_index(target, symbol)
+                .ok_or_else(|| RegistryError::UnknownTarget {
+                    module: target.to_owned(),
+                    symbol: symbol.to_owned(),
+                })?;
         let previous = *self
             .services
-            .entry((module.to_ascii_lowercase(), name))
+            .entry((module.to_ascii_lowercase(), key.clone()))
             .or_insert(index);
         if previous == index {
             Ok(())
         } else {
             Err(RegistryError::Duplicate {
                 module: module.to_owned(),
-                symbol: symbol.to_owned(),
+                symbol: key.to_string(),
             })
         }
     }
@@ -403,9 +559,84 @@ impl ImportRegistry {
         Ok(slots.len())
     }
 
+    pub(crate) fn register_callback_dispatch(
+        &mut self,
+        module: &str,
+        symbol: &str,
+        handler: impl Fn(&Win64Args, &GuestMemory) -> Result<Option<GuestCallback>, ExitReason>
+        + Send
+        + Sync
+        + 'static,
+    ) {
+        self.register_with_status(module, symbol, ServiceStatus::Partial, |_, _, _| {
+            Err(ExitReason::IllegalInstruction(0xff))
+        });
+        let index = self
+            .service_index(module, symbol)
+            .expect("registered dispatcher");
+        self.callback_dispatchers.insert(index, Box::new(handler));
+    }
+
+    /// Register a service that may call guest code before returning. `start`
+    /// receives the arguments, the caller's TEB, guest memory and the address
+    /// of the service's 16-byte stack scratch area.
+    pub(crate) fn register_callback_task(
+        &mut self,
+        module: &str,
+        symbol: &str,
+        status: ServiceStatus,
+        start: impl Fn(&Win64Args, u64, &mut GuestMemory, u64) -> Result<CallbackStart, ExitReason>
+        + Send
+        + Sync
+        + 'static,
+    ) {
+        self.register_with_status(module, symbol, status, |_, _, _| {
+            Err(ExitReason::IllegalInstruction(0xff))
+        });
+        let index = self
+            .service_index(module, symbol)
+            .expect("registered callback task");
+        self.callback_tasks.insert(index, Box::new(start));
+    }
+
+    /// Enter a guest callback from the task frame whose return slot is `slot`.
+    fn enter_task_callback(
+        cpu: &mut CpuState,
+        memory: &mut GuestMemory,
+        frame: CallbackFrame,
+        slot: u64,
+        entry: u64,
+        args: [u64; 4],
+    ) -> Result<(), ExitReason> {
+        let key = (cpu.gs_base, slot + 8);
+        if memory.callback_frames.len() >= MAX_CALLBACK_DEPTH
+            || memory.callback_frames.contains_key(&key)
+        {
+            return Err(ExitReason::ServiceAbiViolation);
+        }
+        memory
+            .fetch_instruction_byte(entry)
+            .map_err(ExitReason::MemoryFault)?;
+        memory
+            .write_u64(slot, CALLBACK_RETURN)
+            .map_err(ExitReason::MemoryFault)?;
+        memory.callback_frames.insert(key, frame);
+        for (register, value) in [Register::Rcx, Register::Rdx, Register::R8, Register::R9]
+            .into_iter()
+            .zip(args)
+        {
+            cpu.set(register, value);
+        }
+        cpu.set(Register::Rsp, slot);
+        cpu.rip = entry;
+        Ok(())
+    }
+
     /// Check if target RIP matches a synthetic service trampoline.
     pub fn is_service_trampoline(&self, rip: u64) -> bool {
-        self.trampoline_to_service.contains_key(&rip)
+        rip == CALLBACK_RETURN
+            || self.trampoline_to_service.contains_key(&rip)
+            || self.dynamic_trampolines.get(rip).is_some()
     }
 
     /// Dispatch a service call when guest RIP hits a service trampoline.
@@ -415,9 +646,43 @@ impl ImportRegistry {
         cpu: &mut CpuState,
         memory: &mut GuestMemory,
     ) -> Result<(), ExitReason> {
-        let service_idx = *self
+        if rip == CALLBACK_RETURN {
+            let key = (cpu.gs_base, cpu.get(Register::Rsp));
+            let frame = memory
+                .callback_frames
+                .remove(&key)
+                .ok_or(ExitReason::IllegalInstruction(0xff))?;
+            if Nonvolatile::of(cpu) != frame.preserved {
+                return Err(ExitReason::ServiceAbiViolation);
+            }
+            let Some(task) = frame.task.clone() else {
+                cpu.set(Register::Rax, 1);
+                cpu.rip = frame.resume;
+                return Ok(());
+            };
+            let result = cpu.get(Register::Rax);
+            let step =
+                task.lock()
+                    .expect("guest callback task")
+                    .resume(result, cpu.gs_base, memory)?;
+            return match step {
+                CallbackStep::Call { entry, args } => {
+                    let slot = key.1 - 8;
+                    Self::enter_task_callback(cpu, memory, frame, slot, entry, args)
+                }
+                CallbackStep::Return(value) => {
+                    cpu.set(Register::Rax, value);
+                    cpu.set(Register::Rsp, frame.after);
+                    cpu.rip = frame.resume;
+                    Ok(())
+                }
+            };
+        }
+        let service_idx = self
             .trampoline_to_service
             .get(&rip)
+            .copied()
+            .or_else(|| self.dynamic_trampolines.get(rip))
             .ok_or(ExitReason::IllegalInstruction(0xFF))?;
 
         let descriptor = &self.handlers[service_idx];
@@ -431,6 +696,68 @@ impl ImportRegistry {
 
         let args = Win64Args::new(cpu);
         let preserved = Nonvolatile::of(cpu);
+        if let Some(start) = self.callback_tasks.get(&service_idx) {
+            let slot = after
+                .checked_sub(TASK_FRAME)
+                .ok_or(ExitReason::MemoryFault(MemoryError::Overflow))?;
+            memory
+                .check_write(slot, (TASK_FRAME - 8) as usize)
+                .map_err(ExitReason::MemoryFault)?;
+            match start(&args, cpu.gs_base, memory, slot + TASK_SCRATCH)? {
+                CallbackStart::Return(value) => {
+                    cpu.set(Register::Rax, value);
+                    cpu.set(Register::Rsp, after);
+                    cpu.rip = ret_addr;
+                }
+                CallbackStart::Call { task, entry, args } => {
+                    let mut preserved = preserved;
+                    preserved.gpr[4] = slot + 8;
+                    let frame = CallbackFrame {
+                        resume: ret_addr,
+                        preserved,
+                        task: Some(Arc::new(Mutex::new(task))),
+                        after,
+                    };
+                    Self::enter_task_callback(cpu, memory, frame, slot, entry, args)?;
+                }
+            }
+            return Ok(());
+        }
+        if let Some(dispatcher) = self.callback_dispatchers.get(&service_idx) {
+            let key = (cpu.gs_base, after);
+            if memory.callback_frames.len() >= MAX_CALLBACK_DEPTH
+                || memory.callback_frames.contains_key(&key)
+            {
+                return Err(ExitReason::ServiceAbiViolation);
+            }
+            memory
+                .check_write(rsp, 8)
+                .map_err(ExitReason::MemoryFault)?;
+            if let Some(callback) = dispatcher(&args, memory)? {
+                memory
+                    .write_u64(rsp, CALLBACK_RETURN)
+                    .map_err(ExitReason::MemoryFault)?;
+                let mut preserved = preserved;
+                preserved.gpr[4] = after;
+                memory.callback_frames.insert(
+                    key,
+                    CallbackFrame {
+                        resume: ret_addr,
+                        preserved,
+                        task: None,
+                        after,
+                    },
+                );
+                cpu.set(Register::Rcx, callback.context);
+                cpu.set(Register::Rdx, u64::from(callback.cancelled));
+                cpu.rip = callback.entry;
+                return Ok(());
+            }
+            cpu.set(Register::Rax, 0);
+            cpu.set(Register::Rsp, after);
+            cpu.rip = ret_addr;
+            return Ok(());
+        }
         let value = (descriptor.handler)(&args, cpu, memory)?;
         if Nonvolatile::of(cpu) != preserved {
             return Err(ExitReason::ServiceAbiViolation);
@@ -444,7 +771,7 @@ impl ImportRegistry {
 }
 
 /// Registers a Win64 callee must preserve (Microsoft x64 calling convention).
-#[derive(PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 struct Nonvolatile {
     gpr: [u64; 9],
     xmm: [u128; 10],
@@ -476,4 +803,53 @@ pub(crate) fn find_import_directory(bytes: &[u8]) -> Option<u32> {
     let rva = u32_at(optional.checked_add(120)?)?;
     let size = u32_at(optional.checked_add(124)?)?;
     (rva != 0 && size != 0).then_some(rva)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::memory::MemoryPermissions;
+
+    #[test]
+    fn win64_arguments_follow_register_and_stack_layout() {
+        let args = Win64Args {
+            rcx: 11,
+            rdx: 12,
+            r8: 13,
+            r9: 14,
+            rsp: 0x1000,
+        };
+        let mut memory = GuestMemory::new();
+        memory
+            .map_region(0x1000, 56, MemoryPermissions::READ_WRITE)
+            .unwrap();
+        memory.write_u64(0x1028, 15).unwrap();
+        memory.write_u64(0x1030, 16).unwrap();
+        for (index, expected) in (11..=16).enumerate() {
+            assert_eq!(args.get(index, &memory), Ok(expected));
+        }
+        assert_eq!(
+            args.get(6, &memory),
+            Err(MemoryError::UnmappedAddress(0x1038))
+        );
+    }
+
+    #[test]
+    fn win64_stack_arguments_reject_overflow_in_offsets_and_addresses() {
+        let mut args = Win64Args {
+            rcx: 0,
+            rdx: 0,
+            r8: 0,
+            r9: 0,
+            rsp: 0x1000,
+        };
+        let memory = GuestMemory::new();
+        assert_eq!(args.get(usize::MAX, &memory), Err(MemoryError::Overflow));
+        assert_eq!(
+            args.get(usize::MAX / 8 + 4, &memory),
+            Err(MemoryError::Overflow)
+        );
+        args.rsp = u64::MAX - 39;
+        assert_eq!(args.get(4, &memory), Err(MemoryError::Overflow));
+    }
 }

@@ -1,12 +1,12 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
-"""Generate the original PE32+ trusted-runner fixture without an x86 toolchain."""
+"""Generate the PE32+ trusted runner fixtures without an x86 toolchain."""
 
 import argparse
 from pathlib import Path
 from struct import pack, pack_into
 
 
-def fixture():
+def fixture(runtime_services=False):
     base = 0x140000000
     entry, callback = 0x1000, 0x1040
     imports, marker, reloc = 0x2000, 0x3000, 0x4000
@@ -63,6 +63,31 @@ def fixture():
     pack_into("<Q", data, 0x6E0, base + marker)
     # DIR64 fixups for the TLS index/array/callback pointers and the draw ticket pointer.
     pack_into("<IIHHHH", data, 0xA00, imports, 16, 0xA0B0, 0xA0B8, 0xA0D0, 0xA0E0)
+    if runtime_services:
+        iat = imports + 0xF0
+        service_iat, service_lookup, kernel, set_error, get_error = (
+            imports + offset for offset in (0x100, 0x120, 0x140, 0x150, 0x160)
+        )
+        pack_into("<I", data, opt + 124, 60)
+        pack_into("<II", data, opt + 112 + 12 * 8, iat, 40)
+        pack_into("<I", data, 0x610, iat)
+        pack_into("<Q", data, 0x6F0, symbol)
+        pack_into("<IIIII", data, 0x614, service_lookup, 0, 0, kernel, service_iat)
+        pack_into("<QQ", data, 0x700, set_error, get_error)
+        pack_into("<QQ", data, 0x720, set_error, get_error)
+        data[0x740:0x74D] = b"kernel32.dll\0"
+        data[0x752:0x75E] = b"SetLastError"
+        data[0x762:0x76E] = b"GetLastError"
+
+        code = bytearray(b"\x48\x83\xec\x28")
+        code += b"\xb9" + pack("<I", 23)
+        code += b"\xff\x15" + pack("<i", service_iat - (entry + len(code) + 6))
+        code += b"\xff\x15" + pack("<i", service_iat + 8 - (entry + len(code) + 6))
+        code += b"\x48\x8b\x0d" + pack("<i", marker_ptr - (entry + len(code) + 7))
+        code += b"\x48\x89\x01"  # Store the retrieved value for the draw handler.
+        code += b"\xff\x15" + pack("<i", iat - (entry + len(code) + 6))
+        code += b"\x48\x83\xc4\x28\xf4"
+        data[0x400:0x400 + len(code)] = code
     return data
 
 
@@ -70,9 +95,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    path = Path(__file__).with_suffix(".exe")
-    if args.check:
-        if path.read_bytes() != fixture():
-            parser.exit(1, f"fixture bytes differ from generator: {path}\n")
-    else:
-        path.write_bytes(fixture())
+    for name, runtime_services in (("trusted-runner", False), ("runtime-services", True)):
+        path = Path(__file__).with_name(f"{name}.exe")
+        if args.check:
+            if path.read_bytes() != fixture(runtime_services):
+                parser.exit(1, f"fixture bytes differ from generator: {path}\n")
+        else:
+            path.write_bytes(fixture(runtime_services))

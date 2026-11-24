@@ -93,14 +93,37 @@ Win32 references include Microsoft's documentation for
 [SetProcessPriorityBoost](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-setprocesspriorityboost),
 and [GetProcessPriorityBoost](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-getprocesspriorityboost).
 
+### Performance timing
+
+The guest can import `QueryPerformanceCounter` and `QueryPerformanceFrequency`
+from Kernel32 or the profile API set. The counter measures monotonic elapsed
+time at a fixed 10 MHz, independently of wall-clock time. Synthetic fixtures
+can advance it deterministically. A failed guest output write returns false
+and records `ERROR_NOACCESS`. `GetTickCount` and `GetTickCount64` return
+whole milliseconds since the synthetic runtime was created. The 32-bit value
+wraps at 2³² milliseconds. Both use the monotonic clock and are available
+through Kernel32 and the system-information API set.
+
+See Microsoft's documentation for
+[QueryPerformanceCounter](https://learn.microsoft.com/windows/win32/api/profileapi/nf-profileapi-queryperformancecounter)
+[QueryPerformanceFrequency](https://learn.microsoft.com/windows/win32/api/profileapi/nf-profileapi-queryperformancefrequency),
+[GetTickCount](https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-gettickcount),
+and [GetTickCount64](https://learn.microsoft.com/windows/win32/api/sysinfoapi/nf-sysinfoapi-gettickcount64).
+
 ### Thread handles and virtual memory
 
 The thread object model exposes one guest thread with a stable synthetic ID.
 `OpenThread` issues rights-checked handles to that thread, and `CloseHandle`
 invalidates real handles. A thread pseudo handle refers to the current synthetic
-thread. The priority APIs store and query the thread's base-priority setting.
+thread. `GetThreadId` accepts the pseudo handle and live thread handles with
+query rights. The priority APIs store and query the thread's base-priority setting.
 Thread creation, inheritance, debugger exceptions, and scheduling remain outside
-this model.
+this model. Within the synthetic process, `DuplicateHandle` can convert the
+thread pseudo handle to a real handle or copy a live thread handle. The new
+handle can keep or reduce the source's rights. The original and duplicate can
+be closed independently. Cross-process duplication, inheritable handles,
+process-handle duplication, and closing the source during duplication are
+outside this subset. A failed output write leaves the handle table unchanged.
 
 `VirtualAlloc` supports combined reserve and commit for data-only pages.
 `VirtualFree` supports `MEM_RELEASE` with the exact allocation base and a
@@ -110,10 +133,257 @@ allocation lifecycle remain unsupported.
 
 References include Microsoft's
 [thread handle](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-openthread),
+[thread ID](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-getthreadid),
 [thread priority](https://learn.microsoft.com/windows/win32/api/processthreadsapi/nf-processthreadsapi-setthreadpriority),
+[handle duplication](https://learn.microsoft.com/windows/win32/api/handleapi/nf-handleapi-duplicatehandle),
 [handle close](https://learn.microsoft.com/windows/win32/api/handleapi/nf-handleapi-closehandle),
 [virtual allocation](https://learn.microsoft.com/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc),
 and [virtual release](https://learn.microsoft.com/windows/win32/api/memoryapi/nf-memoryapi-virtualfree) contracts.
+
+### CRT strings and byte memory
+
+The standard registry provides `strlen` and `strnlen` under UCRT and the CRT
+string API set. They count bytes using checked guest memory. The scan stops at
+a null byte or the requested bound for `strnlen`. A scan that would continue
+past 1 MiB reports an unsupported-service fault. See the
+[Microsoft CRT string-length contract](https://learn.microsoft.com/en-us/cpp/c-runtime-library/reference/strnlen-strnlen-s).
+
+The same modules expose `strcmp` and `strncmp`. These compare unsigned bytes
+and stop at the first difference, null byte, or supplied comparison bound.
+They share the 1 MiB scan budget. `wcslen`, `wcsnlen`, `wcscmp`, and
+`wcsncmp` apply the same rules to unsigned 16-bit Windows code units.
+Counts and bounds for the wide variants are in code units.
+
+The same modules expose `memset`, `memcpy`, `memmove`, and `memcmp` for spans
+up to 1 MiB. Each nonempty span must be fully mapped with the required permissions.
+A span may cross adjacent guest regions. Writes validate the full destination before changing
+bytes, and moves preserve the original source bytes when ranges overlap.
+
+### Guest heaps
+
+`GetProcessHeap`, `HeapAlloc`, `HeapSize`, and `HeapFree` expose the
+default synthetic heap. Allocations are at least 16-byte aligned and zero initialized.
+A zero-size request allocates one byte. All heaps in an address space share a 64 MiB budget and a limit of
+4096 live allocations. Heap and virtual allocations have distinct ownership.
+`HeapReAlloc` preserves the retained bytes and zeroes newly added bytes.
+It can move a block unless `HEAP_REALLOC_IN_PLACE_ONLY` is set. Failed
+resizes preserve the original block. `HeapCreate` supports up to 256 growable private heaps with default flags.
+The initial size is checked against the budget and backing is allocated on
+demand. `HeapDestroy` frees all blocks owned by that private heap and
+invalidates its handle. The default heap cannot be destroyed. See the [Windows heap API reference](https://learn.microsoft.com/windows/win32/api/heapapi/).
+
+UCRT and the CRT heap API set expose `malloc`, `calloc`, `realloc`, and
+`free` on the bounded default guest heap. `calloc` checks for size overflow.
+`realloc(NULL, size)` allocates a new block, and resizing a nonnull block to
+zero frees it. Allocation failures return null and preserve existing blocks.
+Allocation failures also set the synthetic main thread's CRT `errno` to
+`ENOMEM`. The runtime API set and UCRT expose `_errno`, `_get_errno`, and
+`_set_errno` through a stable guest memory slot. Additional guest threads
+and CRT parameter or new-handler callbacks remain unsupported. See
+[Microsoft CRT allocation documentation](https://learn.microsoft.com/cpp/c-runtime-library/memory-allocation).
+
+### CRT integer conversion
+
+UCRT and the CRT conversion API set expose strtol, strtoul, wcstol, and
+wcstoul with 32-bit Windows long results. The parser supports C-locale
+whitespace, explicit bases 2–36 and automatic base selection, and writes
+the first unparsed guest address to a supplied end pointer. Overflow
+clamps the result and sets ERANGE. Scans have a 1 MiB input budget. The long-long variants and
+Microsoft's _strtoi64, _strtoui64, _wcstoi64, and _wcstoui64 apply the
+same rules with 64-bit results.
+
+### Built-in guest modules
+
+GetModuleHandleA and GetModuleHandleW recognize synthetic Kernel32 and UCRT
+module names and their registered API-set aliases. GetProcAddress resolves
+case-sensitive named exports to guest service trampolines. The registry
+captures built-in bindings at standard service registration and excludes
+stubs. Missing names and unsupported ordinals fail explicitly. These APIs
+expose synthetic module handles and never load host libraries.
+
+### Synthetic guest files
+
+The runtime exposes an in-memory C: drive through CreateFileW, ReadFile,
+WriteFile, GetFileSizeEx, and CloseHandle. It supports UTF-16 file and
+directory names, ASCII case folding, synchronous I/O, per-open file positions, and
+read/write sharing. SetFilePointerEx supports seeking from the beginning,
+current position, and end. SetEndOfFile truncates or zero-extends writable
+files at the current position. Seeks alone do not change file length.
+Paths cannot access host files. The drive supports
+256 files and 16 MiB of data, with a 1 MiB limit per transfer.
+CreateDirectoryW and RemoveDirectoryW manage up to 256 directories. Parents
+must exist, and directories must be empty before removal. DeleteFileW
+deletes closed files. MoveFileW moves closed files to an unused name under
+an existing directory. GetFileAttributesW distinguishes files and directories.
+Traversal components and device names are rejected.
+FindFirstFileW, FindNextFileW, and FindClose enumerate a sorted snapshot of
+direct children. The final path component accepts literal names, * and ?
+wildcards, and *.* matches every name. Results include attributes, byte size,
+and a UTF-16 name. Times and alternate names are zero. Up to 32 searches
+can be open. Same-process file handle duplicates share the file position and keep the
+original sharing reservation until the last duplicate closes. Access can
+be reduced per handle. DOS wildcard edge cases, persistence, and
+asynchronous I/O remain outside this subset.
+
+### Event and semaphore signaling
+
+The synthetic runtime supports unnamed manual-reset and auto-reset events
+created with default security attributes. `SetEvent` signals an event,
+`ResetEvent` clears it, and `CloseHandle` invalidates the handle.
+`WaitForSingleObject` consumes an auto-reset signal once, leaves a manual-reset
+signal set, and reports `WAIT_TIMEOUT` when a zero-timeout poll finds no signal.
+A wait that would block returns `WAIT_FAILED` with `ERROR_NOT_SUPPORTED`.
+Thread and event handles are distinct types in the same bounded table.
+Event duplicates share signal state and keep the event alive independently.
+A duplicate can retain or reduce its rights. Waiting requires synchronize
+access, and setting or resetting requires modify-state access.
+
+`WaitForMultipleObjects` supports immediate waits on up to 64 events or semaphores.
+Wait-any selects the first signaled handle. Wait-all consumes auto-reset
+signals only when every object is ready. Repeated handles and wait-all
+aliases to the same event are rejected. The extended single- and multiple-
+object wait APIs support the same immediate behavior when alerting is
+disabled. Alertable calls and waits that would block return an unsupported
+error.
+
+`CreateSemaphoreA` and `CreateSemaphoreW` create unnamed semaphores
+with default security attributes. A successful wait consumes one permit.
+`ReleaseSemaphore` can return the previous count and rejects a release
+that exceeds the maximum without changing the count. Duplicates share
+the same permit count.
+
+`CreateMutexA`, `CreateMutexW` and their `Ex` forms create unnamed mutexes,
+optionally owned by the caller. Ownership belongs to the calling guest
+thread, identified by its TEB. The owner can acquire the mutex again, and
+each acquisition needs a matching `ReleaseMutex`. Another thread sees the
+mutex as unsignaled. A release by a thread that is not the owner fails with
+`ERROR_NOT_OWNER`. Waits, duplicates and wait-all treat mutexes like the
+other waitable objects. Abandonment on thread exit is not modeled, because
+guest threads do not exit yet.
+
+See Microsoft's [event object documentation](https://learn.microsoft.com/windows/win32/sync/event-objects).
+
+### Locks, one-time initialization and thread-local storage
+
+These services keep their state in the runtime and key ownership by guest
+TEB. There is no guest scheduler, so any call that would block stops the
+guest with the runtime-limit fault (`IllegalInstruction(0xFE)`) rather than
+reporting success. Guest code reaches that fault by entering a critical
+section owned by another thread, acquiring a held SRW lock, or beginning a
+one-time initialization that another thread has pending.
+
+- Critical sections use the x64 `RTL_CRITICAL_SECTION` layout from
+  `winnt.h`. Initialization writes the 40-byte structure. `LockCount` is -1
+  when free and -2 when held; the runtime also updates `RecursionCount` and
+  `OwningThread`. The owner may enter recursively. `TryEnterCriticalSection`
+  returns FALSE when another thread owns it. Leaving a section the caller
+  does not own, or using one that was never initialized, stops the guest.
+  The runtime holds up to 4,096 sections.
+- SRW locks allow any number of shared holders or one exclusive holder. The
+  try forms return FALSE instead of waiting. Exclusive acquisition is not
+  recursive. Releasing a mode the caller does not hold stops the guest.
+- Condition variables check that the caller holds the named lock. A
+  zero-timeout sleep returns FALSE with `ERROR_TIMEOUT` and leaves the lock
+  held in its original mode. Longer sleeps return `ERROR_NOT_SUPPORTED`.
+  Wake calls do nothing, because no thread can be sleeping.
+- `InitOnceBeginInitialize` and `InitOnceComplete` support the synchronous
+  mode, `INIT_ONCE_CHECK_ONLY` and `INIT_ONCE_INIT_FAILED`. The completed
+  context is stored in the `INIT_ONCE` word, so later calls read it back.
+  Asynchronous mode returns `ERROR_NOT_SUPPORTED`. `InitOnceExecuteOnce`
+  calls the guest initializer once with the object, the parameter and a
+  context pointer. A FALSE result, or a context that uses the two reserved
+  low bits, leaves the object uninitialized so a later call can retry.
+- Interlocked SLists use the x64 `SLIST_HEADER` layout. The low 16 bits hold
+  the depth, and bits 4 to 63 of the second quadword hold the first entry.
+  Headers and entries must be 16-byte aligned. Updates are atomic with
+  respect to other services. They are not atomic with respect to guest
+  instructions that modify the header directly on another host thread.
+- TLS provides the documented 1,088 indexes. FLS provides the 128
+  `FLS_MAXIMUM_AVAILABLE` slots defined in the MinGW-w64 headers. Values are
+  per guest thread, new indexes read as zero everywhere, and successful get
+  calls clear the last error. Values live in the runtime, not in the TEB
+  `TlsSlots` array, so guest code that reads the TEB directly does not see
+  them. `FlsFree` releases the slot, then calls its cleanup callback on the
+  calling thread for each thread's nonnull value, in TEB order.
+
+### System information, calendar time and sleeping
+
+The guest sees a simulated machine described by `GuestSystemProfile` on
+`ServicesState`, and never the host's hardware. `HostCapabilities::detect`
+reports the Mac's logical processors, physical memory and page size
+separately, for diagnostics.
+
+- `GetSystemInfo` and `GetNativeSystemInfo` report an AMD64 processor
+  (`PROCESSOR_ARCHITECTURE_AMD64`, `PROCESSOR_AMD_X8664`), 4 KiB pages,
+  64 KiB allocation granularity and the x64 user address range
+  `0x10000`–`0x7FFFFFFEFFFF`. The processor count comes from the profile and
+  defaults to one, because guest code runs on one thread at a time. The
+  processor level and revision are zero, because no CPU model is simulated.
+- `GlobalMemoryStatusEx` requires `dwLength` to be 64. Guest physical memory is
+  the virtual-allocation and heap budgets together, 128 MiB. Available memory
+  and `dwMemoryLoad` reflect current guest allocations. There is no paging
+  file, and the virtual totals cover the x64 user range.
+- `GetSystemTime`, `GetLocalTime` and `GetSystemTimePreciseAsFileTime` read
+  the injected clock. The guest time zone is UTC, so local time equals system
+  time. `FileTimeToSystemTime` and `SystemTimeToFileTime` convert using the
+  proleptic Gregorian calendar. They reject FILETIME values with the top bit
+  set and invalid dates (years outside 1601–30827), ignore the day of week on
+  input, and return `ERROR_INVALID_PARAMETER` without writing output.
+- `QueryUnbiasedInterruptTime` reports 100 ns ticks since the service state
+  was created.
+- `Sleep` and `SleepEx` suspend the calling thread through the clock, so the
+  mock clock advances instead of waiting. No APCs exist, so an alertable sleep
+  always returns zero. `INFINITE` and sleeps longer than 10 seconds stop the
+  guest with the runtime-limit fault, because a single guest thread could not
+  be woken.
+
+### Services that call guest code
+
+A service registered as a callback task can call guest functions before it
+returns. The dispatcher reserves 72 bytes of guest stack below the caller's
+return address. That space holds the callback's return address, its 32-byte
+home area and 16 bytes of scratch owned by the service, and it keeps RSP at 8
+modulo 16 on entry, as after a CALL. Each callback receives up to four
+integer register arguments and must preserve the Win64 nonvolatile
+registers, or the guest stops with `ServiceAbiViolation`. The callback's RAX
+is passed to the task, which either calls guest code again or returns a value
+to the original caller with its RSP restored. Up to 32 callback frames may be
+active. Callback entry points must be executable. The earlier one-shot
+dispatch used by the GDK task queue is unchanged.
+
+The CRT uses this for:
+
+- `qsort` and `qsort_s`, which sort up to 1 MiB in place with a guest
+  comparator. Elements stay in place while the comparator runs and are
+  permuted once at the end. `qsort_s` passes its context as the first
+  comparator argument.
+- `bsearch` and `bsearch_s`, which return a pointer to a matching element
+  or null.
+- `_initterm` and `_initterm_e`, which call each nonnull entry of an
+  initializer table in order. `_initterm_e` stops at the first nonzero
+  result and returns it. Tables hold at most 65,536 entries.
+
+- `_initialize_onexit_table`, `_register_onexit_function` and
+  `_execute_onexit_table` manage `_onexit_table_t` tables. Their storage is
+  on the default guest heap, and they hold at most 65,536 entries. Execution
+  resets the table first, then calls the functions in reverse order of
+  registration. `atexit` and `_crt_atexit` record process exit functions,
+  which `_cexit` runs in reverse order. Process termination through `exit` is
+  not modeled.
+
+Null comparators, null arrays with a nonzero count, and reversed or
+misaligned tables would reach the CRT invalid-parameter handler. That
+handler is not modeled, so these inputs stop the guest with the
+runtime-limit fault.
+
+API-set aliases follow Microsoft's
+[Win32 APIs for UWP apps](https://learn.microsoft.com/uwp/win32-and-com/win32-apis)
+listing: critical sections, SRW locks and mutexes use
+`api-ms-win-core-synch-l1-1-0`; condition variables and one-time
+initialization use `api-ms-win-core-synch-l1-2-0`; SLists use
+`api-ms-win-core-interlocked-l1-1-0`; TLS uses
+`api-ms-win-core-processthreads-l1-1-0`; and FLS uses
+`api-ms-win-core-fibers-l1-1-0`.
 
 ## Synthetic tiled textures
 

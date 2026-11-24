@@ -20,6 +20,7 @@ pub struct Parameter {
 pub struct Service {
     pub library: String,
     pub symbol: String,
+    pub ordinal: Option<(u16, String)>,
     pub parameters: Vec<Parameter>,
     pub result: String,
     pub handler: String,
@@ -96,6 +97,17 @@ pub fn parse(text: &str, test_source: &str) -> Result<Vec<Service>, String> {
             "handler" => service.handler = rest.to_owned(),
             "status" => service.status = rest.to_owned(),
             "alias" => service.aliases.push(rest.to_owned()),
+            "ordinal" => {
+                let (value, source) = rest
+                    .split_once(' ')
+                    .ok_or_else(|| at("ordinal needs a number and a source"))?;
+                let value = value
+                    .parse::<u16>()
+                    .ok()
+                    .filter(|value| *value != 0)
+                    .ok_or_else(|| at("ordinal must be in 1..=65535"))?;
+                service.ordinal = Some((value, source.trim().to_owned()));
+            }
             "fails" => service.failure = rest.to_owned(),
             "ref" => service.reference = rest.to_owned(),
             "test" => service.tests.push(rest.to_owned()),
@@ -123,6 +135,7 @@ fn parse_signature(text: &str) -> Result<Service, String> {
     Ok(Service {
         library: library.to_owned(),
         symbol: symbol.trim().to_owned(),
+        ordinal: None,
         parameters,
         result: result.trim().to_owned(),
         handler: String::new(),
@@ -137,6 +150,7 @@ fn parse_signature(text: &str) -> Result<Service, String> {
 fn validate(services: &[Service], test_source: &str) -> Result<(), String> {
     // Every key a guest could import, with the service it resolves to.
     let mut keys: BTreeMap<(String, &str), usize> = BTreeMap::new();
+    let mut ordinals = BTreeSet::new();
     for (index, service) in services.iter().enumerate() {
         let name = format!("{}!{}", service.library, service.symbol);
         let fail = |message: String| Err(format!("{name}: {message}"));
@@ -148,6 +162,14 @@ fn validate(services: &[Service], test_source: &str) -> Result<(), String> {
         }
         if !is_identifier(&service.symbol) {
             return fail("symbol is not an identifier".into());
+        }
+        if let Some((ordinal, source)) = &service.ordinal {
+            if source.is_empty() {
+                return fail("ordinal needs a source".into());
+            }
+            if !ordinals.insert((&service.library, ordinal)) {
+                return fail(format!("ordinal {ordinal} already resolves in this module"));
+            }
         }
         if !is_identifier(&service.handler) {
             return fail("missing or invalid handler".into());
@@ -283,16 +305,18 @@ pub fn generate_rust(services: &[Service]) -> String {
         } else {
             "Ok(result.place(cpu))"
         };
-        let cpu = if service.result == "void" && count == 0 {
-            "        let _ = cpu;\n"
-        } else {
-            ""
-        };
         let _ = writeln!(
             out,
-            "{cpu}        let mut context = ServiceContext {{ state: &s, memory }};\n        {binding} = handlers::{}(&mut context{names})?;\n        {place}\n    }});",
+            "        let mut context = ServiceContext {{ state: &s, memory, teb: cpu.gs_base }};\n        {binding} = handlers::{}(&mut context{names})?;\n        {place}\n    }});",
             service.handler
         );
+        if let Some((ordinal, _)) = &service.ordinal {
+            let _ = writeln!(
+                out,
+                "    registry.try_ordinal_alias({:?}, {:?}, {ordinal}).expect(\"validated export ordinal\");",
+                service.library, service.symbol
+            );
+        }
     }
     out.push_str("    for service in &SERVICES {\n        for alias in service.aliases {\n            if let Err(error) = registry.try_alias(alias, service.library, service.symbol) {\n                panic!(\"{error}\");\n            }\n        }\n    }\n}\n");
     out.replace(
@@ -343,6 +367,15 @@ pub fn generate_report(services: &[Service]) -> String {
             service.failure
         );
     }
+    for service in services {
+        if let Some((ordinal, source)) = &service.ordinal {
+            let _ = writeln!(
+                out,
+                "\nOrdinal {ordinal} for `{}!{}` is documented by {source}.",
+                service.library, service.symbol
+            );
+        }
+    }
     out
 }
 
@@ -377,6 +410,26 @@ mod tests {
             assert!(rust.contains(expected), "{expected}");
         }
         assert!(generate_report(&services).contains("| Unique handler implementations | 1 |"));
+    }
+
+    #[test]
+    fn ordinal_requires_a_source_and_unique_module_key() {
+        let first = entry("kernel32.dll F() -> void", "ordinal 42 test catalog");
+        let services = parse(&first, TESTS).unwrap();
+        assert!(
+            generate_rust(&services).contains("try_ordinal_alias(\"kernel32.dll\", \"F\", 42)")
+        );
+        assert!(generate_report(&services).contains("documented by test catalog"));
+        let second = entry("kernel32.dll G() -> void", "ordinal 42 test catalog");
+        rejects(&(first + &second), "ordinal 42 already resolves");
+        rejects(
+            &entry("kernel32.dll F() -> void", "ordinal 42"),
+            "needs a number and a source",
+        );
+        rejects(
+            &entry("kernel32.dll F() -> void", "ordinal 65536 test catalog"),
+            "1..=65535",
+        );
     }
 
     #[test]

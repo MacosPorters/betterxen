@@ -14,6 +14,7 @@ Guest imports resolve through one lookup, `ImportRegistry::resolve`. Binding, th
 
 - Module names compare without case; symbol names are exact. A name spelled `Ordinal#7` is not ordinal 7.
 - An API set resolves only if the registry lists that exact set for that symbol. A similar name forwards nowhere.
+- An optional `ordinal <number> <source>` field adds an ordinal for the canonical DLL. Cite the export catalog and version that establish the mapping. Named and ordinal imports share the same adapter. The ordinal applies only to the canonical DLL.
 - Registering a key twice is an error. A host module cannot replace a standard service.
 - Binding resolves every import before it writes any slot. A malformed table or an unresolved import leaves every slot unbound.
 - A service call reads its return address first, and stops the guest with `ServiceAbiViolation` if the service changed a nonvolatile register, including XMM6 to XMM15.

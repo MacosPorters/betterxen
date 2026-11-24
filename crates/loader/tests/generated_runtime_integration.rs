@@ -3,7 +3,7 @@
 use std::sync::Arc;
 use xenora_loader::cpu::{CpuState, ExitReason};
 use xenora_loader::imports::{ImportRegistry, ServiceStatus, Win64Args};
-use xenora_loader::memory::{GuestMemory, MemoryPermissions};
+use xenora_loader::memory::{GuestMemory, MemoryError, MemoryPermissions};
 use xenora_loader::services::{MockClock, ServicesState, register_standard_services};
 
 #[test]
@@ -60,4 +60,52 @@ fn test_unsupported_stub_fails_explicitly() {
     let desc = registry.binding("kernel32.dll", "UnsupportedApi").unwrap();
     let res = (desc.handler)(&args, &mut cpu, &mut mem);
     assert_eq!(res, Err(ExitReason::IllegalInstruction(0xFE)));
+}
+
+#[test]
+fn crt_handlers_validate_memory_boundaries() {
+    let mut registry = ImportRegistry::new();
+    register_standard_services(
+        &mut registry,
+        Arc::new(ServicesState::new(Arc::new(MockClock::new(0)))),
+    );
+    let mut cpu = CpuState::new(0x1000, 0x8000);
+    let mut memory = GuestMemory::new();
+    memory
+        .map_region_with_data(0x1000, 4, MemoryPermissions::READ_WRITE, b"abcd")
+        .unwrap();
+    memory
+        .map_region_with_data(0x1004, 4, MemoryPermissions::READ_WRITE, b"efgh")
+        .unwrap();
+    let mut call = |symbol, rcx, rdx, r8, memory: &mut GuestMemory| {
+        let args = Win64Args {
+            rcx,
+            rdx,
+            r8,
+            r9: 0,
+            rsp: 0x8000,
+        };
+        let service = registry.binding("ucrtbase.dll", symbol).unwrap();
+        (service.handler)(&args, &mut cpu, memory)
+    };
+
+    assert_eq!(call("strnlen", 0x1000, 8, 0, &mut memory), Ok(8));
+    assert_eq!(
+        call("strlen", 0x1000, 0, 0, &mut memory),
+        Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(
+            0x1008
+        )))
+    );
+    assert_eq!(
+        call("memmove", 0x1005, 0x1000, 4, &mut memory),
+        Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(
+            0x1005
+        )))
+    );
+    let mut bytes = [0; 8];
+    memory.read_bytes(0x1000, &mut bytes).unwrap();
+    assert_eq!(&bytes, b"abcdefgh");
+    assert_eq!(call("memmove", 0x1002, 0x1000, 6, &mut memory), Ok(0x1002));
+    memory.read_bytes(0x1000, &mut bytes).unwrap();
+    assert_eq!(&bytes, b"ababcdef");
 }

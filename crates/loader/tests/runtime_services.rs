@@ -131,6 +131,7 @@ struct Guest {
     engine: DbtEngine,
     memory: GuestMemory,
     clock: Arc<MockClock>,
+    teb: u64,
     /// Upper halves and XMM lanes of unrelated arguments hold this pattern.
     xmm: [u128; 4],
 }
@@ -161,6 +162,7 @@ impl Guest {
             engine,
             memory,
             clock,
+            teb: 0,
             xmm: [0xAAAA_BBBB_CCCC_DDDD_EEEE_FFFF_0123_4567; 4],
         }
     }
@@ -171,6 +173,7 @@ impl Guest {
             .position(|service| service.symbol == symbol)
             .unwrap();
         let mut cpu = CpuState::new(BASE + u64::from(CODE_RVA) + 16 * index as u64, STACK_TOP);
+        cpu.gs_base = self.teb;
         for (index, register) in cpu.gpr.iter_mut().enumerate() {
             if index != Register::Rsp as usize {
                 *register = 0x0101_0101_0101_0101 * (index as u64 + 1);
@@ -321,6 +324,234 @@ fn system_time_comes_from_the_injected_clock() {
         assert!(matches!(exit, ExitReason::MemoryFault(_)), "{exit:?}");
         assert_eq!(guest.memory.read_u32(SCRATCH + 0xFC).unwrap(), before);
     }
+}
+
+#[test]
+fn guest_udp_loopback_delivers_datagrams_through_bound_imports() {
+    let symbols = [
+        "WSAStartup",
+        "socket",
+        "bind",
+        "connect",
+        "send",
+        "recv",
+        "WSAGetLastError",
+        "WSACleanup",
+        "WSAPoll",
+        "getsockname",
+        "getpeername",
+        "getsockopt",
+        "inet_pton",
+        "inet_ntop",
+        "htons",
+    ];
+    let imports = symbols.map(|symbol| ("ws2_32.dll", Symbol::Name(symbol)));
+    let image = build(&imports);
+    let pe = ParsedPe::parse(&image.bytes).unwrap();
+    let mut memory = pe.load_into_memory(&image.bytes).unwrap().memory;
+    memory
+        .map_region(SCRATCH, 4096, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    memory
+        .map_region(STACK, 4096, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    let (mut registry, _) = standard(0);
+    assert_eq!(
+        registry
+            .bind_imports(&pe, &image.bytes, BASE, &mut memory)
+            .unwrap(),
+        symbols.len()
+    );
+    let mut engine = DbtEngine::new(256 * 1024).unwrap();
+    engine.set_import_registry(registry);
+    let mut call = |memory: &mut GuestMemory, symbol, args: &[u64]| {
+        let index = symbols.iter().position(|&name| symbol == name).unwrap() as u64;
+        let mut cpu = CpuState::new(BASE + u64::from(CODE_RVA) + 16 * index, STACK_TOP);
+        for (register, &value) in [Register::Rcx, Register::Rdx, Register::R8, Register::R9]
+            .into_iter()
+            .zip(args)
+        {
+            cpu.set(register, value);
+        }
+        if let Some(&fifth) = args.get(4) {
+            memory.write_u64(STACK_TOP + 32, fifth).unwrap();
+        }
+        let result = engine.run(&mut cpu, memory, 8);
+        assert_eq!(result.exit_reason, ExitReason::Halt, "{symbol}");
+        cpu.get(Register::Rax)
+    };
+    let address = SCRATCH + 0x200;
+    let outgoing = SCRATCH + 0x220;
+    let incoming = SCRATCH + 0x240;
+    let text = SCRATCH + 0x260;
+    let poll = SCRATCH + 0x280;
+    let formatted = SCRATCH + 0x2a0;
+    let address_length = SCRATCH + 0x2b0;
+    let peer_address = SCRATCH + 0x2c0;
+    memory.write_u16(address, 2).unwrap();
+    let port = call(&mut memory, "htons", &[5000]);
+    assert_eq!(port, 0x8813);
+    memory.write_bytes(text, b"127.0.0.1\0").unwrap();
+    assert_eq!(call(&mut memory, "inet_pton", &[2, text, address + 4]), 1);
+    assert_eq!(
+        memory.read_u32(address + 4).unwrap().to_le_bytes(),
+        [127, 0, 0, 1]
+    );
+    memory.write_bytes(text, b"127.0.0.999\0").unwrap();
+    assert_eq!(call(&mut memory, "inet_pton", &[2, text, address + 4]), 0);
+    assert_eq!(
+        memory.read_u32(address + 4).unwrap().to_le_bytes(),
+        [127, 0, 0, 1]
+    );
+    assert_eq!(
+        call(&mut memory, "inet_pton", &[23, text, address + 4]),
+        u64::from(u32::MAX)
+    );
+    assert_eq!(call(&mut memory, "WSAGetLastError", &[]), 10047);
+    memory.write_u8(formatted, 0xaa).unwrap();
+    assert_eq!(
+        call(&mut memory, "inet_ntop", &[2, address + 4, formatted, 9]),
+        0
+    );
+    assert_eq!(call(&mut memory, "WSAGetLastError", &[]), 87);
+    assert_eq!(memory.read_u8(formatted).unwrap(), 0xaa);
+    assert_eq!(
+        call(&mut memory, "inet_ntop", &[2, address + 4, formatted, 10]),
+        formatted
+    );
+    let mut formatted_address = [0; 10];
+    memory
+        .read_bytes(formatted, &mut formatted_address)
+        .unwrap();
+    assert_eq!(&formatted_address, b"127.0.0.1\0");
+    assert_eq!(call(&mut memory, "WSAStartup", &[0x0202, SCRATCH]), 0);
+    let receiver = call(&mut memory, "socket", &[2, 2, 17]);
+    let sender = call(&mut memory, "socket", &[2, 2, 17]);
+    assert_ne!(receiver, u64::MAX);
+    assert_ne!(sender, u64::MAX);
+    assert_ne!(sender, receiver);
+    for (option, expected) in [(0x1008, 2), (0x2003, 65_507)] {
+        memory.write_u32(address_length, 8).unwrap();
+        assert_eq!(
+            call(
+                &mut memory,
+                "getsockopt",
+                &[sender, 0xffff, option, incoming, address_length]
+            ),
+            0
+        );
+        assert_eq!(memory.read_u32(incoming).unwrap(), expected);
+        assert_eq!(memory.read_u32(address_length).unwrap(), 4);
+    }
+    memory.write_u32(address_length, 3).unwrap();
+    assert_eq!(
+        call(
+            &mut memory,
+            "getsockopt",
+            &[sender, 0xffff, 0x1008, incoming, address_length]
+        ),
+        u64::from(u32::MAX)
+    );
+    assert_eq!(call(&mut memory, "WSAGetLastError", &[]), 10014);
+    assert_eq!(memory.read_u32(incoming).unwrap(), 65_507);
+    assert_eq!(call(&mut memory, "bind", &[receiver, address, 16]), 0);
+    memory.write_u32(address_length, 15).unwrap();
+    assert_eq!(
+        call(
+            &mut memory,
+            "getsockname",
+            &[receiver, address, address_length]
+        ),
+        u64::from(u32::MAX)
+    );
+    assert_eq!(call(&mut memory, "WSAGetLastError", &[]), 10014);
+    assert_eq!(memory.read_u16(address + 2).unwrap(), 0);
+    memory.write_u32(address_length, 32).unwrap();
+    assert_eq!(
+        call(
+            &mut memory,
+            "getsockname",
+            &[receiver, address, address_length]
+        ),
+        0
+    );
+    assert_eq!(memory.read_u32(address_length).unwrap(), 16);
+    assert_eq!(memory.read_u16(address + 2).unwrap().swap_bytes(), 49152);
+    assert_eq!(call(&mut memory, "connect", &[sender, address, 16]), 0);
+    assert_eq!(
+        call(
+            &mut memory,
+            "getpeername",
+            &[sender, peer_address, address_length]
+        ),
+        0
+    );
+    assert_eq!(
+        memory.read_u64(peer_address).unwrap(),
+        memory.read_u64(address).unwrap()
+    );
+    memory.write_u64(poll, receiver).unwrap();
+    memory.write_u16(poll + 8, 0x0100).unwrap();
+    memory.write_u64(poll + 16, sender).unwrap();
+    memory.write_u16(poll + 24, 0x0010).unwrap();
+    assert_eq!(call(&mut memory, "WSAPoll", &[poll, 2, 0]), 1);
+    assert_eq!(memory.read_u16(poll + 10).unwrap(), 0);
+    assert_eq!(memory.read_u16(poll + 26).unwrap(), 0x0010);
+    memory.write_bytes(outgoing, b"loop").unwrap();
+    for _ in 0..16 {
+        assert_eq!(call(&mut memory, "send", &[sender, outgoing, 4, 0]), 4);
+    }
+    assert_eq!(
+        call(&mut memory, "send", &[sender, outgoing, 4, 0]),
+        u64::from(u32::MAX)
+    );
+    assert_eq!(call(&mut memory, "WSAGetLastError", &[]), 10055);
+    assert_eq!(call(&mut memory, "WSAPoll", &[poll, 2, 0]), 1);
+    assert_eq!(memory.read_u16(poll + 10).unwrap(), 0x0100);
+    assert_eq!(memory.read_u16(poll + 26).unwrap(), 0);
+    for _ in 0..16 {
+        assert_eq!(call(&mut memory, "recv", &[receiver, incoming, 4, 0]), 4);
+        let mut received = [0; 4];
+        memory.read_bytes(incoming, &mut received).unwrap();
+        assert_eq!(&received, b"loop");
+        memory.write_u32(incoming, 0).unwrap();
+    }
+    assert_eq!(
+        call(&mut memory, "recv", &[receiver, incoming, 4, 0]),
+        u64::from(u32::MAX)
+    );
+    assert_eq!(call(&mut memory, "WSAGetLastError", &[]), 10035);
+    assert_eq!(call(&mut memory, "WSAPoll", &[poll, 2, 0]), 1);
+    assert_eq!(memory.read_u16(poll + 10).unwrap(), 0);
+    assert_eq!(memory.read_u16(poll + 26).unwrap(), 0x0010);
+    let started = std::time::Instant::now();
+    assert_eq!(call(&mut memory, "WSAPoll", &[poll, 1, 10]), 0);
+    assert!(started.elapsed() >= std::time::Duration::from_millis(10));
+    assert_eq!(memory.read_u16(poll + 10).unwrap(), 0);
+    assert_eq!(
+        call(&mut memory, "WSAPoll", &[poll, 1, 1001]),
+        u64::from(u32::MAX)
+    );
+    assert_eq!(call(&mut memory, "WSAGetLastError", &[]), 10045);
+    assert_eq!(call(&mut memory, "WSACleanup", &[]), 0);
+}
+
+#[test]
+fn last_error_isolated_across_guest_thread_switches() {
+    let mut guest = Guest::new();
+    guest.teb = 0x10000;
+    guest.call("SetLastError", &[123]);
+    guest.teb = 0x20000;
+    assert_eq!(guest.last_error(), 0);
+    assert_eq!(guest.call("CloseHandle", &[123]), 0);
+    assert_eq!(guest.last_error(), 6);
+    guest.teb = 0x10000;
+    guest.call("GetCurrentProcessId", &[]);
+    assert_eq!(guest.last_error(), 123);
+    guest.call("SetLastError", &[0]);
+    assert_eq!(guest.last_error(), 0);
+    guest.teb = 0x20000;
+    assert_eq!(guest.last_error(), 6);
 }
 
 #[test]
