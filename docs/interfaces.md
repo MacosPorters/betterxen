@@ -80,6 +80,18 @@ names with DLL-scoped ordinals, and canonical registered handlers separately.
 The unresolved total includes explicitly tracked unsupported APIs and other
 missing handlers. Existing stubs remain visible in the full inventory.
 
+`xenora_import_gen::demangle` decodes Microsoft Visual C++ decorated names
+for diagnostics, in the style of Microsoft's `undname`. It covers functions,
+data, member access and storage, `this` qualifiers, calling conventions,
+constructors, destructors, common operators, `vftable` names, classes,
+structs, unions, enums, pointers, references, primitive types, templates
+with type and integer arguments, and name and type back-references. Function
+pointer types, RTTI descriptors, nested function scopes and other constructs
+return `None`, so callers show the decorated name instead of a guess. The
+generator manifest's list of imports that need manual engineering shows the
+undecorated form beside each decorated C++ import. Tests check names mangled
+by clang for `x86_64-pc-windows-msvc` against their source declarations.
+
 The synthetic process registry supports the current-process pseudo handle and
 its process ID. The priority boost setter and getter record and query a guest
 policy. They are partial until a guest scheduler applies the policy. The process

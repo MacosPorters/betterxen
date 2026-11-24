@@ -42,6 +42,8 @@ remains unsupported.
 
 - Added guest mutexes, critical sections, SRW locks, condition variables, synchronous one-time initialization, interlocked SLists, and TLS and FLS slots. Ownership is per guest thread (TEB). Calls that would have to block stop the guest with an explicit runtime-limit fault, because there is no guest scheduler yet. An original PE32+ fixture calls every service through its import table, using two guest TEBs. See `docs/interfaces.md`.
 
+- Added an MSVC decorated-name decoder (`xenora_import_gen::demangle`), and import manifests now show undecorated names for C++ imports that need manual engineering. Unsupported constructs return no result rather than a guess. Tests decode names mangled independently by clang for `x86_64-pc-windows-msvc`.
+
 - Added a guest service dispatch benchmark (`cargo bench -p xenora-loader --bench service_dispatch`). It runs correctness-gated guest loops that call services through the import table under the DBT; see `docs/testing/benchmarks.md`.
 
 - Added a `runtime_services` fuzz target (`scripts/fuzz.sh runtime_services`) and a stable-toolchain replay test sharing the same driver. Both call random sequences of the standard guest services with zero, all-ones, writable, read-only, executable, unmapped, raw and earlier-result arguments, and check after every call that read-only and code memory are unchanged and nonvolatile registers are preserved. A local 300-second campaign on Apple M2 Pro ran 131,744 inputs (1,573 coverage edges) without a crash. Services that wait on real time or reach native Metal are excluded.
