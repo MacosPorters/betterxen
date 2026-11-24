@@ -29,7 +29,7 @@
 //! host rename between the final identity check and `unlinkat` (on Linux,
 //! file and directory removal prefer `AT_EMPTY_PATH` on the verified
 //! descriptor). This boundary was agent-reviewed for guest path confinement;
-//! it is not a substitute for a human security audit.
+//! it is not a substitute for an independent human security audit.
 
 use std::ffi::{CStr, CString};
 use std::fs::File;
