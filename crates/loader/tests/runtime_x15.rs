@@ -1645,8 +1645,18 @@ fn test_guest_synthetic_file_io_through_iat() {
                     access
                 },
             ),
-            ([0x49, 0xb8], 0),
-            ([0x49, 0xb9], 0),
+            (
+                [0x49, 0xb8],
+                if symbol == "GetTempFileNameW" { disposition } else { 0 },
+            ),
+            (
+                [0x49, 0xb9],
+                match (symbol, access) {
+                    ("GetTempFileNameW", 0) => PROCESS_FIXTURE_OUTPUT,
+                    ("GetTempFileNameW", address) => address,
+                    _ => 0,
+                },
+            ),
         ] {
             code.extend_from_slice(&register);
             code.extend_from_slice(&value.to_le_bytes());
@@ -1726,6 +1736,38 @@ fn test_guest_synthetic_file_io_through_iat() {
     );
     assert_eq!(namespace("CreateDirectoryW", "C:/work"), 1);
     assert_eq!(namespace("SetCurrentDirectoryW", "C:/work"), 1);
+    let temp_file = |directory, unique| {
+        path_result("GetTempFileNameW", directory, 0, unique, Some("prefix"))
+    };
+    let explicit = temp_file("C:/work", 0x1_002a);
+    assert_eq!(explicit.execution.final_state.get(Register::Rax), 0x1_002a);
+    let read_name = |result: &xenora_loader::startup::StartupResult| {
+        let units: Vec<_> = (0..64)
+            .map(|i| result.image.memory.read_u16(output + i * 2).unwrap())
+            .take_while(|&unit| unit != 0)
+            .collect();
+        String::from_utf16(&units).unwrap()
+    };
+    let suggested = read_name(&explicit);
+    assert_eq!(suggested, r"C:\work\pre002A.TMP");
+    assert_eq!(open(&suggested, 0x8000_0000, 3), u64::MAX);
+
+    let rejected = path_result("GetTempFileNameW", ".", 1, 0, Some("prefix"));
+    assert_eq!(rejected.execution.final_state.get(Register::Rax), 0);
+    for (number, expected) in [(1, r"C:\work\pre0001.TMP"), (2, r"C:\work\pre0002.TMP")] {
+        let created = temp_file(".", 0);
+        assert_eq!(created.execution.final_state.get(Register::Rax), number);
+        assert_eq!(read_name(&created), expected);
+        let handle = open(expected, 0x8000_0000, 3);
+        assert_ne!(handle, u64::MAX);
+        let size = call("GetFileSizeEx", &[handle, output]);
+        assert_eq!(size.execution.final_state.get(Register::Rax), 1);
+        assert_eq!(size.image.memory.read_u64(output).unwrap(), 0);
+        call("CloseHandle", &[handle]);
+    }
+    for expected in [r"C:\work\pre0001.TMP", r"C:\work\pre0002.TMP"] {
+        assert_eq!(namespace("DeleteFileW", expected), 1);
+    }
     let narrow = call("GetCurrentDirectoryA", &[8, output]);
     assert_eq!(narrow.execution.final_state.get(Register::Rax), 7);
     assert_eq!(

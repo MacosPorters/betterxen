@@ -531,7 +531,106 @@ fn share_mask(access: u32) -> u32 {
     u32::from(access & READ != 0) | (u32::from(access & WRITE != 0) << 1)
 }
 
+fn temp_file_name(
+    state: &ServicesState,
+    memory: &mut GuestMemory,
+    teb: u64,
+    path: u64,
+    prefix: u64,
+    unique: u32,
+    output: u64,
+) -> Result<u64, ExitReason> {
+    let Some(path) = read_raw_path(memory, path).map_err(ExitReason::MemoryFault)? else {
+        return state.fail(teb, INVALID_NAME, 0);
+    };
+    if path.encode_utf16().count() > 246 {
+        return state.fail(teb, 111, 0); // ERROR_BUFFER_OVERFLOW
+    }
+    let Some(prefix) = read_raw_path(memory, prefix).map_err(ExitReason::MemoryFault)? else {
+        return state.fail(teb, INVALID_NAME, 0);
+    };
+    let prefix: String = prefix.chars().take(3).collect();
+    if !prefix.is_ascii() || !valid_component(&format!("{prefix}0000.TMP")) {
+        return state.fail(teb, INVALID_NAME, 0);
+    }
+    let mut objects = state.objects.lock().expect("guest object state");
+    let current = &objects.current_directory;
+    let directory = if path == "." {
+        current.as_str().to_owned()
+    } else {
+        let Some(directory) = resolve_synthetic_path(&path, current) else {
+            return state.fail(teb, INVALID_NAME, 0);
+        };
+        directory.trim_end_matches('\\').to_owned()
+    };
+    if !directory.is_empty() && !objects.directories.contains(&directory) {
+        return state.fail(teb, PATH_NOT_FOUND, 0);
+    }
+    if unique == 0 && objects.files.len() >= MAX_FILES {
+        return state.fail(teb, DISK_FULL, 0);
+    }
+
+    let path = if path == "." {
+        format!("C:\\{directory}")
+    } else {
+        path
+    };
+    let separator = if path.ends_with('\\') { "" } else { "\\" };
+    let start = match state.clock.now_filetime() as u16 {
+        0 => 1,
+        value => value,
+    };
+    let candidates = (0..u16::MAX).map(|offset| {
+        ((u32::from(start) - 1 + u32::from(offset)) % u32::from(u16::MAX) + 1) as u16
+    });
+    let numbers = if unique == 0 {
+        None.into_iter().chain(candidates)
+    } else {
+        Some(unique as u16).into_iter().chain(candidates)
+    };
+    for number in numbers {
+        let name = format!("{prefix}{number:04X}.TMP");
+        let key = if directory.is_empty() {
+            name.to_ascii_lowercase()
+        } else {
+            format!("{directory}\\{}", name.to_ascii_lowercase())
+        };
+        if unique == 0 && (objects.files.contains_key(&key) || objects.directories.contains(&key)) {
+            continue;
+        }
+        let units = format!("{path}{separator}{name}");
+        if units.encode_utf16().count() >= 260 {
+            return state.fail(teb, 111, 0); // ERROR_BUFFER_OVERFLOW
+        }
+        let bytes: Vec<_> = units
+            .encode_utf16()
+            .chain([0])
+            .flat_map(u16::to_le_bytes)
+            .collect();
+        if output == 0 || memory.write_bytes(output, &bytes).is_err() {
+            return state.fail(teb, ERROR_NOACCESS, 0);
+        }
+        if unique == 0 {
+            objects.files.insert(key, Vec::new());
+            return Ok(u64::from(number));
+        }
+        return Ok(u64::from(unique));
+    }
+    state.fail(teb, FILE_EXISTS, 0)
+}
+
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
+    let temp = Arc::clone(state);
+    registry.register_with_status(
+        KERNEL32,
+        "GetTempFileNameW",
+        ServiceStatus::Partial,
+        move |args, cpu, memory| {
+            temp_file_name(&temp, memory, cpu.gs_base, args.rcx, args.rdx, args.r8 as u32, args.r9)
+        },
+    );
+    registry.alias(FILE_API, KERNEL32, "GetTempFileNameW");
+
     for (symbol, wide) in [("GetTempPathA", false), ("GetTempPathW", true)] {
         let state = Arc::clone(state);
         registry.register_with_status(
