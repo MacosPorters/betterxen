@@ -9,7 +9,7 @@ Xenora is an open-source project written primarily in Rust that builds and verif
 Xenora is still experimental. Verified work is restricted to independently authored synthetic programs and shaders; authentic Xbox executable loading, system-service compatibility and commercial game execution remain unsupported. See the [current limitations](#current-limitations).
 
 > [!CAUTION]
-> **Xenora strictly opposes piracy.** Xenora is an independent, clean-room, general-purpose emulation research project that neither distributes copyrighted game files nor supports unauthorized content, DRM circumvention, or leaked materials. Use only legally obtained software. Xenora is not affiliated with Microsoft, Rockstar Games, Take-Two Interactive, or any other publisher or platform holder.
+> **Xenora strictly opposes piracy.** Xenora is an independent, clean-room, general-purpose emulation research project that neither distributes copyrighted game files nor supports unauthorized content, DRM circumvention, or leaked materials. Use only legally obtained software. Xenora is not affiliated with Microsoft or any other publisher or platform holder.
 
 [![Native Rust checks](https://github.com/ranveersoni98/Xenora/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/ranveersoni98/Xenora/actions/workflows/ci.yml)
 
