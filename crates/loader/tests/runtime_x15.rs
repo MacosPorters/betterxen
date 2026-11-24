@@ -1087,6 +1087,8 @@ fn test_guest_crt_wide_strings_use_16_bit_units() {
     let slot = PROCESS_FIXTURE_OUTPUT;
     for module in ["ucrtbase.dll", "api-ms-win-crt-string-l1-1-0.dll"] {
         for (symbol, args, expected) in [
+            ("wcsspn", [slot, slot + 6, 0], 4),
+            ("wcscspn", [slot, slot + 8, 0], 4),
             ("wcslen", [slot, 0, 0], 4),
             ("wcsnlen", [slot, 3, 0], 3),
             ("wcsnlen", [slot, 7, 0], 4),
@@ -1100,6 +1102,10 @@ fn test_guest_crt_wide_strings_use_16_bit_units() {
                 expected
             );
         }
+        for (set, expected) in [(slot + 6, slot), (slot + 8, 0)] {
+            let result = call_service_fixture(&state, module, "wcspbrk", &[slot, set]);
+            assert_eq!(result.execution.final_state.get(Register::Rax), expected);
+        }
     }
 }
 
@@ -1109,6 +1115,18 @@ fn test_guest_crt_string_length_through_iat() {
     for module in ["ucrtbase.dll", "api-ms-win-crt-string-l1-1-0.dll"] {
         // The fixture seeds the output slot with eight 0xff bytes followed by zeroed stack bytes.
         for (symbol, address, bound, expected) in [
+            (
+                "strpbrk",
+                PROCESS_FIXTURE_OUTPUT,
+                PROCESS_FIXTURE_OUTPUT + 7,
+                PROCESS_FIXTURE_OUTPUT,
+            ),
+            (
+                "strpbrk",
+                PROCESS_FIXTURE_OUTPUT,
+                PROCESS_FIXTURE_OUTPUT + 8,
+                0,
+            ),
             ("strlen", PROCESS_FIXTURE_OUTPUT, 0, 8),
             ("strlen", PROCESS_FIXTURE_OUTPUT + 8, 0, 0),
             ("strnlen", PROCESS_FIXTURE_OUTPUT, 3, 3),

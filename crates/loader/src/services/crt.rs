@@ -268,6 +268,25 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strcspn", |args, _, memory| {
         span_length(memory, args.rcx, args.rdx, false)
     });
+    registry.register(UCRT, "strpbrk", |args, _, memory| {
+        let offset = span_length(memory, args.rcx, args.rdx, false)?;
+        match StringUnit::Byte.read(memory, args.rcx, offset)? {
+            0 => Ok(0),
+            _ => Ok(args.rcx + offset),
+        }
+    });
+    for (symbol, accept) in [("wcsspn", true), ("wcscspn", false)] {
+        registry.register(UCRT, symbol, move |args, _, memory| {
+            wide_span(memory, args.rcx, args.rdx, accept)
+        });
+    }
+    registry.register(UCRT, "wcspbrk", |args, _, memory| {
+        let offset = wide_span(memory, args.rcx, args.rdx, false)?;
+        match StringUnit::Wide.read(memory, args.rcx, offset)? {
+            0 => Ok(0),
+            _ => Ok(args.rcx + offset * 2),
+        }
+    });
     registry.register(UCRT, "strtok", |args, cpu, memory| {
         tokenize(memory, cpu.gs_base, args.rcx, args.rdx)
     });
@@ -288,7 +307,8 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     });
     for symbol in [
         "memchr", "strcpy", "strncpy", "strcat", "strncat", "strstr", "strspn", "strcspn",
-        "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr", "strtok",
+        "wcscpy", "wcsncpy", "wcscat", "wcschr", "wcsrchr", "strtok", "strpbrk", "wcsspn",
+        "wcscspn", "wcspbrk",
     ] {
         registry.alias(CRT_STRING_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);
@@ -438,6 +458,39 @@ fn byte_set(memory: &GuestMemory, address: u64) -> Result<[bool; 256], ExitReaso
             return Ok(present);
         }
         present[byte] = true;
+    }
+    Err(ExitReason::IllegalInstruction(0xFE))
+}
+
+fn wide_span(
+    memory: &GuestMemory,
+    address: u64,
+    set: u64,
+    accept: bool,
+) -> Result<u64, ExitReason> {
+    if address == 0 || set == 0 {
+        return Err(ExitReason::MemoryFault(MemoryError::UnmappedAddress(0)));
+    }
+    let mut present = [0u64; 1024];
+    let limit = SCAN_BUDGET / 2;
+    let mut terminated = false;
+    for offset in 0..limit {
+        let unit = StringUnit::Wide.read(memory, set, offset)? as usize;
+        if unit == 0 {
+            terminated = true;
+            break;
+        }
+        present[unit / 64] |= 1 << (unit % 64);
+    }
+    if !terminated {
+        return Err(ExitReason::IllegalInstruction(0xFE));
+    }
+    for offset in 0..limit {
+        let unit = StringUnit::Wide.read(memory, address, offset)? as usize;
+        let found = present[unit / 64] & (1 << (unit % 64)) != 0;
+        if unit == 0 || found != accept {
+            return Ok(offset);
+        }
     }
     Err(ExitReason::IllegalInstruction(0xFE))
 }
