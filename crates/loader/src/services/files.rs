@@ -48,14 +48,19 @@ impl SyntheticFile {
 #[derive(Clone)]
 pub(super) struct OpenFile {
     path: String,
-    // The object table serializes all operations on this open instance.
-    position: Arc<AtomicU64>,
-    suppressed_times: Arc<AtomicU8>,
+    instance: Arc<FileInstance>,
     open_access: u32,
     pub(super) access: u32,
     share: u32,
     /// Set for files on a host mount; `path` is then a label only.
     host: Option<Arc<HostFile>>,
+}
+
+/// Duplicated handles share this state. The object table serializes I/O.
+#[derive(Default)]
+struct FileInstance {
+    position: AtomicU64,
+    suppressed_times: AtomicU8,
 }
 
 /// An open host file and the size limit of the mount it came from.
@@ -66,7 +71,7 @@ pub(super) struct HostFile {
 
 impl OpenFile {
     fn updates_time(&self, index: usize) -> bool {
-        self.suppressed_times.load(Ordering::Relaxed) & (1 << index) == 0
+        self.instance.suppressed_times.load(Ordering::Relaxed) & (1 << index) == 0
     }
 
     fn host_len(&self) -> Option<Result<u64, u32>> {
@@ -195,8 +200,7 @@ fn create_host_file(
         handle,
         GuestObject::File(OpenFile {
             path: key,
-            position: Arc::new(AtomicU64::new(0)),
-            suppressed_times: Arc::default(),
+            instance: Arc::default(),
             open_access: access,
             access,
             share,
@@ -928,8 +932,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 handle,
                 GuestObject::File(OpenFile {
                     path,
-                    position: Arc::new(AtomicU64::new(0)),
-                    suppressed_times: Arc::default(),
+                    instance: Arc::default(),
                     open_access: access,
                     access,
                     share,
@@ -1303,7 +1306,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 match value {
                     0 => {}
                     u64::MAX if index != 0 => {
-                        file.suppressed_times.fetch_or(1 << index, Ordering::Relaxed);
+                        file.instance.suppressed_times.fetch_or(1 << index, Ordering::Relaxed);
                     }
                     _ => *slot = value,
                 }
@@ -1359,7 +1362,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         }
         let origin = match args.r9 as u32 {
             0 => None,
-            1 => Some(file.position.load(Ordering::Relaxed)),
+            1 => Some(file.instance.position.load(Ordering::Relaxed)),
             2 => match file.host_len() {
                 Some(Ok(bytes)) => Some(bytes),
                 Some(Err(error)) => return seek.fail(cpu.gs_base, error, 0),
@@ -1383,7 +1386,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if args.r8 != 0 && memory.write_u64(args.r8, position).is_err() {
             return seek.fail(cpu.gs_base, ERROR_NOACCESS, 0);
         }
-        file.position.store(position, Ordering::Relaxed);
+        file.instance.position.store(position, Ordering::Relaxed);
         Ok(1)
     });
 
@@ -1397,7 +1400,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         if file.access & WRITE == 0 {
             return truncate.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0);
         }
-        let position = file.position.load(Ordering::Relaxed);
+        let position = file.instance.position.load(Ordering::Relaxed);
         if let Some(host) = &file.host {
             if position > host.max_size {
                 return truncate.fail(cpu.gs_base, DISK_FULL, 0);
@@ -1455,7 +1458,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 return state.fail(cpu.gs_base, ERROR_NOACCESS, 0);
             }
             if let Some(host) = file.host.clone() {
-                let position = file.position.load(Ordering::Relaxed);
+                let position = file.instance.position.load(Ordering::Relaxed);
                 let Some(end) = position.checked_add(count as u64) else {
                     return state.fail(cpu.gs_base, ERROR_INVALID_PARAMETER, 0);
                 };
@@ -1487,7 +1490,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 memory
                     .write_u32(args.r9, transferred as u32)
                     .map_err(ExitReason::MemoryFault)?;
-                file.position
+                file.instance.position
                     .store(position + transferred as u64, Ordering::Relaxed);
                 return Ok(1);
             }
@@ -1499,7 +1502,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             };
             let synthetic = files.get_mut(&file.path).expect("open file exists");
             let data = &mut synthetic.data;
-            let position = file.position.load(Ordering::Relaxed);
+            let position = file.instance.position.load(Ordering::Relaxed);
             let transferred = if writing {
                 if count == 0 {
                     0
@@ -1547,7 +1550,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if transferred != 0 && file.updates_time(time_index) {
                 synthetic.times[time_index] = state.clock.now_filetime();
             }
-            file.position
+            file.instance.position
                 .store(position + transferred as u64, Ordering::Relaxed);
             Ok(1)
         });

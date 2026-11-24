@@ -28,6 +28,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "ReadFile"),
     (KERNEL32, "WriteFile"),
     (KERNEL32, "CloseHandle"),
+    (KERNEL32, "DuplicateHandle"),
     (FILE_API, "GetFileSize"),
     (FILE_API, "GetFileType"),
     (FILE_API, "GetFileTime"),
@@ -172,6 +173,14 @@ fn synthetic_timestamp_suppression_is_scoped_to_the_open_file() {
     assert_ne!(normal, INVALID);
     guest.memory.write_u64(COUNT, u64::MAX).unwrap();
     assert_eq!(guest.call("SetFileTime", &[pinned, 0, COUNT, COUNT]), 1);
+    let process = u64::MAX;
+    assert_eq!(
+        guest.call("DuplicateHandle", &[process, pinned, process, COUNT, 0, 0, 2]),
+        1
+    );
+    let duplicate = guest.u64_at(COUNT);
+    assert_eq!(guest.call("CloseHandle", &[pinned]), 1);
+    let pinned = duplicate;
     clock.advance(10);
     assert!(write(&mut guest, pinned, b"x"));
     assert_eq!(guest.call("SetFilePointerEx", &[pinned, 0, 0, 0]), 1);
