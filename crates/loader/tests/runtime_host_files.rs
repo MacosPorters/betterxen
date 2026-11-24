@@ -23,6 +23,7 @@ const UCRT: &str = "ucrtbase.dll";
 const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "GetLastError"),
     (FILE_API, "CreateFileW"),
+    (FILE_API, "GetTempFileNameW"),
     (KERNEL32, "ReadFile"),
     (KERNEL32, "WriteFile"),
     (KERNEL32, "CloseHandle"),
@@ -147,6 +148,36 @@ fn found_name(guest: &Guest) -> String {
 
 fn symlink(target: &Path, link: &Path) {
     std::os::unix::fs::symlink(target, link).unwrap();
+}
+
+#[test]
+fn temporary_files_use_the_mounted_directory_and_skip_existing_names() {
+    let tree = Tree::new("temp-file");
+    let root = tree.path("root");
+    std::fs::create_dir_all(root.join("Temp")).unwrap();
+    std::fs::write(root.join("Temp/PRE0001.tmp"), b"original").unwrap();
+    let writable = HostMount::new('D', &root, true).unwrap();
+    let readonly = HostMount::new('E', &root, false).unwrap();
+    let mut guest = guest_with(vec![writable, readonly]);
+    let prefix = PATH + 0x200;
+    put_path(&mut guest, prefix, "prefix");
+    put_path(&mut guest, PATH, r"D:\temp");
+    assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 0, 1]), 0);
+    assert_eq!(guest.error(), 998);
+    assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 0, BUFFER]), 2);
+    let name: Vec<_> = (0..32)
+        .map(|i| guest.u16_at(BUFFER + 2 * i))
+        .take_while(|unit| *unit != 0)
+        .collect();
+    assert_eq!(String::from_utf16(&name).unwrap(), r"D:\temp\pre0002.TMP");
+    assert_eq!(std::fs::metadata(root.join("Temp/pre0002.TMP")).unwrap().len(), 0);
+    assert_eq!(std::fs::read(root.join("Temp/PRE0001.tmp")).unwrap(), b"original");
+
+    put_path(&mut guest, PATH, r"E:\Temp");
+    assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 0, BUFFER]), 0);
+    assert_eq!(guest.error(), 5);
+    assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 3, BUFFER]), 3);
+    assert!(!root.join("Temp/pre0003.TMP").exists());
 }
 
 #[test]

@@ -10,6 +10,7 @@ use super::{
 use crate::cpu::ExitReason;
 use crate::imports::{ImportRegistry, ServiceStatus};
 use crate::memory::{GuestMemory, MemoryError};
+use std::collections::BTreeSet;
 use std::fs::File;
 use std::os::unix::fs::FileExt;
 use std::sync::Arc;
@@ -553,6 +554,39 @@ fn temp_file_name(
     if !prefix.is_ascii() || !valid_component(&format!("{prefix}0000.TMP")) {
         return state.fail(teb, INVALID_NAME, 0);
     }
+    if let Some(resolved) = host_files::resolve(&state.mounts, &path, valid_component) {
+        let result = resolved.and_then(|resolved| {
+            if unique == 0 && !resolved.mount.writable() {
+                return Err(ERROR_ACCESS_DENIED);
+            }
+            let directory = resolved.directory()?;
+            let occupied = if unique == 0 {
+                host_files::list(&directory)
+                    .map_err(|error| host_files::win32_error(&error))?
+                    .into_iter()
+                    .map(|entry| entry.name.to_ascii_lowercase())
+                    .collect::<BTreeSet<_>>()
+            } else {
+                BTreeSet::new()
+            };
+            write_temp_file_name(memory, output, &path, &prefix, unique, state.clock.now_filetime(), |name| {
+                if occupied.contains(&name.to_ascii_lowercase()) {
+                    return Ok(false);
+                }
+                let request = host_files::OpenRequest { read: false, write: true, create: true };
+                match host_files::open_file(&directory, name, &request, None) {
+                    Ok(_) => Ok(true),
+                    Err(error) if error.raw_os_error() == Some(libc::EEXIST) => Ok(false),
+                    Err(error) => Err(host_files::win32_error(&error)),
+                }
+            })
+        });
+        return match result {
+            Ok(number) => Ok(number),
+            Err(error) => state.fail(teb, error, 0),
+        };
+    }
+
     let mut objects = state.objects.lock().expect("guest object state");
     let current = &objects.current_directory;
     let directory = if path == "." {
@@ -575,48 +609,63 @@ fn temp_file_name(
     } else {
         path
     };
-    let separator = if path.ends_with('\\') { "" } else { "\\" };
-    let start = match state.clock.now_filetime() as u16 {
-        0 => 1,
-        value => value,
-    };
-    let candidates = (0..u16::MAX).map(|offset| {
-        ((u32::from(start) - 1 + u32::from(offset)) % u32::from(u16::MAX) + 1) as u16
-    });
-    let numbers = if unique == 0 {
-        None.into_iter().chain(candidates)
-    } else {
-        Some(unique as u16).into_iter().chain(candidates)
-    };
-    for number in numbers {
-        let name = format!("{prefix}{number:04X}.TMP");
+    let result = write_temp_file_name(memory, output, &path, &prefix, unique, state.clock.now_filetime(), |name| {
+        let name = name.to_ascii_lowercase();
         let key = if directory.is_empty() {
-            name.to_ascii_lowercase()
+            name
         } else {
-            format!("{directory}\\{}", name.to_ascii_lowercase())
+            format!("{directory}\\{name}")
         };
-        if unique == 0 && (objects.files.contains_key(&key) || objects.directories.contains(&key)) {
-            continue;
+        if objects.files.contains_key(&key) || objects.directories.contains(&key) {
+            return Ok(false);
         }
+        objects.files.insert(key, Vec::new());
+        Ok(true)
+    });
+    match result {
+        Ok(number) => Ok(number),
+        Err(error) => state.fail(teb, error, 0),
+    }
+}
+
+fn write_temp_file_name(
+    memory: &mut GuestMemory,
+    output: u64,
+    path: &str,
+    prefix: &str,
+    unique: u32,
+    now: u64,
+    mut create: impl FnMut(&str) -> Result<bool, u32>,
+) -> Result<u64, u32> {
+    let separator = if path.ends_with('\\') { "" } else { "\\" };
+    let start = (now as u16).max(1);
+    let count = if unique == 0 { u32::from(u16::MAX) } else { 1 };
+    for offset in 0..count {
+        let number = if unique == 0 {
+            ((u32::from(start) - 1 + offset) % u32::from(u16::MAX) + 1) as u16
+        } else {
+            unique as u16
+        };
+        let name = format!("{prefix}{number:04X}.TMP");
         let units = format!("{path}{separator}{name}");
         if units.encode_utf16().count() >= 260 {
-            return state.fail(teb, 111, 0); // ERROR_BUFFER_OVERFLOW
+            return Err(111); // ERROR_BUFFER_OVERFLOW
         }
         let bytes: Vec<_> = units
             .encode_utf16()
             .chain([0])
             .flat_map(u16::to_le_bytes)
             .collect();
-        if output == 0 || memory.write_bytes(output, &bytes).is_err() {
-            return state.fail(teb, ERROR_NOACCESS, 0);
+        if output == 0 || memory.check_write(output, bytes.len()).is_err() {
+            return Err(ERROR_NOACCESS);
         }
-        if unique == 0 {
-            objects.files.insert(key, Vec::new());
-            return Ok(u64::from(number));
+        if unique == 0 && !create(&name)? {
+            continue;
         }
-        return Ok(u64::from(unique));
+        memory.write_bytes(output, &bytes).map_err(|_| ERROR_NOACCESS)?;
+        return Ok(if unique == 0 { u64::from(number) } else { u64::from(unique) });
     }
-    state.fail(teb, FILE_EXISTS, 0)
+    Err(FILE_EXISTS)
 }
 
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {

@@ -360,8 +360,9 @@ among `TMP`, `TEMP`, and `USERPROFILE`, falling back to the synthetic
 directory exists. The narrow entry point accepts ASCII. No host environment
 is consulted.
 
-The partial `GetTempFileNameW` service supports the synthetic drive and ASCII
-prefixes. A nonzero unique value formats a name without creating a file. A zero
+The partial `GetTempFileNameW` service accepts ASCII prefixes on the synthetic
+drive and explicitly mounted drives. Automatic creation requires a writable
+mount and uses exclusive creation inside the resolved directory. A nonzero unique value formats a name without creating a file. A zero
 value picks an available name using the guest clock and creates an empty file
 without retaining a handle. Callers can remove it with `DeleteFileW`.
 
