@@ -41,7 +41,10 @@ pub(super) struct SyntheticFile {
 
 impl SyntheticFile {
     fn new(now: u64) -> Self {
-        Self { data: Vec::new(), times: [now; 3] }
+        Self {
+            data: Vec::new(),
+            times: [now; 3],
+        }
     }
 }
 
@@ -275,14 +278,12 @@ fn change_host_namespace(
     use host_files::Kind::{Directory, File};
     let result = match (change, entry) {
         (HostChange::CreateDirectory, Some(_)) => return state.fail(teb, ALREADY_EXISTS, 0),
-        (HostChange::CreateDirectory, None) => {
-            match host_files::create_directory(&parent, &name) {
-                Err(error) if error.raw_os_error() == Some(libc::EEXIST) => {
-                    return state.fail(teb, ALREADY_EXISTS, 0);
-                }
-                result => result,
+        (HostChange::CreateDirectory, None) => match host_files::create_directory(&parent, &name) {
+            Err(error) if error.raw_os_error() == Some(libc::EEXIST) => {
+                return state.fail(teb, ALREADY_EXISTS, 0);
             }
-        }
+            result => result,
+        },
         (_, None) => return state.fail(teb, FILE_NOT_FOUND, 0),
         (HostChange::RemoveDirectory, Some(entry)) if entry.kind == File => {
             return state.fail(teb, ERROR_DIRECTORY, 0);
@@ -320,7 +321,11 @@ fn file_metadata(state: &ServicesState, raw: &str) -> Result<(u32, u64, [u64; 3]
         let resolved = resolved?;
         let (_, entry) = resolved.lookup()?;
         let entry = entry.ok_or(FILE_NOT_FOUND)?;
-        return Ok((host_attributes(&entry, resolved.mount.writable()), entry.size, entry.times));
+        return Ok((
+            host_attributes(&entry, resolved.mount.writable()),
+            entry.size,
+            entry.times,
+        ));
     }
 
     let objects = state.objects.lock().expect("guest object state");
@@ -332,11 +337,13 @@ fn file_metadata(state: &ServicesState, raw: &str) -> Result<(u32, u64, [u64; 3]
         return Ok((0x80, file.data.len() as u64, file.times)); // FILE_ATTRIBUTE_NORMAL
     }
     let parent = parent(&path);
-    Err(if parent.is_empty() || objects.directories.contains(parent) {
-        FILE_NOT_FOUND
-    } else {
-        PATH_NOT_FOUND
-    })
+    Err(
+        if parent.is_empty() || objects.directories.contains(parent) {
+            FILE_NOT_FOUND
+        } else {
+            PATH_NOT_FOUND
+        },
+    )
 }
 
 /// FindFirstFileW on a host mount: a sorted snapshot of matching names.
@@ -627,17 +634,29 @@ fn temp_file_name(
             } else {
                 BTreeSet::new()
             };
-            write_temp_file_name(memory, output, &path, &prefix, unique, state.clock.now_filetime(), |name| {
-                if occupied.contains(&name.to_ascii_lowercase()) {
-                    return Ok(false);
-                }
-                let request = host_files::OpenRequest { read: false, write: true, create: true };
-                match host_files::open_file(&directory, name, &request, None) {
-                    Ok(_) => Ok(true),
-                    Err(error) if error.raw_os_error() == Some(libc::EEXIST) => Ok(false),
-                    Err(error) => Err(host_files::win32_error(&error)),
-                }
-            })
+            write_temp_file_name(
+                memory,
+                output,
+                &path,
+                &prefix,
+                unique,
+                state.clock.now_filetime(),
+                |name| {
+                    if occupied.contains(&name.to_ascii_lowercase()) {
+                        return Ok(false);
+                    }
+                    let request = host_files::OpenRequest {
+                        read: false,
+                        write: true,
+                        create: true,
+                    };
+                    match host_files::open_file(&directory, name, &request, None) {
+                        Ok(_) => Ok(true),
+                        Err(error) if error.raw_os_error() == Some(libc::EEXIST) => Ok(false),
+                        Err(error) => Err(host_files::win32_error(&error)),
+                    }
+                },
+            )
         });
         return match result {
             Ok(number) => Ok(number),
@@ -667,19 +686,29 @@ fn temp_file_name(
     } else {
         path
     };
-    let result = write_temp_file_name(memory, output, &path, &prefix, unique, state.clock.now_filetime(), |name| {
-        let name = name.to_ascii_lowercase();
-        let key = if directory.is_empty() {
-            name
-        } else {
-            format!("{directory}\\{name}")
-        };
-        if objects.files.contains_key(&key) || objects.directories.contains(&key) {
-            return Ok(false);
-        }
-        objects.files.insert(key, SyntheticFile::new(state.clock.now_filetime()));
-        Ok(true)
-    });
+    let result = write_temp_file_name(
+        memory,
+        output,
+        &path,
+        &prefix,
+        unique,
+        state.clock.now_filetime(),
+        |name| {
+            let name = name.to_ascii_lowercase();
+            let key = if directory.is_empty() {
+                name
+            } else {
+                format!("{directory}\\{name}")
+            };
+            if objects.files.contains_key(&key) || objects.directories.contains(&key) {
+                return Ok(false);
+            }
+            objects
+                .files
+                .insert(key, SyntheticFile::new(state.clock.now_filetime()));
+            Ok(true)
+        },
+    );
     match result {
         Ok(number) => Ok(number),
         Err(error) => state.fail(teb, error, 0),
@@ -720,8 +749,14 @@ fn write_temp_file_name(
         if unique == 0 && !create(&name)? {
             continue;
         }
-        memory.write_bytes(output, &bytes).map_err(|_| ERROR_NOACCESS)?;
-        return Ok(if unique == 0 { u64::from(number) } else { u64::from(unique) });
+        memory
+            .write_bytes(output, &bytes)
+            .map_err(|_| ERROR_NOACCESS)?;
+        return Ok(if unique == 0 {
+            u64::from(number)
+        } else {
+            u64::from(unique)
+        });
     }
     Err(FILE_EXISTS)
 }
@@ -733,7 +768,15 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "GetTempFileNameW",
         ServiceStatus::Partial,
         move |args, cpu, memory| {
-            temp_file_name(&temp, memory, cpu.gs_base, args.rcx, args.rdx, args.r8 as u32, args.r9)
+            temp_file_name(
+                &temp,
+                memory,
+                cpu.gs_base,
+                args.rcx,
+                args.rdx,
+                args.r8 as u32,
+                args.r9,
+            )
         },
     );
     registry.alias(FILE_API, KERNEL32, "GetTempFileNameW");
@@ -891,8 +934,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 return create_host_file(&open, cpu.gs_base, resolved, access, share, disposition);
             }
             let mut objects = open.objects.lock().expect("guest object state");
-            let Some(path) = resolve_file_path(&raw, &objects.current_directory)
-            else {
+            let Some(path) = resolve_file_path(&raw, &objects.current_directory) else {
                 return open.fail(cpu.gs_base, INVALID_NAME, INVALID_HANDLE);
             };
             let parent = parent(&path);
@@ -919,7 +961,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 if objects.files.len() >= MAX_FILES {
                     return open.fail(cpu.gs_base, DISK_FULL, INVALID_HANDLE);
                 }
-                objects.files.insert(path.clone(), SyntheticFile::new(open.clock.now_filetime()));
+                objects
+                    .files
+                    .insert(path.clone(), SyntheticFile::new(open.clock.now_filetime()));
             } else if matches!(disposition, 2 | 5) {
                 let file = objects.files.get_mut(&path).expect("existing file");
                 file.data.clear();
@@ -1018,11 +1062,15 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 return delete.fail(cpu.gs_base, INVALID_NAME, 0);
             };
             if let Some(resolved) = host_files::resolve(&delete.mounts, &raw, valid_component) {
-                return change_host_namespace(&delete, cpu.gs_base, resolved, HostChange::DeleteFile);
+                return change_host_namespace(
+                    &delete,
+                    cpu.gs_base,
+                    resolved,
+                    HostChange::DeleteFile,
+                );
             }
             let mut objects = delete.objects.lock().expect("guest object state");
-            let Some(path) = resolve_file_path(&raw, &objects.current_directory)
-            else {
+            let Some(path) = resolve_file_path(&raw, &objects.current_directory) else {
                 return delete.fail(cpu.gs_base, INVALID_NAME, 0);
             };
             if objects.directories.contains(&path) {
@@ -1227,7 +1275,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             let bytes = match file.host_len() {
                 Some(Ok(bytes)) => bytes,
                 Some(Err(error)) => return size.fail(cpu.gs_base, error, failure),
-                None => objects.files.get(&file.path).expect("open file exists").data.len() as u64,
+                None => objects
+                    .files
+                    .get(&file.path)
+                    .expect("open file exists")
+                    .data
+                    .len() as u64,
             };
             if extended {
                 if args.rdx == 0 || memory.write_u64(args.rdx, bytes).is_err() {
@@ -1268,11 +1321,17 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 Err(error) => return times.fail(cpu.gs_base, host_files::win32_error(&error), 0),
             }
         } else {
-            objects.files.get(&file.path).expect("open file exists").times
+            objects
+                .files
+                .get(&file.path)
+                .expect("open file exists")
+                .times
         };
         for (address, value) in addresses.into_iter().zip(values) {
             if address != 0 {
-                memory.write_u64(address, value).map_err(ExitReason::MemoryFault)?;
+                memory
+                    .write_u64(address, value)
+                    .map_err(ExitReason::MemoryFault)?;
             }
         }
         Ok(1)
@@ -1306,7 +1365,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 match value {
                     0 => {}
                     u64::MAX if index != 0 => {
-                        file.instance.suppressed_times.fetch_or(1 << index, Ordering::Relaxed);
+                        file.instance
+                            .suppressed_times
+                            .fetch_or(1 << index, Ordering::Relaxed);
                     }
                     _ => *slot = value,
                 }
@@ -1490,7 +1551,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 memory
                     .write_u32(args.r9, transferred as u32)
                     .map_err(ExitReason::MemoryFault)?;
-                file.instance.position
+                file.instance
+                    .position
                     .store(position + transferred as u64, Ordering::Relaxed);
                 return Ok(1);
             }
@@ -1550,7 +1612,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if transferred != 0 && file.updates_time(time_index) {
                 synthetic.times[time_index] = state.clock.now_filetime();
             }
-            file.instance.position
+            file.instance
+                .position
                 .store(position + transferred as u64, Ordering::Relaxed);
             Ok(1)
         });

@@ -175,7 +175,10 @@ fn synthetic_timestamp_suppression_is_scoped_to_the_open_file() {
     assert_eq!(guest.call("SetFileTime", &[pinned, 0, COUNT, COUNT]), 1);
     let process = u64::MAX;
     assert_eq!(
-        guest.call("DuplicateHandle", &[process, pinned, process, COUNT, 0, 0, 2]),
+        guest.call(
+            "DuplicateHandle",
+            &[process, pinned, process, COUNT, 0, 0, 2]
+        ),
         1
     );
     let duplicate = guest.u64_at(COUNT);
@@ -185,14 +188,20 @@ fn synthetic_timestamp_suppression_is_scoped_to_the_open_file() {
     assert!(write(&mut guest, pinned, b"x"));
     assert_eq!(guest.call("SetFilePointerEx", &[pinned, 0, 0, 0]), 1);
     assert_eq!(read(&mut guest, pinned, 1).unwrap(), b"x");
-    assert_eq!(guest.call("GetFileTime", &[pinned, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(
+        guest.call("GetFileTime", &[pinned, 0, BUFFER, BUFFER + 8]),
+        1
+    );
     assert_eq!(guest.u64_at(BUFFER), 100);
     assert_eq!(guest.u64_at(BUFFER + 8), 100);
 
     clock.advance(10);
     assert_eq!(read(&mut guest, normal, 1).unwrap(), b"x");
     assert!(write(&mut guest, normal, b"y"));
-    assert_eq!(guest.call("GetFileTime", &[pinned, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(
+        guest.call("GetFileTime", &[pinned, 0, BUFFER, BUFFER + 8]),
+        1
+    );
     assert_eq!(guest.u64_at(BUFFER), 120);
     assert_eq!(guest.u64_at(BUFFER + 8), 120);
 }
@@ -204,9 +213,18 @@ fn synthetic_file_times_follow_the_file_until_deletion() {
     let mut guest = Guest::with_state(IMPORTS, &[], state);
     let source = r"C:\Before.dat";
     let target = r"C:\After.dat";
-    let handle = open(&mut guest, source, GENERIC_READ | GENERIC_WRITE, 0, CREATE_NEW);
+    let handle = open(
+        &mut guest,
+        source,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        CREATE_NEW,
+    );
     assert_ne!(handle, INVALID);
-    assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, BUFFER + 8, BUFFER + 16]), 1);
+    assert_eq!(
+        guest.call("GetFileTime", &[handle, BUFFER, BUFFER + 8, BUFFER + 16]),
+        1
+    );
     assert_eq!(guest.u64_at(BUFFER), 100);
     assert_eq!(guest.u64_at(BUFFER + 8), 100);
     assert_eq!(guest.u64_at(BUFFER + 16), 100);
@@ -215,7 +233,10 @@ fn synthetic_file_times_follow_the_file_until_deletion() {
     guest.memory.write_u64(COUNT, created).unwrap();
     guest.memory.write_u64(COUNT + 8, modified).unwrap();
     assert_eq!(guest.call("SetFileTime", &[handle, COUNT, 0, COUNT + 8]), 1);
-    assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, BUFFER + 8, BUFFER + 16]), 1);
+    assert_eq!(
+        guest.call("GetFileTime", &[handle, BUFFER, BUFFER + 8, BUFFER + 16]),
+        1
+    );
     assert_eq!(guest.u64_at(BUFFER), created);
     assert_eq!(guest.u64_at(BUFFER + 8), 100);
     assert_eq!(guest.u64_at(BUFFER + 16), modified);
@@ -224,7 +245,10 @@ fn synthetic_file_times_follow_the_file_until_deletion() {
     assert_eq!(guest.call("SetFilePointerEx", &[handle, 0, 0, 0]), 1);
     clock.advance(10);
     assert_eq!(read(&mut guest, handle, 4).unwrap(), b"data");
-    assert_eq!(guest.call("GetFileTime", &[handle, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(
+        guest.call("GetFileTime", &[handle, 0, BUFFER, BUFFER + 8]),
+        1
+    );
     assert_eq!(guest.u64_at(BUFFER), 120);
     assert_eq!(guest.u64_at(BUFFER + 8), 110);
     assert_eq!(guest.call("CloseHandle", &[handle]), 1);
@@ -248,7 +272,10 @@ fn synthetic_file_times_follow_the_file_until_deletion() {
 
     let handle = open(&mut guest, target, GENERIC_READ, 0, CREATE_NEW);
     assert_ne!(handle, INVALID);
-    assert_eq!(guest.call("GetFileTime", &[handle, BUFFER, 0, BUFFER + 8]), 1);
+    assert_eq!(
+        guest.call("GetFileTime", &[handle, BUFFER, 0, BUFFER + 8]),
+        1
+    );
     assert_eq!(guest.u64_at(BUFFER), 130);
     assert_eq!(guest.u64_at(BUFFER + 8), 130);
     assert_eq!(guest.call("CloseHandle", &[handle]), 1);
@@ -269,14 +296,23 @@ fn guest_sets_mounted_write_time_by_handle() {
     assert_eq!(guest.error(), 5);
     assert_eq!(guest.call("CloseHandle", &[readonly]), 1);
 
-    let handle = open(&mut guest, name, GENERIC_READ | GENERIC_WRITE, 0, OPEN_EXISTING);
+    let handle = open(
+        &mut guest,
+        name,
+        GENERIC_READ | GENERIC_WRITE,
+        0,
+        OPEN_EXISTING,
+    );
     assert_ne!(handle, INVALID);
     assert_eq!(guest.call("GetFileTime", &[handle, 0, BUFFER, 0]), 1);
     let accessed = guest.u64_at(BUFFER);
     let modified = 133_444_736_012_345_678;
     guest.memory.write_u64(COUNT, modified).unwrap();
     assert_eq!(guest.call("SetFileTime", &[handle, 0, 0, COUNT]), 1);
-    assert_eq!(guest.call("GetFileTime", &[handle, 0, BUFFER, BUFFER + 8]), 1);
+    assert_eq!(
+        guest.call("GetFileTime", &[handle, 0, BUFFER, BUFFER + 8]),
+        1
+    );
     assert_eq!(guest.u64_at(BUFFER), accessed);
     assert_eq!(guest.u64_at(BUFFER + 8), modified);
     assert_eq!(guest.call("SetFileTime", &[handle, 0, COUNT, 1]), 0);
@@ -297,8 +333,12 @@ fn mounted_metadata_reports_windows_filetimes() {
     let file = std::fs::File::create(root.join("Times.dat")).unwrap();
     let accessed = UNIX_EPOCH + Duration::new(1_700_000_000, 123_456_700);
     let modified = UNIX_EPOCH + Duration::new(1_700_000_001, 234_567_800);
-    file.set_times(std::fs::FileTimes::new().set_accessed(accessed).set_modified(modified))
-        .unwrap();
+    file.set_times(
+        std::fs::FileTimes::new()
+            .set_accessed(accessed)
+            .set_modified(modified),
+    )
+    .unwrap();
     let mount = HostMount::new('D', &root, false).unwrap();
     let mut guest = guest_with(vec![mount]);
     put_path(&mut guest, PATH, r"D:\Times.dat");
@@ -383,7 +423,10 @@ fn ansi_create_file_uses_the_same_mount_and_sharing_rules() {
     let mut guest = guest_with(vec![HostMount::new('D', &root, true).unwrap()]);
     let open_ansi = |guest: &mut Guest, name: &[u8], disposition| {
         guest.memory.write_bytes(PATH, name).unwrap();
-        guest.call("CreateFileA", &[PATH, GENERIC_WRITE, 0, 0, disposition, 0x80, 0])
+        guest.call(
+            "CreateFileA",
+            &[PATH, GENERIC_WRITE, 0, 0, disposition, 0x80, 0],
+        )
     };
 
     let file = open_ansi(&mut guest, b"D:\\Mixed.txt\0", CREATE_NEW);
@@ -457,19 +500,36 @@ fn temporary_files_use_the_mounted_directory_and_skip_existing_names() {
     put_path(&mut guest, PATH, r"D:\temp");
     assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 0, 1]), 0);
     assert_eq!(guest.error(), 998);
-    assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 0, BUFFER]), 2);
+    assert_eq!(
+        guest.call("GetTempFileNameW", &[PATH, prefix, 0, BUFFER]),
+        2
+    );
     let name: Vec<_> = (0..32)
         .map(|i| guest.u16_at(BUFFER + 2 * i))
         .take_while(|unit| *unit != 0)
         .collect();
     assert_eq!(String::from_utf16(&name).unwrap(), r"D:\temp\pre0002.TMP");
-    assert_eq!(std::fs::metadata(root.join("Temp/pre0002.TMP")).unwrap().len(), 0);
-    assert_eq!(std::fs::read(root.join("Temp/PRE0001.tmp")).unwrap(), b"original");
+    assert_eq!(
+        std::fs::metadata(root.join("Temp/pre0002.TMP"))
+            .unwrap()
+            .len(),
+        0
+    );
+    assert_eq!(
+        std::fs::read(root.join("Temp/PRE0001.tmp")).unwrap(),
+        b"original"
+    );
 
     put_path(&mut guest, PATH, r"E:\Temp");
-    assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 0, BUFFER]), 0);
+    assert_eq!(
+        guest.call("GetTempFileNameW", &[PATH, prefix, 0, BUFFER]),
+        0
+    );
     assert_eq!(guest.error(), 5);
-    assert_eq!(guest.call("GetTempFileNameW", &[PATH, prefix, 3, BUFFER]), 3);
+    assert_eq!(
+        guest.call("GetTempFileNameW", &[PATH, prefix, 3, BUFFER]),
+        3
+    );
     assert!(!root.join("Temp/pre0003.TMP").exists());
 }
 
@@ -526,13 +586,25 @@ fn read_only_mounts_serve_files_without_escaping_the_root() {
     let mount = HostMount::new('D', &tree.path("root"), false).unwrap();
     let mut guest = guest_with(vec![mount]);
 
-    guest.memory.write_bytes(PATH, b"D:\\data\\LEVEL1.BIN\0").unwrap();
+    guest
+        .memory
+        .write_bytes(PATH, b"D:\\data\\LEVEL1.BIN\0")
+        .unwrap();
     assert_eq!(guest.call("GetFileAttributesA", &[PATH]), 1);
-    guest.memory.write_bytes(PATH, b"D:\\data\\missing.bin\0").unwrap();
-    assert_eq!(guest.call("GetFileAttributesA", &[PATH]), u64::from(u32::MAX));
+    guest
+        .memory
+        .write_bytes(PATH, b"D:\\data\\missing.bin\0")
+        .unwrap();
+    assert_eq!(
+        guest.call("GetFileAttributesA", &[PATH]),
+        u64::from(u32::MAX)
+    );
     assert_eq!(guest.error(), 2);
     guest.memory.write_bytes(PATH, b"D:\\data\\\xff\0").unwrap();
-    assert_eq!(guest.call("GetFileAttributesA", &[PATH]), u64::from(u32::MAX));
+    assert_eq!(
+        guest.call("GetFileAttributesA", &[PATH]),
+        u64::from(u32::MAX)
+    );
     assert_eq!(guest.error(), 123);
 
     // Names match case-insensitively against the host listing.

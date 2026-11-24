@@ -281,7 +281,10 @@ pub(super) fn register(registry: &mut ImportRegistry) {
     registry.register(UCRT, "strtok", |args, cpu, memory| {
         tokenize(memory, cpu.gs_base, args.rcx, args.rdx)
     });
-    for (symbol, unit) in [("strtok_s", StringUnit::Byte), ("wcstok_s", StringUnit::Wide)] {
+    for (symbol, unit) in [
+        ("strtok_s", StringUnit::Byte),
+        ("wcstok_s", StringUnit::Wide),
+    ] {
         registry.register(UCRT, symbol, move |args, cpu, memory| {
             tokenize_s(memory, cpu.gs_base, args.rcx, args.rdx, args.r8, unit)
         });
@@ -1281,27 +1284,12 @@ fn strtok_s_keeps_context_and_errno_separate() {
     assert_eq!(call(&mut memory, 0, 0x1020, 0x1040), 0);
     assert_eq!(memory.read_u32(errno).unwrap(), EINVAL);
     memory.write_u32(errno, 0).unwrap();
-    assert_eq!(
-        call(&mut memory, 0x1000, 0x1020, 0x1040),
-        0x1001
-    );
-    assert_eq!(
-        call(&mut memory, 0x1010, 0x1020, 0x1048),
-        0x1010
-    );
-    assert_eq!(
-        call(&mut memory, 0, 0x1022, 0x1040),
-        0x1003
-    );
-    assert_eq!(
-        call(&mut memory, 0, 0x1022, 0x1040),
-        0x1005
-    );
+    assert_eq!(call(&mut memory, 0x1000, 0x1020, 0x1040), 0x1001);
+    assert_eq!(call(&mut memory, 0x1010, 0x1020, 0x1048), 0x1010);
+    assert_eq!(call(&mut memory, 0, 0x1022, 0x1040), 0x1003);
+    assert_eq!(call(&mut memory, 0, 0x1022, 0x1040), 0x1005);
     assert_eq!(memory.read_u64(0x1040).unwrap(), 0x1006);
     assert_eq!(call(&mut memory, 0, 0x1022, 0x1040), 0);
-    assert_eq!(
-        call(&mut memory, 0, 0x1020, 0x1048),
-        0x1012
-    );
+    assert_eq!(call(&mut memory, 0, 0x1020, 0x1048), 0x1012);
     assert_eq!(memory.read_u32(errno).unwrap(), 0);
 }

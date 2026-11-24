@@ -191,8 +191,8 @@ fn classify(status: &libc::stat) -> Option<(Kind, u64, FileId)> {
 
 fn file_times(status: &libc::stat) -> [u64; 3] {
     fn filetime(seconds: i64, nanoseconds: i64) -> u64 {
-        let ticks = (i128::from(seconds) + 11_644_473_600) * 10_000_000
-            + i128::from(nanoseconds) / 100;
+        let ticks =
+            (i128::from(seconds) + 11_644_473_600) * 10_000_000 + i128::from(nanoseconds) / 100;
         u64::try_from(ticks).unwrap_or(0)
     }
     #[cfg(any(target_os = "macos", target_os = "ios"))]

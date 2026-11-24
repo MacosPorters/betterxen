@@ -395,7 +395,10 @@ fn guest_wcstok_s_resumes_in_wide_units_and_sets_errno() {
     assert_eq!(memory.read_u32(errno).unwrap(), 22);
     memory.write_u32(errno, 0).unwrap();
 
-    assert_eq!(call(&mut memory, 0, [input, delimiters, context]), input + 2);
+    assert_eq!(
+        call(&mut memory, 0, [input, delimiters, context]),
+        input + 2
+    );
     assert_eq!(memory.read_u16(input + 4).unwrap(), 0);
     assert_eq!(memory.read_u64(context).unwrap(), input + 6);
     assert_eq!(call(&mut memory, 1, [0, delimiters, context]), input + 6);
@@ -451,10 +454,16 @@ fn guest_strtok_s_shares_context_across_win64_import_aliases() {
     assert_eq!(memory.read_u32(errno).unwrap(), 22);
     memory.write_u32(errno, 0).unwrap();
 
-    assert_eq!(call(&mut memory, 0, [input, delimiters, context]), input + 1);
+    assert_eq!(
+        call(&mut memory, 0, [input, delimiters, context]),
+        input + 1
+    );
     assert_eq!(memory.read_u8(input + 2).unwrap(), 0);
     assert_eq!(memory.read_u64(context).unwrap(), input + 3);
-    assert_eq!(call(&mut memory, 1, [0, delimiters + 2, context]), input + 3);
+    assert_eq!(
+        call(&mut memory, 1, [0, delimiters + 2, context]),
+        input + 3
+    );
     assert_eq!(memory.read_u8(input + 4).unwrap(), 0);
     assert_eq!(call(&mut memory, 0, [0, delimiters, context]), input + 5);
     assert_eq!(call(&mut memory, 1, [0, delimiters, context]), 0);

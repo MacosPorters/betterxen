@@ -1647,7 +1647,11 @@ fn test_guest_synthetic_file_io_through_iat() {
             ),
             (
                 [0x49, 0xb8],
-                if symbol == "GetTempFileNameW" { disposition } else { 0 },
+                if symbol == "GetTempFileNameW" {
+                    disposition
+                } else {
+                    0
+                },
             ),
             (
                 [0x49, 0xb9],
@@ -1669,7 +1673,10 @@ fn test_guest_synthetic_file_io_through_iat() {
         append_import_call(&mut code, 0x2060);
         code.extend_from_slice(&[0x48, 0x83, 0xc4, 0x48, 0xf4]);
         code.resize(0x80, 0);
-        if matches!(symbol, "SetCurrentDirectoryA" | "GetFileAttributesA" | "CreateFileA") {
+        if matches!(
+            symbol,
+            "SetCurrentDirectoryA" | "GetFileAttributesA" | "CreateFileA"
+        ) {
             code.extend_from_slice(name.as_bytes());
             code.push(0);
         } else {
@@ -1722,23 +1729,36 @@ fn test_guest_synthetic_file_io_through_iat() {
     let output = PROCESS_FIXTURE_OUTPUT;
     let temp = call("GetTempPathA", &[4, output]);
     assert_eq!(temp.execution.final_state.get(Register::Rax), 3);
-    assert_eq!(temp.image.memory.read_u32(output).unwrap().to_le_bytes(), *b"C:\\\0");
+    assert_eq!(
+        temp.image.memory.read_u32(output).unwrap().to_le_bytes(),
+        *b"C:\\\0"
+    );
     let short = call("GetTempPathW", &[3, output]);
     assert_eq!(short.execution.final_state.get(Register::Rax), 4);
     assert_eq!(short.image.memory.read_u64(output).unwrap(), u64::MAX);
-    assert_eq!(path_call("SetEnvironmentVariableW", "TEMP", 0, 0, Some("C:/work")), 1);
-    assert_eq!(path_call("SetEnvironmentVariableW", "TMP", 0, 0, Some("C:/scratch")), 1);
+    assert_eq!(
+        path_call("SetEnvironmentVariableW", "TEMP", 0, 0, Some("C:/work")),
+        1
+    );
+    assert_eq!(
+        path_call("SetEnvironmentVariableW", "TMP", 0, 0, Some("C:/scratch")),
+        1
+    );
     let temp = call_service_fixture(&state, MODULE, "GetTempPathW", &[12, output]);
     assert_eq!(temp.execution.final_state.get(Register::Rax), 11);
     assert_eq!(
-        (0..12).map(|i| temp.image.memory.read_u16(output + i * 2).unwrap()).collect::<Vec<_>>(),
-        "C:\\scratch\\".encode_utf16().chain([0]).collect::<Vec<_>>()
+        (0..12)
+            .map(|i| temp.image.memory.read_u16(output + i * 2).unwrap())
+            .collect::<Vec<_>>(),
+        "C:\\scratch\\"
+            .encode_utf16()
+            .chain([0])
+            .collect::<Vec<_>>()
     );
     assert_eq!(namespace("CreateDirectoryW", "C:/work"), 1);
     assert_eq!(namespace("SetCurrentDirectoryW", "C:/work"), 1);
-    let temp_file = |directory, unique| {
-        path_result("GetTempFileNameW", directory, 0, unique, Some("prefix"))
-    };
+    let temp_file =
+        |directory, unique| path_result("GetTempFileNameW", directory, 0, unique, Some("prefix"));
     let explicit = temp_file("C:/work", 0x1_002a);
     assert_eq!(explicit.execution.final_state.get(Register::Rax), 0x1_002a);
     let read_name = |result: &xenora_loader::startup::StartupResult| {
@@ -1806,12 +1826,18 @@ fn test_guest_synthetic_file_io_through_iat() {
     assert_ne!(writer, u64::MAX);
     assert_eq!(open("sample.dat", 0x8000_0000, 3), u64::MAX);
     assert_eq!(
-        call("GetFileType", &[writer]).execution.final_state.get(Register::Rax),
+        call("GetFileType", &[writer])
+            .execution
+            .final_state
+            .get(Register::Rax),
         1
     );
     let wrote = call("WriteFile", &[writer, output, 4, output + 8, 0]);
     assert_eq!(
-        call("FlushFileBuffers", &[writer]).execution.final_state.get(Register::Rax),
+        call("FlushFileBuffers", &[writer])
+            .execution
+            .final_state
+            .get(Register::Rax),
         1
     );
     assert_eq!(wrote.execution.final_state.get(Register::Rax), 1);
