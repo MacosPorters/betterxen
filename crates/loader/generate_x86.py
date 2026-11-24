@@ -7,8 +7,9 @@
              differs. Never writes.
 
 Rejects unknown keys and vocabulary, overlapping encodings, digit and plain
-forms sharing an opcode, operand constraints that contradict each other, and
-flags declared both written and undefined. Standard library only (Python 3.11+).
+forms sharing an opcode, operand constraints that contradict each other, LOCK
+on a form that cannot write memory, and flags declared both written and
+undefined. Standard library only (Python 3.11+).
 """
 
 import sys
@@ -26,7 +27,7 @@ RUST = HERE / "src/x86_table.rs"
 TOP_KEYS = {"schema", "architecture", "documents", "operation", "alu", "form", "group"}
 OPERATION_KEYS = {"reads", "writes", "undefined", "conditional", "terminator", "faults", "ref"}
 FORM_KEYS = {"op", "map", "prefix", "opcode", "count", "digit", "enc", "size", "imm", "src",
-             "memory_only", "register_only", "no_rex_b", "unaligned"}
+             "memory_only", "register_only", "no_rex_b", "unaligned", "lock"}
 GROUP_KEYS = {"map", "opcodes", "digits"}
 FLAGS = ["cf", "zf", "sf", "of", "pf", "af"]
 MAPS = {"1": "ONE_BYTE", "0f": "TWO_BYTE"}
@@ -63,6 +64,8 @@ ENCS = {
     "reg_xmm": ("RegXmm", True, {""}),
     "reg_xmm_imm": ("RegXmmImm", True, {"ub"}),
 }
+# Encodings whose ModRM operand is the destination, so LOCK can apply to it.
+RM_DESTINATIONS = {"rm_reg", "rm", "rm_imm", "rm_one", "rm_cl"}
 # Encodings whose ModRM operand is an XMM register or memory of the source width.
 XMM_RM = {"xmm_rm", "rm_xmm", "xmm_rm_imm", "rm_imm_xmm", "reg_xmm", "reg_xmm_imm"}
 # One-byte opcodes that are prefixes or the two-byte escape, never instructions.
@@ -171,6 +174,8 @@ def load(text):
         if (form["size"] == "x") != (form["enc"] in XMM_RM - {"reg_xmm", "reg_xmm_imm"}
                                      or form["enc"] == "xmm_gpr_imm"):
             fail(f"{where}: XMM size does not match the encoding")
+        if form.get("lock") and (form["enc"] not in RM_DESTINATIONS or form.get("register_only")):
+            fail(f"{where}: LOCK needs a memory destination")
         if form.get("unaligned") and form["src"] != "x":
             fail(f"{where}: alignment applies only to 16-byte operands")
         if form["prefix"] and form["map"] != "0f":
@@ -266,7 +271,8 @@ def generate(operations, forms):
             f"memory_only: {str(bool(form.get('memory_only'))).lower()}, "
             f"register_only: {str(bool(form.get('register_only'))).lower()}, "
             f"no_rex_b: {str(bool(form.get('no_rex_b'))).lower()}, "
-            f"unaligned: {str(bool(form.get('unaligned'))).lower()} }},")
+            f"unaligned: {str(bool(form.get('unaligned'))).lower()}, "
+            f"lockable: {str(bool(form.get('lock'))).lower()} }},")
     out += ["];", ""]
 
     groups = []

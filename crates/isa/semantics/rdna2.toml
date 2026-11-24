@@ -21,6 +21,7 @@ include = [
   "rdna2/sopc.toml",
   "rdna2/sopk.toml",
   "rdna2/sop1.toml",
+  "rdna2/vop1.toml",
   "rdna2/vop2.toml",
   "rdna2/vopc.toml",
   "rdna2/vop3.toml",
@@ -47,7 +48,7 @@ file = "amdgpu_isa_rdna2.xml"
 #   width         operand and result width in bits
 #   scc           unchanged | carry_out | borrow | signed_overflow | nonzero | relation | selected_src0
 #   vcc, exec     unchanged (stated, not implied) | lane_mask (vcc of a Wave32 VOPC compare)
-#   wave          any | wave32 (wave32 exactly for the VOPC lane-mask compares)
+#   wave          any | wave32 (wave32 for VOPC compares and VOP1 integer forms)
 #   operands      a key of [operand_rules]
 #   spec          references; at least one guide section with a page
 #   verify        evidence required before the form counts as verified

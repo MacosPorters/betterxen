@@ -5,12 +5,12 @@ use std::process::{Command, Stdio};
 use xenora_decoder::{
     Architecture, CompareRelation, DecodeError, DecodeErrorKind, DecodedInstruction, Instruction,
     ScalarAlu64Op, ScalarAluOp, ScalarImmediateOp, ScalarSource, ScalarSource64, ScalarUnaryOp,
-    VectorAluOp, VectorAluVop3Op, VectorSource, decode, decode_at,
+    VectorAluOp, VectorAluVop3Op, VectorSource, VectorUnaryOp, decode, decode_at,
 };
 use xenora_isa::semantics::Signedness;
 use xenora_ref::{
     BranchCondition, CompareSource, Comparison, Op, ScalarAlu, ScalarImmediate, ScalarUnary,
-    Source, VectorAlu, VectorInteger,
+    Source, VectorAlu, VectorInteger, VectorUnary,
 };
 
 const FIXTURE: &[u8] = include_bytes!("../../../fixtures/rdna2/add.bin");
@@ -357,6 +357,22 @@ fn reference_op(instruction: Instruction) -> Op {
             };
             Op::ScalarLogicPair(kind, dst, pair(src0), pair(src1))
         }
+        Instruction::VectorUnary { op, dst, src } => Op::VectorUnary(
+            match op {
+                VectorUnaryOp::NotB32 => VectorUnary::Not,
+                VectorUnaryOp::BfrevB32 => VectorUnary::ReverseBits,
+                VectorUnaryOp::FfbhU32 => VectorUnary::FindFirstOneFromMsb,
+                VectorUnaryOp::FfblB32 => VectorUnary::FindFirstOneFromLsb,
+                VectorUnaryOp::FfbhI32 => VectorUnary::FindSignChange,
+            },
+            dst,
+            match src {
+                VectorSource::Register(reg) => CompareSource::Vector(reg),
+                VectorSource::Scalar(reg) => CompareSource::Scalar(reg),
+                VectorSource::Immediate(bits) => CompareSource::Immediate(bits),
+            },
+        ),
+        Instruction::VectorSwap { dst, src, .. } => Op::Swap(dst, src),
         Instruction::ScalarAlu {
             op,
             dst,
@@ -596,12 +612,13 @@ fn compares_fixture_instructions_against_llvm() {
         include_bytes!("../../../fixtures/rdna2/vector-integer.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare.bin"),
         include_bytes!("../../../fixtures/rdna2/vector-compare-ft.bin"),
+        include_bytes!("../../../fixtures/rdna2/vector-unary.bin"),
         high_registers,
         &matrix,
     ] {
         count += compare_against_llvm(fixture, &mut forms);
     }
-    assert_eq!(forms.len(), 128, "forms compared: {forms:?}");
+    assert_eq!(forms.len(), 134, "forms compared: {forms:?}");
     eprintln!(
         "{count} three-way instruction comparisons across {} forms",
         forms.len()

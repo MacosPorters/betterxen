@@ -61,7 +61,7 @@ OPERATIONS = {
     "mul": "Multiply", "mul_hi": "MultiplyHigh", "bfe": "BitfieldExtract",
     "absdiff": "AbsoluteDifference", "lshl_add": "ShiftLeftAdd",
     "mul24": "Multiply24", "mul_hi24": "MultiplyHigh24",
-    "mov": "Move", "cmov": "ConditionalMove",
+    "mov": "Move", "cmov": "ConditionalMove", "swap": "Swap",
 }
 # Unary operations read one source; they need an operand rule of the unary kind.
 UNARY = {"not", "brev", "bcnt0", "bcnt1", "ff0", "ff1", "flbit", "sext", "abs"}
@@ -97,7 +97,7 @@ COMPARE_PRIMITIVES = {
 # the signedness their primitive names, and their S1 is an unsigned count.
 LOGICAL = {
     "and", "or", "xor", "andn2", "orn2", "nand", "nor", "xnor",
-    "not", "brev", "bcnt0", "bcnt1", "ff0", "ff1", "cselect", "bfm",
+    "not", "brev", "bcnt0", "bcnt1", "ff0", "ff1", "cselect", "bfm", "swap",
 }
 ARITHMETIC = {
     "add", "sub", "min", "max", "mul", "mul_hi", "bfe", "absdiff", "lshl_add", "mul24", "mul_hi24",
@@ -140,10 +140,14 @@ MASK = {"unchanged": "Unchanged", "lane_mask": "LaneMask"}
 WAVE = {"any": "Any", "wave32": "Wave32"}
 # Which wave declaration each operand-rule kind must make. The decoder has no
 # wave-size input, so "wave32" is only true where the caller's ABI fixes the
-# wave size: the lane-mask compares, whose one entry point is the Wave32
-# compute fixture ABI (docs/shaders/vector-compare.md section 2). Every other
-# kind must be "any".
-WAVE_BY_KIND = {"vector_compare": "wave32"}
+# wave size. Lane-mask compares, vector unary operations and vector swaps use
+# the Wave32 compute fixture ABI. The default for other kinds is "any".
+WAVE_BY_KIND = {
+    "alu64": "any",
+    "vector_compare": "wave32",
+    "vector_unary": "wave32",
+    "vector_swap": "wave32",
+}
 EVIDENCE = {
     "reference": "Reference",
     "independent": "Independent",
@@ -262,7 +266,45 @@ UNSUPPORTED_COMBOS = {
 # VOP3 rules also name source classes and encoding fields they refuse.
 VOP3_COMBOS = {"src_sgpr", "src_inline", "src_literal", "modifiers", "src2"}
 ALL_COMBOS = UNSUPPORTED_COMBOS | {"src_vcc_hi", "src_null"} | VOP3_COMBOS | {"dst_odd_pair", "src_odd_pair"}
+VECTOR_UNARY_PRIMITIVES = {
+    ("not", "bitwise"): "Not",
+    ("brev", "bitwise"): "ReverseBits",
+    ("flbit", "unsigned"): "FindHighUnsigned",
+    ("ff1", "bitwise"): "FindLow",
+    ("flbit", "signed"): "FindHighSigned",
+}
+
 OPERAND_RULES = {
+    "vop1_vgpr": {
+        "rust": "Vop1Vgpr",
+        "enum": "VectorUnaryOp",
+        "shape": {
+            "family": "VOP1",
+            "dst": {"field": "VDST", "class": "vgpr", "min": 0, "max": 255},
+            "src": [{"field": "SRC0", "class": "vector_source"}],
+            "max_literals": 1,
+        },
+        "unsupported": {
+            "src_vcc_hi", "src_exec", "src_m0", "src_ttmp", "src_null", "src_float_inline",
+            "src_special",
+        },
+        "kind": "vector_unary",
+    },
+    "vop1_swap": {
+        "rust": "Vop1Swap",
+        "enum": "VectorSwapOp",
+        "shape": {
+            "family": "VOP1",
+            "dst": {"field": "VDST", "class": "vgpr", "min": 0, "max": 255},
+            "src": [{"field": "SRC0", "class": "vgpr"}],
+            "max_literals": 0,
+        },
+        "unsupported": {
+            "src_sgpr", "src_vcc", "src_exec", "src_m0", "src_ttmp", "src_null", "src_inline",
+            "src_float_inline", "src_special", "src_literal",
+        },
+        "kind": "vector_swap",
+    },
     "sop2_sgpr": {
         "rust": "Sop2Sgpr",
         "enum": "ScalarAluOp",
@@ -668,7 +710,10 @@ def _check_xml(form, rule, snapshot, errors):
         expected = bits if type(bits) is int else form["width"]
         if size != expected:
             errors.append(f"{label}: {field} is {size} bits in the XML, declared {expected}")
-        if (is_input, is_output) != (is_source, not is_source):
+        # The XML marks both swap operands as outputs. Guide 12.8 also
+        # reads both old values before assigning either result.
+        direction = (False, True) if _rule_kind(form) == "vector_swap" else (is_source, not is_source)
+        if (is_input, is_output) != direction:
             errors.append(f"{label}: {field} direction disagrees with the XML")
         if field == count_field:
             if data_format != "FMT_NUM_U32":
@@ -843,10 +888,16 @@ def validate(registry, snapshot):
             if form["carry_in"] != "none":
                 errors.append(f"{label}: carry_in {form['carry_in']} contradicts compare")
             primitive = (scc, None, False)
-        elif _rule_kind(form) == "vector":
+        elif _rule_kind(form) in ("vector", "vector_unary", "vector_swap"):
             if RELATION_KEY in form:
                 errors.append(f"{label}: {RELATION_KEY} on a non-compare operation")
-            lowering = VECTOR_PRIMITIVES.get((form["operation"], form["signedness"]))
+            key = (form["operation"], form["signedness"])
+            table = {
+                "vector": VECTOR_PRIMITIVES,
+                "vector_unary": VECTOR_UNARY_PRIMITIVES,
+                "vector_swap": {("swap", "bitwise"): "Swap"},
+            }[_rule_kind(form)]
+            lowering = table.get(key)
             primitive = None if lowering is None else ("unchanged", lowering, False)
         elif _rule_kind(form) == "alu64":
             if RELATION_KEY in form:
@@ -878,6 +929,8 @@ def validate(registry, snapshot):
         elif form["operands"] in OPERAND_RULES and OPERAND_RULES[form["operands"]]["kind"] != (
             (_rule_kind(form) if _rule_kind(form) in ("vector_compare", "immediate_compare") else "compare")
             if form["operation"] == "compare"
+            else "vector_swap" if form["operation"] == "swap"
+            else "vector_unary" if _rule_kind(form) == "vector_unary" and form["operation"] in UNARY
             else "unary" if form["operation"] in UNARY or (
                 form["operation"] == "mov" and form["family"] == "SOP1"
             )
@@ -1069,7 +1122,7 @@ def render(registry, snapshot):
         "use crate::primitive;",
         "use crate::semantics::{",
         "    CarryIn, Document, Evidence, FormSemantics, MaskEffect, Operation, OperandRule, SccEffect,",
-        "    Signedness, SpecRef, VectorBinary, Wave,",
+        "    Signedness, SpecRef, VectorBinary, VectorUnary, Wave,",
         "};",
         "use crate::CompareRelation;",
         "",
@@ -1316,6 +1369,31 @@ def _render_enum(rule_name, forms, snapshot, positions):
         "        }]",
         "    }",
     ]
+    if kind in ("vector_unary", "vector_swap"):
+        out += [
+            "",
+            "    /// Assembler name of the 32-bit VOP1 encoding.",
+            "    pub const fn assembly_name(self) -> &'static str {",
+            "        match self {",
+        ]
+        suffix = "_e32" if kind == "vector_unary" else ""
+        out += [f"            Self::{form['variant']} => \"{form['name'].lower()}{suffix}\"," for form in forms]
+        out += ["        }", "    }"]
+    if kind == "vector_swap":
+        return out + ["}"]
+    if kind == "vector_unary":
+        out += [
+            "",
+            "    /// Per-lane integer operation selected by the registry.",
+            "    pub const fn lowering(self) -> VectorUnary {",
+            "        match self {",
+        ]
+        out += [
+            f"            Self::{form['variant']} => "
+            f"VectorUnary::{VECTOR_UNARY_PRIMITIVES[(form['operation'], form['signedness'])]},"
+            for form in forms
+        ]
+        return out + ["        }", "    }", "}"]
     if kind == "immediate":
         out += [
             "",

@@ -405,3 +405,17 @@ fn scalar_logic_b64_fixture_matches_goldens() {
         include_str!("../../../fixtures/golden/scalar-logic-b64.metal")
     );
 }
+
+#[test]
+fn vop1_integer_fixture_lowers_unary_and_masked_swap() {
+    let code = include_bytes!("../../../fixtures/rdna2/vector-unary.bin");
+    let compiled = compile(Architecture::Gfx1030, code).unwrap();
+    assert_eq!(
+        compiled.ir,
+        include_str!("../../../fixtures/golden/vector-unary.ir")
+    );
+    assert_eq!(
+        compiled.msl,
+        include_str!("../../../fixtures/golden/vector-unary.metal")
+    );
+}

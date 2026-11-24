@@ -305,6 +305,8 @@ enum Outcome {
 }
 
 fn reference(m: &mut Machine, text: &str) -> Outcome {
+    // LOCK changes no result on a machine that runs one instruction at a time.
+    let text = text.strip_prefix("lock ").unwrap_or(text);
     let (name, rest) = text.split_once(' ').unwrap_or((text, ""));
     let places: Vec<Place> = if rest.is_empty() || name == "lea" || name == "nop" {
         Vec::new()
@@ -657,6 +659,28 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
             let (a, b) = (read(m, places[0], bits), read(m, places[1], bits));
             write(m, places[0], b);
             write(m, places[1], a);
+            Outcome::Done(none)
+        }
+        "xadd" => {
+            // TEMP := SRC + DEST; SRC := DEST; DEST := TEMP.
+            let (a, b) = (read(m, places[0], bits), read(m, places[1], bits));
+            let sum = arithmetic(m, a, b, false, false, bits);
+            write(m, places[1], a);
+            write(m, places[0], sum);
+            Outcome::Done(none)
+        }
+        "cmpxchg" => {
+            // The accumulator is compared with DEST as CMP would. On a match
+            // DEST := SRC; otherwise accumulator := DEST and DEST := DEST.
+            let accumulator = read(m, rax(bits), bits);
+            let (destination, source) = (read(m, places[0], bits), read(m, places[1], bits));
+            arithmetic(m, accumulator, destination, true, false, bits);
+            if accumulator == destination {
+                write(m, places[0], source);
+            } else {
+                write(m, rax(bits), destination);
+                write(m, places[0], destination);
+            }
             Outcome::Done(none)
         }
         "bswap" => {
