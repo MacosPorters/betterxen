@@ -210,6 +210,9 @@ pub enum OperandRule {
     /// SOP1 unary: SDST is s0-s105; SSRC0 is s0-s105, an inline integer -16..64 or
     /// a literal word. Everything else is rejected as unsupported.
     Sop1Sgpr,
+    /// SOP1 move: the same sources as Sop1Sgpr, with VCC and EXEC halves
+    /// also allowed as explicit destinations.
+    Sop1Move,
     /// SOPK integer: SDST is s0-s105 and, except for compares, written (never s0-s7,
     /// which hold resource descriptors); SIMM16 is the 16-bit immediate. The word
     /// never takes a literal. Everything else is rejected as unsupported.

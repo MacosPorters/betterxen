@@ -9,7 +9,7 @@ pub use xenora_isa::{
 };
 use xenora_isa::{
     BUFFER_LOAD_DWORD, BUFFER_STORE_DWORD, EXP, IMAGE_SAMPLE_LZ, S_BRANCH, S_CBRANCH_EXECZ,
-    S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_ENDPGM, S_MOV_B32, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
+    S_CBRANCH_SCC0, S_CBRANCH_VCCZ, S_ENDPGM, S_WAITCNT, S_WAITCNT_VSCNT, V_ADD_F32,
     V_INTERP_P1_F32, V_INTERP_P2_F32, V_MOV_B32, V_MUL_F32, VCC_LO,
 };
 
@@ -40,7 +40,7 @@ const fn concat_forms<const N: usize>() -> [(&'static str, EncodingFamily); N] {
 }
 
 /// Decoded forms not yet described by the semantic registry.
-const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 17] = [
+const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 16] = [
     ("BUFFER_LOAD_DWORD", EncodingFamily::Mubuf),
     ("BUFFER_STORE_DWORD", EncodingFamily::Mubuf),
     ("EXP", EncodingFamily::Exp),
@@ -50,7 +50,6 @@ const HANDWRITTEN_FORMS: [(&str, EncodingFamily); 17] = [
     ("S_CBRANCH_SCC0", EncodingFamily::Sopp),
     ("S_CBRANCH_VCCZ", EncodingFamily::Sopp),
     ("S_ENDPGM", EncodingFamily::Sopp),
-    ("S_MOV_B32", EncodingFamily::Sop1),
     ("S_WAITCNT", EncodingFamily::Sopp),
     ("S_WAITCNT_VSCNT", EncodingFamily::Sopk),
     ("V_ADD_F32", EncodingFamily::Vop2),
@@ -344,23 +343,21 @@ fn decode_gfx1030(bytes: &[u8], offset: usize) -> Result<(Instruction, u8), Deco
         let second = word(bytes, 8)?;
         return Ok((vop3_vgpr2(op, first, second)?, 8));
     }
-    if S_MOV_B32.matches(first) {
-        let dst = ((first >> 16) & 0x7f) as u8;
-        if !matches!(dst, 0..=107 | 126..=127) {
-            return Err(unsupported(
-                "s_mov_b32",
-                "expected a normal SGPR or EXEC/VCC destination",
-            ));
-        }
-        let (src, len) = scalar_source(first as u8, bytes, "s_mov_b32")?;
-        return Ok((Instruction::ScalarMoveB32 { dst, src }, len));
-    }
     if let Some(op) = ScalarUnaryOp::from_word(first) {
         // SOP1: SSRC0 in bits 0-7, SDST in bits 16-22.
         let mnemonic = op.mnemonic();
         let dst = ((first >> 16) & 0x7f) as u8;
-        if dst > 105 {
-            return Err(unsupported(mnemonic, "expected a normal SGPR destination"));
+        match op.semantics().operands {
+            OperandRule::Sop1Move if !matches!(dst, 0..=107 | 126..=127) => {
+                return Err(unsupported(
+                    mnemonic,
+                    "expected a normal SGPR or EXEC/VCC destination",
+                ));
+            }
+            OperandRule::Sop1Sgpr if dst > 105 => {
+                return Err(unsupported(mnemonic, "expected a normal SGPR destination"));
+            }
+            _ => {}
         }
         let (src, len) = scalar_source(first as u8, bytes, mnemonic)?;
         return Ok((Instruction::ScalarUnary { op, dst, src }, len));
