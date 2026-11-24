@@ -7,6 +7,7 @@
 //! convention documentation, not from the registry or the handlers.
 
 use std::sync::Arc;
+use std::sync::Mutex;
 use std::sync::atomic::{AtomicUsize, Ordering};
 use xenora_loader::cpu::{CpuState, ExitReason, Register};
 use xenora_loader::dbt::DbtEngine;
@@ -697,6 +698,76 @@ fn floating_arguments_and_results_use_xmm_registers() {
 }
 
 #[test]
+fn guest_call_through_dbt_preserves_win64_abi_state() {
+    use Register::{R8, R9, R12, R13, R14, R15, Rax, Rbp, Rbx, Rcx, Rdi, Rdx, Rsi, Rsp};
+    let observed = Arc::new(Mutex::new(None::<(u64, u64, [u64; 4])>));
+    let seen = observed.clone();
+    let mut registry = ImportRegistry::new();
+    registry.register("t.dll", "F", move |_args, cpu, mem| {
+        let rsp = cpu.get(Rsp);
+        let shadow = [
+            mem.read_u64(rsp + 8).unwrap(),
+            mem.read_u64(rsp + 16).unwrap(),
+            mem.read_u64(rsp + 24).unwrap(),
+            mem.read_u64(rsp + 32).unwrap(),
+        ];
+        *seen.lock().unwrap() = Some((rsp, cpu.rip, shadow));
+        cpu.set(Rcx, 0x11);
+        cpu.set(Rdx, 0x22);
+        cpu.set(R8, 0x33);
+        cpu.set(R9, 0x44);
+        for (reg, lane) in cpu.xmm[..6].iter_mut().enumerate() {
+            *lane = u128::from(0x55_u64 + reg as u64);
+        }
+        Ok(0x99AA_BBCC_DDEE_F001)
+    });
+    let image = build(&[("t.dll", Symbol::Name("F"))]);
+    let pe = ParsedPe::parse(&image.bytes).unwrap();
+    let mut memory = pe.load_into_memory(&image.bytes).unwrap().memory;
+    memory
+        .map_region(STACK, 0x1000, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    registry
+        .bind_imports(&pe, &image.bytes, BASE, &mut memory)
+        .unwrap();
+    let mut engine = DbtEngine::new(256 * 1024).unwrap();
+    engine.set_import_registry(registry);
+    // Before CALL RSP is 16-byte aligned; CALL pushes return address so the
+    // callee sees RSP % 16 == 8. Shadow space is [entry_rsp+8, entry_rsp+40).
+    let initial_rsp = STACK_TOP;
+    assert_eq!(initial_rsp % 16, 0);
+    let entry_rsp_expected = initial_rsp - 8;
+    for slot in 0..4u64 {
+        memory
+            .write_u64(entry_rsp_expected + 8 + slot * 8, 0x7000 + slot)
+            .unwrap();
+    }
+    let mut cpu = CpuState::new(BASE + u64::from(CODE_RVA), initial_rsp);
+    let nonvolatile_gpr = [Rbx, Rbp, Rdi, Rsi, R12, R13, R14, R15];
+    for (index, register) in nonvolatile_gpr.into_iter().enumerate() {
+        cpu.set(register, 0x6100 + index as u64);
+    }
+    for (offset, lane) in cpu.xmm[6..16].iter_mut().enumerate() {
+        *lane = u128::from(0x6200_u64 + (offset + 6) as u64);
+    }
+    let result = engine.run(&mut cpu, &mut memory, 1000);
+    assert_eq!(result.exit_reason, ExitReason::Halt);
+    let (entry_rsp, _, shadow) = observed.lock().unwrap().expect("service ran");
+    assert_eq!(entry_rsp, entry_rsp_expected);
+    assert_eq!(entry_rsp % 16, 8);
+    assert_eq!(shadow, [0x7000, 0x7001, 0x7002, 0x7003]);
+    assert_eq!(cpu.get(Rax), 0x99AA_BBCC_DDEE_F001);
+    assert_eq!(cpu.get(Rsp), initial_rsp);
+    for (index, register) in nonvolatile_gpr.into_iter().enumerate() {
+        assert_eq!(cpu.get(register), 0x6100 + index as u64, "{register:?}");
+    }
+    for (offset, lane) in cpu.xmm[6..16].iter().enumerate() {
+        let index = offset + 6;
+        assert_eq!(*lane, u128::from(0x6200_u64 + index as u64), "xmm{index}");
+    }
+}
+
+#[test]
 fn arguments_are_assigned_by_position_and_read_the_stack_after_the_fourth() {
     let mut memory = GuestMemory::new();
     memory
@@ -954,6 +1025,96 @@ fn a_service_that_changes_a_nonvolatile_register_stops_the_guest() {
             Err(ExitReason::ServiceAbiViolation)
         };
         assert_eq!(result, expected, "xmm{index}");
+    }
+}
+
+#[test]
+fn service_calls_preserve_win64_abi_state() {
+    // Microsoft x64 calling convention: at entry RSP % 16 == 8 (return address
+    // pushed by CALL). Callee preserves RBX,RBP,RDI,RSI,R12-R15 and XMM6-XMM15.
+    // Caller owns 32-byte shadow/home space at [RSP+8, RSP+40). RAX carries the
+    // return value; RCX,RDX,R8,R9,R10,R11,XMM0-XMM5 are volatile.
+    use Register::{R8, R9, R10, R11, R12, R13, R14, R15, Rax, Rbp, Rbx, Rcx, Rdi, Rdx, Rsi, Rsp};
+    let observed = Arc::new(Mutex::new(None::<(u64, u64, [u64; 4], u64)>));
+    let seen = observed.clone();
+    let (registry, mut memory, trampoline) = bound_service(move |args, cpu, mem| {
+        let rsp = cpu.get(Rsp);
+        let shadow = [
+            mem.read_u64(rsp + 8).unwrap(),
+            mem.read_u64(rsp + 16).unwrap(),
+            mem.read_u64(rsp + 24).unwrap(),
+            mem.read_u64(rsp + 32).unwrap(),
+        ];
+        *seen.lock().unwrap() = Some((rsp, cpu.rip, shadow, args.rcx));
+        // Clobber volatile registers; dispatcher must still return correctly and
+        // nonvolatile state must be preserved after return.
+        cpu.set(Rcx, 0xA1);
+        cpu.set(Rdx, 0xA2);
+        cpu.set(R8, 0xA3);
+        cpu.set(R9, 0xA4);
+        cpu.set(R10, 0xA5);
+        cpu.set(R11, 0xA6);
+        for (reg, lane) in cpu.xmm[..6].iter_mut().enumerate() {
+            *lane = u128::from(0xB0_u64 + reg as u64);
+        }
+        Ok(0x1122_3344_5566_7788)
+    });
+    // Win64: before CALL RSP is 16-byte aligned; CALL pushes return address,
+    // so callee entry sees RSP % 16 == 8.
+    let call_rsp = STACK_TOP - 8;
+    assert_eq!(call_rsp % 16, 8);
+    memory.write_u64(call_rsp, 0x1234).unwrap();
+    for slot in 0..4u64 {
+        memory
+            .write_u64(call_rsp + 8 + slot * 8, 0xC000 + slot)
+            .unwrap();
+    }
+    let mut cpu = CpuState::new(trampoline, call_rsp);
+    let nonvolatile_gpr = [Rbx, Rbp, Rdi, Rsi, R12, R13, R14, R15];
+    for (index, register) in nonvolatile_gpr.into_iter().enumerate() {
+        cpu.set(register, 0x5AA5_0000_0001_0000 + index as u64);
+    }
+    for (offset, lane) in cpu.xmm[6..16].iter_mut().enumerate() {
+        *lane = u128::from(0xD000_0000_0000_0000_u64 + (offset + 6) as u64);
+    }
+    cpu.set(Rcx, 0x1357_9BDF_2468_ACE0);
+    let result = registry.dispatch(trampoline, &mut cpu, &mut memory);
+    assert_eq!(result, Ok(()));
+    let (entry_rsp, entry_rip, shadow, entry_rcx) = observed.lock().unwrap().expect("service ran");
+    assert_eq!(entry_rip, trampoline);
+    assert_eq!(
+        entry_rsp, call_rsp,
+        "service sees caller RSP at return address"
+    );
+    assert_eq!(entry_rsp % 16, 8, "Win64 entry RSP must be 8 mod 16");
+    assert_eq!(entry_rcx, 0x1357_9BDF_2468_ACE0);
+    // Shadow/home space is caller-owned and must be addressable by the service.
+    assert_eq!(shadow, [0xC000, 0xC001, 0xC002, 0xC003]);
+    for slot in 0..4u64 {
+        assert_eq!(
+            memory.read_u64(call_rsp + 8 + slot * 8).unwrap(),
+            0xC000 + slot,
+            "service call must not mutate caller shadow space"
+        );
+    }
+    // Post-return ABI state.
+    assert_eq!(cpu.get(Rax), 0x1122_3344_5566_7788);
+    assert_eq!(cpu.get(Rsp), call_rsp + 8);
+    assert_eq!(cpu.rip, 0x1234);
+    for (index, register) in nonvolatile_gpr.into_iter().enumerate() {
+        assert_eq!(
+            cpu.get(register),
+            0x5AA5_0000_0001_0000 + index as u64,
+            "nonvolatile {register:?} must be preserved"
+        );
+    }
+    for (offset, lane) in cpu.xmm[6..16].iter().enumerate() {
+        let index = offset + 6;
+        assert_eq!(
+            *lane,
+            u128::from(0xD000_0000_0000_0000_u64 + index as u64),
+            "nonvolatile xmm{index} must be preserved"
+        );
     }
 }
 
