@@ -1193,6 +1193,16 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         });
     }
 
+    let file_type = Arc::clone(state);
+    registry.register(KERNEL32, "GetFileType", move |args, cpu, _| {
+        const FILE_TYPE_DISK: u64 = 1;
+        let objects = file_type.objects.lock().expect("guest object state");
+        if matches!(objects.handles.get(&args.rcx), Some(GuestObject::File(_))) {
+            return Ok(FILE_TYPE_DISK);
+        }
+        file_type.fail(cpu.gs_base, ERROR_INVALID_HANDLE, 0)
+    });
+
     let flush = Arc::clone(state);
     registry.register(KERNEL32, "FlushFileBuffers", move |args, cpu, _| {
         let objects = flush.objects.lock().expect("guest object state");
@@ -1413,6 +1423,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "CreateFileW",
         "GetFileSize",
         "GetFileSizeEx",
+        "GetFileType",
         "FlushFileBuffers",
         "ReadFile",
         "WriteFile",

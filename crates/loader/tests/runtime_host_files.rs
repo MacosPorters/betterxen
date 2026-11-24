@@ -29,6 +29,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "WriteFile"),
     (KERNEL32, "CloseHandle"),
     (FILE_API, "GetFileSize"),
+    (FILE_API, "GetFileType"),
     (KERNEL32, "GetFileSizeEx"),
     (FILE_API, "FlushFileBuffers"),
     (KERNEL32, "SetFilePointerEx"),
@@ -165,6 +166,7 @@ fn legacy_file_size_splits_large_lengths_and_distinguishes_failure() {
     let mut guest = guest_with(vec![HostMount::new('D', &root, false).unwrap()]);
     let file = open(&mut guest, r"D:\Sparse.dat", GENERIC_READ, 0, OPEN_EXISTING);
     assert_ne!(file, INVALID);
+    assert_eq!(guest.call("GetFileType", &[file]), 1);
     let invalid_size = u64::from(u32::MAX);
     guest.memory.write_u64(COUNT, u64::MAX).unwrap();
 
@@ -179,6 +181,8 @@ fn legacy_file_size_splits_large_lengths_and_distinguishes_failure() {
     assert_eq!(guest.u64_at(COUNT), 0x1_0000_0007);
     assert_eq!(guest.call("CloseHandle", &[file]), 1);
     assert_eq!(guest.call("GetFileSize", &[file, COUNT]), invalid_size);
+    assert_eq!(guest.error(), 6);
+    assert_eq!(guest.call("GetFileType", &[file]), 0);
     assert_eq!(guest.error(), 6);
     assert_eq!(guest.u64_at(COUNT), 0x1_0000_0007);
 }

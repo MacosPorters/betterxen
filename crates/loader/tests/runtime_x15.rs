@@ -1805,6 +1805,10 @@ fn test_guest_synthetic_file_io_through_iat() {
     let writer = open("C:/Sample.dat", 0x4000_0000, 2);
     assert_ne!(writer, u64::MAX);
     assert_eq!(open("sample.dat", 0x8000_0000, 3), u64::MAX);
+    assert_eq!(
+        call("GetFileType", &[writer]).execution.final_state.get(Register::Rax),
+        1
+    );
     let wrote = call("WriteFile", &[writer, output, 4, output + 8, 0]);
     assert_eq!(
         call("FlushFileBuffers", &[writer]).execution.final_state.get(Register::Rax),

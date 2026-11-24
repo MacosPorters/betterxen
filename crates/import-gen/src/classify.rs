@@ -989,6 +989,7 @@ impl SymbolDb {
                 "WriteFile",
                 "GetFileSize",
                 "GetFileSizeEx",
+                "GetFileType",
                 "FlushFileBuffers",
                 "SetFilePointerEx",
                 "SetEndOfFile",
