@@ -8,7 +8,7 @@ kernel void xenora_compute(
     uint t0 = input[index];
     uint t1 = 0x00000000u;
     uint t2 = 0x00000001u;
-    uint t3 = 0xffffffffu;
+    uint t3 = 0x40000001u;
     uint t4 = 0x00000001u;
     uint t5 = 0u;
     for (uint lane = 0u; lane < 32u; ++lane) {
@@ -171,10 +171,18 @@ kernel void xenora_compute(
         uint lane_index = (index & ~31u) + lane;
         if (lane_index >= grid) { break; }
         uint l0 = input[lane_index];
-        uint pass = (t3 > l0) ? 1u : 0u;
+        uint pass = (l0 == t3) ? 1u : 0u;
         t53 |= ((0xffffffffu >> lane) & pass) << lane;
     }
-    uint t55 = t4 ^ t52;
-    uint t56 = t53 != 0u ? t55 : t52;
-    output[index] = t56;
+    uint t54 = 0u;
+    for (uint lane = 0u; lane < 32u; ++lane) {
+        uint lane_index = (index & ~31u) + lane;
+        if (lane_index >= grid) { break; }
+        uint l0 = input[lane_index];
+        uint pass = (t3 > l0) ? 1u : 0u;
+        t54 |= ((0xffffffffu >> lane) & pass) << lane;
+    }
+    uint t56 = t4 ^ t52;
+    uint t57 = t54 != 0u ? t56 : t52;
+    output[index] = t57;
 }

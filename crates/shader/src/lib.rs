@@ -106,6 +106,10 @@ enum Op {
     /// The value is wave-uniform; every thread computes it for its own wave.
     LaneMask {
         op: VectorCompareOp,
+        /// Assembly name of the decoded encoding (`_e32` or `_e64`).
+        name: &'static str,
+        /// The explicit SGPR destination of the VOP3A encoding (IR text only).
+        sdst: Option<usize>,
         src0: Value,
         src1: Value,
         exec: u32,
@@ -476,14 +480,20 @@ pub fn compile(architecture: Architecture, bytes: &[u8]) -> Result<CompiledShade
             ),
             Op::LaneMask {
                 op,
+                name,
+                sdst,
                 src0,
                 src1,
                 exec,
             } => {
+                let target = match sdst {
+                    None => String::new(),
+                    Some(VCC_LO) => " -> vcc_lo".to_string(),
+                    Some(register) => format!(" -> s{register}"),
+                };
                 let _ = writeln!(
                     ir,
-                    "{offset:04x}: {dest} = wave.mask {} {src0}, {src1} exec=0x{exec:08x}",
-                    op.assembly_name()
+                    "{offset:04x}: {dest} = wave.mask {name} {src0}, {src1}{target} exec=0x{exec:08x}"
                 );
                 emit_lane_mask(&mut msl, &operations, &uniform, index, op, src0, src1, exec);
                 continue;
@@ -936,8 +946,10 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
             // Both encodings share the Wave32 lane mask implementation.
             compare @ (Instruction::VectorCompare { .. }
             | Instruction::VectorCompareVop3 { .. }) => {
-                let (op, sdst, src0, src1) = match compare {
-                    Instruction::VectorCompare { op, src0, src1 } => (op, VCC_LO, src0, src1),
+                let (op, name, explicit, sdst, src0, src1) = match compare {
+                    Instruction::VectorCompare { op, src0, src1 } => {
+                        (op, op.assembly_name(), false, VCC_LO, src0, src1)
+                    }
                     Instruction::VectorCompareVop3 {
                         op,
                         sdst,
@@ -945,6 +957,8 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                         src1,
                     } => (
                         op.base(),
+                        op.assembly_name(),
+                        true,
                         usize::from(sdst),
                         VectorSource::Register(src0),
                         src1,
@@ -993,6 +1007,8 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
                     offset,
                     Op::LaneMask {
                         op,
+                        name,
+                        sdst: explicit.then_some(sdst),
                         src0,
                         src1,
                         exec,
