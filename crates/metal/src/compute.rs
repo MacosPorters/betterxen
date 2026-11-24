@@ -147,7 +147,18 @@ pub struct RunProfile {
     pub library_seconds: f64,
     pub pipeline_seconds: f64,
     pub gpu_seconds: f64,
+    /// Host wall time from the start of setup until the command buffer completed.
     pub host_seconds: f64,
+    /// Host time to allocate the input and output shared buffers.
+    pub alloc_seconds: f64,
+    /// Host time to create the command buffer and encode the dispatch.
+    pub encode_seconds: f64,
+    /// Host time spent in `commit`.
+    pub commit_seconds: f64,
+    /// Host time blocked in `waitUntilCompleted` plus the status check.
+    pub wait_seconds: f64,
+    /// Host time to copy the output words back; not part of `host_seconds`.
+    pub readback_seconds: f64,
     pub output: Vec<u32>,
 }
 
@@ -672,6 +683,7 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
                 "fixture exceeds device buffer limit",
             ));
         }
+        let alloc_start = Instant::now();
         let input_buffer = match input {
             ComputeInput::Words(words) => Some(self.new_buffer(words)?),
             ComputeInput::SampledTexture { coords, .. } => Some(self.new_buffer(coords)?),
@@ -679,6 +691,8 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         };
         let mut words = vec![0xA5A5_A5A5; input.len()];
         let output_buffer = self.new_buffer(&words)?;
+        let alloc_seconds = alloc_start.elapsed().as_secs_f64();
+        let encode_start = Instant::now();
         let command = self
             .queue
             .commandBuffer()
@@ -710,9 +724,16 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
         }
         encoder.dispatchThreads_threadsPerThreadgroup(size(input.len()), size(width));
         encoder.endEncoding();
-        complete_command(&command)?;
+        let encode_seconds = encode_start.elapsed().as_secs_f64();
+        let commit_start = Instant::now();
+        command.commit();
+        let commit_seconds = commit_start.elapsed().as_secs_f64();
+        let wait_start = Instant::now();
+        wait_command(&command)?;
+        let wait_seconds = wait_start.elapsed().as_secs_f64();
         let gpu_seconds = command.GPUEndTime() - command.GPUStartTime();
         let host_seconds = host_start.elapsed().as_secs_f64();
+        let readback_start = Instant::now();
         // SAFETY: Metal copied the initialized words into distinct shared storage.
         // The GPU finished before the CPU touches that storage. Both ranges are
         // valid for byte_len bytes and don't overlap. A byte copy requires no
@@ -724,11 +745,17 @@ kernel void sample_rgba8(texture2d<float, access::sample> tex [[texture(0)]],
                 byte_len,
             );
         }
+        let readback_seconds = readback_start.elapsed().as_secs_f64();
         Ok(RunProfile {
             library_seconds,
             pipeline_seconds,
             gpu_seconds,
             host_seconds,
+            alloc_seconds,
+            encode_seconds,
+            commit_seconds,
+            wait_seconds,
+            readback_seconds,
             output: words,
         })
     }
@@ -829,6 +856,11 @@ fn find_function(
 
 fn complete_command(command: &ProtocolObject<dyn MTLCommandBuffer>) -> Result<(), MetalError> {
     command.commit();
+    wait_command(command)
+}
+
+/// Block until a committed command buffer finishes and check its status.
+fn wait_command(command: &ProtocolObject<dyn MTLCommandBuffer>) -> Result<(), MetalError> {
     command.waitUntilCompleted();
 
     if command.status() != MTLCommandBufferStatus::Completed {
