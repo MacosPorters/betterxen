@@ -369,6 +369,35 @@ pub fn execute(
             write_rm(cpu, memory, insn, b)?;
             write_reg(cpu, insn.reg, size, a);
         }
+        Op::Xadd => {
+            let (a, b) = operands(cpu, memory, insn)?;
+            let (value, flags) = add(a, b, false, size);
+            write_rm(cpu, memory, insn, value)?;
+            // The source is loaded before the destination is stored, so a
+            // register added to itself keeps the sum.
+            if insn.rm != Some(RmOperand::Reg(insn.reg)) {
+                write_reg(cpu, insn.reg, size, a);
+            }
+            cpu.flags = flags;
+        }
+        Op::Cmpxchg => {
+            let (destination, source) = operands(cpu, memory, insn)?;
+            let expected = cpu.gpr[RAX] & mask(size);
+            let (_, flags) = sub(expected, destination, false, size);
+            // The destination is written whether or not the values match, so a
+            // mismatch on memory that cannot be written still faults.
+            let matched = expected == destination;
+            write_rm(
+                cpu,
+                memory,
+                insn,
+                if matched { source } else { destination },
+            )?;
+            if !matched {
+                write_reg(cpu, accumulator(RAX), size, destination);
+            }
+            cpu.flags = flags;
+        }
         Op::Bswap => {
             let value = read_reg(cpu, insn.reg, size).swap_bytes() >> (64 - 8 * u32::from(size));
             write_reg(cpu, insn.reg, size, value);

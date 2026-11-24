@@ -50,6 +50,8 @@ pub struct Form {
     pub no_rex_b: bool,
     /// A 16-byte memory operand may have any alignment.
     pub unaligned: bool,
+    /// The LOCK prefix is accepted when the ModRM operand is memory.
+    pub lockable: bool,
 }
 
 /// Opcode table entry.
@@ -167,6 +169,9 @@ pub struct Insn {
     pub imm: u64,
     /// Condition code for Jcc, CMOVcc and SETcc.
     pub condition: u8,
+    /// Carries a LOCK prefix. Set only for a lockable form with a memory
+    /// destination.
+    pub lock: bool,
 }
 
 impl Insn {
@@ -231,8 +236,9 @@ impl<E, F: FnMut(u64) -> Result<u8, E>> Cursor<F> {
 /// Decode one instruction at `rip`. `fetch` supplies the byte at an address and
 /// is called only for bytes that belong to the instruction, in order.
 ///
-/// Forms the registry does not declare, LOCK, address-size overrides and an
-/// ignored segment override after FS or GS are rejected rather than approximated.
+/// Forms the registry does not declare, LOCK anywhere but on a lockable form
+/// with a memory destination, address-size overrides and an ignored segment
+/// override after FS or GS are rejected rather than approximated.
 pub fn decode<E>(
     rip: u64,
     fetch: impl FnMut(u64) -> Result<u8, E>,
@@ -246,6 +252,7 @@ pub fn decode<E>(
     let mut operand_size = false;
     let mut rep = false;
     let mut repne = false;
+    let mut lock = false;
     let mut segment = None;
     let mut byte = cursor.u8()?;
     loop {
@@ -264,6 +271,11 @@ pub fn decode<E>(
             }
             0xF2 => {
                 repne = true;
+                byte = cursor.u8()?;
+                continue;
+            }
+            0xF0 => {
+                lock = true;
                 byte = cursor.u8()?;
                 continue;
             }
@@ -413,6 +425,11 @@ pub fn decode<E>(
     } else if matches!(form.encoding, Encoding::OpReg | Encoding::OpRegImm) {
         reg = register(opcode & 7, rex_b, size);
     }
+    // LOCK is an invalid opcode unless the instruction is lockable and its
+    // destination is memory (Intel SDM Vol. 2, "LOCK").
+    if lock && !(form.lockable && matches!(rm, Some(RmOperand::Mem(_)))) {
+        return Err(DecodeError::Unsupported(0xF0));
+    }
 
     let mut imm = match form.immediate {
         Immediate::None => 0,
@@ -449,6 +466,7 @@ pub fn decode<E>(
         reg,
         imm,
         condition: opcode & 0xF,
+        lock,
     })
 }
 

@@ -953,6 +953,68 @@ c7 44 be 10 5a 00 00 00 | mov dword ptr [rsi + 4*rdi + 16], 0x5a
 48 c7 44 be 10 5a 00 00 00 | mov qword ptr [rsi + 4*rdi + 16], 0x5a
 49 87 d9 | xchg rbx, r9
 48 87 54 be 10 | xchg qword ptr [rsi + 4*rdi + 16], rdx
+0f c0 cb | xadd bl, cl
+45 0f c0 e1 | xadd r9b, r12b
+0f c0 d0 | xadd al, dl
+0f c0 db | xadd bl, bl
+0f c0 54 be 10 | xadd byte ptr [rsi + 4*rdi + 16], dl
+f0 0f c0 54 be 10 | lock xadd byte ptr [rsi + 4*rdi + 16], dl
+f0 0f c0 44 be 10 | lock xadd byte ptr [rsi + 4*rdi + 16], al
+66 0f c1 cb | xadd bx, cx
+66 45 0f c1 e1 | xadd r9w, r12w
+66 0f c1 d0 | xadd ax, dx
+66 0f c1 db | xadd bx, bx
+66 0f c1 54 be 10 | xadd word ptr [rsi + 4*rdi + 16], dx
+66 f0 0f c1 54 be 10 | lock xadd word ptr [rsi + 4*rdi + 16], dx
+66 f0 0f c1 44 be 10 | lock xadd word ptr [rsi + 4*rdi + 16], ax
+0f c1 cb | xadd ebx, ecx
+45 0f c1 e1 | xadd r9d, r12d
+0f c1 d0 | xadd eax, edx
+0f c1 db | xadd ebx, ebx
+0f c1 54 be 10 | xadd dword ptr [rsi + 4*rdi + 16], edx
+f0 0f c1 54 be 10 | lock xadd dword ptr [rsi + 4*rdi + 16], edx
+f0 0f c1 44 be 10 | lock xadd dword ptr [rsi + 4*rdi + 16], eax
+48 0f c1 cb | xadd rbx, rcx
+4d 0f c1 e1 | xadd r9, r12
+48 0f c1 d0 | xadd rax, rdx
+48 0f c1 db | xadd rbx, rbx
+48 0f c1 54 be 10 | xadd qword ptr [rsi + 4*rdi + 16], rdx
+f0 48 0f c1 54 be 10 | lock xadd qword ptr [rsi + 4*rdi + 16], rdx
+f0 48 0f c1 44 be 10 | lock xadd qword ptr [rsi + 4*rdi + 16], rax
+0f c0 dc | xadd ah, bl
+0f c0 f1 | xadd cl, dh
+0f c0 6c be 10 | xadd byte ptr [rsi + 4*rdi + 16], ch
+0f b0 cb | cmpxchg bl, cl
+45 0f b0 e1 | cmpxchg r9b, r12b
+0f b0 d0 | cmpxchg al, dl
+0f b0 db | cmpxchg bl, bl
+0f b0 54 be 10 | cmpxchg byte ptr [rsi + 4*rdi + 16], dl
+f0 0f b0 54 be 10 | lock cmpxchg byte ptr [rsi + 4*rdi + 16], dl
+f0 0f b0 44 be 10 | lock cmpxchg byte ptr [rsi + 4*rdi + 16], al
+66 0f b1 cb | cmpxchg bx, cx
+66 45 0f b1 e1 | cmpxchg r9w, r12w
+66 0f b1 d0 | cmpxchg ax, dx
+66 0f b1 db | cmpxchg bx, bx
+66 0f b1 54 be 10 | cmpxchg word ptr [rsi + 4*rdi + 16], dx
+66 f0 0f b1 54 be 10 | lock cmpxchg word ptr [rsi + 4*rdi + 16], dx
+66 f0 0f b1 44 be 10 | lock cmpxchg word ptr [rsi + 4*rdi + 16], ax
+0f b1 cb | cmpxchg ebx, ecx
+45 0f b1 e1 | cmpxchg r9d, r12d
+0f b1 d0 | cmpxchg eax, edx
+0f b1 db | cmpxchg ebx, ebx
+0f b1 54 be 10 | cmpxchg dword ptr [rsi + 4*rdi + 16], edx
+f0 0f b1 54 be 10 | lock cmpxchg dword ptr [rsi + 4*rdi + 16], edx
+f0 0f b1 44 be 10 | lock cmpxchg dword ptr [rsi + 4*rdi + 16], eax
+48 0f b1 cb | cmpxchg rbx, rcx
+4d 0f b1 e1 | cmpxchg r9, r12
+48 0f b1 d0 | cmpxchg rax, rdx
+48 0f b1 db | cmpxchg rbx, rbx
+48 0f b1 54 be 10 | cmpxchg qword ptr [rsi + 4*rdi + 16], rdx
+f0 48 0f b1 54 be 10 | lock cmpxchg qword ptr [rsi + 4*rdi + 16], rdx
+f0 48 0f b1 44 be 10 | lock cmpxchg qword ptr [rsi + 4*rdi + 16], rax
+0f b0 dc | cmpxchg ah, bl
+0f b0 f1 | cmpxchg cl, dh
+0f b0 6c be 10 | cmpxchg byte ptr [rsi + 4*rdi + 16], ch
 88 dc | mov ah, bl
 88 ea | mov dl, ch
 b7 21 | mov bh, 0x21

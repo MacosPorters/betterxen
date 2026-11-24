@@ -84,6 +84,15 @@ def cases():
                 f"mov {mem(bits)}, {reg(2, bits)}", f"mov {reg(14, bits)}, 0x5a",
                 f"mov {mem(bits)}, 0x5a", f"xchg {reg(3, bits)}, {reg(9, bits)}",
                 f"xchg {mem(bits)}, {reg(2, bits)}"]
+    for op in ("xadd", "cmpxchg"):
+        for bits in (8, 16, 32, 64):
+            # Destination RAX always matches the accumulator; a register with
+            # itself keeps the sum. LOCK is valid only with a memory destination.
+            out += [f"{op} {reg(3, bits)}, {reg(1, bits)}", f"{op} {reg(9, bits)}, {reg(12, bits)}",
+                    f"{op} {reg(0, bits)}, {reg(2, bits)}", f"{op} {reg(3, bits)}, {reg(3, bits)}",
+                    f"{op} {mem(bits)}, {reg(2, bits)}", f"lock {op} {mem(bits)}, {reg(2, bits)}",
+                    f"lock {op} {mem(bits)}, {reg(0, bits)}"]
+        out += [f"{op} ah, bl", f"{op} cl, dh", f"{op} {mem(8)}, ch"]
     out += ["mov ah, bl", "mov dl, ch", "mov bh, 0x21", "xchg ah, bl", "mov sil, dil",
             "movabs r15, 0x8877665544332211", "mov rcx, -2", "bswap ebx", "bswap r9",
             "cbw", "cwde", "cdqe", "cwd", "cdq", "cqo", "clc", "stc", "cmc", "nop",
@@ -163,7 +172,13 @@ def assemble(lines):
         subprocess.run(["clang", "-target", "x86_64-apple-macos", "-c", source, "-o", obj], check=True)
         # One line per instruction: objdump never wraps its raw bytes.
         listing = subprocess.run(["objdump", "-d", obj], check=True, capture_output=True, text=True).stdout
-    rows = [m.group(1).split() for m in re.finditer(r"^\s*[0-9a-f]+:\s((?:[0-9a-f]{2}\s)+)", listing, re.M)]
+    rows, prefix = [], []
+    for match in re.finditer(r"^\s*[0-9a-f]+:\s((?:[0-9a-f]{2}\s)+)(.*)$", listing, re.M):
+        row = prefix + match.group(1).split()
+        # objdump lists a leading LOCK prefix on a row of its own.
+        prefix = row if match.group(2).strip() == "lock" else []
+        if not prefix:
+            rows.append(row)
     if len(rows) != len(lines):
         sys.exit(f"{len(lines)} instructions assembled to {len(rows)} rows")
     return "".join(f"{' '.join(row)} | {line}\n" for row, line in zip(rows, lines))
