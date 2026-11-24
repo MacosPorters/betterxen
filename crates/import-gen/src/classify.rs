@@ -981,14 +981,9 @@ impl SymbolDb {
 
     fn populate_win32_file(&mut self) {
         let m = "api-ms-win-core-file-l1-1-0.dll";
-        self.win32_stub(
-            m,
-            "CreateFileA",
-            false,
-            "CreateFile — stub returning INVALID_HANDLE_VALUE",
-        );
         for module in [m, "kernel32.dll"] {
             for symbol in [
+                "CreateFileA",
                 "CreateFileW",
                 "ReadFile",
                 "WriteFile",

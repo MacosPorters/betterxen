@@ -354,6 +354,10 @@ letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Without
 a mount, nothing on the host is reachable through these services. Mounts are
 read-only unless created writable.
 
+The ANSI forms `CreateFileA`, `DeleteFileA`, and `GetFileAttributesA`
+accept ASCII paths and use the same guest namespace and mount rules as the
+wide forms.
+
 The partial `GetTempPathA/W` services use the first nonempty guest value
 among `TMP`, `TEMP`, and `USERPROFILE`, falling back to the synthetic
 `C:\` root. They add a trailing separator without checking whether the

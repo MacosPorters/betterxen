@@ -22,6 +22,7 @@ const UCRT: &str = "ucrtbase.dll";
 
 const IMPORTS: &[(&str, &str)] = &[
     (KERNEL32, "GetLastError"),
+    (FILE_API, "CreateFileA"),
     (FILE_API, "CreateFileW"),
     (FILE_API, "GetTempFileNameW"),
     (KERNEL32, "ReadFile"),
@@ -150,6 +151,39 @@ fn found_name(guest: &Guest) -> String {
 
 fn symlink(target: &Path, link: &Path) {
     std::os::unix::fs::symlink(target, link).unwrap();
+}
+
+#[test]
+fn ansi_create_file_uses_the_same_mount_and_sharing_rules() {
+    let tree = Tree::new("ansi-create");
+    let root = tree.path("root");
+    std::fs::create_dir_all(&root).unwrap();
+    let mut guest = guest_with(vec![HostMount::new('D', &root, true).unwrap()]);
+    let open_ansi = |guest: &mut Guest, name: &[u8], disposition| {
+        guest.memory.write_bytes(PATH, name).unwrap();
+        guest.call("CreateFileA", &[PATH, GENERIC_WRITE, 0, 0, disposition, 0x80, 0])
+    };
+
+    let file = open_ansi(&mut guest, b"D:\\Mixed.txt\0", CREATE_NEW);
+    assert_ne!(file, INVALID);
+    assert!(write(&mut guest, file, b"from ANSI"));
+    assert_eq!(
+        open(&mut guest, r"D:\mixed.txt", GENERIC_READ, 1, OPEN_EXISTING),
+        INVALID
+    );
+    assert_eq!(guest.error(), 32);
+    assert_eq!(guest.call("CloseHandle", &[file]), 1);
+    assert_eq!(
+        open_ansi(&mut guest, b"D:\\mixed.txt\0", CREATE_NEW),
+        INVALID
+    );
+    assert_eq!(guest.error(), 80);
+    assert_eq!(
+        open_ansi(&mut guest, b"D:\\\xff.txt\0", CREATE_NEW),
+        INVALID
+    );
+    assert_eq!(guest.error(), 123);
+    assert_eq!(std::fs::read(root.join("Mixed.txt")).unwrap(), b"from ANSI");
 }
 
 #[test]
