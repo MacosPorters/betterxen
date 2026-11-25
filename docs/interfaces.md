@@ -318,6 +318,24 @@ next datagram; `WSAEINVAL` on a listening socket) and `FIONBIO` with a nonzero
 argument. Every socket is already non-blocking, so asking for blocking mode
 returns `WSAEOPNOTSUPP` instead of being ignored.
 
+### C++ type identity
+
+`__std_type_info_compare`, `__std_type_info_hash`, `__std_type_info_name` and
+`__std_type_info_destroy_list` are registered on `vcruntime140.dll`. They back
+`typeid` equality, `type_info::before`, `hash_code` and `name`. Each takes the
+type descriptor's data: an 8-byte cached-name slot followed by the decorated
+name, as in the publicly described MSVC RTTI type descriptor.
+
+Two descriptors with the same decorated name compare equal and hash equally,
+so a type seen from two modules is one type. The hash is FNV-1a over the
+decorated name and is not claimed to match Microsoft's runtime. `name`
+undecorates plain class, struct, union and int-based enum names with their
+namespaces (`.?AVWidget@ui@@` becomes `class ui::Widget`), allocates the text
+on the guest heap and caches it in the descriptor; `destroy_list` frees those
+names. Templates, back-references, anonymous namespaces and non-class types
+stop the guest instead of returning a wrong name. Exception handling,
+`dynamic_cast` and thread-safe static initialization are not implemented.
+
 ### XInput controllers
 
 `XInputGetState`, `XInputSetState`, `XInputGetCapabilities` and

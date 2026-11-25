@@ -16,6 +16,7 @@ mod crt_env;
 mod crt_locale;
 mod crt_stdio;
 mod crt_time;
+mod cxx;
 mod events;
 mod files;
 mod gdk_async;
@@ -210,6 +211,7 @@ pub struct ServicesState {
     /// Where XInput readings come from; see [`ServicesState::set_controllers`].
     controllers: Arc<dyn xinput::ControllerSource>,
     xinput: Mutex<xinput::XInput>,
+    type_names: Arc<Mutex<cxx::TypeNames>>,
     task_fixture: Mutex<task_fixture::TaskFixture>,
     platform_fixture: Mutex<platform_fixture::PlatformFixture>,
     gdk_queues: Mutex<gdk_queue::QueueHandles>,
@@ -242,6 +244,7 @@ impl ServicesState {
             winsock: Mutex::default(),
             controllers: Arc::new(xinput::NoControllers),
             xinput: Mutex::default(),
+            type_names: Arc::default(),
             task_fixture: Mutex::default(),
             platform_fixture: Mutex::default(),
             gdk_queues: Mutex::default(),
@@ -653,6 +656,7 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     );
     winsock::register(registry, &state);
     xinput::register(registry, &state);
+    cxx::register(registry, &state);
     task_fixture::register(registry, &state);
     platform_fixture::register(registry, &state);
     gdk_queue::register(registry, &state);

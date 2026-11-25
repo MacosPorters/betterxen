@@ -640,11 +640,22 @@ impl SymbolDb {
                 "std::exception destroy — stub",
             );
             self.runtime_helper(m, "__std_terminate", "std::terminate — calls abort");
-            self.runtime_helper(
-                m,
-                "__std_type_info_compare",
-                "type_info comparison — stub returning -1",
-            );
+            if *m == "vcruntime140.dll" {
+                for symbol in [
+                    "__std_type_info_compare",
+                    "__std_type_info_hash",
+                    "__std_type_info_name",
+                    "__std_type_info_destroy_list",
+                ] {
+                    self.ins(m, symbol, Classification::StandardService);
+                }
+            } else {
+                self.runtime_helper(
+                    m,
+                    "__std_type_info_compare",
+                    "type_info comparison — stub returning -1",
+                );
+            }
             self.runtime_helper(m, "memcpy", "CRT memcpy delegate — same as libc");
             self.runtime_helper(m, "memset", "CRT memset delegate — same as libc");
             self.runtime_helper(m, "memmove", "CRT memmove delegate — same as libc");
