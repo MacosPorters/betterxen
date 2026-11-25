@@ -290,20 +290,20 @@ impl SymbolDb {
                 "__acrt_iob_func",
                 "fprintf",
                 "printf",
+                "fputc",
+                "putc",
+                "fputs",
+                "puts",
+                "fgetc",
+                "getc",
+                "fflush",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
         for (sym, libc) in &[
-            ("fflush", "fflush"),
-            ("fgetc", "fgetc"),
             ("fgetpos", "fgetpos"),
-            ("fputc", "fputc"),
-            ("fputs", "fputs"),
             ("fsetpos", "fsetpos"),
-            ("getc", "getc"),
-            ("putc", "putc"),
-            ("puts", "puts"),
             ("remove", "remove"),
             ("rename", "rename"),
             ("setvbuf", "setvbuf"),

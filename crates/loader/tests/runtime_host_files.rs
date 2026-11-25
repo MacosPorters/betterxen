@@ -54,6 +54,7 @@ const IMPORTS: &[(&str, &str)] = &[
     (UCRT, "fclose"),
     (UCRT, "fread"),
     (UCRT, "fwrite"),
+    (UCRT, "fflush"),
 ];
 
 const GENERIC_READ: u64 = 0x8000_0000;
@@ -1121,6 +1122,15 @@ fn crt_fopen_writes_through_a_writable_host_mount() {
     guest.memory.read_bytes(out, &mut got).unwrap();
     assert_eq!(&got, b"stdio");
     assert_eq!(guest.call("fclose", &[reader]), 0);
+
+    // fflush delivers a writable stream to the host before fclose.
+    let file = guest.call("fopen", &[path, mode_w]);
+    assert_eq!(guest.call("fwrite", &[payload, 1, 3, file]), 3);
+    assert_eq!(std::fs::read(tree.path("root/crt.bin")).unwrap(), b"");
+    assert_eq!(guest.call("fflush", &[file]), 0);
+    assert_eq!(std::fs::read(tree.path("root/crt.bin")).unwrap(), b"std");
+    assert_eq!(guest.call("fclose", &[file]), 0);
+    assert_eq!(std::fs::read(tree.path("root/crt.bin")).unwrap(), b"std");
 }
 
 /// A mount quota bounds the net bytes and entries guest operations add,

@@ -20,6 +20,8 @@ use std::sync::Arc;
 const UCRT: &str = "ucrtbase.dll";
 const STDIO_API: &str = "api-ms-win-crt-stdio-l1-1-0.dll";
 const EINVAL: u32 = 22;
+/// `EOF` as the C `int` -1, in the low 32 bits of RAX.
+const EOF: u64 = u32::MAX as u64;
 const ENOENT: u32 = 2;
 const ENOMEM: u32 = 12;
 const EACCES: u32 = 13;
@@ -445,6 +447,72 @@ fn open_stream(
     Ok(cookie)
 }
 
+/// Deliver a stream's contents: a dirty host-backed stream replaces its host
+/// file (charging the mount quota), and an in-memory file is published under
+/// its name so a later `fopen` sees it. Returns the `errno` on failure.
+fn flush_stream(stream: &mut Stream, files: &mut BTreeMap<String, Vec<u8>>) -> Result<(), u32> {
+    if stream.kind != Kind::File {
+        return Ok(());
+    }
+    if !stream.host_backed {
+        files.insert(stream.name.clone(), stream.data.clone());
+        return Ok(());
+    }
+    if !stream.dirty {
+        return Ok(());
+    }
+    let Some((file, budget)) = stream.host.as_mut() else {
+        return Ok(());
+    };
+    let target = stream.data.len() as u64;
+    let length = file.metadata().map_err(|_| EACCES)?.len();
+    budget.resize(length, target).map_err(errno_from_host)?;
+    let failed = file
+        .set_len(target)
+        .and_then(|_| file.seek(SeekFrom::Start(0)))
+        .and_then(|_| file.write_all(&stream.data))
+        .is_err();
+    if failed {
+        // Charge what the host file now holds.
+        let now = file.metadata().map_or(length, |metadata| metadata.len());
+        let _ = budget.resize(target, now);
+        return Err(EACCES);
+    }
+    stream.dirty = false;
+    Ok(())
+}
+
+/// Write `bytes` at the stream position, as `fwrite` does. Standard output
+/// and error accept and discard output. Returns whether it was written.
+fn put_bytes(stream: &mut Stream, bytes: &[u8]) -> Result<bool, ExitReason> {
+    if !stream.writable || stream.kind == Kind::StdIn {
+        stream.error = true;
+        return Ok(false);
+    }
+    if matches!(stream.kind, Kind::StdOut | Kind::StdErr) {
+        return Ok(true);
+    }
+    if stream.append {
+        stream.position = stream.data.len();
+    }
+    let end = stream
+        .position
+        .checked_add(bytes.len())
+        .ok_or(ExitReason::IllegalInstruction(0xFE))?;
+    if end > stream.max_bytes {
+        stream.error = true;
+        return Ok(false);
+    }
+    if end > stream.data.len() {
+        stream.data.resize(end, 0);
+    }
+    stream.data[stream.position..end].copy_from_slice(bytes);
+    stream.position = end;
+    stream.eof = false;
+    stream.dirty = stream.host_backed;
+    Ok(true)
+}
+
 fn with_stream<T>(
     state: &Arc<ServicesState>,
     memory: &mut GuestMemory,
@@ -650,39 +718,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             set_errno(memory, cpu.gs_base, EINVAL)?;
             return Ok(u64::from(u32::MAX));
         };
-        if stream.kind == Kind::File && stream.host_backed {
-            if stream.dirty
-                && let Some((mut file, budget)) = stream.host.take()
-            {
-                let target = stream.data.len() as u64;
-                let failed = match file.metadata() {
-                    Err(_) => true,
-                    Ok(metadata) => {
-                        let length = metadata.len();
-                        if let Err(code) = budget.resize(length, target) {
-                            set_errno(memory, cpu.gs_base, errno_from_host(code))?;
-                            return Ok(u64::from(u32::MAX));
-                        }
-                        let failed = file
-                            .set_len(target)
-                            .and_then(|_| file.seek(SeekFrom::Start(0)))
-                            .and_then(|_| file.write_all(&stream.data))
-                            .is_err();
-                        if failed {
-                            // Charge what the host file now holds.
-                            let now = file.metadata().map_or(length, |metadata| metadata.len());
-                            let _ = budget.resize(target, now);
-                        }
-                        failed
-                    }
-                };
-                if failed {
-                    set_errno(memory, cpu.gs_base, EACCES)?;
-                    return Ok(u64::from(u32::MAX));
-                }
-            }
-        } else if stream.kind == Kind::File {
-            stdio.files.insert(stream.name, stream.data);
+        if let Err(error) = flush_stream(&mut stream, &mut stdio.files) {
+            set_errno(memory, cpu.gs_base, error)?;
+            return Ok(u64::from(u32::MAX));
         }
         let _ = memory.release_heap_allocation(PROCESS_HEAP, args.rcx);
         Ok(0)
@@ -745,33 +783,97 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         let mut bytes = vec![0u8; total as usize];
         memory.read_bytes(buffer, &mut bytes).map_err(fault)?;
         with_stream(&fwrite, memory, cookie, |stream, _| {
-            if !stream.writable || stream.kind == Kind::StdIn {
-                stream.error = true;
-                return Ok(0);
-            }
-            if matches!(stream.kind, Kind::StdOut | Kind::StdErr) {
-                return Ok(count);
-            }
-            if stream.append {
-                stream.position = stream.data.len();
-            }
-            let end = stream
-                .position
-                .checked_add(bytes.len())
-                .ok_or(ExitReason::IllegalInstruction(0xFE))?;
-            if end > stream.max_bytes {
-                stream.error = true;
-                return Ok(0);
-            }
-            if end > stream.data.len() {
-                stream.data.resize(end, 0);
-            }
-            stream.data[stream.position..end].copy_from_slice(&bytes);
-            stream.position = end;
-            stream.eof = false;
-            stream.dirty = stream.host_backed;
-            Ok(count)
+            Ok(if put_bytes(stream, &bytes)? { count } else { 0 })
         })
+    });
+
+    for symbol in ["fputc", "putc"] {
+        let putc = Arc::clone(state);
+        registry.register(UCRT, symbol, move |args, _, memory| {
+            let byte = args.rcx as u8;
+            with_stream(&putc, memory, args.rdx, |stream, _| {
+                Ok(if put_bytes(stream, &[byte])? {
+                    u64::from(byte)
+                } else {
+                    EOF
+                })
+            })
+        });
+    }
+
+    let fputs = Arc::clone(state);
+    registry.register(UCRT, "fputs", move |args, _, memory| {
+        let text = read_c_string(memory, args.rcx, MAX_OUTPUT)?;
+        with_stream(&fputs, memory, args.rdx, |stream, _| {
+            Ok(if put_bytes(stream, &text)? { 0 } else { EOF })
+        })
+    });
+
+    let puts = Arc::clone(state);
+    registry.register(UCRT, "puts", move |args, _, memory| {
+        let mut text = read_c_string(memory, args.rcx, MAX_OUTPUT)?;
+        text.push(b'\n');
+        ensure_std_cookies(&puts, memory)?;
+        let stdout = puts.stdio.lock().expect("stdio state").stdout;
+        with_stream(&puts, memory, stdout, |stream, _| {
+            Ok(if put_bytes(stream, &text)? { 0 } else { EOF })
+        })
+    });
+
+    for symbol in ["fgetc", "getc"] {
+        let getc = Arc::clone(state);
+        registry.register(UCRT, symbol, move |args, _, memory| {
+            with_stream(&getc, memory, args.rcx, |stream, _| {
+                if !stream.readable {
+                    stream.error = true;
+                    return Ok(EOF);
+                }
+                match stream.data.get(stream.position) {
+                    Some(&byte) if stream.kind == Kind::File => {
+                        stream.position += 1;
+                        Ok(u64::from(byte))
+                    }
+                    _ => {
+                        stream.eof = true;
+                        Ok(EOF)
+                    }
+                }
+            })
+        });
+    }
+
+    let fflush = Arc::clone(state);
+    registry.register(UCRT, "fflush", move |args, cpu, memory| {
+        let mut stdio = fflush.stdio.lock().expect("stdio state");
+        let stdio = &mut *stdio;
+        let ids: Vec<u32> = if args.rcx == 0 {
+            // A null stream flushes every open stream.
+            stdio.streams.keys().copied().collect()
+        } else {
+            vec![read_cookie(memory, args.rcx)?]
+        };
+        let mut failure = None;
+        for id in ids {
+            let Some(stream) = stdio.streams.get_mut(&id) else {
+                failure.get_or_insert(EINVAL);
+                continue;
+            };
+            if !stream.writable {
+                // Flushing an input stream has no effect.
+                continue;
+            }
+            if let Err(error) = flush_stream(stream, &mut stdio.files) {
+                stream.error = true;
+                failure.get_or_insert(error);
+            }
+        }
+        match failure {
+            None => Ok(0),
+            Some(error) => {
+                set_errno(memory, cpu.gs_base, error)?;
+                Ok(EOF)
+            }
+        }
     });
 
     let fseek = Arc::clone(state);
@@ -930,6 +1032,13 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "__acrt_iob_func",
         "fprintf",
         "printf",
+        "fputc",
+        "putc",
+        "fputs",
+        "puts",
+        "fgetc",
+        "getc",
+        "fflush",
     ] {
         registry.alias(STDIO_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);

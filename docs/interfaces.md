@@ -318,6 +318,19 @@ next datagram; `WSAEINVAL` on a listening socket) and `FIONBIO` with a nonzero
 argument. Every socket is already non-blocking, so asking for blocking mode
 returns `WSAEOPNOTSUPP` instead of being ignored.
 
+### CRT character and line streams
+
+`fputc`, `putc`, `fputs`, `puts`, `fgetc`, `getc` and `fflush` are registered
+on `ucrtbase.dll` and `api-ms-win-crt-stdio-l1-1-0.dll` and share the stream
+state of `fopen`. The character functions return the byte as an unsigned char
+or `EOF`; writing a read-only stream or reading a write-only one returns `EOF`
+and sets the error indicator. `fputs` adds no newline and `puts` adds one;
+standard output accepts and discards output. `fflush` writes a dirty
+host-backed stream to its mounted file now rather than at `fclose`, charging
+the mount quota, and publishes an in-memory file so a second `fopen` sees it.
+A null stream flushes every open stream, and flushing an input stream has no
+effect. `ungetc` is not provided.
+
 ### Bounds-checked string copies
 
 `strcpy_s`, `strcat_s`, `strncpy_s`, `strncat_s`, `wcscpy_s`, `wcscat_s`,
