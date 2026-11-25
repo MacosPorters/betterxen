@@ -148,6 +148,34 @@ service kernel32.dll VirtualFree(address: ptr, size: u64, kind: u32) -> bool32
     ref memoryapi.h VirtualFree
     test virtual_memory_is_mapped_released_and_bounded
 
+# Stubs. A program built with the mingw-w64 runtime imports these three and
+# does not call them on a normal run. They exist so that its imports bind. A
+# call stops the guest with the runtime-limit fault and changes nothing.
+
+service kernel32.dll VirtualProtect(address: ptr, size: u64, protect: u32, old: out<4>) -> bool32
+    handler virtual_protect
+    status stub
+    alias api-ms-win-core-memory-l1-1-0.dll
+    fails always: stops the guest with the runtime-limit fault; no protection changes
+    ref memoryapi.h VirtualProtect
+    test memory_and_exception_stubs_stop_the_guest_and_change_nothing
+
+service kernel32.dll VirtualQuery(address: ptr, information: out<48>, length: u64) -> u64
+    handler virtual_query
+    status stub
+    alias api-ms-win-core-memory-l1-1-0.dll
+    fails always: stops the guest with the runtime-limit fault; nothing is written
+    ref memoryapi.h VirtualQuery
+    test memory_and_exception_stubs_stop_the_guest_and_change_nothing
+
+service ucrtbase.dll __C_specific_handler(record: ptr, frame: ptr, context: ptr, dispatcher: ptr) -> i32
+    handler c_specific_handler
+    status stub
+    alias api-ms-win-crt-private-l1-1-0.dll
+    fails always: stops the guest with the runtime-limit fault; no exception is dispatched
+    ref Microsoft Learn, x64 exception handling, language-specific handler
+    test memory_and_exception_stubs_stop_the_guest_and_change_nothing
+
 service ucrtbase.dll sqrt(x: f64) -> f64
     handler sqrt
     status partial

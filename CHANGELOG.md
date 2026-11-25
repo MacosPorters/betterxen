@@ -133,6 +133,8 @@ remains unsupported.
 
 - Added the synthetic default process heap with allocation, size queries, and release.
 
+- Added `VirtualProtect`, `VirtualQuery` and `__C_specific_handler` as `stub` services so that a C program built with the mingw-w64 runtime can bind its imports (#388, part of Gate A2). Such a program imports all three and does not call them on a normal run; without them the loader refused it before its entry point. A call to any of them stops the guest with the runtime-limit fault (`IllegalInstruction(0xFE)`) and writes nothing, so a program that needs one stops there and cannot run on with a made-up result. No page protection is changed, no region is described and no exception is dispatched. The service generator's API-set table gains `api-ms-win-crt-private-l1-1-0.dll` for `ucrtbase.dll`, which is inferred and not taken from a document that names it. Two tests in `runtime_services.rs` call the stubs from guest code and check how they resolve. Not compared with Windows; awaiting independent review.
+
 - Added Win64 signatures for wide-string length and comparison and overlapping byte moves to the import catalog.
 
 - Added guest CRT wide-string length and comparison using Windows 16-bit code units.

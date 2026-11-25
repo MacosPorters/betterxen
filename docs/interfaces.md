@@ -196,6 +196,24 @@ References include Microsoft's
 [virtual allocation](https://learn.microsoft.com/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc),
 and [virtual release](https://learn.microsoft.com/windows/win32/api/memoryapi/nf-memoryapi-virtualfree) contracts.
 
+### Stubs a hosted C program binds
+
+`VirtualProtect`, `VirtualQuery` and `__C_specific_handler` are declared
+`stub` in the typed registry (`docs/runtime/services.md`). A C program built
+with the mingw-w64 runtime imports all three and does not call them on a
+normal run: the first two serve its runtime pseudo-relocations, and the third
+is the language handler Windows calls while dispatching a structured
+exception. They exist so that such a program's imports bind.
+
+A call to any of them stops the guest with the runtime-limit fault
+(`IllegalInstruction(0xFE)`). The service writes nothing: no output buffer, no
+result and no last-error value. It does not return a made-up success or a
+failure code Windows would not give, so a program that needs one of them
+stops at that call. Nothing here changes a page protection, describes a
+region or dispatches an exception; each needs work the runtime does not have
+yet (regions that can be split, translated-code invalidation for executable
+pages, recorded allocation bases, exception dispatch).
+
 ### CRT strings and byte memory
 
 The standard registry provides `strlen` and `strnlen` under UCRT and the CRT

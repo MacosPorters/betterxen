@@ -8,7 +8,7 @@ use crate::runtime::{Call, Parameter, Return, ServiceContext, ServiceMetadata};
 use crate::services::{ServicesState, handlers};
 use std::sync::Arc;
 
-pub static SERVICES: [ServiceMetadata; 20] = [
+pub static SERVICES: [ServiceMetadata; 23] = [
     ServiceMetadata {
         library: "kernel32.dll",
         symbol: "SetProcessPriorityBoost",
@@ -184,6 +184,39 @@ pub static SERVICES: [ServiceMetadata; 20] = [
         failure: "0 with ERROR_NOT_SUPPORTED, ERROR_INVALID_PARAMETER or ERROR_INVALID_ADDRESS",
         reference: "memoryapi.h VirtualFree",
         tests: &["virtual_memory_is_mapped_released_and_bounded"],
+    },
+    ServiceMetadata {
+        library: "kernel32.dll",
+        symbol: "VirtualProtect",
+        parameters: &[Parameter { name: "address", kind: "ptr" }, Parameter { name: "size", kind: "u64" }, Parameter { name: "protect", kind: "u32" }, Parameter { name: "old", kind: "out<4>" }],
+        result: "bool32",
+        status: ServiceStatus::Stub,
+        aliases: &["api-ms-win-core-memory-l1-1-0.dll"],
+        failure: "always: stops the guest with the runtime-limit fault; no protection changes",
+        reference: "memoryapi.h VirtualProtect",
+        tests: &["memory_and_exception_stubs_stop_the_guest_and_change_nothing"],
+    },
+    ServiceMetadata {
+        library: "kernel32.dll",
+        symbol: "VirtualQuery",
+        parameters: &[Parameter { name: "address", kind: "ptr" }, Parameter { name: "information", kind: "out<48>" }, Parameter { name: "length", kind: "u64" }],
+        result: "u64",
+        status: ServiceStatus::Stub,
+        aliases: &["api-ms-win-core-memory-l1-1-0.dll"],
+        failure: "always: stops the guest with the runtime-limit fault; nothing is written",
+        reference: "memoryapi.h VirtualQuery",
+        tests: &["memory_and_exception_stubs_stop_the_guest_and_change_nothing"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "__C_specific_handler",
+        parameters: &[Parameter { name: "record", kind: "ptr" }, Parameter { name: "frame", kind: "ptr" }, Parameter { name: "context", kind: "ptr" }, Parameter { name: "dispatcher", kind: "ptr" }],
+        result: "i32",
+        status: ServiceStatus::Stub,
+        aliases: &["api-ms-win-crt-private-l1-1-0.dll"],
+        failure: "always: stops the guest with the runtime-limit fault; no exception is dispatched",
+        reference: "Microsoft Learn, x64 exception handling, language-specific handler",
+        tests: &["memory_and_exception_stubs_stop_the_guest_and_change_nothing"],
     },
     ServiceMetadata {
         library: "ucrtbase.dll",
@@ -364,6 +397,38 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let a2 = call.u32(2)?;
         let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: bool = handlers::virtual_free(&mut context, a0, a1, a2)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("kernel32.dll", "VirtualProtect", ServiceStatus::Stub, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.u64(0)?;
+        let a1 = call.u64(1)?;
+        let a2 = call.u32(2)?;
+        let a3 = call.out::<4>(3)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: bool = handlers::virtual_protect(&mut context, a0, a1, a2, a3)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("kernel32.dll", "VirtualQuery", ServiceStatus::Stub, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.u64(0)?;
+        let a1 = call.out::<48>(1)?;
+        let a2 = call.u64(2)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::virtual_query(&mut context, a0, a1, a2)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "__C_specific_handler", ServiceStatus::Stub, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.u64(0)?;
+        let a1 = call.u64(1)?;
+        let a2 = call.u64(2)?;
+        let a3 = call.u64(3)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: i32 = handlers::c_specific_handler(&mut context, a0, a1, a2, a3)?;
         Ok(result.place(cpu))
     });
     let s = state.clone();

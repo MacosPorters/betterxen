@@ -658,6 +658,122 @@ fn virtual_memory_is_mapped_released_and_bounded() {
     assert_eq!(guest.call("VirtualFree", &[address, 0, RELEASE]), 0);
 }
 
+/// `VirtualProtect`, `VirtualQuery` and `__C_specific_handler` are stubs: a
+/// hosted C program imports them and does not call them on a normal run. A
+/// call stops the guest with the runtime-limit fault. The service writes
+/// nothing: not the output buffers, not a result, not the last-error value.
+#[test]
+fn memory_and_exception_stubs_stop_the_guest_and_change_nothing() {
+    let mut guest = Guest::new();
+    const READ_WRITE: u64 = 0x04;
+    const LIMIT: ExitReason = ExitReason::IllegalInstruction(0xFE);
+    let scratch: Vec<u8> = (0..0x100).map(|index| index as u8 ^ 0xA5).collect();
+    guest.memory.write_bytes(SCRATCH, &scratch).unwrap();
+    guest.call("SetLastError", &[0x1234]);
+
+    for (symbol, args) in [
+        // The scratch page, read-write as it already is, with the old
+        // protection going to the scratch page too.
+        (
+            "VirtualProtect",
+            [SCRATCH, 0x100, READ_WRITE, SCRATCH + 0x80],
+        ),
+        ("VirtualProtect", [0, 0, 0, 0]),
+        // A full MEMORY_BASIC_INFORMATION, 48 bytes, about a mapped address.
+        ("VirtualQuery", [SCRATCH, SCRATCH + 0x40, 48, 0]),
+        ("VirtualQuery", [0, 0, 0, 0]),
+        (
+            "__C_specific_handler",
+            [SCRATCH, STACK_TOP, SCRATCH + 0x40, SCRATCH + 0x80],
+        ),
+        ("__C_specific_handler", [0, 0, 0, 0]),
+    ] {
+        let (cpu, exit) = guest.run(symbol, &args);
+        assert_eq!(exit, LIMIT, "{symbol} {args:x?}");
+        // Every general register but the stack pointer is as the caller left
+        // it: no result in RAX, no argument register cleared.
+        for (index, value) in cpu.gpr.iter().enumerate() {
+            let argument = [Register::Rcx, Register::Rdx, Register::R8, Register::R9]
+                .iter()
+                .position(|register| *register as usize == index);
+            let wanted = match argument {
+                Some(position) => args[position],
+                None => 0x0101_0101_0101_0101 * (index as u64 + 1),
+            };
+            if index != Register::Rsp as usize {
+                assert_eq!(*value, wanted, "{symbol} register {index}");
+            }
+        }
+        assert_eq!(cpu.xmm[..4], guest.xmm, "{symbol}");
+        let mut after = vec![0; scratch.len()];
+        guest.memory.read_bytes(SCRATCH, &mut after).unwrap();
+        assert_eq!(after, scratch, "{symbol} {args:x?}");
+    }
+    // The stopped calls recorded no error, and the guest still runs.
+    assert_eq!(guest.last_error(), 0x1234);
+    // The scratch page kept its protection: it is still writable.
+    guest.memory.write_u8(SCRATCH, 1).unwrap();
+}
+
+/// The three stubs resolve by the module and symbol pairs a program built
+/// with mingw-w64 14.0.0 (UCRT) imports them by, and say they are stubs.
+#[test]
+fn memory_and_exception_stubs_bind_and_are_declared_stubs() {
+    let (registry, _) = standard(0);
+    let named = |name: &str| ImportName::Name(name.to_owned());
+    for (module, symbol, canonical) in [
+        ("KERNEL32.dll", "VirtualProtect", "kernel32.dll"),
+        ("KERNEL32.dll", "VirtualQuery", "kernel32.dll"),
+        (
+            "api-ms-win-core-memory-l1-1-0.dll",
+            "VirtualProtect",
+            "kernel32.dll",
+        ),
+        (
+            "api-ms-win-core-memory-l1-1-0.dll",
+            "VirtualQuery",
+            "kernel32.dll",
+        ),
+        (
+            "api-ms-win-crt-private-l1-1-0.dll",
+            "__C_specific_handler",
+            "ucrtbase.dll",
+        ),
+    ] {
+        let service = registry
+            .resolve(module, &named(symbol))
+            .unwrap_or_else(|| panic!("{module}!{symbol}"));
+        let target = registry.resolve(canonical, &named(symbol)).unwrap();
+        assert!(std::ptr::eq(service, target), "{module}!{symbol}");
+        assert_eq!(service.status, ServiceStatus::Stub, "{symbol}");
+    }
+    // The real services beside them are not stubs, and the API sets forward
+    // only the symbols listed for them.
+    let alloc = registry
+        .resolve("kernel32.dll", &named("VirtualAlloc"))
+        .unwrap();
+    assert_eq!(alloc.status, ServiceStatus::Partial);
+    for (module, symbol) in [
+        ("api-ms-win-crt-private-l1-1-0.dll", "VirtualProtect"),
+        ("api-ms-win-core-memory-l1-1-0.dll", "__C_specific_handler"),
+        ("kernel32.dll", "__C_specific_handler"),
+    ] {
+        assert!(
+            registry.resolve(module, &named(symbol)).is_none(),
+            "{module}!{symbol}"
+        );
+    }
+    let stubs: Vec<&str> = SERVICES
+        .iter()
+        .filter(|service| service.status == ServiceStatus::Stub)
+        .map(|service| service.symbol)
+        .collect();
+    assert_eq!(
+        stubs,
+        ["VirtualProtect", "VirtualQuery", "__C_specific_handler"]
+    );
+}
+
 #[test]
 fn floating_arguments_and_results_use_xmm_registers() {
     let mut guest = Guest::new();

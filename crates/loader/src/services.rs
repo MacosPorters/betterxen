@@ -641,6 +641,9 @@ pub(crate) mod handlers {
 
     type Outcome<T> = Result<T, ExitReason>;
 
+    /// The exit for a request the runtime does not model.
+    const RUNTIME_LIMIT: ExitReason = ExitReason::IllegalInstruction(0xFE);
+
     pub fn set_process_priority_boost(
         context: &mut ServiceContext<'_>,
         process: u64,
@@ -863,6 +866,42 @@ pub(crate) mod handlers {
             return state.fail(context.teb, ERROR_INVALID_ADDRESS, false);
         }
         Ok(true)
+    }
+
+    // Stubs (#388). A program built with the mingw-w64 runtime imports these
+    // three and does not call them on a normal run: the first two serve its
+    // runtime pseudo-relocations and the third is the language handler Windows
+    // calls while dispatching a structured exception. None is modelled, so a
+    // call stops the guest with the runtime-limit fault. Returning a made-up
+    // result would let the program run on with wrong state.
+
+    pub fn virtual_protect(
+        _: &mut ServiceContext<'_>,
+        _address: u64,
+        _size: u64,
+        _protect: u32,
+        _old: OutPtr<4>,
+    ) -> Outcome<bool> {
+        Err(RUNTIME_LIMIT)
+    }
+
+    pub fn virtual_query(
+        _: &mut ServiceContext<'_>,
+        _address: u64,
+        _information: OutPtr<48>,
+        _length: u64,
+    ) -> Outcome<u64> {
+        Err(RUNTIME_LIMIT)
+    }
+
+    pub fn c_specific_handler(
+        _: &mut ServiceContext<'_>,
+        _record: u64,
+        _frame: u64,
+        _context: u64,
+        _dispatcher: u64,
+    ) -> Outcome<i32> {
+        Err(RUNTIME_LIMIT)
     }
 
     /// The guest MXCSR is not visible to a service, so results use the default
