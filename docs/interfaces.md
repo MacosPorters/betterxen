@@ -460,6 +460,19 @@ stops there instead of getting a handler that is silently ignored. `exit`,
 which must run `atexit` functions first, is not provided. Debug-CRT message
 boxes and error reporting are not modelled.
 
+### CRT integer absolute value and division
+
+`abs`, `labs`, `llabs`, `div`, `ldiv` and `lldiv` are registered on
+`ucrtbase.dll` and `api-ms-win-crt-utility-l1-1-0.dll`. They follow the
+Windows LLP64 model, where `long` is 32 bits, so `labs` and `ldiv` match `abs`
+and `div` and ignore the upper half of each argument register. `div_t` and
+`ldiv_t` return in RAX with the quotient in the low 32 bits and the remainder
+in the high 32 bits. `lldiv_t` is 16 bytes, so the caller passes a result
+pointer in RCX, the operands arrive in RDX and R8, and RAX returns the pointer.
+Quotients truncate toward zero. The absolute value of the minimum integer
+wraps to itself. Division by zero and the minimum divided by -1 stop the guest
+with a divide error, as the x86 `idiv` instruction does.
+
 ### XInput controllers
 
 `XInputGetState`, `XInputSetState`, `XInputGetCapabilities` and

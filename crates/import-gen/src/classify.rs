@@ -88,6 +88,13 @@ impl SymbolDb {
         entries
     }
 
+    /// Add or replace one classification, for a project-specific module the
+    /// built-in database does not describe. `module` is matched
+    /// case-insensitively, like [`SymbolDb::get`].
+    pub fn insert(&mut self, module: &str, symbol: &str, classification: Classification) {
+        self.ins(module, symbol, classification);
+    }
+
     /// Build the built-in database.  Every entry here is derived exclusively from
     /// public Microsoft documentation and ISO/POSIX standards.
     pub fn builtin() -> Self {
@@ -560,12 +567,13 @@ impl SymbolDb {
 
     fn populate_crt_utility(&mut self) {
         let m = "api-ms-win-crt-utility-l1-1-0.dll";
-        self.crt_native(m, "abs", "abs", "ISO C abs");
-        self.crt_native(m, "labs", "labs", "ISO C labs");
-        self.crt_native(m, "llabs", "llabs", "ISO C llabs");
-        self.crt_native(m, "div", "div", "ISO C div");
-        self.crt_native(m, "ldiv", "ldiv", "ISO C ldiv");
-        self.crt_native(m, "lldiv", "lldiv", "ISO C lldiv");
+        // Windows long is 32 bits and lldiv_t returns through a hidden
+        // pointer, so these cannot map to the LP64 host libc.
+        for module in [m, "ucrtbase.dll"] {
+            for symbol in ["abs", "labs", "llabs", "div", "ldiv", "lldiv"] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
         // The comparators are guest code, so these cannot use host libc.
         for module in [m, "ucrtbase.dll"] {
             for symbol in ["qsort", "qsort_s", "bsearch", "bsearch_s"] {

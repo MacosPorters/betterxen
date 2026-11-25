@@ -27,6 +27,7 @@ remains unsupported.
 - Extended the read-only RDNA2 planning CLI (`python3 -m qa rdna2`) with family/status filters, compact summaries, Codex-ready manifests under `artifacts/`, active-claim exclusion (family claims exclude those families; path-only claims block overlapping permitted files), coverage reconcile against `semantic_coverage` without inflating counts, and inventory diffs. Covered by `tests/qa/test_rdna2_plan.py`; planning only, no GPU production edits.
 
 ### Fixed
+- The import metadata mapped `labs` and `ldiv` to the host libc as identical-ABI calls, but Windows `long` is 32 bits and macOS `long` is 64 bits; the integer functions are now runtime services. The generated `abs`/`labs` adapter no longer panics on the minimum integer. `crates/import-gen/tests/pipeline.rs` now exercises the adapter path through a test-only native entry, because no built-in symbol uses it any more.
 - The import metadata still classified `ExitProcess` on `kernel32.dll` and `api-ms-win-core-processthreads-l1-1-0.dll` as a stub that "calls exit(0)" after guest process exit landed (#331). It is now a runtime service; the coverage report shows no disagreements.
 - The import metadata classified `abort` and `_exit` as native libc calls with an identical ABI, which would describe ending the host process. They, `terminate` and `_purecall` are now runtime services that end only the guest.
 - Guest `strncpy` and `wcsncpy` with a count far larger than the destination (for example all ones) aborted the host process while allocating the zero padding. The padding is now written in bounded chunks, and the guest faults at the first byte it cannot write. Found by the `runtime_services` fuzz replay after the stronger harness from main was merged; covered by `tests/runtime_crt_strncpy.rs`.
@@ -48,6 +49,8 @@ remains unsupported.
 - Bounds-checked `strcpy_s`, `strcat_s`, `strncpy_s`, `strncat_s` and their `wcs` forms, with the documented `EINVAL`, `ERANGE` and `_TRUNCATE` behaviour.
 - CRT `fputc`, `putc`, `fputs`, `puts`, `fgetc`, `getc` and `fflush`. `fflush` writes a host-backed stream to its mounted file (charging the mount quota) and publishes an in-memory file before `fclose`; standard output is still discarded.
 - Abnormal CRT termination: `abort`, `terminate`, `_purecall`, `__std_terminate` and `_exit` end the guest process through the same exit as `ExitProcess` (exit code 3 for the abort family, the given status for `_exit`). Handlers cannot be installed yet, and `exit` is not provided.
+- CRT `abs`, `labs`, `llabs`, `div`, `ldiv` and `lldiv` with Windows' 32-bit `long` and the Win64 struct-return rules (`lldiv_t` through a hidden pointer). Division by zero stops the guest with a divide error.
+- `SymbolDb::insert` lets a project classify a module the built-in import metadata does not describe.
 - `IsProcessorFeaturePresent`, answered from the guest CPUID table so startup code never selects instruction sets the translator does not report. It currently reports no optional features.
 - `GetTimeZoneInformation` (the guest zone is UTC) and `GetLogicalProcessorInformation` (cores and package from the guest profile; no simulated caches are reported).
 - `xenora imports coverage` writes a deterministic report of every standard runtime service by module and status, and lists where the import metadata disagrees with the registry.
