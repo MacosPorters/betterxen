@@ -193,9 +193,9 @@ pub(super) fn register(registry: &mut ImportRegistry) {
 }
 
 const ENOMEM: u32 = 12;
-const EINVAL: u32 = 22;
+pub(super) const EINVAL: u32 = 22;
 
-fn set_errno(memory: &mut GuestMemory, teb: u64, error: u32) -> Result<(), ExitReason> {
+pub(super) fn set_errno(memory: &mut GuestMemory, teb: u64, error: u32) -> Result<(), ExitReason> {
     let address = memory
         .crt_errno_address(teb)
         .map_err(ExitReason::MemoryFault)?;

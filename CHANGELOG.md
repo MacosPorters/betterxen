@@ -126,6 +126,8 @@ remains unsupported.
 
 - Added bounded guest CRT long-integer parsing for byte and wide strings.
 
+- Added standard output for a hosted C program (#400, part of Gate A2): a `printf` formatting engine, the standard streams, and capture of what the guest writes to `stdout` and `stderr`. The services are `__acrt_iob_func`, `__stdio_common_vfprintf` (what `printf` and `fprintf` call in a program built with the mingw-w64 runtime), `fwrite`, `fputs`, `fflush` and `setvbuf`; a host reads the output through `ServicesState::standard_output` and `standard_error`. The engine handles the flags, width, precision and size prefixes of `d`, `i`, `u`, `o`, `x`, `X`, `c`, `s`, `p` and `%%` as Microsoft's format specification page and ISO C describe, reading arguments from the guest's `va_list`. The standard streams are text-mode streams, so a line feed is captured as carriage return and line feed. Floating-point and wide conversions, a locale object, other streams and files are not modelled and stop the guest with the runtime-limit fault instead of printing something wrong; `%n` and unknown conversions return -1 with `EINVAL`. All six services are `partial`. The engine's output matches the host C library's `snprintf` on 2,600 generated cases whose result ISO C defines (`crates/loader/tests/printf/reference.py`), with hand-written cases for the Windows-specific rules, and seven tests in `runtime_services.rs` call the services from guest code. Not compared with Windows; awaiting independent review.
+
 - Added guest CRT errno accessors and allocation failure reporting for the synthetic main thread.
 
 - Added guest CRT allocation, zeroed array allocation, resizing, and release.

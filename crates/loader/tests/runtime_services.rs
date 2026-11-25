@@ -19,7 +19,9 @@ use xenora_loader::pe::ParsedPe;
 use xenora_loader::probe::{ProbeConfig, ProbeReport, probe_pe_bytes};
 use xenora_loader::runtime::{Call, Float32, Float64};
 use xenora_loader::runtime_table::SERVICES;
-use xenora_loader::services::{MockClock, ServicesState, register_standard_services};
+use xenora_loader::services::{
+    MAX_CAPTURED_OUTPUT, MockClock, ServicesState, register_standard_services,
+};
 
 const BASE: u64 = 0x1_4000_0000;
 const CODE_RVA: u32 = 0x1000;
@@ -132,7 +134,8 @@ fn standard_with_state(clock: u64) -> (ImportRegistry, Arc<MockClock>, Arc<Servi
     (registry, clock, state)
 }
 
-/// A guest whose image imports every generated service from its own library.
+/// A guest whose image imports every generated service from its own library,
+/// and `_errno` after them, which is registered by hand.
 struct Guest {
     engine: DbtEngine,
     memory: GuestMemory,
@@ -145,10 +148,11 @@ struct Guest {
 
 impl Guest {
     fn new() -> Self {
-        let imports: Vec<(&str, Symbol)> = SERVICES
+        let mut imports: Vec<(&str, Symbol)> = SERVICES
             .iter()
             .map(|service| (service.library, Symbol::Name(service.symbol)))
             .collect();
+        imports.push(("ucrtbase.dll", Symbol::Name("_errno")));
         let image = build(&imports);
         let pe = ParsedPe::parse(&image.bytes).unwrap();
         let mut memory = pe.load_into_memory(&image.bytes).unwrap().memory;
@@ -162,7 +166,7 @@ impl Guest {
         let bound = registry
             .bind_imports(&pe, &image.bytes, BASE, &mut memory)
             .unwrap();
-        assert_eq!(bound, SERVICES.len());
+        assert_eq!(bound, SERVICES.len() + 1);
         let mut engine = DbtEngine::new(256 * 1024).unwrap();
         engine.set_import_registry(registry);
         Self {
@@ -179,6 +183,7 @@ impl Guest {
         let index = SERVICES
             .iter()
             .position(|service| service.symbol == symbol)
+            .or((symbol == "_errno").then_some(SERVICES.len()))
             .unwrap();
         let mut cpu = CpuState::new(BASE + u64::from(CODE_RVA) + 16 * index as u64, STACK_TOP);
         cpu.gs_base = self.teb;
@@ -222,6 +227,17 @@ impl Guest {
 
     fn last_error(&mut self) -> u64 {
         self.call("GetLastError", &[])
+    }
+
+    /// The calling thread's `errno`, read through the pointer `_errno` returns.
+    fn errno(&mut self) -> u32 {
+        let address = self.call("_errno", &[]);
+        self.memory.read_u32(address).unwrap()
+    }
+
+    fn set_errno(&mut self, value: u32) {
+        let address = self.call("_errno", &[]);
+        self.memory.write_u32(address, value).unwrap();
     }
 }
 
@@ -602,6 +618,443 @@ fn a_retired_thread_starts_clean_when_its_teb_address_is_reused() {
     assert_eq!(guest.last_error(), 0);
     guest.call("SetLastError", &[5]);
     assert_eq!(guest.last_error(), 5);
+}
+
+/// Guest memory for format strings, argument lists and strings.
+const TEXT: u64 = 0x100_0000;
+const TEXT_LEN: usize = 0x10_0000 + 0x1000;
+/// Where `print` puts the `va_list`, and where string arguments start.
+const VA_LIST: u64 = TEXT + 0x400;
+const STRINGS: u64 = TEXT + 0x800;
+/// What a program built with mingw-w64 passes as the options of
+/// `__stdio_common_vfprintf`.
+const MINGW_OPTIONS: u64 = 0x24;
+const LIMIT: ExitReason = ExitReason::IllegalInstruction(0xFE);
+const STDIO_EINVAL: u32 = 22;
+/// The low 32 bits of an `int` result of -1, which is also `EOF`.
+const STDIO_MINUS_ONE: u64 = 0xFFFF_FFFF;
+
+/// A guest with its three standard streams and room for text.
+fn stdio_guest() -> (Guest, [u64; 3]) {
+    let mut guest = Guest::new();
+    guest
+        .memory
+        .map_region(TEXT, TEXT_LEN, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    let streams = [0, 1, 2].map(|index| guest.call("__acrt_iob_func", &[index]));
+    (guest, streams)
+}
+
+/// Put a NUL-terminated string in guest memory and return its address.
+fn place(guest: &mut Guest, at: u64, text: &[u8]) -> u64 {
+    guest.memory.write_bytes(at, text).unwrap();
+    guest.memory.write_u8(at + text.len() as u64, 0).unwrap();
+    at
+}
+
+/// Call `__stdio_common_vfprintf` as compiled code does: the format string
+/// and the `va_list` are in guest memory, and the fifth argument is on the
+/// stack above the shadow space.
+fn print_with(
+    guest: &mut Guest,
+    options: u64,
+    stream: u64,
+    format: &[u8],
+    slots: &[u64],
+) -> (u64, ExitReason) {
+    let format = place(guest, TEXT, format);
+    for (index, slot) in slots.iter().enumerate() {
+        guest
+            .memory
+            .write_u64(VA_LIST + 8 * index as u64, *slot)
+            .unwrap();
+    }
+    guest.memory.write_u64(STACK_TOP + 32, VA_LIST).unwrap();
+    let (cpu, exit) = guest.run("__stdio_common_vfprintf", &[options, stream, format, 0]);
+    (cpu.get(Register::Rax) & 0xFFFF_FFFF, exit)
+}
+
+fn print(guest: &mut Guest, stream: u64, format: &[u8], slots: &[u64]) -> u64 {
+    let (count, exit) = print_with(guest, MINGW_OPTIONS, stream, format, slots);
+    assert_eq!(
+        exit,
+        ExitReason::Halt,
+        "{}",
+        String::from_utf8_lossy(format)
+    );
+    count
+}
+
+/// `__acrt_iob_func` (corecrt_wstdio.h) is what `stdin`, `stdout` and
+/// `stderr` expand to: indices 0, 1 and 2. A `FILE` is one pointer wide.
+#[test]
+fn standard_streams_are_three_stable_file_objects() {
+    let (mut guest, streams) = stdio_guest();
+    let mut sorted = streams;
+    sorted.sort_unstable();
+    assert!(sorted[0] != 0 && sorted[1] - sorted[0] >= 8 && sorted[2] - sorted[1] >= 8);
+    // Each call returns the same object, and the index is an unsigned int.
+    for (index, stream) in streams.into_iter().enumerate() {
+        let index = index as u64;
+        assert_eq!(guest.call("__acrt_iob_func", &[index]), stream);
+        assert_eq!(
+            guest.call("__acrt_iob_func", &[0xFFFF_FFFF_0000_0000 | index]),
+            stream
+        );
+    }
+    // There is no fourth standard stream.
+    for index in [3, 4, 0x8000_0000, 0xFFFF_FFFF] {
+        assert_eq!(
+            guest.run("__acrt_iob_func", &[index]).1,
+            LIMIT,
+            "{index:#x}"
+        );
+    }
+    // Asking for a stream writes nothing to it.
+    assert!(guest.state.standard_output().is_empty());
+    assert!(guest.state.standard_error().is_empty());
+}
+
+/// `__stdio_common_vfprintf` is what `printf` and `fprintf` call. It returns
+/// "the number of characters written" (Microsoft Learn, vfprintf). The
+/// standard streams are text-mode streams, where "each line feed is replaced
+/// with a carriage return-line feed pair" that "has no effect on the return
+/// value" (fwrite). Expected text follows the format specification page.
+#[test]
+fn formatted_output_reaches_the_captured_standard_streams() {
+    let (mut guest, [_, out, err]) = stdio_guest();
+    // The calls the Gate A2 program makes, with the options mingw-w64 passes.
+    assert_eq!(print(&mut guest, out, b"gate a2: %d arguments\n", &[3]), 21);
+    let one = place(&mut guest, STRINGS, b"one");
+    assert_eq!(print(&mut guest, out, b"arg %d = %s\n", &[1, one]), 12);
+    assert_eq!(
+        guest.state.standard_output(),
+        b"gate a2: 3 arguments\r\narg 1 = one\r\n"
+    );
+    assert!(guest.state.standard_error().is_empty());
+
+    // stderr is a separate buffer.
+    assert_eq!(print(&mut guest, err, b"%s: %#x\n", &[one, 0xa2]), 10);
+    assert_eq!(guest.state.standard_error(), b"one: 0xa2\r\n");
+    assert_eq!(guest.state.standard_output().len(), 35);
+
+    // The arguments are 8-byte slots read in order from the va_list: a width
+    // from *, an int whose upper half is junk, a 64-bit value, a string with
+    // a precision, a character and a pointer.
+    let junk = 0xDEAD_BEEF_0000_0000;
+    let slots = [
+        6,
+        junk | 0xFFFF_FFFE,
+        u64::MAX,
+        one,
+        u64::from(b'!'),
+        0x1_4000_2000,
+    ];
+    let (mut fresh, [_, out, _]) = stdio_guest();
+    let one = place(&mut fresh, STRINGS, b"one");
+    let slots = [slots[0], slots[1], slots[2], one, slots[4], slots[5]];
+    let text: &[u8] = b"[%*d] %llu %.2s%c %p";
+    // The result is the number of characters in the text below: 50.
+    let expected: &[u8] = b"[    -2] 18446744073709551615 on! 0000000140002000";
+    assert_eq!(print(&mut fresh, out, text, &slots), 50);
+    assert_eq!(expected.len(), 50);
+    assert_eq!(fresh.state.standard_output(), expected);
+
+    // Several line feeds in one call, text with none, and an empty format.
+    let (mut guest, [_, out, _]) = stdio_guest();
+    assert_eq!(print(&mut guest, out, b"a\n\nb\n", &[]), 5);
+    assert_eq!(print(&mut guest, out, b"no newline", &[]), 10);
+    assert_eq!(print(&mut guest, out, b"", &[]), 0);
+    // A carriage return the program wrote itself is kept as it is.
+    assert_eq!(print(&mut guest, out, b"\r\n", &[]), 2);
+    assert_eq!(
+        guest.state.standard_output(),
+        b"a\r\n\r\nb\r\nno newline\r\r\n"
+    );
+
+    // The option bits that concern wide functions and floating point change
+    // nothing here.
+    for options in [0, 0x04, 0x10, 0x20, 0x24, 0x34] {
+        let (mut guest, [_, out, _]) = stdio_guest();
+        let (count, exit) = print_with(&mut guest, options, out, b"%5.3d|%-4x|", &[7, 255]);
+        assert_eq!((count, exit), (11, ExitReason::Halt), "{options:#x}");
+        assert_eq!(
+            guest.state.standard_output(),
+            b"  007|ff  |",
+            "{options:#x}"
+        );
+    }
+}
+
+/// What `__stdio_common_vfprintf` refuses. A null stream or format returns -1
+/// with `errno` `EINVAL` (Microsoft Learn, vfprintf). An invalid format calls
+/// the invalid parameter handler on Windows; here it returns the same -1 and
+/// writes nothing. What the runtime does not model stops the guest. In every
+/// case nothing reaches either stream.
+#[test]
+fn formatted_output_refuses_what_it_cannot_print_correctly() {
+    let (mut guest, [input, out, _]) = stdio_guest();
+    let quiet = |guest: &Guest| {
+        assert!(guest.state.standard_output().is_empty());
+        assert!(guest.state.standard_error().is_empty());
+    };
+
+    // Null stream, null format.
+    guest.set_errno(0);
+    let format = place(&mut guest, TEXT, b"text");
+    guest.memory.write_u64(STACK_TOP + 32, VA_LIST).unwrap();
+    for args in [[MINGW_OPTIONS, 0, format, 0], [MINGW_OPTIONS, out, 0, 0]] {
+        let result = guest.call("__stdio_common_vfprintf", &args);
+        assert_eq!(result & 0xFFFF_FFFF, STDIO_MINUS_ONE, "{args:x?}");
+        assert_eq!(guest.errno(), STDIO_EINVAL, "{args:x?}");
+        guest.set_errno(0);
+    }
+    quiet(&guest);
+
+    // %n is disabled by default, and a character with no meaning as a type
+    // is invalid. The text before it is not written.
+    for format in [&b"count%n"[..], b"before %d then %y", b"%", b"100%"] {
+        let (count, exit) = print_with(&mut guest, MINGW_OPTIONS, out, format, &[1, 2]);
+        assert_eq!((count, exit), (STDIO_MINUS_ONE, ExitReason::Halt));
+        assert_eq!(guest.errno(), STDIO_EINVAL);
+        guest.set_errno(0);
+    }
+    quiet(&guest);
+
+    // Floating point and wide strings are valid and not modelled.
+    for format in [&b"%f"[..], b"ok %d then %g", b"%ls", b"%S", b"%lc"] {
+        let (_, exit) = print_with(&mut guest, MINGW_OPTIONS, out, format, &[1, 2]);
+        assert_eq!(exit, LIMIT, "{}", String::from_utf8_lossy(format));
+    }
+    // Option bits that change how the format is read or that belong to the
+    // buffer functions, and unknown bits.
+    for options in [0x01, 0x02, 0x08, 0x40, 0x25, 1 << 32, u64::MAX] {
+        let (_, exit) = print_with(&mut guest, options, out, b"x", &[]);
+        assert_eq!(exit, LIMIT, "{options:#x}");
+    }
+    // A locale object.
+    let format = place(&mut guest, TEXT, b"x");
+    let args = [MINGW_OPTIONS, out, format, STRINGS];
+    assert_eq!(guest.run("__stdio_common_vfprintf", &args).1, LIMIT);
+    // stdin, and pointers that are no stream: beside a FILE object, inside
+    // one, and elsewhere.
+    for stream in [input, out + 1, out + 24, out - 16, TEXT, 8] {
+        let (_, exit) = print_with(&mut guest, MINGW_OPTIONS, stream, b"x", &[]);
+        assert_eq!(exit, LIMIT, "{stream:#x}");
+    }
+    // Unreadable memory is a fault at the address that could not be read.
+    let unmapped = 0x9_0000_0000;
+    let (_, exit) = print_with(&mut guest, MINGW_OPTIONS, out, b"%s", &[unmapped]);
+    assert!(matches!(exit, ExitReason::MemoryFault(_)), "{exit:?}");
+    guest.memory.write_u64(STACK_TOP + 32, unmapped).unwrap();
+    for args in [
+        [MINGW_OPTIONS, out, format, 0],
+        [MINGW_OPTIONS, out, unmapped, 0],
+    ] {
+        let format_reads_arguments = place(&mut guest, TEXT, b"%d");
+        assert_eq!(format_reads_arguments, format);
+        let exit = guest.run("__stdio_common_vfprintf", &args).1;
+        assert!(matches!(exit, ExitReason::MemoryFault(_)), "{exit:?}");
+    }
+    quiet(&guest);
+    // None of the stops set errno.
+    assert_eq!(guest.errno(), 0);
+
+    // A guest that never asked for its streams has none to write to.
+    let mut fresh = Guest::new();
+    fresh
+        .memory
+        .map_region(TEXT, TEXT_LEN, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    let (_, exit) = print_with(&mut fresh, MINGW_OPTIONS, out, b"x", &[]);
+    assert_eq!(exit, LIMIT);
+}
+
+/// `fwrite` "returns the number of full items the function writes" and, for a
+/// null buffer or stream, sets `errno` to `EINVAL` and returns 0. `fputs`
+/// returns "a nonnegative value if it's successful", copies no terminating
+/// null, and returns `EOF` with `EINVAL` for a null pointer (Microsoft Learn).
+#[test]
+fn fwrite_and_fputs_write_to_the_captured_standard_streams() {
+    let (mut guest, [input, out, err]) = stdio_guest();
+    let text = place(&mut guest, TEXT, b"cleanup ran\nxyz");
+    // Twelve items of one byte, then three items of four bytes to stderr.
+    assert_eq!(guest.call("fwrite", &[text, 1, 12, out]), 12);
+    assert_eq!(guest.call("fwrite", &[text, 4, 3, err]), 3);
+    assert_eq!(guest.state.standard_output(), b"cleanup ran\r\n");
+    assert_eq!(guest.state.standard_error(), b"cleanup ran\r\n");
+    // No items or no size writes nothing and returns 0.
+    for (size, count) in [(0, 5), (5, 0), (0, 0)] {
+        assert_eq!(guest.call("fwrite", &[text, size, count, out]), 0);
+    }
+    assert_eq!(guest.state.standard_output().len(), 13);
+    // A byte of zero is data to fwrite.
+    assert_eq!(guest.call("fwrite", &[text + 14, 1, 2, out]), 2);
+    assert_eq!(guest.state.standard_output()[13..], [b'z', 0]);
+
+    guest.set_errno(0);
+    for args in [[0, 1, 4, out], [text, 1, 4, 0]] {
+        assert_eq!(guest.call("fwrite", &args), 0, "{args:x?}");
+        assert_eq!(guest.errno(), STDIO_EINVAL, "{args:x?}");
+        guest.set_errno(0);
+    }
+    // stdin, another pointer, more than this runtime transfers at once, a
+    // product that overflows, and unreadable memory.
+    for args in [
+        [text, 1, 4, input],
+        [text, 1, 4, TEXT],
+        [text, 1, (1 << 20) + 1, out],
+        [text, 1 << 33, 1 << 33, out],
+    ] {
+        assert_eq!(guest.run("fwrite", &args).1, LIMIT, "{args:x?}");
+    }
+    let exit = guest.run("fwrite", &[0x9_0000_0000, 1, 4, out]).1;
+    assert!(matches!(exit, ExitReason::MemoryFault(_)), "{exit:?}");
+    assert_eq!(guest.state.standard_output().len(), 15);
+    assert_eq!(guest.errno(), 0);
+
+    // fputs writes up to the terminator and not the terminator itself.
+    let (mut guest, [input, out, err]) = stdio_guest();
+    let text = place(&mut guest, TEXT, b"cleanup ran\n");
+    assert_eq!(guest.call("fputs", &[text, out]) & 0xFFFF_FFFF, 0);
+    let empty = place(&mut guest, STRINGS, b"");
+    assert_eq!(guest.call("fputs", &[empty, out]) & 0xFFFF_FFFF, 0);
+    assert_eq!(guest.call("fputs", &[text + 8, err]) & 0xFFFF_FFFF, 0);
+    assert_eq!(guest.state.standard_output(), b"cleanup ran\r\n");
+    assert_eq!(guest.state.standard_error(), b"ran\r\n");
+    guest.set_errno(0);
+    for args in [[0, out], [text, 0]] {
+        assert_eq!(guest.call("fputs", &args) & 0xFFFF_FFFF, STDIO_MINUS_ONE);
+        assert_eq!(guest.errno(), STDIO_EINVAL, "{args:x?}");
+        guest.set_errno(0);
+    }
+    for args in [[text, input], [text, TEXT]] {
+        assert_eq!(guest.run("fputs", &args).1, LIMIT, "{args:x?}");
+    }
+    let exit = guest.run("fputs", &[0x9_0000_0000, out]).1;
+    assert!(matches!(exit, ExitReason::MemoryFault(_)), "{exit:?}");
+    assert_eq!(guest.state.standard_output().len(), 13);
+}
+
+/// `fflush` "returns 0 if the buffer was successfully flushed", and a null
+/// stream means every open stream. `setvbuf` "returns 0 if successful"; for a
+/// null stream or a mode or size that is not valid it returns -1 and sets
+/// `errno` to `EINVAL`. The modes are `_IOFBF` (0), `_IOLBF` (0x40) and
+/// `_IONBF` (4), and the size must be from 2 to `INT_MAX` unless the mode is
+/// `_IONBF` (Microsoft Learn; values from stdio.h).
+#[test]
+fn fflush_and_setvbuf_return_their_documented_results() {
+    let (mut guest, [input, out, err]) = stdio_guest();
+    for stream in [0, input, out, err] {
+        assert_eq!(
+            guest.call("fflush", &[stream]) & 0xFFFF_FFFF,
+            0,
+            "{stream:#x}"
+        );
+    }
+    for stream in [TEXT, out + 4, 16] {
+        assert_eq!(guest.run("fflush", &[stream]).1, LIMIT, "{stream:#x}");
+    }
+
+    const INT_MAX: u64 = 0x7FFF_FFFF;
+    let junk = 0xFFFF_FFFF_0000_0000;
+    guest.set_errno(0);
+    for (args, result) in [
+        // The call the mingw-w64 startup makes: stderr, unbuffered.
+        ([err, 0, 4, 0], 0),
+        // No buffer is used, regardless of buffer or size.
+        ([out, TEXT, 4, 1], 0),
+        ([out, 0, 4, u64::MAX], 0),
+        ([out, 0, 0, 4096], 0),
+        ([out, TEXT, 0, 2], 0),
+        ([input, 0, 0x40, INT_MAX], 0),
+        // The mode is an int.
+        ([out, 0, junk | 0x40, 2], 0),
+        // A size outside 2 to INT_MAX, and modes that are not one of the three.
+        ([out, 0, 0, 1], STDIO_MINUS_ONE),
+        ([out, 0, 0, 0], STDIO_MINUS_ONE),
+        ([out, 0, 0x40, INT_MAX + 1], STDIO_MINUS_ONE),
+        ([out, 0, 1, 4096], STDIO_MINUS_ONE),
+        ([out, 0, 0x44, 4096], STDIO_MINUS_ONE),
+        ([out, 0, 0xFFFF_FFFF, 4096], STDIO_MINUS_ONE),
+        ([0, 0, 4, 0], STDIO_MINUS_ONE),
+    ] {
+        assert_eq!(
+            guest.call("setvbuf", &args) & 0xFFFF_FFFF,
+            result,
+            "{args:x?}"
+        );
+        let errno = if result == 0 { 0 } else { STDIO_EINVAL };
+        assert_eq!(guest.errno(), errno, "{args:x?}");
+        guest.set_errno(0);
+    }
+    assert_eq!(guest.run("setvbuf", &[TEXT, 0, 4, 0]).1, LIMIT);
+
+    // Neither function holds output back or lets any through.
+    assert!(guest.state.standard_output().is_empty());
+    assert_eq!(print(&mut guest, out, b"now", &[]), 3);
+    assert_eq!(guest.state.standard_output(), b"now");
+}
+
+/// Each captured stream keeps at most `MAX_CAPTURED_OUTPUT` bytes, counted
+/// after the text-mode replacement, and a write that would pass it stops the
+/// guest and adds nothing.
+#[test]
+fn captured_output_is_bounded() {
+    let (mut guest, [_, out, err]) = stdio_guest();
+    const CHUNK: u64 = 1 << 20;
+    assert_eq!(MAX_CAPTURED_OUTPUT as u64, 16 * CHUNK);
+    guest
+        .memory
+        .write_bytes(TEXT, &vec![b'x'; CHUNK as usize])
+        .unwrap();
+    for _ in 0..15 {
+        assert_eq!(guest.call("fwrite", &[TEXT, 1, CHUNK, out]), CHUNK);
+    }
+    assert_eq!(guest.call("fwrite", &[TEXT, 1, CHUNK - 2, out]), CHUNK - 2);
+    // Two bytes of room: a line feed takes both.
+    guest.memory.write_bytes(TEXT, b"\n\nxx").unwrap();
+    assert_eq!(guest.run("fwrite", &[TEXT, 1, 2, out]).1, LIMIT);
+    assert_eq!(guest.run("fwrite", &[TEXT + 1, 1, 2, out]).1, LIMIT);
+    assert_eq!(guest.state.standard_output().len(), MAX_CAPTURED_OUTPUT - 2);
+    assert_eq!(guest.call("fwrite", &[TEXT, 1, 1, out]), 1);
+    assert_eq!(guest.state.standard_output().len(), MAX_CAPTURED_OUTPUT);
+    assert_eq!(guest.run("fwrite", &[TEXT + 2, 1, 1, out]).1, LIMIT);
+    assert_eq!(guest.state.standard_output().len(), MAX_CAPTURED_OUTPUT);
+    // The other stream has its own room.
+    assert_eq!(guest.call("fwrite", &[TEXT + 2, 1, 2, err]), 2);
+    assert_eq!(guest.state.standard_error(), b"xx");
+}
+
+/// The module and symbol pairs a program built with mingw-w64 14.0.0 (UCRT)
+/// imports these six services by, read from such a program's import table.
+#[test]
+fn standard_stream_services_resolve_as_mingw_w64_imports_them() {
+    let (registry, _) = standard(0);
+    let named = |name: &str| ImportName::Name(name.to_owned());
+    const STDIO: &str = "api-ms-win-crt-stdio-l1-1-0.dll";
+    for symbol in [
+        "__acrt_iob_func",
+        "__stdio_common_vfprintf",
+        "fwrite",
+        "fputs",
+        "fflush",
+        "setvbuf",
+    ] {
+        let service = registry
+            .resolve(STDIO, &named(symbol))
+            .unwrap_or_else(|| panic!("{symbol}"));
+        let target = registry.resolve("ucrtbase.dll", &named(symbol)).unwrap();
+        assert!(std::ptr::eq(service, target), "{symbol}");
+        assert_eq!(service.status, ServiceStatus::Partial, "{symbol}");
+        // Not through the runtime API set, which lists other symbols.
+        assert!(
+            registry
+                .resolve("api-ms-win-crt-runtime-l1-1-0.dll", &named(symbol))
+                .is_none(),
+            "{symbol}"
+        );
+    }
 }
 
 #[test]

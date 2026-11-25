@@ -116,6 +116,58 @@ service kernel32.dll GetSystemTimeAsFileTime(time: out<8>) -> void
     ref sysinfoapi.h GetSystemTimeAsFileTime
     test system_time_comes_from_the_injected_clock
 
+# Standard streams and formatted output for a hosted C program. Output to
+# stdout and stderr is captured; any other stream, input, floating-point and
+# wide conversions stop the guest with the runtime-limit fault.
+
+service ucrtbase.dll __acrt_iob_func(index: u32) -> ptr
+    handler standard_stream
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails stops the guest for an index above 2 or when the streams cannot be allocated
+    ref corecrt_wstdio.h __acrt_iob_func
+    test standard_streams_are_three_stable_file_objects
+
+service ucrtbase.dll __stdio_common_vfprintf(options: u64, stream: ptr, format: ptr, locale: ptr, arguments: ptr) -> i32
+    handler vfprintf
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails -1 with errno EINVAL for a null stream or format or an invalid format; stops the guest for what is not modelled
+    ref corecrt_stdio_config.h __stdio_common_vfprintf; Microsoft Learn, vfprintf and format specification syntax
+    test formatted_output_reaches_the_captured_standard_streams
+
+service ucrtbase.dll fwrite(buffer: ptr, size: u64, count: u64, stream: ptr) -> u64
+    handler fwrite
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails 0 with errno EINVAL for a null buffer or stream; stops the guest for a stream other than stdout or stderr
+    ref stdio.h fwrite
+    test fwrite_and_fputs_write_to_the_captured_standard_streams
+
+service ucrtbase.dll fputs(text: ptr, stream: ptr) -> i32
+    handler fputs
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails EOF with errno EINVAL for a null string or stream; stops the guest for a stream other than stdout or stderr
+    ref stdio.h fputs
+    test fwrite_and_fputs_write_to_the_captured_standard_streams
+
+service ucrtbase.dll fflush(stream: ptr) -> i32
+    handler fflush
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails stops the guest for a stream that is not a standard stream
+    ref stdio.h fflush
+    test fflush_and_setvbuf_return_their_documented_results
+
+service ucrtbase.dll setvbuf(stream: ptr, buffer: ptr, mode: i32, size: u64) -> i32
+    handler setvbuf
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails -1 with errno EINVAL for a null stream, an unknown mode or a size outside 2 to INT_MAX; stops the guest for a stream that is not a standard stream
+    ref stdio.h setvbuf
+    test fflush_and_setvbuf_return_their_documented_results
+
 service kernel32.dll GetLastError() -> u32
     handler get_last_error
     status partial
