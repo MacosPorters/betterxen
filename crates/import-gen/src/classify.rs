@@ -479,7 +479,18 @@ impl SymbolDb {
     fn populate_crt_heap(&mut self) {
         let m = "api-ms-win-crt-heap-l1-1-0.dll";
         for module in [m, "ucrtbase.dll"] {
-            for symbol in ["malloc", "free", "calloc", "realloc"] {
+            for symbol in [
+                "malloc",
+                "free",
+                "calloc",
+                "realloc",
+                "_msize",
+                "_recalloc",
+                "_aligned_malloc",
+                "_aligned_realloc",
+                "_aligned_msize",
+                "_aligned_free",
+            ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }

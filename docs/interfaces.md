@@ -318,6 +318,27 @@ next datagram; `WSAEINVAL` on a listening socket) and `FIONBIO` with a nonzero
 argument. Every socket is already non-blocking, so asking for blocking mode
 returns `WSAEOPNOTSUPP` instead of being ignored.
 
+### CRT block sizes and aligned allocation
+
+`_msize`, `_recalloc`, `_aligned_malloc`, `_aligned_realloc`, `_aligned_msize`
+and `_aligned_free` are registered on `ucrtbase.dll` and
+`api-ms-win-crt-heap-l1-1-0.dll`, using the same CRT heap as `malloc`.
+`_msize` reports the requested size. `_recalloc` checks `count * size` for
+overflow (`ENOMEM`, block unchanged), zeroes bytes past the old size, and frees
+the block for a size of zero.
+
+Heap blocks start on 64 KiB boundaries, so an aligned block is an ordinary
+heap block whose address is checked. Alignments that are not powers of two
+return `NULL` with `EINVAL`; alignments above 64 KiB return `NULL` with
+`ENOMEM` instead of a misaligned block. `_aligned_realloc` resizes in place
+when it can and otherwise moves the contents to a new aligned block.
+`_aligned_offset_malloc` is not provided, so `_aligned_msize` with a nonzero
+offset returns `EINVAL`. Aligned blocks are recorded: passing `_aligned_free`,
+`_aligned_realloc` or `_aligned_msize` a pointer that `_aligned_malloc` did not
+return, or one already freed, stops the guest with a memory fault. Calls the
+UCRT sends to the invalid-parameter handler set `errno` and return the
+documented failure value; the handler is not modelled.
+
 ### C++ type identity
 
 `__std_type_info_compare`, `__std_type_info_hash`, `__std_type_info_name` and

@@ -13,6 +13,7 @@ mod crt;
 mod crt_callbacks;
 mod crt_ctype;
 mod crt_env;
+mod crt_heap;
 mod crt_locale;
 mod crt_stdio;
 mod crt_time;
@@ -212,6 +213,7 @@ pub struct ServicesState {
     controllers: Arc<dyn xinput::ControllerSource>,
     xinput: Mutex<xinput::XInput>,
     type_names: Arc<Mutex<cxx::TypeNames>>,
+    aligned: Mutex<crt_heap::AlignedBlocks>,
     task_fixture: Mutex<task_fixture::TaskFixture>,
     platform_fixture: Mutex<platform_fixture::PlatformFixture>,
     gdk_queues: Mutex<gdk_queue::QueueHandles>,
@@ -245,6 +247,7 @@ impl ServicesState {
             controllers: Arc::new(xinput::NoControllers),
             xinput: Mutex::default(),
             type_names: Arc::default(),
+            aligned: Mutex::default(),
             task_fixture: Mutex::default(),
             platform_fixture: Mutex::default(),
             gdk_queues: Mutex::default(),
@@ -428,6 +431,7 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     files::register(registry, &state);
     crt::register(registry);
     crt::register_heap(registry);
+    crt_heap::register(registry, &state);
     crt::register_errno(registry);
     crt::register_conversions(registry);
     crt::register_rand(registry, &state);
