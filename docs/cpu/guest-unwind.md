@@ -12,7 +12,7 @@ These describe Windows on desktop x64. Whether Xbox titles use the same metadata
 
 ## What exists today
 
-On main `67b8cff`:
+On main `9923e59`:
 
 - The loader does not read the Exception Table data directory, so `.pdata` is ignored.
 - `ucrtbase.dll!__C_specific_handler` is the #240 stub. It stops the guest with the runtime-limit fault and dispatches nothing. That trap stays until a real path exists.
@@ -86,24 +86,24 @@ Microsoft's own text is inconsistent on `UWOP_ALLOC_LARGE`: the C enum comment s
 
 The input is a guest context (RIP, RSP, the integer registers and XMM6–XMM15) and the mapped image. The output is the caller's context, or a refusal that leaves the input context unchanged. The computation works on a copy. Every stack read must lie in mapped, readable guest memory, or the whole unwind is refused.
 
-1. **No covering entry** (a leaf function): RIP ← [RSP], RSP += 8.
+The procedure has two terminal paths, which return the caller's context at once, and one path that undoes unwind codes.
+
+1. **Leaf** (no covering entry): RIP ← [RSP], RSP += 8. The unwind ends here.
 2. **Epilog.** Microsoft's epilog is exactly `add rsp, imm` or `lea rsp, [FP + disp]`, then zero or more 8-byte pops, then `ret` or a `jmp` whose ModRM `mod` is 00. Nothing else may be scheduled in it. The profile recognizes these encodings: `48 83 C4 ib`, `48 81 C4 id`, `48 8D 65 ib` and its other FP encodings, `5x` and `41 5x`, `C3`, `FF /4` with `mod` 00.
-   - If the bytes from RIP to that `ret` or `jmp` form a trailing part of such a sequence, the remainder is simulated: the add or lea adjusts RSP, the pops restore registers, and `ret` or `jmp` takes RIP ← [RSP], RSP += 8.
+   - If the bytes from RIP to that `ret` or `jmp` form a trailing part of such a sequence, the remainder is simulated: the add or lea adjusts RSP, the pops restore registers, and `ret` or `jmp` takes RIP ← [RSP], RSP += 8. The unwind ends here. No unwind code is applied and step 5 does not run.
    - A `jmp` in an epilog is a tail call, so for unwinding it behaves like `ret`.
    - Bytes that only partly match are not an epilog.
-3. **Prolog**, when RIP − `BeginAddress` ≤ `SizeOfProlog`: undo only codes whose `CodeOffset` ≤ RIP − `BeginAddress`, in array order. Those are the operations that have executed.
-4. **Body**: undo every code, in array order.
-5. **Base.** It is fixed once, before undoing:
-   - FP − 16 × `FrameOffset` if a `UWOP_SET_FPREG` is among the codes being undone;
-   - otherwise RSP.
+3. **Undo codes.** Choose which codes to undo:
+   - **Prolog**, when RIP − `BeginAddress` ≤ `SizeOfProlog`: only codes whose `CodeOffset` ≤ RIP − `BeginAddress`, in array order. Those are the operations that have executed.
+   - **Body**: every code, in array order.
 
-   FP is read before any code restores the frame register.
-6. **Chained info** (`UNW_FLAG_CHAININFO`): after the codes, continue with the parent `RUNTIME_FUNCTION` that follows the padded array, undoing all its codes. The profile also requires:
+   The base is fixed once, before undoing: FP − 16 × `FrameOffset` if a `UWOP_SET_FPREG` is among the codes being undone, otherwise RSP. FP is read before any code restores the frame register.
+4. **Chained info** (`UNW_FLAG_CHAININFO`): after the codes, continue with the parent `RUNTIME_FUNCTION` that follows the padded array, undoing all its codes. The profile also requires:
    - Chained entries contain only `UWOP_SAVE_NONVOL`, `UWOP_SAVE_NONVOL_FAR`, `UWOP_SAVE_XMM128` and `UWOP_SAVE_XMM128_FAR`. Microsoft rules out pushes and extra fixed allocations in a chained grouping.
    - The handler flags are clear.
    - `FrameRegister` and `FrameOffset` equal the primary's.
    - A chain longer than 32 entries, or one that revisits an entry, is refused.
-7. Unless `UWOP_PUSH_MACHFRAME` set them, RIP ← [RSP] and RSP += 8.
+5. **Return.** Only after step 3, and step 4 if chained: unless `UWOP_PUSH_MACHFRAME` set them, RIP ← [RSP] and RSP += 8.
 
 ## Stack walk
 
@@ -112,6 +112,35 @@ A stack walk repeats the virtual unwind, read-only.
 - **Progress.** The caller's RSP must be strictly greater than the callee's, or the walk is refused at that frame. This catches loops and corrupt stacks.
 - **Stop conditions.** The walk stops at a configured depth (at most 256 frames), at a RIP outside every mapped executable image, or at a refusal.
 - **Records.** Each completed frame is reported. A refusal is reported with the frame index and reason, and earlier frames are kept. For #255, a refusal is never shown as a complete walk.
+
+## Precise fault state
+
+The input to an unwind is a stopped guest context. This section fixes where that snapshot comes from. It describes main `9923e59`; the profile requires that it stays true.
+
+- **Snapshot.** A run that faults returns `ExecutionResult` with `final_state` (the `CpuState`), `exit_reason` and `instructions_executed`. An unwind or stack walk reads `final_state` and guest memory after the run has stopped. It never runs while the guest runs.
+- **RIP and count.** In a translated block, `emit_fault_guard` (`crates/loader/src/dbt.rs`) stores the faulting instruction's RIP into `CpuState` and reports only the instructions completed before it. The faulting instruction is not counted. `crates/loader/tests/cpu_differential.rs` checks that the interpreter and the DBT, stepped and in whole blocks, end a fault with the same `CpuState`, retired count and `ExitReason`.
+- **Registers and SIMD.** Native lowering writes each result to `CpuState` when its instruction completes. X21 carries a guest value only inside one instruction. XMM registers and MXCSR live in `CpuState`, not in host vector registers across instructions. So at a guard, the general registers, XMM0–XMM15 and MXCSR hold exactly the completed instructions' effects. The guard's comment states that the faulting instruction has committed nothing; the profile relies on that and does not re-derive it per instruction.
+- **Flags.** Native lowering may skip computing flags that a later instruction overwrites. `flags_live_after` treats any later instruction that can stop the block (a memory operand, `PUSH`, `POP`, `LEAVE`, an instruction that can fault, a terminator) as reading the flags. So the flags are materialized before every point where a fault can end the block. A lowering change that defers flags past a possible fault breaks this profile.
+- **Helper-backed instructions** run through the shared semantics on the same `CpuState`. A failing access sets `BlockContext.faulted`, and the guard ends the block as above.
+- **Check.** An implementation must fault inside `f2` of the [fixture](../../tests/compat_fixtures/unwind/README.md) under both the interpreter and the DBT, and the two snapshots and the two walks must be equal.
+
+### Host signals
+
+BetterXen installs no signal handlers in `crates/`. Guest faults are detected in software by the memory helpers and guards and become an `ExitReason`. A host Darwin signal or Mach exception, for example from a bug in emitted code, stops the host process or worker. It is never turned into a guest exception record, a guest context or a guest stack frame, and the unwinder never reads host stack frames.
+
+## Staged follow-up
+
+Each stage needs its own issue, agreed file list and acceptance. A later stage may not start by weakening an earlier one.
+
+| Stage | Scope | Execution and budget |
+| --- | --- | --- |
+| 1. Table parser | Read the Exception Table and `UNWIND_INFO` into a validated, read-only form at load time. Must agree with `llvm-readobj --unwind` on the fixture and refuse every negative variant | runs no guest code. A refused table does not refuse the image; loading is otherwise unchanged |
+| 2. Virtual unwind and stack walk | A pure function from a stopped snapshot and read-only guest memory to frame records or a refusal, for diagnostics | runs after the run has stopped; executes no guest instruction, consumes no budget, changes no `ExitReason` |
+| 3. Guest fault delivery | Build an exception record and context in guest memory and start dispatch on the faulting guest thread | needs its own design. Every guest instruction it causes counts towards the same instruction budget; running out ends the run with `StepLimitExceeded` as today; a fault during dispatch ends the run |
+| 4. Language handlers | `__C_specific_handler` scope tables | the #240 trap stays until this stage is accepted. No stand-in may return a handler result such as "continue search" without running the documented logic |
+| 5. C++ exceptions | `__CxxFrameHandler*` | not planned |
+
+Guest memory is read through `GuestMemory`'s checked accessors in stages 1 and 2, never through host pointers, and nothing is written. A refusal leaves the snapshot unchanged, and the run's result is the same with or without a walk.
 
 ## Out of scope and unknown
 
