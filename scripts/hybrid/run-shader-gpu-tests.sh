@@ -62,6 +62,6 @@ if [ "$WHICH" = all ]; then
 else
     # The exact count is deliberate: a looser marker would also accept a filter that matches nothing
     # ("0 passed"). Update it when BetterXen adds or removes tests in emit/betterxen_tests.rs.
-    exec "$B" run --bottle "$BOTTLE" --timeout 300 --stall-timeout 120 --expect "test result: ok. 7 passed" \
+    exec "$B" run --bottle "$BOTTLE" --timeout 300 --stall-timeout 120 --expect "test result: ok. 10 passed" \
         --out artifacts/hybrid-runs -- "$EXE" betterxen --test-threads=1
 fi
