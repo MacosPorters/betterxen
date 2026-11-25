@@ -439,9 +439,26 @@ empty record. Destroy frees an owned message (guest `free` and these helpers
 use the same heap) and clears the record. Destroying an owned pointer the heap
 never allocated stops the guest with a memory fault.
 
-Throwing and catching exceptions, `dynamic_cast`, `std::terminate`,
-`_purecall` and thread-safe static initialization are not implemented. The
-runtime has no guest process exit yet, so `terminate` cannot end the program.
+Throwing and catching exceptions, `dynamic_cast` and thread-safe static
+initialization are not implemented. `terminate` and `_purecall` are described
+under abnormal termination below.
+
+### Abnormal CRT termination
+
+`abort`, `terminate` and `_purecall` (on `ucrtbase.dll` and
+`api-ms-win-crt-runtime-l1-1-0.dll`) and `__std_terminate` and `_purecall` (on
+`vcruntime140.dll`) end the guest process with exit code 3, the code the
+Microsoft C runtime documents for `abort` without a `SIGABRT` handler. The
+default `terminate` and pure-virtual-call handlers call `abort`. `_exit` ends
+the process with the low 32 bits of its status and runs no `atexit`
+functions. All of them use the same process exit as `ExitProcess`: handles
+close, the first exit decides the status, and the host process never ends.
+
+No handler can be installed: `signal`, `set_terminate` and
+`_set_purecall_handler` are not runtime services, so a guest that calls them
+stops there instead of getting a handler that is silently ignored. `exit`,
+which must run `atexit` functions first, is not provided. Debug-CRT message
+boxes and error reporting are not modelled.
 
 ### XInput controllers
 

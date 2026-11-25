@@ -13,6 +13,7 @@ mod crt;
 mod crt_callbacks;
 mod crt_ctype;
 mod crt_env;
+mod crt_exit;
 mod crt_heap;
 mod crt_locale;
 mod crt_safe_string;
@@ -777,6 +778,7 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     gdk_async::register(registry, &state);
     modules::register(registry, &state);
     process::register(registry, &state);
+    crt_exit::register(registry, &state);
 }
 
 /// Implementations behind the generated adapters. A failure the guest can

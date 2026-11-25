@@ -364,9 +364,7 @@ impl SymbolDb {
     fn populate_crt_runtime(&mut self) {
         let m = "api-ms-win-crt-runtime-l1-1-0.dll";
         for (sym, libc) in &[
-            ("abort", "abort"),
             ("exit", "exit"),
-            ("_exit", "_exit"),
             ("rand", "rand"),
             ("srand", "srand"),
             ("atoi", "atoi"),
@@ -377,6 +375,10 @@ impl SymbolDb {
         }
         for module in [m, "ucrtbase.dll"] {
             for symbol in ["_errno", "_get_errno", "_set_errno", "getenv"] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+            // Abnormal termination ends the guest process, never the host.
+            for symbol in ["abort", "_exit", "terminate", "_purecall"] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
@@ -407,7 +409,6 @@ impl SymbolDb {
             false,
             "CRT invalid param abort",
         );
-        self.win32_stub(m, "_purecall", false, "pure virtual call trap");
         // Initializer and exit functions are guest code.
         for module in [m, "ucrtbase.dll"] {
             for symbol in [
@@ -454,7 +455,6 @@ impl SymbolDb {
         );
         self.win32_stub(m, "__p___argv", false, "argv pointer — returns null");
         self.win32_stub(m, "__p__commode", false, "_commode pointer — stub");
-        self.win32_stub(m, "terminate", false, "C++ terminate — calls abort");
         self.win32_stub(
             m,
             "__std_terminate",
@@ -793,6 +793,8 @@ impl SymbolDb {
                     "__std_type_info_destroy_list",
                     "__std_exception_copy",
                     "__std_exception_destroy",
+                    "__std_terminate",
+                    "_purecall",
                 ] {
                     self.ins(m, symbol, Classification::StandardService);
                 }
@@ -878,7 +880,12 @@ impl SymbolDb {
                 }
             }
             self.win32_stub(m, "Sleep", false, "Sleep — no-op (single-threaded)");
-            self.win32_stub(m, "ExitProcess", false, "ExitProcess — calls exit(0)");
+            self.win32_stub(
+                m,
+                "ExitProcess",
+                false,
+                "ExitProcess — not registered on this API set",
+            );
             self.win32_stub(m, "ExitThread", false, "ExitThread — calls exit(0)");
         }
         // The guest thread scheduler provides these on kernel32 and the
@@ -892,6 +899,8 @@ impl SymbolDb {
                 "SuspendThread",
                 "ResumeThread",
                 "SwitchToThread",
+                // Process exit (#331) ends the guest, never the host.
+                "ExitProcess",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
