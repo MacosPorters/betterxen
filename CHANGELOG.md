@@ -45,6 +45,7 @@ remains unsupported.
 
 ### Fixed
 - Startup reports now reject existing destinations before guest execution, surface journal write failures, and preserve late errors alongside signal termination.
+- `SetFilePointerEx` now fails a negative distance with `FILE_BEGIN` using `ERROR_NEGATIVE_SEEK` and leaves the file position unchanged, as the documented contract requires, instead of storing a wrapped 64-bit position that only later reads and writes rejected (#336). The synthetic-drive guest test checks the error code, the untouched position, a zero `FILE_BEGIN` distance and the existing `FILE_CURRENT` negative case.
 - Restored the DBT benchmark report-test fixture after the cache-invalidation counter was added. Its existing percentile, JSON and comparison tests now run in ordinary workspace CI instead of requiring a separate benchmark test-harness command.
 - DBT cache hits now compare an executable-generation token instead of rereading every instruction byte. Address-space or executable-memory changes trigger byte and execute-permission revalidation before a translation can be reused; changed code is retranslated. Ordinary data writes retain the fast path. Tests cover cloned spaces, loader bypass writes, split writes, remapping and bounded cache exhaustion. Same-dispatch self-modification and discarded-code reclamation remain unsupported.
 - Gate A2 checks the cross-compiler driver before invoking it, then checks its helpers before fixture compilation. CI also verifies the driver architecture before requesting its version.

@@ -1764,20 +1764,18 @@ fn test_guest_synthetic_file_io_through_iat() {
     assert_eq!(read.image.memory.read_u32(output).unwrap(), 6);
     assert_eq!(read.image.memory.read_u64(output + 8).unwrap(), 0xffff);
 
-    assert_eq!(
-        call("SetFilePointerEx", &[writer, u64::MAX, 0, 0])
-            .execution
-            .final_state
-            .get(Register::Rax),
-        1
-    );
-    assert_eq!(
-        call("WriteFile", &[writer, output, 1, output + 8, 0])
-            .execution
-            .final_state
-            .get(Register::Rax),
-        0
-    );
+    // A negative distance with FILE_BEGIN names a position before the start of
+    // the file. The documented SetFilePointerEx contract fails it with
+    // ERROR_NEGATIVE_SEEK and leaves the file pointer unchanged, so the
+    // distance must not wrap to a huge unsigned position.
+    let negative = call("SetFilePointerEx", &[writer, u64::MAX, 0, 0]);
+    assert_eq!(negative.execution.final_state.get(Register::Rax), 0);
+    let error = call("GetLastError", &[]);
+    assert_eq!(error.execution.final_state.get(Register::Rax), 131);
+    // The failed call left the pointer where the previous read stopped: 6.
+    let position = call("SetFilePointerEx", &[writer, 0, output, 1]);
+    assert_eq!(position.execution.final_state.get(Register::Rax), 1);
+    assert_eq!(position.image.memory.read_u64(output).unwrap(), 6);
     let size = call("GetFileSizeEx", &[writer, output]);
     assert_eq!(size.image.memory.read_u64(output).unwrap(), 6);
     assert_eq!(open("C:/Data/save.bin", 0x4000_0000, 2), u64::MAX);

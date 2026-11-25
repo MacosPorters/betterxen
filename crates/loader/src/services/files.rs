@@ -475,7 +475,16 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             _ => return seek.fail(cpu.gs_base, ERROR_INVALID_PARAMETER, 0),
         };
         let position = match origin {
-            None => args.rdx,
+            // FILE_BEGIN with a negative distance names a position before the
+            // start of the file. The documented SetFilePointerEx contract fails
+            // it with ERROR_NEGATIVE_SEEK and leaves the file pointer unchanged,
+            // so the distance must not wrap to a huge unsigned position.
+            None => {
+                if (args.rdx as i64).is_negative() {
+                    return seek.fail(cpu.gs_base, NEGATIVE_SEEK, 0);
+                }
+                args.rdx
+            }
             Some(origin) => {
                 let distance = args.rdx as i64;
                 if distance.is_negative() && distance.unsigned_abs() > origin {
