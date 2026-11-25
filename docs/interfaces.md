@@ -215,6 +215,43 @@ up to 1 MiB. Each nonempty span must be fully mapped with the required permissio
 A span may cross adjacent guest regions. Writes validate the full destination before changing
 bytes, and moves preserve the original source bytes when ranges overlap.
 
+### Program arguments and environment
+
+A hosted C program's startup code gets `argc`, `argv` and `envp` for `main`
+from five C runtime services. A host supplies the arguments with
+`ServicesState::set_program_arguments(&["program", "first", ...])`, program
+name first, before it runs the guest.
+
+| Service | Behaviour |
+| --- | --- |
+| `__p___argc()`, `__p___argv()`, `__p__environ()` | The address of the guest variable `__argc`, `__argv` or `_environ`. All three start as zero or null |
+| `_configure_narrow_argv(mode)` | For mode 1 or 2, sets `__argc` to the number of arguments and `__argv` to a table of pointers to their NUL-terminated strings, with a null pointer after the last, and returns 0. It builds the table once; later calls return 0 and change nothing. Mode 0 returns 0 and builds nothing. Any other mode returns `EINVAL` |
+| `_initialize_narrow_environment()` | Points `_environ` at a table holding one null pointer, once, and returns 0 |
+
+`set_program_arguments` refuses an argument containing a NUL byte, arguments
+whose bytes and terminators exceed 32,767 (`MAX_PROGRAM_ARGUMENT_BYTES`, the
+documented Windows command-line limit), and a call after the guest has built
+its table. A host that never calls it gives the program one argument, the
+empty string, which is what ISO C specifies when no program name is
+available. An empty list gives it none.
+
+What is documented, inferred and chosen:
+
+- **Documented:** the three global variables and what they hold, and ISO C's
+  rules for `argv` (a null pointer after the last argument, strings the
+  program may modify).
+- **Inferred:** that each `__p_` function returns the address of its
+  variable, as the documented `__p__fmode` does. Microsoft lists these five
+  functions only by name.
+- **Xenora's choice:** what the two initialization functions do. Arguments
+  reach the guest as the bytes of the host's strings, with no code page.
+  Mode 2 asks for wildcard expansion and none is performed. The environment
+  is empty. The variables and tables are blocks from the process heap.
+
+The wide-character counterparts, `GetCommandLineA` and `GetCommandLineW`, and
+environment variables do not exist. All five services are `partial`. None of
+this has been compared with Windows.
+
 ### Guest heaps
 
 `GetProcessHeap`, `HeapAlloc`, `HeapSize`, and `HeapFree` expose the

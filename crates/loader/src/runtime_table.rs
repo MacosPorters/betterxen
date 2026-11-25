@@ -8,7 +8,7 @@ use crate::runtime::{Call, Parameter, Return, ServiceContext, ServiceMetadata};
 use crate::services::{ServicesState, handlers};
 use std::sync::Arc;
 
-pub static SERVICES: [ServiceMetadata; 20] = [
+pub static SERVICES: [ServiceMetadata; 25] = [
     ServiceMetadata {
         library: "kernel32.dll",
         symbol: "SetProcessPriorityBoost",
@@ -162,6 +162,61 @@ pub static SERVICES: [ServiceMetadata; 20] = [
         failure: "never",
         reference: "errhandlingapi.h SetLastError",
         tests: &["last_error_is_set_by_failures_and_by_the_guest"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "__p___argc",
+        parameters: &[],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-runtime-l1-1-0.dll"],
+        failure: "stops the guest when the variable cannot be allocated",
+        reference: "Microsoft Learn, C runtime library reference, __argc, __argv, __wargv",
+        tests: &["program_arguments_reach_the_guest_as_argc_and_argv"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "__p___argv",
+        parameters: &[],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-runtime-l1-1-0.dll"],
+        failure: "stops the guest when the variable cannot be allocated",
+        reference: "Microsoft Learn, C runtime library reference, __argc, __argv, __wargv",
+        tests: &["program_arguments_reach_the_guest_as_argc_and_argv"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "__p__environ",
+        parameters: &[],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-environment-l1-1-0.dll"],
+        failure: "stops the guest when the variable cannot be allocated",
+        reference: "Microsoft Learn, C runtime library reference, _environ, _wenviron",
+        tests: &["the_environment_table_is_empty_and_ends_with_a_null_pointer"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "_configure_narrow_argv",
+        parameters: &[Parameter { name: "mode", kind: "i32" }],
+        result: "i32",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-runtime-l1-1-0.dll"],
+        failure: "EINVAL for a mode other than 0, 1 or 2; stops the guest when the table cannot be allocated",
+        reference: "corecrt_startup.h _configure_narrow_argv",
+        tests: &["program_arguments_reach_the_guest_as_argc_and_argv"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "_initialize_narrow_environment",
+        parameters: &[],
+        result: "i32",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-runtime-l1-1-0.dll"],
+        failure: "stops the guest when the table cannot be allocated",
+        reference: "corecrt_startup.h _initialize_narrow_environment",
+        tests: &["the_environment_table_is_empty_and_ends_with_a_null_pointer"],
     },
     ServiceMetadata {
         library: "kernel32.dll",
@@ -344,6 +399,42 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let () = handlers::set_last_error(&mut context, a0)?;
         Ok(0)
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "__p___argc", ServiceStatus::Partial, move |args, cpu, memory| {
+        let _ = args;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::argc_pointer(&mut context)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "__p___argv", ServiceStatus::Partial, move |args, cpu, memory| {
+        let _ = args;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::argv_pointer(&mut context)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "__p__environ", ServiceStatus::Partial, move |args, cpu, memory| {
+        let _ = args;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::environ_pointer(&mut context)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "_configure_narrow_argv", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.i32(0)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: i32 = handlers::configure_narrow_argv(&mut context, a0)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "_initialize_narrow_environment", ServiceStatus::Partial, move |args, cpu, memory| {
+        let _ = args;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: i32 = handlers::initialize_narrow_environment(&mut context)?;
+        Ok(result.place(cpu))
     });
     let s = state.clone();
     registry.register_with_status("kernel32.dll", "VirtualAlloc", ServiceStatus::Partial, move |args, cpu, memory| {

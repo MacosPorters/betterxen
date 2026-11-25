@@ -121,6 +121,8 @@ remains unsupported.
 
 - Added guest CRT signed and unsigned 64-bit conversions for narrow and wide strings.
 
+- Added command-line arguments for a hosted C program (#392, part of Gate A2): the C runtime services `__p___argc`, `__p___argv`, `__p__environ`, `_configure_narrow_argv` and `_initialize_narrow_environment`, and a host method, `ServicesState::set_program_arguments`, that supplies the program's `argv`. A program built with the mingw-w64 runtime gets `argc`, `argv` and `envp` for `main` through these five, and the loader refused it before its entry point because they did not resolve. After configuration the guest finds the host's arguments in `__argc` and `__argv`, each NUL-terminated, with a null pointer after the last; with no host input it gets one empty argument, as ISO C specifies. The host method refuses a NUL byte, more than 32,767 bytes in all, and a call after the guest has built its table. The three variables are documented and the two initialization functions are not, so their behaviour is Xenora's: no code page, no wildcard expansion, and an empty environment table. All five are `partial`. Four tests in `runtime_services.rs` call the services from guest code and compare what the guest sees with what the test supplied. Not compared with Windows; awaiting independent review.
+
 - Added bounded guest CRT long-integer parsing for byte and wide strings.
 
 - Added guest CRT errno accessors and allocation failure reporting for the synthetic main thread.

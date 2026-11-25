@@ -19,7 +19,10 @@ use xenora_loader::pe::ParsedPe;
 use xenora_loader::probe::{ProbeConfig, ProbeReport, probe_pe_bytes};
 use xenora_loader::runtime::{Call, Float32, Float64};
 use xenora_loader::runtime_table::SERVICES;
-use xenora_loader::services::{MockClock, ServicesState, register_standard_services};
+use xenora_loader::services::{
+    MAX_PROGRAM_ARGUMENT_BYTES, MockClock, ProgramArgumentsError, ServicesState,
+    register_standard_services,
+};
 
 const BASE: u64 = 0x1_4000_0000;
 const CODE_RVA: u32 = 0x1000;
@@ -224,6 +227,9 @@ impl Guest {
         self.call("GetLastError", &[])
     }
 }
+
+/// Bits above an `int` argument are not part of it.
+const JUNK_HIGH: u64 = 0xFFFF_FFFF_0000_0000;
 
 const PROCESS: u64 = u64::MAX;
 const THREAD: u64 = u64::MAX - 1;
@@ -618,6 +624,248 @@ fn last_error_is_set_by_failures_and_by_the_guest() {
     );
     guest.call("CloseHandle", &[0x1234]);
     assert_eq!(guest.last_error(), 6);
+}
+
+/// What a guest sees in `__argc` and `__argv`: the count, each argument's
+/// bytes up to its terminator, and the pointer after the last argument.
+fn guest_arguments(guest: &mut Guest) -> (u32, Vec<Vec<u8>>, u64) {
+    let argc = guest.call("__p___argc", &[]);
+    let argv = guest.call("__p___argv", &[]);
+    let count = guest.memory.read_u32(argc).unwrap();
+    let table = guest.memory.read_u64(argv).unwrap();
+    let mut arguments = Vec::new();
+    for index in 0..u64::from(count) {
+        let mut at = guest.memory.read_u64(table + 8 * index).unwrap();
+        let mut bytes = Vec::new();
+        loop {
+            match guest.memory.read_u8(at).unwrap() {
+                0 => break,
+                byte => bytes.push(byte),
+            }
+            at += 1;
+        }
+        arguments.push(bytes);
+    }
+    let after = guest.memory.read_u64(table + 8 * u64::from(count)).unwrap();
+    (count, arguments, after)
+}
+
+/// The arguments a host supplies are what the guest finds in `__argc` and
+/// `__argv` after `_configure_narrow_argv`, the way the mingw-w64 startup code
+/// reads them before `main`. `__argc` and `__argv` are documented globals; ISO
+/// C (5.1.2.2.1) puts a null pointer after the last argument, lets the program
+/// modify the strings, and makes `argv[0]` the empty string when no program
+/// name is available. Expected values are the strings this test supplied.
+#[test]
+fn program_arguments_reach_the_guest_as_argc_and_argv() {
+    let mut guest = Guest::new();
+    let supplied = ["gate-a2.exe", "one", "two words", "", "caf\u{e9} \u{2713}"];
+    guest.state.set_program_arguments(&supplied).unwrap();
+
+    // Before the runtime configures them there are no arguments.
+    let argc = guest.call("__p___argc", &[]);
+    let argv = guest.call("__p___argv", &[]);
+    assert!(argc != 0 && argv != 0 && argc.abs_diff(argv) >= 8);
+    assert_eq!(guest.memory.read_u32(argc).unwrap(), 0);
+    assert_eq!(guest.memory.read_u64(argv).unwrap(), 0);
+    // A mode other than 0, 1 or 2 is refused with EINVAL; mode 0 asks for no
+    // arguments. Neither builds anything. The mode is an int.
+    for (mode, result) in [(3, 22), (0xFFFF_FFFF, 22), (0x8000_0001, 22), (0, 0)] {
+        let returned = guest.call("_configure_narrow_argv", &[JUNK_HIGH | mode]);
+        assert_eq!(returned & 0xFFFF_FFFF, result, "mode {mode:#x}");
+        assert_eq!(guest.memory.read_u32(argc).unwrap(), 0, "mode {mode:#x}");
+        assert_eq!(guest.memory.read_u64(argv).unwrap(), 0, "mode {mode:#x}");
+    }
+
+    // _crt_argv_unexpanded_arguments is 1.
+    assert_eq!(
+        guest.call("_configure_narrow_argv", &[JUNK_HIGH | 1]) & 0xFFFF_FFFF,
+        0
+    );
+    let (count, arguments, after) = guest_arguments(&mut guest);
+    assert_eq!(count, 5);
+    let wanted: Vec<Vec<u8>> = supplied
+        .iter()
+        .map(|text| text.as_bytes().to_vec())
+        .collect();
+    assert_eq!(arguments, wanted);
+    assert_eq!(after, 0, "argv[argc] is a null pointer");
+    // The variables did not move, and each argument has its own storage.
+    assert_eq!(guest.call("__p___argc", &[]), argc);
+    assert_eq!(guest.call("__p___argv", &[]), argv);
+    let table = guest.memory.read_u64(argv).unwrap();
+    let mut starts: Vec<u64> = (0..5)
+        .map(|index| guest.memory.read_u64(table + 8 * index).unwrap())
+        .collect();
+    for (start, argument) in starts.iter().zip(&wanted) {
+        assert!(*start >= table + 8 * 6, "a string inside the pointer table");
+        // The terminator is the byte after the argument.
+        assert_eq!(
+            guest.memory.read_u8(start + argument.len() as u64).unwrap(),
+            0
+        );
+    }
+    starts.sort_unstable();
+    for (pair, argument) in starts.windows(2).zip(&wanted) {
+        assert!(pair[1] - pair[0] > argument.len() as u64, "strings overlap");
+    }
+
+    // The program may modify its arguments; a second configuration, in either
+    // mode, does not rebuild them.
+    let first = guest.memory.read_u64(table).unwrap();
+    guest.memory.write_u8(first, b'G').unwrap();
+    for mode in [1, 2, 0, 3] {
+        guest.call("_configure_narrow_argv", &[mode]);
+        assert_eq!(guest.memory.read_u64(argv).unwrap(), table, "mode {mode}");
+        assert_eq!(guest.memory.read_u8(first).unwrap(), b'G', "mode {mode}");
+        assert_eq!(guest.memory.read_u32(argc).unwrap(), 5, "mode {mode}");
+    }
+    // Once built, the host can no longer change them.
+    assert_eq!(
+        guest.state.set_program_arguments(&["late"]),
+        Err(ProgramArgumentsError::AlreadyConfigured)
+    );
+    assert_eq!(guest_arguments(&mut guest).0, 5);
+}
+
+/// What a guest gets when the host supplies nothing, supplies no arguments at
+/// all, or uses `_crt_argv_expanded_arguments` (2), and what a host may not
+/// supply.
+#[test]
+fn program_arguments_have_defaults_and_limits() {
+    // No host input: the program name is not available, so ISO C makes
+    // argv[0] the empty string.
+    let mut guest = Guest::new();
+    assert_eq!(guest.call("_configure_narrow_argv", &[1]), 0);
+    assert_eq!(guest_arguments(&mut guest), (1, vec![Vec::new()], 0));
+
+    // An empty list is zero arguments: argv is one null pointer.
+    let mut guest = Guest::new();
+    guest.state.set_program_arguments(&[]).unwrap();
+    assert_eq!(guest.call("_configure_narrow_argv", &[1]), 0);
+    assert_eq!(guest_arguments(&mut guest), (0, Vec::new(), 0));
+    let argv = guest.call("__p___argv", &[]);
+    assert_ne!(guest.memory.read_u64(argv).unwrap(), 0);
+
+    // Mode 2 asks for wildcard expansion, which is not performed: a pattern
+    // arrives as it was supplied. The last list supplied before configuration
+    // is the one used, and configuring first and asking for the pointers
+    // afterwards works too.
+    let mut guest = Guest::new();
+    guest.state.set_program_arguments(&["first"]).unwrap();
+    guest
+        .state
+        .set_program_arguments(&["prog", "*.txt", "a?c"])
+        .unwrap();
+    assert_eq!(guest.call("_configure_narrow_argv", &[2]), 0);
+    let wanted = vec![b"prog".to_vec(), b"*.txt".to_vec(), b"a?c".to_vec()];
+    assert_eq!(guest_arguments(&mut guest), (3, wanted, 0));
+
+    // A NUL byte would end the argument early in the guest.
+    let guest = Guest::new();
+    let state = &guest.state;
+    assert_eq!(
+        state.set_program_arguments(&["ok", "a\0b"]),
+        Err(ProgramArgumentsError::ContainsNul)
+    );
+    // The bound counts each argument with its terminator, and is inclusive.
+    assert_eq!(MAX_PROGRAM_ARGUMENT_BYTES, 32_767);
+    let longest = "x".repeat(MAX_PROGRAM_ARGUMENT_BYTES - 1);
+    assert_eq!(state.set_program_arguments(&[&longest]), Ok(()));
+    let too_long = "x".repeat(MAX_PROGRAM_ARGUMENT_BYTES);
+    assert_eq!(
+        state.set_program_arguments(&[&too_long]),
+        Err(ProgramArgumentsError::TooLong)
+    );
+    // Two arguments of 16,383 and 16,382 bytes take 32,767 with their
+    // terminators; one more empty argument is one byte too many.
+    let (half, rest) = ("y".repeat(16_383), "z".repeat(16_382));
+    assert_eq!(state.set_program_arguments(&[&half, &rest]), Ok(()));
+    assert_eq!(
+        state.set_program_arguments(&[&half, &rest, ""]),
+        Err(ProgramArgumentsError::TooLong)
+    );
+    // A refused list replaces nothing: the last accepted one is still used.
+    let mut guest = guest;
+    assert_eq!(guest.call("_configure_narrow_argv", &[1]), 0);
+    let (count, arguments, after) = guest_arguments(&mut guest);
+    assert_eq!((count, after), (2, 0));
+    assert_eq!(arguments, [half.as_bytes(), rest.as_bytes()]);
+}
+
+/// `_environ` is a documented global: a pointer to the array of environment
+/// strings. Xenora's environment is empty, so after
+/// `_initialize_narrow_environment` the table is one null pointer, the usual
+/// end of such a table. Before that call `_environ` is null.
+#[test]
+fn the_environment_table_is_empty_and_ends_with_a_null_pointer() {
+    let mut guest = Guest::new();
+    let environ = guest.call("__p__environ", &[]);
+    assert_ne!(environ, 0);
+    assert_eq!(guest.memory.read_u64(environ).unwrap(), 0);
+    assert_eq!(guest.call("_initialize_narrow_environment", &[]), 0);
+    let table = guest.memory.read_u64(environ).unwrap();
+    assert_ne!(table, 0);
+    assert_eq!(guest.memory.read_u64(table).unwrap(), 0);
+    // A second call keeps the table, and the pointer does not move.
+    assert_eq!(guest.call("_initialize_narrow_environment", &[]), 0);
+    assert_eq!(guest.call("__p__environ", &[]), environ);
+    assert_eq!(guest.memory.read_u64(environ).unwrap(), table);
+
+    // The three variables are separate, and neither initialization touches
+    // the other's: the order the mingw-w64 startup uses is environment first.
+    let argc = guest.call("__p___argc", &[]);
+    let argv = guest.call("__p___argv", &[]);
+    let mut cells = [argc, argv, environ];
+    cells.sort_unstable();
+    assert!(cells[1] - cells[0] >= 8 && cells[2] - cells[1] >= 8);
+    assert_eq!(guest.memory.read_u32(argc).unwrap(), 0);
+    assert_eq!(guest.memory.read_u64(argv).unwrap(), 0);
+    assert_eq!(guest.call("_configure_narrow_argv", &[1]), 0);
+    assert_eq!(guest.memory.read_u64(environ).unwrap(), table);
+    assert_eq!(guest.memory.read_u64(table).unwrap(), 0);
+    assert_eq!(guest_arguments(&mut guest).0, 1);
+
+    // Arguments first, environment second, on a fresh guest.
+    let mut other = Guest::new();
+    assert_eq!(other.call("_configure_narrow_argv", &[1]), 0);
+    let environ = other.call("__p__environ", &[]);
+    assert_eq!(other.memory.read_u64(environ).unwrap(), 0);
+    assert_eq!(other.call("_initialize_narrow_environment", &[]), 0);
+    let table = other.memory.read_u64(environ).unwrap();
+    assert_eq!(other.memory.read_u64(table).unwrap(), 0);
+    assert_eq!(guest_arguments(&mut other), (1, vec![Vec::new()], 0));
+}
+
+/// The module and symbol pairs a program built with mingw-w64 14.0.0 (UCRT)
+/// imports these five services by, read from such a program's import table.
+#[test]
+fn program_argument_services_resolve_as_mingw_w64_imports_them() {
+    let (registry, _) = standard(0);
+    let named = |name: &str| ImportName::Name(name.to_owned());
+    const RUNTIME: &str = "api-ms-win-crt-runtime-l1-1-0.dll";
+    const ENVIRONMENT: &str = "api-ms-win-crt-environment-l1-1-0.dll";
+    for (module, symbol) in [
+        (RUNTIME, "__p___argc"),
+        (RUNTIME, "__p___argv"),
+        (ENVIRONMENT, "__p__environ"),
+        (RUNTIME, "_configure_narrow_argv"),
+        (RUNTIME, "_initialize_narrow_environment"),
+    ] {
+        let service = registry
+            .resolve(module, &named(symbol))
+            .unwrap_or_else(|| panic!("{module}!{symbol}"));
+        let target = registry.resolve("ucrtbase.dll", &named(symbol)).unwrap();
+        assert!(std::ptr::eq(service, target), "{module}!{symbol}");
+        assert_eq!(service.status, ServiceStatus::Partial, "{symbol}");
+    }
+    // An API set forwards only the symbols listed for it.
+    assert!(
+        registry
+            .resolve(ENVIRONMENT, &named("__p___argc"))
+            .is_none()
+    );
+    assert!(registry.resolve(RUNTIME, &named("__p__environ")).is_none());
 }
 
 #[test]

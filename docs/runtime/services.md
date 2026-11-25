@@ -6,14 +6,14 @@ A declared service is not a claim of compatibility. `implemented` and `partial` 
 
 | Measure | Count |
 | --- | ---: |
-| Services with a declared ABI | 20 |
-| Generated adapters | 20 |
-| Unique handler implementations | 20 |
+| Services with a declared ABI | 25 |
+| Generated adapters | 25 |
+| Unique handler implementations | 25 |
 | Implemented | 7 |
-| Partial | 13 |
+| Partial | 18 |
 | Stub | 0 |
-| Conformance-tested through guest dispatch | 20 |
-| API-set aliases (not services) | 20 |
+| Conformance-tested through guest dispatch | 25 |
+| API-set aliases (not services) | 25 |
 | Independently accepted | 0 |
 
 | Service | Signature | Status | Failure |
@@ -32,6 +32,11 @@ A declared service is not a claim of compatibility. `implemented` and `partial` 
 | `kernel32.dll!GetSystemTimeAsFileTime` | `(time: out<8>) -> void` | implemented | guest fault on an invalid pointer |
 | `kernel32.dll!GetLastError` | `() -> u32` | partial | never |
 | `kernel32.dll!SetLastError` | `(code: u32) -> void` | partial | never |
+| `ucrtbase.dll!__p___argc` | `() -> ptr` | partial | stops the guest when the variable cannot be allocated |
+| `ucrtbase.dll!__p___argv` | `() -> ptr` | partial | stops the guest when the variable cannot be allocated |
+| `ucrtbase.dll!__p__environ` | `() -> ptr` | partial | stops the guest when the variable cannot be allocated |
+| `ucrtbase.dll!_configure_narrow_argv` | `(mode: i32) -> i32` | partial | EINVAL for a mode other than 0, 1 or 2; stops the guest when the table cannot be allocated |
+| `ucrtbase.dll!_initialize_narrow_environment` | `() -> i32` | partial | stops the guest when the table cannot be allocated |
 | `kernel32.dll!VirtualAlloc` | `(address: ptr, size: u64, kind: u32, protect: u32) -> ptr` | partial | 0 with ERROR_INVALID_PARAMETER, ERROR_NOT_SUPPORTED, ERROR_INVALID_ADDRESS or ERROR_NOT_ENOUGH_MEMORY |
 | `kernel32.dll!VirtualFree` | `(address: ptr, size: u64, kind: u32) -> bool32` | partial | 0 with ERROR_NOT_SUPPORTED, ERROR_INVALID_PARAMETER or ERROR_INVALID_ADDRESS |
 | `ucrtbase.dll!sqrt` | `(x: f64) -> f64` | partial | NaN for a negative argument; errno is not set |

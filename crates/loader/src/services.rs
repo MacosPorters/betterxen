@@ -10,6 +10,7 @@
 //! - Xbox physical memory: `XMemAlloc`, `XMemFree`
 
 mod crt;
+mod crt_arguments;
 mod crt_callbacks;
 mod events;
 mod files;
@@ -24,6 +25,7 @@ pub(crate) mod threads;
 mod winsock;
 
 use crate::runtime::HResult;
+pub use crt_arguments::{MAX_PROGRAM_ARGUMENT_BYTES, ProgramArgumentsError};
 
 use crate::cpu::ExitReason;
 use crate::imports::{ImportRegistry, ServiceStatus};
@@ -193,6 +195,7 @@ pub struct ServicesState {
     pub guest_profile: sysinfo::GuestSystemProfile,
     objects: Mutex<ObjectState>,
     last_errors: Mutex<BTreeMap<u64, u32>>,
+    crt_arguments: Mutex<crt_arguments::CrtArguments>,
     synch: Mutex<synch::Synch>,
     pub(crate) threads: Mutex<threads::ThreadTable>,
     pub(crate) hooks: Arc<threads::SchedulerHooks>,
@@ -219,6 +222,7 @@ impl ServicesState {
             guest_profile: sysinfo::GuestSystemProfile::default(),
             objects: Mutex::new(ObjectState::default()),
             last_errors: Mutex::default(),
+            crt_arguments: Mutex::default(),
             synch: Mutex::default(),
             threads: Mutex::default(),
             hooks: Arc::default(),
@@ -233,6 +237,21 @@ impl ServicesState {
             graphics: Arc::new(Mutex::new(crate::graphics::GraphicsContext::new())),
         }
     }
+    /// Give a hosted C program the arguments its `main` receives in `argv`,
+    /// program name first. Call it before running the guest: the C runtime's
+    /// startup code builds `argv` once, and a call after that is refused.
+    ///
+    /// The strings reach the guest as their bytes; no code page is applied.
+    /// A host that never calls this gives the program one argument, the empty
+    /// string. An empty slice gives it none.
+    pub fn set_program_arguments(&self, arguments: &[&str]) -> Result<(), ProgramArgumentsError> {
+        self.crt_arguments().supply(arguments)
+    }
+
+    fn crt_arguments(&self) -> std::sync::MutexGuard<'_, crt_arguments::CrtArguments> {
+        self.crt_arguments.lock().expect("program arguments")
+    }
+
     fn uptime_millis(&self) -> u64 {
         let ticks = self
             .clock
@@ -800,6 +819,38 @@ pub(crate) mod handlers {
     pub fn set_last_error(context: &mut ServiceContext<'_>, code: u32) -> Outcome<()> {
         context.state.set_last_error(context.teb, code);
         Ok(())
+    }
+
+    // What a hosted C program's startup code hands to `main` (#392).
+    // `crt_arguments.rs` says what is documented, inferred and Xenora's choice.
+
+    pub fn argc_pointer(context: &mut ServiceContext<'_>) -> Outcome<u64> {
+        let mut arguments = context.state.crt_arguments();
+        arguments.address(context.memory, crt_arguments::Variable::Argc)
+    }
+
+    pub fn argv_pointer(context: &mut ServiceContext<'_>) -> Outcome<u64> {
+        let mut arguments = context.state.crt_arguments();
+        arguments.address(context.memory, crt_arguments::Variable::Argv)
+    }
+
+    pub fn environ_pointer(context: &mut ServiceContext<'_>) -> Outcome<u64> {
+        let mut arguments = context.state.crt_arguments();
+        arguments.address(context.memory, crt_arguments::Variable::Environ)
+    }
+
+    pub fn configure_narrow_argv(context: &mut ServiceContext<'_>, mode: i32) -> Outcome<i32> {
+        context
+            .state
+            .crt_arguments()
+            .configure(context.memory, mode)
+    }
+
+    pub fn initialize_narrow_environment(context: &mut ServiceContext<'_>) -> Outcome<i32> {
+        context
+            .state
+            .crt_arguments()
+            .initialize_environment(context.memory)
     }
 
     pub fn virtual_alloc(
