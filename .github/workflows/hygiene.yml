@@ -1,0 +1,43 @@
+name: Repository hygiene
+
+# Fast checks on tracked files that need no Rust toolchain and no network:
+# merge-conflict markers, broken relative Markdown links and invalid workflow
+# YAML (scripts/audit/docs_hygiene.py). A second, advisory step warns when
+# source or script changes arrive without a CHANGELOG.md update; it never fails.
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: hygiene-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  hygiene:
+    name: Repository hygiene
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - name: Install PyYAML
+        run: python3 -c 'import yaml' 2>/dev/null || python3 -m pip install --user --break-system-packages pyyaml
+      - name: Check documentation and workflow files
+        run: python3 scripts/audit/docs_hygiene.py --require-yaml
+      - name: Remind about the changelog (advisory)
+        if: github.event_name == 'pull_request'
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+        run: |
+          changed="$(git diff --name-only "$BASE_SHA"...HEAD || true)"
+          if printf '%s\n' "$changed" | grep -Eq '^(crates|scripts|shaders|fixtures)/' \
+             && ! printf '%s\n' "$changed" | grep -qx 'CHANGELOG.md'; then
+            echo "::warning title=Changelog::Source or script files changed without a CHANGELOG.md update."
+          fi

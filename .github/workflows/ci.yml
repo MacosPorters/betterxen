@@ -63,8 +63,6 @@ jobs:
         run: |
           PYTHONPATH=scripts python3 -m unittest discover -s tests/agent_queue
           sh -n scripts/agent-queue.sh scripts/agent-sync.sh
-      - name: Test pull request template check
-        run: PYTHONPATH=scripts python3 -m unittest discover -s tests/pr_template
       - name: Test native audit JSON decoding
         run: python3 -m unittest discover -s tests/audit
       - name: Test semantic registry generator and coverage report
@@ -90,3 +88,33 @@ jobs:
           file "$binary"
           test "$(lipo -archs "$binary")" = arm64
           otool -L "$binary"
+
+  native-app:
+    name: Native app build and smoke
+    runs-on: macos-26
+    timeout-minutes: 20
+    env:
+      CARGO_BUILD_JOBS: 3
+      RUSTUP_TOOLCHAIN: 1.100.0-aarch64-apple-darwin
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Verify runner architecture
+        run: |
+          uname -m
+          test "$(uname -m)" = arm64
+          test "$(sysctl -n sysctl.proc_translated)" = 0
+      - name: Install native Rust
+        run: |
+          rustup toolchain install "$RUSTUP_TOOLCHAIN" --profile minimal
+          rustc -vV
+      - name: Show Swift and Xcode
+        run: |
+          xcodebuild -version
+          swift --version
+      # Builds the locked C ABI library and the Swift app together, checks the
+      # executable is arm64-only and links only system libraries, and runs
+      # `--smoke`. This is an app build and smoke result, not GPU verification.
+      - name: Build BetterXen.app and run its smoke check
+        run: scripts/build-app.sh

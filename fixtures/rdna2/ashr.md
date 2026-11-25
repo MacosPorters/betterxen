@@ -6,7 +6,7 @@ identified the arithmetic shift as a candidate. Xenora uses the public
 and its existing pinned AMD XML generator for the VOP2 encoding. The lowering
 uses signed integer shift from the
 [Metal Shading Language Specification](https://developer.apple.com/metal/Metal-Shading-Language-Specification).
-The implementation and fixture were authored in Xenora. No Leonida code, tables,
+The implementation and fixture were authored in Xenora. No PE-Vulkan project code, tables,
 dependencies or game material were imported.
 
 The decoder accepts the VOP2 VGPR/VGPR form. The shader lifter retains the synthetic

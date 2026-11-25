@@ -60,6 +60,7 @@ Historical phase checkpoints retain their original evidence scope.
 
 - [Public sources](research/sources.md), [RDNA 2 notes](research/rdna2.md), and [Xbox GPU evidence](research/xbox-gpu.md) — Specifications, evidence scope, and unknown console behavior.
 - [Shader inputs](research/shader-containers.md) and [risk register](risk-register.md) — Input provenance and unresolved engineering risks.
+- [PortWatch native macOS research](research/portwatch-native-macos.md) — Screening of public Xbox-on-Windows port projects for native macOS planning; discovery only.
 - [Synthetic integration and upstream evidence](research/synthetic-integration.md) — Audited source snapshots and remaining commercial startup prerequisites.
 
 ## Security, licensing, and contributions

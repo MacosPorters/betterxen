@@ -1,29 +1,95 @@
+<div align="center">
+
 # BetterXen
 
-BetterXen is a community-maintained continuation. Original Git history, licenses and contributor attribution are retained. See the [project history and migration notes](docs/migration.md) for source attribution and imported issue and pull-request records.
+**Experimental Xbox Series X|S emulation research, built natively for Apple Silicon.**
 
-**Experimental Xbox Series X|S emulation research for Apple Silicon Macs.**
-
-BetterXen is an open-source project written primarily in Rust that builds and verifies a native, bounded execution environment on Apple Silicon: an independent x86-64 guest path, original PE32+ loading, AMD RDNA 2 shader translation, and a native Apple Metal graphics backend.
+[![Native Rust checks](https://github.com/MacosPorters/betterxen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MacosPorters/betterxen/actions/workflows/ci.yml)
+![Platform: Apple Silicon](https://img.shields.io/badge/platform-Apple%20Silicon%20(ARM64)-1f6feb?logo=apple&logoColor=white)
+![Graphics: Metal](https://img.shields.io/badge/graphics-native%20Metal-8957e5)
+![Language: Rust](https://img.shields.io/badge/language-Rust%201.100-dea584?logo=rust&logoColor=white)
+![Status: experimental](https://img.shields.io/badge/status-experimental-d29922)
+![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-2ea043)
 
 **No Wine. No CrossOver. No Rosetta. No Vulkan runtime.**
 
-BetterXen is still experimental. Verified work is restricted to independently authored synthetic programs and shaders; authentic Xbox executable loading, system-service compatibility and commercial game execution remain unsupported. See the [current limitations](#current-limitations).
+</div>
+
+BetterXen is a community-maintained, open-source project written primarily in Rust. It builds and verifies a native, bounded execution environment on Apple Silicon: an independent x86-64 guest path, original PE32+ loading, AMD RDNA 2 shader translation, and a native Apple Metal graphics backend. The host runs as ARM64 code; the x86-64 code being emulated is guest data.
+
+> [!IMPORTANT]
+> **BetterXen is experimental.** Verified work is restricted to independently authored synthetic programs and shaders. Authentic Xbox executable loading, system-service compatibility and commercial game execution are **not supported**. Progress is measured by reproducible tests, not by estimated game compatibility percentages. See the [current limitations](#current-limitations).
 
 > [!CAUTION]
 > **BetterXen strictly opposes piracy.** BetterXen is an independent, clean-room, general-purpose emulation research project that neither distributes copyrighted game files nor supports unauthorized content, DRM circumvention, or leaked materials. Use only legally obtained software. BetterXen is not affiliated with Microsoft or any other publisher or platform holder.
 
-[![Native Rust checks](https://github.com/MacosPorters/betterxen/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/MacosPorters/betterxen/actions/workflows/ci.yml)
+---
+
+## How it fits together
+
+One guest program travels through three native subsystems. Every stage is checked against an independently derived expectation.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'system-ui, sans-serif','lineColor':'#6e7781'}}}%%
+flowchart LR
+    A["Original PE32+<br/>test program"]:::guest --> B["Loader<br/>relocations, TLS, imports"]:::guest
+    B --> C["x86-64 interpreter<br/>+ ARM64 translator"]:::cpu
+    C --> D["Typed runtime<br/>services"]:::cpu
+    D --> E["Guest graphics<br/>commands"]:::gpu
+    S["Original gfx1030<br/>shader bytes"]:::shader --> T["RDNA 2 decoder<br/>+ validated IR"]:::shader --> U["Metal Shading<br/>Language"]:::shader
+    E --> M["Native Metal<br/>pipelines"]:::gpu
+    U --> M
+    M --> G["Apple Silicon GPU<br/>+ readback"]:::gpu
+    G --> V{"Matches the<br/>independent<br/>CPU reference?"}:::check
+    S -.-> R["Independent<br/>CPU reference"]:::check -.-> V
+
+    classDef guest fill:#ddf4ff,stroke:#0969da,color:#0a3069
+    classDef cpu fill:#dafbe1,stroke:#1a7f37,color:#0f5323
+    classDef shader fill:#fbefff,stroke:#8250df,color:#512a97
+    classDef gpu fill:#fff8c5,stroke:#9a6700,color:#4d2d00
+    classDef check fill:#ffebe9,stroke:#cf222e,color:#82071e
+```
+
+Legend: 🟦 guest loading · 🟩 guest CPU and services · 🟪 shader translation · 🟨 native Metal · 🟥 independent verification.
 
 ---
 
-## What works today?
+## Milestones
 
-BetterXen has progressed from executing individual x86-64 instructions to running original PE32+ guest programs that interact with translated GPU workloads on Apple Silicon.
+BetterXen's work order is the six [development phases](docs/development-phases.md), which lead to one concrete target: the **first launchable application** (tracker [#311](https://github.com/MacosPorters/betterxen/issues/311)). That target is an original C program, built with native ARM64 tools, that runs through the ARM64 translator, controls its own translated shader pipeline, and shows its Metal frame in the native app window. It is **not** a commercial or authentic Xbox title, and no date or percentage is attached to it.
 
-The latest verified milestones include **translated gfx1030 vertex and pixel shaders executing through native Apple Metal**, the native Metal **blend pass** (`NativeCompute::render_blend`) and **indexed triangle draws** (`NativeCompute::render_indexed`) into offscreen targets, with rendered pixels compared against independently calculated reference results.
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'fontFamily':'system-ui, sans-serif','lineColor':'#6e7781'}}}%%
+flowchart LR
+    P1["<b>Phase 1</b><br/>Trustworthy baseline"]:::wip --> P2["<b>Phase 2</b><br/>Hosted C application"]:::wip
+    P2 --> P3["<b>Phase 3</b><br/>Coherent threading"]:::wip
+    P3 --> P4["<b>Phase 4</b><br/>Resource updates<br/>to translated rendering"]:::wip
+    P4 --> P5["<b>Phase 5</b><br/>One integrated<br/>interactive application"]:::plan
+    P5 --> P6["<b>Phase 6</b><br/>Measured performance"]:::plan
+    P2 --> L(["<b>First launchable app</b><br/>issue 311"]):::goal
+    P4 --> L
+    classDef wip fill:#fff8c5,stroke:#9a6700,color:#4d2d00
+    classDef plan fill:#eaeef2,stroke:#8c959f,color:#24292f
+    classDef goal fill:#dafbe1,stroke:#1a7f37,color:#0f5323,stroke-width:3px
+```
 
-### Development milestones
+<sub>🟨 work under way · ⬜ not started · 🟩 the next original-workload target. Nothing here is independently accepted.</sub>
+
+| Phase | Goal | State | What exists now |
+| --- | --- | --- | --- |
+| **1 · Baseline** | Contributors can tell what exists on `main`, what is pending review, and which checks ran | 🟡 In progress | CODEOWNERS review, a fast repository hygiene check, claim-before-work rules, generated status tables and claim audits |
+| **2 · Hosted C application** | An original hosted C program starts, uses the runtime, reports results and exits with checked cleanup | 🟡 In progress | CRT startup, arguments, exit handlers, formatted output, file streams and the hosted-C fixture (A2) are integrated; a stdio follow-up is still open and the result is not independently accepted |
+| **3 · Threaded behavior** | A worker-based application can block and resume without stalling other guest work | 🟡 In progress | Deterministic scheduler, guest thread contexts, guarded stacks and thread services. Guest `Sleep` still delays all guest threads (#304); worker TLS and callback lifecycle is a design draft (#312) |
+| **4 · Resource updates to rendering** | A guest updates a texture and geometry, submits translated rendering and gets a checked frame | 🟡 In progress | Persistent resources, descriptor-table texture binding, translated vertex and pixel stages, blend, depth and indexed draws. Guest-selected pipelines and the typed graphics bridge are open (#314–#316) |
+| **5 · Integrated interactive app** | Guest execution, rendering, input, audio, filesystem and lifecycle in one session | ⚪ Planned | Swift app with frame loop, input, audio and sandboxed filesystem fixtures exists, but those demonstrations are not guest-integration evidence |
+| **6 · Measured performance** | Faster execution of workloads whose correctness is already checked | ⚪ Planned | Startup, DBT and TLS measurements recorded; bottlenecks are chosen from measurements, not assumed |
+
+The launch milestone's proposed acceptance is **60 bounded frames containing two independently distinguishable guest-controlled states, then a clean close and one restart**. Sixty is a fixture criterion, not a measured frame rate. The work is tracked as issues [#313](https://github.com/MacosPorters/betterxen/issues/313)–[#323](https://github.com/MacosPorters/betterxen/issues/323).
+
+<details>
+<summary><b>Capability reference: the original X1–X25 map</b></summary>
+
+The X1–X25 names are an older, broad capability map. Keep them as a reference; use the phases above for the next work order. X10–X25 are proposed engineering milestones, not completed implementations or a guaranteed sequence.
 
 | Milestone | Implementation | Status |
 | --- | --- | --- |
@@ -36,7 +102,7 @@ The latest verified milestones include **translated gfx1030 vertex and pixel sha
 | X7 — Imported services | Named imports, guest-to-host service dispatch and result validation | Verified |
 | X8 — Translated compute | Original gfx1030 compute shaders executing on Metal, partial Wave32 handling and BC1 readback | Verified subset |
 | X9 — Translated graphics | Persistent resource handles, translated vertex/pixel stages and offscreen Metal rendering | Verified subset |
-| X10 — Texture sampling | Translated image instructions are still planned; upload, readback and decode of BC compressed formats is implemented (see [Texture support](#texture-support)) | Planned |
+| X10 — Texture sampling | One translated `image_sample_lz` pixel stage with point/clamp sampling of RGBA8 and BC1 2D textures bound through descriptor tables, locally verified on Apple M5 Pro; upload, readback and decode of BC compressed formats (see [Texture support](#texture-support)). Other image instructions and formats are not implemented | Implemented subset |
 | X11 — Graphics pipeline | Bounded multi-draw passes into offscreen RGBA8 targets: translated vertex and pixel stages, indexed triangle draws, colour write masks and blend state | Implemented |
 | X12 — Wave execution | Expand Wave32/Wave64 semantics, divergent control flow, cross-lane operations, LDS and barriers | Planned |
 | X13 — Advanced shaders | Mesh, geometry and additional compute shader capabilities with verified Metal execution | Planned |
@@ -53,9 +119,59 @@ The latest verified milestones include **translated gfx1030 vertex and pixel sha
 | X24 — Gameplay and performance | Expand rendering correctness, input, audio, memory management, shader caching and execution performance | Long-term goal |
 | X25 — Running games | Achieve reproducible, stable execution of compatible games on native Apple Silicon macOS using Metal | Long-term goal |
 
-**Roadmap note:** X10–X25 are proposed engineering milestones, not completed implementations or a guaranteed sequence. Follow the [BetterXen development phases](docs/development-phases.md) for the current work order and existing issue/PR dependencies. Actual priorities will change as compatibility testing reveals new blockers. Successfully completing one milestone does not guarantee that a particular game will run.
+</details>
 
 All existing verification refers to independently authored synthetic programs and shaders. Commercial-game compatibility remains unverified.
+
+---
+
+## Repository at a glance
+
+Counts below come from the generated registries and were read from the repository, not measured on new runs. They describe synthetic fixtures only.
+
+| Area | Where | What exists today |
+| --- | --- | --- |
+| Guest CPU | `crates/loader` | A generated x86-64 decoder and interpreter, plus a native ARM64 dynamic binary translator (DBT) for a bounded subset. The instruction registry declares 213 operations, 403 forms and 498 opcode slots; 93 operations have at least one form lowered to ARM64 and the rest run through shared interpreter semantics. See the [instruction registry](docs/cpu/instruction-registry.md). |
+| Executable loading | `crates/loader` | PE32+ loading, relocations, thread-local storage, import binding and a static inspection report. |
+| Runtime services | `crates/loader`, `crates/import-gen` | A typed service registry: 47 declared services (7 implemented, 37 partial, 3 stubs), all exercised through guest dispatch, none independently accepted. See the [registry](docs/runtime/registry.md) and [generated coverage](docs/runtime/services.md). Guest threads run on a deterministic scheduler on one host thread. |
+| Shader ISA | `crates/isa`, `crates/decoder`, `crates/shader`, `crates/ref` | The RDNA 2 (gfx1030) instruction snapshot lists 1,465 forms; 189 are decoder-supported, 185 are lowered to Metal Shading Language, and 18 are Metal-verified on fixtures. See the [semantic coverage](docs/shaders/semantic-coverage.md). An independent CPU reference checks GPU output. |
+| Metal backend | `crates/metal` | Native compute, blend, indexed-draw, depth and sampled-texture passes, with Metal API and shader validation. |
+| Textures | `crates/texture` | Upload, readback, BC1 to BC7 decoding and sampler code. |
+| Application | `app`, `crates/ffi` | A Swift macOS app over a versioned C interface: frame loop, interactive input, persistent resources, audio and a sandboxed virtual filesystem, all against synthetic guests. |
+| Test and tooling | `tests`, `fuzz`, `benchmarks`, `scripts` | Original guest programs, independent validation, fuzz targets (CPU decode, PE parse, instruction streams, fixtures, reference, runtime services), mutation testing, correctness-gated benchmarks, and audit scripts for claims, status tables and dependency direction. |
+
+The `betterxen` command-line tool provides `info`, `demo`, `inspect <pe>`, `probe --pe <path> --mode static`, `run`, `imports` and `shaders`. Run `cargo run -p betterxen` with no arguments to see its usage.
+
+
+### Where the numbers stand
+
+Counts come from the repository's generated registries at this revision. They describe synthetic fixtures only and are not compatibility percentages.
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'pie1':'#1a7f37','pie2':'#d0d7de','pieTitleTextSize':'16px','pieStrokeColor':'#ffffff','pieOuterStrokeColor':'#ffffff','fontFamily':'system-ui, sans-serif'}}}%%
+pie showData title Guest CPU — 213 declared x86-64 operations
+    "Lowered to ARM64 (at least one native form)" : 93
+    "Shared interpreter semantics only" : 120
+```
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'pie1':'#1a7f37','pie2':'#d4a72c','pie3':'#cf222e','pieStrokeColor':'#ffffff','pieOuterStrokeColor':'#ffffff','fontFamily':'system-ui, sans-serif'}}}%%
+pie showData title Runtime services — 47 declared, none independently accepted
+    "Implemented" : 7
+    "Partial" : 37
+    "Stub" : 3
+```
+
+```mermaid
+%%{init: {'theme':'base','themeVariables':{'xyChart':{'plotColorPalette':'#8250df'}}}}%%
+xychart-beta
+    title "gfx1030 instruction forms by stage (1,465 identified)"
+    x-axis ["Decoder-supported", "Lowered to MSL", "Metal-verified"]
+    y-axis "Forms" 0 --> 200
+    bar [189, 185, 18]
+```
+
+---
 
 ## Native graphics translation
 
@@ -177,9 +293,9 @@ Implemented and tested functionality includes:
 - Edge-block and transparency tests.
 - Invalid descriptor and bounds rejection.
 
-**Translated texture-sampling instructions are not yet implemented.**
+**Translated texture sampling covers one instruction and one sampler mode.** A guest draw with the translated `image_sample_lz` pixel stage and a point/clamp sampler matched the software reference and hand-derived images on a local Apple M5 Pro run (one-level RGBA8 and an 8×8 BC1 texture). Other image instructions, filtering modes and formats are not implemented, and this is local verification, not independent acceptance.
 
-The existing texture readback path uses authored Metal kernels. It should not be confused with executing arbitrary RDNA2 texture-fetch instructions.
+The texture upload and readback paths use authored Metal kernels. They should not be confused with executing arbitrary RDNA2 texture-fetch instructions.
 
 Xbox-specific texture layouts and additional compression formats require further research and validation.
 
@@ -230,13 +346,22 @@ flowchart TD
         L --> M
         K --> M
     end
+
+    classDef guestNode fill:#dafbe1,stroke:#1a7f37,color:#0f5323
+    classDef shaderNode fill:#fbefff,stroke:#8250df,color:#512a97
+    classDef metalNode fill:#fff8c5,stroke:#9a6700,color:#4d2d00
+    classDef checkNode fill:#ffebe9,stroke:#cf222e,color:#82071e
+    class A,B,C,D guestNode
+    class E,F,G,H shaderNode
+    class I,J,K metalNode
+    class L,M checkNode
 ```
 
 BetterXen's host execution environment is native ARM64. The guest architecture being interpreted is x86-64.
 
 The native graphics pipeline runs translated vertex and pixel stages, the indexed-draw and blend passes and the depth pass into offscreen Metal targets, with GPU readback compared against independent CPU references.
 
-The project does not currently provide a general-purpose x86-64 dynamic recompiler or a complete Xbox operating-system implementation.
+The native ARM64 dynamic recompiler covers a bounded subset of x86-64 instructions; the rest run through the shared interpreter semantics (see the [CPU coverage map](docs/testing/cpu-coverage.md) once it lands). The project does not provide a complete Xbox operating-system implementation.
 
 See [Interface Contracts](docs/interfaces.md) for the documented execution and resource boundaries.
 
@@ -254,8 +379,8 @@ The following remain unsupported or incomplete:
 | Executable loader | General relocations, TLS, DLL initialization and authentic Xbox startup |
 | Xbox runtime | Console-specific services, system APIs, filesystem and application lifecycle |
 | RDNA2 shaders | General control flow, broader instructions, Wave64, cross-lane operations and mesh stages |
-| Graphics | Translated texture sampling and broader resource binding |
-| Textures | Authentic Xbox memory layouts and translated sampling |
+| Graphics | Broader translated texture sampling (one instruction and sampler mode exist) and broader resource binding |
+| Textures | Authentic Xbox memory layouts and broader translated sampling |
 | Performance | Production-scale workloads, CPU/GPU profiling and optimized execution |
 | Game compatibility | No demonstrated execution of commercial Xbox titles |
 
@@ -351,9 +476,21 @@ Testing distinguishes between:
 
 Compiling a shader is not equivalent to proving its GPU output is correct.
 
+### Contributing
+
+Contributions are welcome, and several people and coding agents work in this repository at once. To avoid duplicated work:
+
+1. Read every comment on an issue and check for open pull requests that link it.
+2. Claim the issue with a plain reply (for example "I'm taking this. Plan: ...") before you edit anything. The earliest live claim wins, and a claim is stale only after about seven days without a pull request.
+3. Stay inside the files the issue lists, and put `Closes #<n>` in the pull request description.
+4. Sign off every commit (DCO) and use only public documentation and original code. Anyone who has seen leaked or confidential Xbox material must not contribute.
+5. Update `CHANGELOG.md` for meaningful changes. Changes to `main` need maintainer review through [CODEOWNERS](.github/CODEOWNERS).
+
+See [CONTRIBUTING.md](CONTRIBUTING.md), [docs/legal.md](docs/legal.md) and the [documentation index](docs/README.md) for the full rules.
+
 ### Where the work is heading
 
-See the [roadmap table](#development-milestones) for proposed milestones, and the [changelog](CHANGELOG.md) for the current unreleased additions, such as the native blend pass, indexed draws and the depth pass. The remaining research steps are the outstanding items in [current limitations](#current-limitations).
+See the [milestones](#milestones) for proposed milestones, and the [changelog](CHANGELOG.md) for the current unreleased additions, such as the native blend pass, indexed draws and the depth pass. The remaining research steps are the outstanding items in [current limitations](#current-limitations).
 
 ---
 
@@ -367,6 +504,6 @@ BetterXen is licensed under the [GNU General Public License v3 or later](LICENSE
 
 See [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) for third-party attribution and [docs/legal.md](docs/legal.md) for the project's research and legal boundaries.
 
-BetterXen is an independent open-source project and is not affiliated with Microsoft, Xbox, Rockstar Games or Apple.
+BetterXen is an independent open-source project and is not affiliated with Microsoft, Xbox, any game publisher or Apple.
 
 ---

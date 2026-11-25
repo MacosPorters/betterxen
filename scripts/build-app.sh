@@ -54,5 +54,22 @@ codesign --force --sign - "$bundle"
 
 binary="$bundle/Contents/MacOS/BetterXen"
 [ "$(lipo -archs "$binary")" = arm64 ] || fail "executable is not arm64-only: $(lipo -archs "$binary")"
+file "$binary"
+# Only system libraries may be linked: anything else would be a host dependency
+# shipped or expected outside macOS, which this bundle does not carry. List the
+# dependencies once, print that listing and check the same output.
+dependencies=$(otool -L "$binary") || fail "otool -L failed for $binary"
+printf '%s\n' "$dependencies"
+dependencies=$(printf '%s\n' "$dependencies" | tail -n +2 | awk '{print $1}')
+# Every Swift executable links at least libSystem, so an empty list is an error.
+[ -n "$dependencies" ] || fail "otool -L listed no dependencies for $binary"
+for dependency in $dependencies; do
+    case "$dependency" in
+        /System/Library/*|/usr/lib/*) ;;
+        @rpath/*|@executable_path/*|@loader_path/*)
+            fail "executable links a bundle-relative library, but this bundle ships none: $dependency" ;;
+        *) fail "executable links a non-system library: $dependency" ;;
+    esac
+done
 "$binary" --smoke
 echo "build-app: built $bundle"

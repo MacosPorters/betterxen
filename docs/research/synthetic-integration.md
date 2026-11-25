@@ -11,8 +11,8 @@ in this checkout uses original fixtures and public specifications.
 | Project and audited snapshot | Type and observed evidence | Claimed-only behavior or provenance risk | Xenora work and original acceptance fixture | Priority and owner |
 | --- | --- | --- | --- | --- |
 | [Xenora `3133d8e`](https://github.com/ranveersoni98/Xenora/tree/3133d8e) | Native Rust guest and shader research. X1–X4 fixtures and gfx1030 compiler in tree. | GPL-3.0-or-later. Console execution unsupported. | Re-run the guest and translated compute fixtures on ARM64. | Immediate, integration |
-| [Leonida `3faac55`](https://github.com/ItsNotRexed/Leonida/tree/3faac55) | Windows PE mapping, service shims and Vulkan proxy tests. | GPL-3 family and Xenora no-port rule. Commercial boot absent in audit. | Original PE startup and GPU resource contracts. | Later, CPU and Metal |
-| [Project ReCity `cb4840b`](https://github.com/pixl27/ProjectReCity/tree/cb4840b) | Windows/Vulkan implementation and PE tests. | GPL-3, Leonida-derived. Separate retail proof absent. | Same synthetic startup coverage as Leonida, no parallel benchmark. | Later, CPU |
+| [PE-Vulkan project `3faac55`](https://github.com/ItsNotRexed/Leonida/tree/3faac55) | Windows PE mapping, service shims and Vulkan proxy tests. | GPL-3 family and Xenora no-port rule. Commercial boot absent in audit. | Original PE startup and GPU resource contracts. | Later, CPU and Metal |
+| [Project ReCity `cb4840b`](https://github.com/pixl27/ProjectReCity/tree/cb4840b) | Windows/Vulkan implementation and PE tests. | GPL-3, PE-Vulkan project-derived. Separate retail proof absent. | Same synthetic startup coverage as PE-Vulkan project, no parallel benchmark. | Later, CPU |
 | [Xbox2Windows `6de5738`](https://github.com/R0Y00/Xbox2Windows/tree/6de5738) | Static recompilation tests for imports, CPU startup, TLS and GPU output. See `tests/cpu/startup_exe.cpp`. | MIT at repository level. Full title startup unverified. | Build a source-authored PE guest and test exact service results. | Immediate, CPU |
 | [americas-recomp `9bf220e`](https://github.com/realdody/americas-recomp/tree/9bf220e) | Audited main root had a license file. | GPL-2.0. Other branches uninspected. | No fixture justified by audited tree. | Deferred, research |
 | [6stars `480d9a4`](https://github.com/meetox80/6stars/tree/480d9a4) | Swift/Metal renderer and sampler mapping in `Sources/SixStars`. | No verified root license. Guest CPU execution unverified. | Original translated shader, validated resource range and known readback. | Immediate, Metal |
@@ -63,7 +63,7 @@ in this checkout uses original fixtures and public specifications.
   services, hardware queues, formats and memory initialization need their
   own sources and tests. [Xbox GPU evidence](../research/xbox-gpu.md) ·
   [PE format](https://learn.microsoft.com/en-us/windows/win32/debug/pe-format)
-- GTA VI startup and execution remain unsupported. No authorized retail
+- Commercial-title startup and execution remain unsupported. No authorized retail
   executable was loaded. Actual title imports, startup ordering, resource
   bindings and pipeline behavior remain unverified. Relocation, thread-local
   storage, process and thread services, dynamic shader execution and
