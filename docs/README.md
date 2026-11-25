@@ -73,6 +73,7 @@ checkpoints retain their original evidence scope.
 - [Synthetic integration and upstream evidence](research/synthetic-integration.md) — Audited source snapshots and remaining commercial startup prerequisites.
 - [Hybrid backlog research record](research/hybrid-backlog-research-2026-11-25.md) — Findings, registry candidates and the issues they produced (2026-11-25); not verified on hardware.
 - [Primary-source verification](research/primary-source-verification-2026-11-25.md) — Which hybrid-research claims were confirmed, contradicted or left unverified against vendor documentation.
+- [Registry verification](research/registry-verification-2026-11-25.md) — Independent re-derivation of the registry rows and reuse decisions, with corrections and remaining unknowns.
 
 ## Security, licensing, and contributions
 
