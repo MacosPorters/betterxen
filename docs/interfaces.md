@@ -677,6 +677,12 @@ separately, for diagnostics.
   features the function can report, so every answer is `FALSE`. Features
   with no CPUID test, such as `PF_NX_ENABLED` and `PF_FASTFAIL_AVAILABLE`,
   and unknown numbers report `FALSE`.
+- `GetLogicalProcessorInformation` reports one core per profile processor
+  and one package holding them, 32 bytes each. No cache or NUMA entries are
+  reported, because no cache hierarchy is simulated. A short buffer fails with
+  `ERROR_INSUFFICIENT_BUFFER` and the required length.
+- `GetTimeZoneInformation` reports UTC: zero bias, both names "Coordinated
+  Universal Time", no daylight transition, and `TIME_ZONE_ID_UNKNOWN`.
 - `GlobalMemoryStatusEx` requires `dwLength` to be 64. Guest physical memory is
   the virtual-allocation and heap budgets together, 128 MiB. Available memory
   and `dwMemoryLoad` reflect current guest allocations. There is no paging

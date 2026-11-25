@@ -304,3 +304,83 @@ fn processor_features_agree_with_guest_cpuid() {
         assert_eq!(guest.call("IsProcessorFeaturePresent", &[feature]), 0);
     }
 }
+
+/// `TIME_ZONE_INFORMATION` (172 bytes) and `TIME_ZONE_ID_UNKNOWN` per the
+/// public GetTimeZoneInformation page: a zone without daylight saving.
+#[test]
+fn time_zone_is_utc_without_daylight_saving() {
+    const ZONE: &[(&str, &str)] = &[
+        (
+            "api-ms-win-core-timezone-l1-1-0.dll",
+            "GetTimeZoneInformation",
+        ),
+        ("kernel32.dll", "GetLastError"),
+    ];
+    let mut guest = Guest::new(ZONE, &[]);
+    guest.memory.write_bytes(SCRATCH, &[0xCC; 176]).unwrap();
+    assert_eq!(guest.call("GetTimeZoneInformation", &[SCRATCH]), 0);
+    let name = |offset: u64| {
+        let units: Vec<u16> = (0..32)
+            .map(|i| guest.u16_at(SCRATCH + offset + 2 * i))
+            .collect();
+        String::from_utf16(&units[..units.iter().position(|&u| u == 0).unwrap()]).unwrap()
+    };
+    assert_eq!(name(4), "Coordinated Universal Time");
+    assert_eq!(name(88), "Coordinated Universal Time");
+    assert_eq!(guest.u32_at(SCRATCH), 0, "Bias");
+    for (offset, length) in [(68, 20), (152, 20)] {
+        for byte in 0..length {
+            assert_eq!(guest.memory.read_u8(SCRATCH + offset + byte).unwrap(), 0);
+        }
+    }
+    assert_eq!(
+        guest.u32_at(SCRATCH + 172),
+        0xCCCC_CCCC,
+        "nothing past the struct"
+    );
+    assert_eq!(guest.call("GetTimeZoneInformation", &[0]), u32::MAX as u64);
+    assert_eq!(guest.error(), 998);
+}
+
+/// SYSTEM_LOGICAL_PROCESSOR_INFORMATION entries are 32 bytes on x64; a short
+/// buffer fails with ERROR_INSUFFICIENT_BUFFER and the required length.
+#[test]
+fn processor_topology_follows_the_guest_profile() {
+    const TOPOLOGY: &[(&str, &str)] = &[
+        (
+            "api-ms-win-core-sysinfo-l1-1-0.dll",
+            "GetLogicalProcessorInformation",
+        ),
+        ("kernel32.dll", "GetLastError"),
+    ];
+    let length = SCRATCH + 0x800;
+    let mut state = ServicesState::new(Arc::new(MockClock::new(0)));
+    state.guest_profile = GuestSystemProfile { processors: 2 };
+    let mut guest = Guest::with_state(TOPOLOGY, &[], state);
+    guest.memory.write_u32(length, 0).unwrap();
+    assert_eq!(
+        guest.call("GetLogicalProcessorInformation", &[0, length]),
+        0
+    );
+    assert_eq!(guest.error(), 122);
+    // Two cores and one package.
+    assert_eq!(guest.u32_at(length), 3 * 32);
+    assert_eq!(
+        guest.call("GetLogicalProcessorInformation", &[SCRATCH, length]),
+        1
+    );
+    let entry = |index: u64| {
+        (
+            guest.u64_at(SCRATCH + 32 * index),
+            guest.u32_at(SCRATCH + 32 * index + 8),
+        )
+    };
+    assert_eq!(entry(0), (0b01, 0), "RelationProcessorCore");
+    assert_eq!(entry(1), (0b10, 0), "RelationProcessorCore");
+    assert_eq!(entry(2), (0b11, 3), "RelationProcessorPackage");
+    assert_eq!(
+        guest.call("GetLogicalProcessorInformation", &[SCRATCH, 0]),
+        0
+    );
+    assert_eq!(guest.error(), 998);
+}

@@ -625,9 +625,19 @@ impl SymbolDb {
                 &["IsProcessorFeaturePresent"][..],
             ),
             (
+                "api-ms-win-core-timezone-l1-1-0.dll",
+                &["GetTimeZoneInformation"][..],
+            ),
+            (
+                "api-ms-win-core-sysinfo-l1-1-0.dll",
+                &["GetLogicalProcessorInformation"][..],
+            ),
+            (
                 "kernel32.dll",
                 &[
                     "IsProcessorFeaturePresent",
+                    "GetTimeZoneInformation",
+                    "GetLogicalProcessorInformation",
                     "CloseHandle",
                     "FreeLibrary",
                     "GetCurrentDirectoryA",

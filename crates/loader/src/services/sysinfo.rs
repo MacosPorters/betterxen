@@ -7,7 +7,7 @@
 //! separate so detected host hardware is never presented to the guest as its
 //! own, and guest-visible values do not change from one Mac to another.
 
-use super::{ERROR_INVALID_PARAMETER, KERNEL32, ServicesState};
+use super::{ERROR_INVALID_PARAMETER, ERROR_NOACCESS, KERNEL32, ServicesState};
 use crate::cpu::ExitReason;
 use crate::imports::{ImportRegistry, ServiceStatus};
 use crate::memory::{ALLOCATION_GRANULARITY, DYNAMIC_BUDGET, GuestMemory, MemoryError};
@@ -39,6 +39,36 @@ const MILLIS_PER_DAY: u64 = 86_400_000;
 const DAYS_1601_TO_1970: i64 = 134_774;
 /// FILETIME values at or above this are rejected by FileTimeToSystemTime.
 const MAX_FILETIME: u64 = 0x8000_0000_0000_0000;
+const TIME_ZONE_INFORMATION_SIZE: usize = 172;
+const TIME_ZONE_ID_UNKNOWN: u32 = 0;
+const TIME_ZONE_ID_INVALID: u32 = u32::MAX;
+const UTC_NAME: &str = "Coordinated Universal Time";
+const ERROR_INSUFFICIENT_BUFFER: u32 = 122;
+/// `SYSTEM_LOGICAL_PROCESSOR_INFORMATION` on x64.
+const PROCESSOR_INFO_SIZE: usize = 32;
+const RELATION_PROCESSOR_CORE: u32 = 0;
+const RELATION_PROCESSOR_PACKAGE: u32 = 3;
+
+/// One core per guest processor and one package holding them all. No cache
+/// or NUMA entries are reported, because no cache hierarchy is simulated.
+fn processor_topology(processors: u32) -> Vec<[u8; PROCESSOR_INFO_SIZE]> {
+    let entry = |mask: u64, relationship: u32| {
+        let mut bytes = [0u8; PROCESSOR_INFO_SIZE];
+        bytes[..8].copy_from_slice(&mask.to_le_bytes());
+        bytes[8..12].copy_from_slice(&relationship.to_le_bytes());
+        bytes
+    };
+    let mut entries: Vec<_> = (0..processors)
+        .map(|index| entry(1 << index, RELATION_PROCESSOR_CORE))
+        .collect();
+    let all = if processors == 64 {
+        u64::MAX
+    } else {
+        (1 << processors) - 1
+    };
+    entries.push(entry(all, RELATION_PROCESSOR_PACKAGE));
+    entries
+}
 
 /// What the guest is told about the machine it runs on.
 #[derive(Clone, Debug)]
@@ -410,7 +440,56 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         });
     }
 
+    let zone = Arc::clone(state);
+    registry.register(KERNEL32, "GetTimeZoneInformation", move |args, cpu, mem| {
+        // TIME_ZONE_INFORMATION is 172 bytes: Bias, StandardName[32],
+        // StandardDate, StandardBias, DaylightName[32], DaylightDate,
+        // DaylightBias. UTC has no bias and no daylight transition, so every
+        // field but the two names is zero.
+        let mut info = [0u8; TIME_ZONE_INFORMATION_SIZE];
+        for offset in [4, 88] {
+            for (index, unit) in UTC_NAME.encode_utf16().enumerate() {
+                info[offset + 2 * index..offset + 2 * index + 2]
+                    .copy_from_slice(&unit.to_le_bytes());
+            }
+        }
+        if args.rcx == 0 || mem.write_bytes(args.rcx, &info).is_err() {
+            return zone.fail(cpu.gs_base, ERROR_NOACCESS, u64::from(TIME_ZONE_ID_INVALID));
+        }
+        Ok(u64::from(TIME_ZONE_ID_UNKNOWN))
+    });
+
+    let topology = Arc::clone(state);
+    registry.register(
+        KERNEL32,
+        "GetLogicalProcessorInformation",
+        move |args, cpu, mem| {
+            let (buffer, length) = (args.rcx, args.rdx);
+            if length == 0 {
+                return topology.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+            }
+            let processors = topology.guest_profile.processors.clamp(1, 64);
+            let entries = processor_topology(processors);
+            let needed = (entries.len() * PROCESSOR_INFO_SIZE) as u32;
+            let available = mem.read_u32(length).map_err(ExitReason::MemoryFault)?;
+            if buffer == 0 || available < needed {
+                mem.write_u32(length, needed)
+                    .map_err(ExitReason::MemoryFault)?;
+                return topology.fail(cpu.gs_base, ERROR_INSUFFICIENT_BUFFER, 0);
+            }
+            let bytes: Vec<u8> = entries.concat();
+            if mem.write_bytes(buffer, &bytes).is_err() {
+                return topology.fail(cpu.gs_base, ERROR_NOACCESS, 0);
+            }
+            mem.write_u32(length, needed)
+                .map_err(ExitReason::MemoryFault)?;
+            Ok(1)
+        },
+    );
+
     for (symbol, api_set) in [
+        ("GetTimeZoneInformation", TIMEZONE_API),
+        ("GetLogicalProcessorInformation", SYSINFO_API),
         ("GetSystemInfo", SYSINFO_API),
         ("GetNativeSystemInfo", SYSINFO_API_2),
         ("GlobalMemoryStatusEx", SYSINFO_API),
