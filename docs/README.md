@@ -68,6 +68,7 @@ checkpoints retain their original evidence scope.
 
 - [Public sources](research/sources.md), [RDNA 2 notes](research/rdna2.md), and [Xbox GPU evidence](research/xbox-gpu.md) — Specifications, evidence scope, and unknown console behavior.
 - [Shader inputs](research/shader-containers.md) and [risk register](risk-register.md) — Input provenance and unresolved engineering risks.
+- [victory-shader provenance review](research/victory-shader-provenance.md) — Per-file licence and origin record for the proposed import; not approved, maintainer decision pending.
 - [victory-shader integration](research/victory-shader-integration.md) — The vendored GFX10-to-DXIL recompiler, how BetterXen's fixtures run through it on the GPU under CrossOver, and what is not verified.
 - [Shader wave-semantics investigation](research/shader-wave-semantics.md) — Why two upstream wave tests failed under D3DMetal: device capabilities, independent probes, the fix and its limits.
 - [Texture format inventory](research/texture-formats.md) — Formats and layouts by stage (decode, layout, native upload, sampling, guest), their public specifications, unknowns and ranked follow-ups.

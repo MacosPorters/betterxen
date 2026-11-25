@@ -1,5 +1,7 @@
 # Upstream provenance: victory-shader
 
+**Not approved for merge.** This crate was developed against one commercial title's shaders; the per-file review and the open maintainer decision are in `docs/research/victory-shader-provenance.md`.
+
 | | |
 | --- | --- |
 | Source | <https://github.com/skakwy/victory-mac>, directory `crates/victory-shader/` (Cargo.toml and `src/`) |
@@ -25,9 +27,10 @@ Changes to upstream files (19 lines, nothing functional) and files BetterXen add
 
 - `src/emit/lower.rs` (`active_f64_sum`, about 90 lines): the whole-wave f64 sum no longer emits a native `double` wave operation (`makeDouble`, `waveActiveOp.f64`, `splitDouble`); it builds the console's balanced tree over the lanes with the crate's own integer `add_f64`, reading partner runs through `waveReadLaneAt` and a ballot for lanes that are not present, and no longer sets the doubles feature flag. Why: D3DMetal reports no double-precision shader operations and a shader that uses a `double` ran without writing anything (docs/research/shader-wave-semantics.md).
 - `src/emit/bitcode.rs`: two `#[allow(dead_code)]` for the double type, now never constructed.
-- `src/emit/host.rs`: `Host::wave_lane_count_max()` (test host only).
+- `src/emit/host.rs`: `Host::wave_lane_count_max()` and `Host::hardware()` (test host only; `hardware()` ignores `VICTORY_WARP`).
+- `src/emit/mod.rs`: the static-sampler construction is factored into `static_samplers()` so `translate_native` reports immediate samplers.
 - `src/emit/wave64_tests.rs`: `a_sum_of_halves_where_lanes_have_left_is_the_consoles_tree_bit_for_bit` checks the device's wave width and, on a device narrower than 64 lanes, asserts the recompiler's refusal instead of running a 64-lane lowering.
 
 ## Not carried
 
-The upstream repository's other crates (`victory-gpu`, `victory-loader`, `victory-hle`, ...), which are tied to one console title and its runtime, and `mac/`, `tools/`. The shader inputs the upstream project was built for are not included; BetterXen validates this crate only with its own synthetic fixtures (see `docs/research/` for the validation record).
+The upstream repository's other crates (`victory-gpu`, `victory-loader`, `victory-hle`, ...), which are tied to one console title and its runtime, and `mac/`, `tools/`. No shader binaries or dumps of the title the upstream project targets are included, but comments and behaviour in this crate refer to that title's shaders; BetterXen validates this crate only with its own synthetic fixtures (see `docs/research/` for the validation record).

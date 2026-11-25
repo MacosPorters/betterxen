@@ -1,6 +1,6 @@
 # victory-shader integration (GFX10 to DXIL recompiler)
 
-Evidence: classes noted per row. Everything ran on one machine (Apple M4, 24 GiB, macOS 27.0, CrossOver 26.3.0.39832, bottle `betterxen-test`, default backend) and has **not been independently reproduced**. No game, console title or leaked material was used.
+Evidence: classes noted per row. Everything ran on one machine (Apple M4, 24 GiB, macOS 27.0, CrossOver 26.3.0.39832, bottle `betterxen-test`, default backend) and has **not been independently reproduced**. BetterXen's runs used no game files or leaked material. **The vendored code itself was developed against one commercial title's shaders** and is not approved for merge: see [victory-shader-provenance.md](victory-shader-provenance.md).
 
 ## What was integrated
 

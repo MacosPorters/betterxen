@@ -14,6 +14,7 @@ Companion to the [upstream registry](upstream-registry.md); same evidence limits
 | Direct3D 12 to Vulkan | VKD3D-Proton | **Evaluate**; blocked on a Vulkan 1.3 provider | Depends on MoltenVK feature coverage, unknown. |
 | Vulkan on Metal | MoltenVK | **Evaluate** | Apache-2.0 (compatible with GPLv3). Subset of Vulkan; coverage vs consumers unknown. |
 | Shader compiler / runtime | VIctory, VIctory-macOS | **Rejected for reuse** | Built for a specific commercial game's Xbox Series build whose provenance is not established as authorized. Ideas only. |
+| GFX10 to DXIL recompiler | victory-mac `crates/victory-shader` (VIctory family) | **Not approved: maintainer decision pending** (the rejection above stands until then) | PR #394 proposes vendoring it. The [per-file review](victory-shader-provenance.md) finds GPL-3.0 licensing but development against one commercial title's shaders; read plainly, the engineering rules exclude it. |
 | Project discovery | PortWatch VI | Reference only | Editorial tracker; not engineering evidence; nothing imported. |
 | x86-64 decode and ARM64 translation, runtime, gfx1030 compiler, Metal backend | BetterXen native implementation | **Preserved, paused** | Reuse only where hybrid needs it and it shows a demonstrated advantage; not forced into the architecture. |
 | Test and diagnostics methodology | BetterXen existing audits, benchmark harness, claims registry | **Reuse** | Existing evidence classes, claims audit and benchmark gating apply to hybrid work (Phase 1 onward). |

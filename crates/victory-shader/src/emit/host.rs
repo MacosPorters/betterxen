@@ -103,6 +103,17 @@ impl Host {
     /// The default adapter, or WARP with `warp` (or `VICTORY_WARP=1`).
     pub fn new(warp: bool) -> Result<Self, String> {
         let warp = warp || std::env::var("VICTORY_WARP").is_ok_and(|v| v == "1");
+        Self::create(warp)
+    }
+
+    /// The default hardware adapter, whatever `VICTORY_WARP` says; an error when the default
+    /// device is the software adapter. BetterXen addition: a test that reports GPU verification
+    /// must not be redirectable to WARP by the environment.
+    pub fn hardware() -> Result<Self, String> {
+        Self::create(false)
+    }
+
+    fn create(warp: bool) -> Result<Self, String> {
         // SAFETY: plain D3D12/DXGI calls with valid out pointers.
         unsafe {
             // `VICTORY_D3D12_DEBUG`: the debug layer, whose messages a

@@ -242,7 +242,7 @@ fn a_sum_of_halves_where_lanes_have_left_is_the_consoles_tree_bit_for_bit() {
     // this program ("a wave sum of 16-bit floats where not every lane runs"): the test then
     // asserts that refusal, which is the correct behaviour, rather than reporting a failure
     // or silently skipping.
-    if let Some(w) = Host::new(false).ok().and_then(|h| h.wave_lane_count_max()).filter(|&w| w < 64) {
+    if let Some(w) = Host::hardware().ok().and_then(|h| h.wave_lane_count_max()).filter(|&w| w < 64) {
         let refused = lowered_on(&native, &p, &HashSet::new(), w);
         assert!(
             matches!(&refused, Err(ShaderError::Unsupported { what, .. }) if what.contains("16-bit floats where not every lane runs")),
