@@ -8,7 +8,15 @@
 //! launcher interface is vendor-help-only. The graphics backend is selected through the
 //! `CX_GRAPHICS_BACKEND` environment variable, which appears in third-party launch scripts and
 //! is likewise undocumented; an unrecognised value was observed to be ignored silently, so a
-//! record names the backend *requested* and relies on the workload's own diagnostics
+//!
+//! Stall detection and the wait for memory to settle after a stop follow the supervision
+//! lessons in skakwy's <https://github.com/skakwy/victory-mac> (`mac/PROGRESS.md`,
+//! `mac/run-victory.sh`, `crates/victory-core/src/notes.rs` at commit 22b3f8e45a59; his own
+//! work, GPL-3.0, used with his permission): detect a hung run by absence of progress, stop a
+//! bottle with `wineserver -k` and its prefix, and do not start the next run until memory has
+//! been returned. Reimplemented here; none of his code is copied.
+//!
+//! A record names the backend *requested* and relies on the workload's own diagnostics
 //! (adapter name, backend log lines) to show what actually ran.
 
 use crate::frames;
@@ -30,6 +38,12 @@ pub struct RunConfig {
     /// Text that must appear in stdout for a zero exit to count as a pass.
     pub expect: Option<String>,
     pub work_dir: PathBuf,
+    /// Stop the run when neither stdout nor stderr has grown for this long.
+    pub stall_timeout: Option<Duration>,
+    /// After a stop, wait at most this long for free memory to return to `min_start_free`.
+    pub settle_bound: Duration,
+    /// Free-memory reader; `memory::free_percentage` outside tests.
+    pub read_free: fn() -> Option<u8>,
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -38,6 +52,8 @@ pub enum Class {
     FailedExit(i32),
     MissingExpectedMarker,
     TimedOut,
+    /// No output on stdout or stderr for the stall timeout.
+    Stalled,
     StoppedLowMemory,
     RefusedToStart,
     /// The Windows loader did not accept the file (for example an ARM64 PE this build cannot run).
@@ -55,6 +71,7 @@ impl Class {
             Class::FailedExit(c) => format!("failed_exit_{c}"),
             Class::MissingExpectedMarker => "missing_expected_marker".into(),
             Class::TimedOut => "timed_out".into(),
+            Class::Stalled => "stalled".into(),
             Class::StoppedLowMemory => "stopped_low_memory".into(),
             Class::RefusedToStart => "refused_to_start_low_memory".into(),
             Class::CannotExecute => "cannot_execute".into(),
@@ -171,8 +188,9 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
     let err_path = cfg
         .work_dir
         .join(format!("stderr-{t_wall}-{}.txt", std::process::id()));
+    let mut settle: Option<(Duration, bool)> = None;
     let thermal_before = thermal();
-    let free_start = memory::free_percentage();
+    let free_start = (cfg.read_free)();
 
     let mut result = RunRecord {
         class: Class::LaunchFailed,
@@ -212,6 +230,8 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                     let needles = vec![bundle, format!("Bottles/{}", cfg.bottle)];
                     let (mut cpu_sum, mut n) = (0f64, 0u32);
                     let mut stop: Option<Class> = None;
+                    let mut last_len = 0u64;
+                    let mut last_growth = Instant::now();
                     loop {
                         match child.try_wait() {
                             Ok(Some(st)) => {
@@ -225,7 +245,7 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                         result.samples.peak_rss_kb = result.samples.peak_rss_kb.max(rss);
                         cpu_sum += cpu;
                         n += 1;
-                        match memory::free_percentage() {
+                        match (cfg.read_free)() {
                             Some(f) => {
                                 let m = result.samples.min_free_percent.map_or(f, |x| x.min(f));
                                 result.samples.min_free_percent = Some(m);
@@ -235,22 +255,46 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                             }
                             None => stop = Some(Class::MemoryUnreadable),
                         }
+                        let len = [&out_path, &err_path]
+                            .iter()
+                            .map(|p| std::fs::metadata(p).map_or(0, |m| m.len()))
+                            .sum::<u64>();
+                        if len != last_len {
+                            last_len = len;
+                            last_growth = Instant::now();
+                        }
                         if stop.is_none() && started.elapsed() > cfg.timeout {
                             stop = Some(Class::TimedOut);
                         }
+                        if stop.is_none()
+                            && cfg.stall_timeout.is_some_and(|d| last_growth.elapsed() > d)
+                        {
+                            stop = Some(Class::Stalled);
+                        }
                         if stop.is_some() {
                             memory::terminate(&mut child, cfg.limits.grace);
-                            if let Some(dir) = cfg.wine.parent() {
-                                let _ = Command::new(dir.join("wineserver"))
-                                    .arg("-k")
-                                    .env("CX_BOTTLE", &cfg.bottle)
-                                    .status();
-                            }
+                            stop_bottle(&cfg.wine, &cfg.bottle);
                             break;
                         }
                         std::thread::sleep(cfg.limits.poll);
                     }
                     result.duration = started.elapsed();
+                    if stop.is_some() {
+                        let t = Instant::now();
+                        let need = cfg.limits.min_start_free;
+                        let mut recovered = false;
+                        loop {
+                            if (cfg.read_free)().is_some_and(|f| f >= need) {
+                                recovered = true;
+                                break;
+                            }
+                            if t.elapsed() >= cfg.settle_bound {
+                                break;
+                            }
+                            std::thread::sleep(cfg.limits.poll);
+                        }
+                        settle = Some((t.elapsed(), recovered));
+                    }
                     result.samples.samples = n;
                     result.samples.mean_cpu_percent_of_core =
                         if n > 0 { cpu_sum / n as f64 } else { 0.0 };
@@ -320,6 +364,21 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         ),
         ("timeout_s", Json::Num(cfg.timeout.as_secs_f64())),
         (
+            "stall_timeout_s",
+            cfg.stall_timeout
+                .map_or(Json::Null, |d| Json::Num(d.as_secs_f64())),
+        ),
+        (
+            "memory_settle_after_stop",
+            settle.map_or(Json::Null, |(d, ok)| {
+                Json::obj(vec![
+                    ("waited_ms", Json::Num(d.as_secs_f64() * 1000.0)),
+                    ("recovered_to_start_threshold", Json::Bool(ok)),
+                    ("bound_s", Json::Num(cfg.settle_bound.as_secs_f64())),
+                ])
+            }),
+        ),
+        (
             "free_memory_percent_at_start",
             free_start.map_or(Json::Null, |f| Json::Num(f as f64)),
         ),
@@ -353,6 +412,30 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
     let _ = std::fs::remove_file(&out_path);
     let _ = std::fs::remove_file(&err_path);
     result
+}
+
+/// Prefix directory of a bottle. CrossOver documents `BottleDir` in its preferences; otherwise
+/// the default location under Application Support is used.
+pub fn bottle_prefix(bottle: &str) -> PathBuf {
+    let base = crate::crossover::preference("BottleDir")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            PathBuf::from(std::env::var("HOME").unwrap_or_default())
+                .join("Library/Application Support/CrossOver/Bottles")
+        });
+    base.join(bottle)
+}
+
+/// Stop every process of one bottle with `wineserver -k`, selecting the bottle through
+/// `WINEPREFIX`. Setting `CX_BOTTLE` instead was tried first and observed NOT to select the
+/// bottle: the Windows process kept running after the supervisor reported it stopped.
+pub fn stop_bottle(wine: &Path, bottle: &str) {
+    if let Some(dir) = wine.parent() {
+        let _ = Command::new(dir.join("wineserver"))
+            .arg("-k")
+            .env("WINEPREFIX", bottle_prefix(bottle))
+            .status();
+    }
 }
 
 pub fn wine_path(app: &Path) -> PathBuf {
@@ -425,6 +508,9 @@ mod tests {
             },
             expect: Some("PASS".into()),
             work_dir: std::env::temp_dir().join(format!("bxrun-{tag}-{}", std::process::id())),
+            stall_timeout: None,
+            settle_bound: Duration::from_millis(200),
+            read_free: memory::free_percentage,
         }
     }
 
@@ -477,6 +563,123 @@ mod tests {
         assert_eq!(
             execute(&cfg(w, 10_000, "c"), None).class,
             Class::FailedExit(3)
+        );
+    }
+
+    #[test]
+    fn silent_workload_is_stopped_as_stalled_before_the_timeout() {
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!("bxrun-stall1-{}", std::process::id()));
+        let w = stub(&dir, "exec /bin/sleep 30");
+        let mut c = cfg(w, 20_000, "d");
+        c.stall_timeout = Some(Duration::from_millis(300));
+        let t0 = Instant::now();
+        let r = execute(&c, None);
+        assert_eq!(r.class, Class::Stalled);
+        assert!(
+            t0.elapsed() < Duration::from_secs(5),
+            "stall must fire long before the 20 s timeout"
+        );
+        assert!(r.json.render().contains("\"classification\": \"stalled\""));
+    }
+
+    #[test]
+    fn workload_that_keeps_printing_is_not_stalled() {
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!("bxrun-stall2-{}", std::process::id()));
+        // Prints every 0.1 s for about 1.2 s: longer than the 0.5 s stall timeout in total.
+        let w = stub(
+            &dir,
+            "i=0; while [ $i -lt 12 ]; do echo tick; i=$((i+1)); sleep 0.1; done; echo PASS",
+        );
+        let mut c = cfg(w, 20_000, "e");
+        c.stall_timeout = Some(Duration::from_millis(500));
+        assert_eq!(execute(&c, None).class, Class::Passed);
+    }
+
+    static FREE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(90);
+    fn fake_free() -> Option<u8> {
+        Some(FREE.load(std::sync::atomic::Ordering::SeqCst))
+    }
+
+    // One test owns the shared `FREE` value, so it does not race with the others.
+    #[test]
+    fn after_a_stop_the_run_waits_for_memory_to_return() {
+        use std::sync::atomic::Ordering::SeqCst;
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!("bxrun-settle-{}", std::process::id()));
+        let w = stub(&dir, "exec /bin/sleep 30");
+        let mut c = cfg(w, 300, "f");
+        c.read_free = fake_free;
+        c.limits.min_start_free = 50;
+        c.limits.min_free = 0; // only the timeout stops the run
+        c.settle_bound = Duration::from_secs(5);
+
+        // Memory drops 100 ms in and returns 900 ms in; the timeout stop happens at about 300 ms.
+        FREE.store(90, SeqCst);
+        let h = std::thread::spawn(|| {
+            std::thread::sleep(Duration::from_millis(100));
+            FREE.store(10, SeqCst);
+            std::thread::sleep(Duration::from_millis(800));
+            FREE.store(90, SeqCst);
+        });
+        let r = execute(&c, None);
+        h.join().unwrap();
+        assert_eq!(r.class, Class::TimedOut);
+        let j = r.json.render();
+        assert!(j.contains("\"recovered_to_start_threshold\": true"), "{j}");
+        assert!(r.duration >= Duration::from_millis(300));
+
+        // Memory never returns: the wait gives up at the bound and says so.
+        FREE.store(90, SeqCst);
+        let h = std::thread::spawn(|| {
+            std::thread::sleep(Duration::from_millis(100));
+            FREE.store(10, SeqCst);
+        });
+        c.settle_bound = Duration::from_millis(400);
+        let t0 = Instant::now();
+        let r = execute(&c, None);
+        h.join().unwrap();
+        assert!(t0.elapsed() < Duration::from_secs(5));
+        assert!(
+            r.json
+                .render()
+                .contains("\"recovered_to_start_threshold\": false")
+        );
+        FREE.store(90, SeqCst);
+    }
+
+    #[test]
+    fn stopping_a_bottle_selects_it_through_wineprefix() {
+        use std::os::unix::fs::PermissionsExt;
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!("bxrun-stop-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let log = dir.join("wineserver.log");
+        let ws = dir.join("wineserver");
+        std::fs::write(
+            &ws,
+            format!(
+                "#!/bin/sh\necho \"args=$* WINEPREFIX=$WINEPREFIX\" > '{}'\n",
+                log.display()
+            ),
+        )
+        .unwrap();
+        std::fs::set_permissions(&ws, std::fs::Permissions::from_mode(0o755)).unwrap();
+        stop_bottle(&dir.join("wine"), "my-bottle");
+        let got = std::fs::read_to_string(&log).unwrap();
+        assert!(got.contains("args=-k"), "{got}");
+        assert!(
+            got.contains("Bottles/my-bottle") || got.contains("/my-bottle"),
+            "{got}"
         );
     }
 }

@@ -96,3 +96,19 @@ Counts for this pass: 11 component groups reviewed; 1 integrated (adapted); 0 in
 - **PortWatch VI** (portwatch-vi.xyz): its own description says "leaked Xbox Series build of GTA VI". Reference for discovery only, unchanged.
 - **MacBox, ScarlettMac:** see above; unchanged.
 - **ossover CI** (`.github/workflows/ci.yml`): a macOS arm64 runner running `bash -n` over shell scripts, a standard-library Python manifest check with `python3 -I`, and `swift build`/`test`. The two cheap ideas (shell syntax check, isolated-interpreter script) match what `docs_hygiene.py` already does; a `bash -n` step for `scripts/hybrid/*.sh` is a candidate follow-up, not added.
+
+### Per-file authorship of victory-mac (measured with `git blame` at `22b3f8e45a59`)
+
+"Owned" means every line is attributed to skakwy. His permission covers these; it cannot cover lines written by others, and some owned files still carry other restrictions.
+
+| File (lines, all his) | What it is | Decision |
+| --- | --- | --- |
+| `crates/victory-shader/src/emit/f64.rs` (409) | fp64 by 64-bit integer operations, with tests against the CPU's `f64` | General-purpose. Candidate for the native shader compiler; native work is paused, so it waits for a maintainer decision (#387) |
+| `mac/run-victory.sh` (139), `crates/victory-core/src/notes.rs` (135) | Run script with memory guard; stall bookkeeping | Memory guard adapted (`guard`); stall detection and settle adapted in #385; the rest is game-specific launch configuration |
+| `mac/unixlib/*`, `crates/victory-gpu/src/alias.rs` (369), `zerocopy.rs` (365), `crates/victory-hle/src/modules/vmem.rs` (208) | Alias mappings and a Metal swizzle over game memory | Not integrated: they act on D3DMetal internals and game memory (Apple's licence section 2D forbids reverse engineering; his notes give D3DMetal struct offsets) |
+| `crates/victory-loader/src/maskmov.rs` (830), `masked_stores.rs` (243) | Rewrites masked AVX stores in a console title's image for Rosetta | Not integrated: the header says it follows XCL's `maskmov.rs`, which is GPL-2.0-only (incompatible with GPL-3.0-or-later), and it patches a title image |
+| `crates/victory-gpu/src/ambient.rs` (193), `mac/scan/*` | Replaces one game's lighting output; scans its shader pack | Not integrated: game-specific |
+| `crates/victory-gpu/src/dxc.rs` (110) | Loads Microsoft's `dxcompiler.dll` to compile HLSL under Wine | General-purpose. Not needed yet: D3D12 minimal tests can use SM 5.1 through `d3dcompiler_47`. Revisit when a workload needs SM 6 |
+| `tools/macos/gnullvm-cc.sh`, `mac/build.sh` | Windows cross-link wrapper, build wrapper | Evaluated; failed with Homebrew `llvm@17`; superseded by llvm-mingw |
+
+Everything else in the repository is mostly or entirely other authors' work (for example `victory-gpu/src/host.rs` is 8 % his, `victory-shader/src/emit/lower.rs` 1 %).

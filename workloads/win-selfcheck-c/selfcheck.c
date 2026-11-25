@@ -5,6 +5,8 @@
 // check passed; non-zero names the failing check. It touches no game data and no graphics.
 #include <stdint.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include <windows.h>
 
 static uint32_t crc32(const unsigned char *p, size_t n) {
@@ -23,7 +25,10 @@ static DWORD WINAPI bump(LPVOID arg) {
     return 0;
 }
 
-int main(void) {
+// `--sleep-silent <seconds>` sleeps before printing anything, to exercise stall detection in
+// the supervisor; the checks still run afterwards.
+int main(int argc, char **argv) {
+    if (argc > 2 && !strcmp(argv[1], "--sleep-silent")) Sleep((DWORD)atoi(argv[2]) * 1000u);
 #if defined(__x86_64__)
     const char *arch = "x86_64";
 #elif defined(__aarch64__)
