@@ -173,6 +173,9 @@ pub enum ExitReason {
     SimdException,
     /// A host service changed a register the Win64 ABI requires it to preserve.
     ServiceAbiViolation,
+    /// The guest ended its own process with this exit status. Only the guest
+    /// stops; the host keeps running.
+    ProcessExit(u32),
     /// A service has to wait; it had no effect and runs again later.
     GuestBlocked,
     /// A service completed and asked the scheduler for a turn.
@@ -194,6 +197,7 @@ impl fmt::Display for ExitReason {
             Self::DivideError => write!(f, "guest divide error"),
             Self::GeneralProtection => write!(f, "guest general-protection fault"),
             Self::SimdException => write!(f, "guest SIMD floating-point exception"),
+            Self::ProcessExit(status) => write!(f, "guest process exited with status {status}"),
             Self::ServiceAbiViolation => {
                 write!(f, "host service changed a nonvolatile guest register")
             }

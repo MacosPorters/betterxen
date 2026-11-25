@@ -91,6 +91,16 @@ struct Stream {
 }
 
 impl Winsock {
+    /// Sockets the guest has open.
+    pub(super) fn open_count(&self) -> usize {
+        self.sockets.len()
+    }
+
+    /// Process exit: every socket is closed.
+    pub(super) fn close_all(&mut self) {
+        self.sockets.clear();
+    }
+
     fn socket(&self, handle: u64) -> Result<&Socket, u32> {
         if self.refs == 0 {
             return Err(WSANOTINITIALISED);

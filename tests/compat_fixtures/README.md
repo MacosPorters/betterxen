@@ -66,3 +66,47 @@ enabled.
 The runner prints the guest's exit value and returns a nonzero host status
 for load or interpreter faults. The gate compares both outcomes. These
 fixtures exercise synthetic commands and local Apple Silicon readback.
+
+## Gate A1: a C program with no C library
+
+`gate_a1.c` is an original C program that links no C library. It imports
+twelve functions from `ucrtbase.dll` and eight from `kernel32.dll` by name,
+with prototypes written from the public Windows SDK and C standard
+declarations. It allocates and frees memory, sorts with a callback, does
+64-bit and double arithmetic, uses the C string functions, writes and reads
+files on the synthetic `C:` drive, checks two error paths, writes a text
+report and ends with `ExitProcess`.
+
+`build-gate-a1.sh [output directory]` builds it. `cargo test -p xenora-loader
+--test gate_a1` runs that script and then runs the result through
+`run_synthetic_startup`, the standard services and the DBT. No built
+executable is committed: the test builds from source every time, in CI too.
+
+Compiler configuration:
+
+| Step | Command |
+| --- | --- |
+| Compile | `clang --target=x86_64-pc-windows-msvc -O<level> -ffreestanding -fno-stack-protector -Wall -Wextra -Werror` |
+| Import libraries | `lld-link /lib /machine:x64 /def:<kernel32 or ucrtbase>.def` from the name lists in the script |
+| Link | `lld-link /entry:gate_entry /subsystem:console /nodefaultlib /timestamp:0` |
+
+It is built at `-O0`, `-O1`, `-O2` and `-Os`, and three more times at `-O1` as
+controls: `GATE_BREAK` (one wrong expectation), `GATE_RETURN` (the entry point
+returns its status) and `GATE_MISSING` (an import no service provides).
+
+Tools. `CLANG` defaults to Homebrew LLVM when it is installed and otherwise to
+the `clang` on `PATH`. `LLD_LINK` defaults to Homebrew `lld` when it is
+installed and otherwise to the `rust-lld` inside the active Rust toolchain,
+which is an LLD. On macOS the script requires both, and every library they
+load that is a file on disk, to be ARM64: it checks each tool with `file` and
+`lipo -archs`, and each library `otool -L` lists with `lipo -archs`, following
+the tool's own run paths. The script writes the versions it used to
+`toolchain.txt`, which the test prints, and what the native checks looked at to
+`toolchain-native.txt`. The test builds into a directory of its own for each
+test process under the Cargo target directory, so two runs that share a target
+directory do not overwrite each other's files; `cargo clean` removes them.
+
+Provenance. The source, the name lists and the script were written for Xenora
+and are GPL-3.0-or-later. Nothing from a Windows SDK, a C runtime or another
+project is compiled or linked. The compiler and linker are LLVM projects
+under the Apache License 2.0 with LLVM exceptions; they are tools, not inputs.

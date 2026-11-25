@@ -46,6 +46,11 @@ impl SyntheticFile {
             times: [now; 3],
         }
     }
+
+    /// The file's contents.
+    pub(super) fn data(&self) -> &[u8] {
+        &self.data
+    }
 }
 
 #[derive(Clone)]

@@ -66,8 +66,34 @@ returns owned words after command completion or a stage-specific error.
 fixture, guest memory addresses, a service registry and an entry instruction
 budget. It maps and rebases the image, binds imports, initializes thread-local
 storage, invokes its callbacks and runs the entry point. The fixture entry point
-uses a Win64-aligned stack and terminates with HLT. The result includes the loaded
-guest memory and the entry execution outcome.
+uses a Win64-aligned stack. It may end with HLT, call `ExitProcess`, or return.
+The result includes the loaded guest memory and the entry execution outcome.
+
+A guest ends its process through `kernel32.dll!ExitProcess`, also reachable as
+`api-ms-win-core-processthreads-l1-1-0.dll!ExitProcess`. Execution stops with
+`ExitReason::ProcessExit(status)`, where the status is the full 32-bit value
+the guest passed. Only the guest stops: the host process is not ended. A
+returning entry point does the same with EAX as the status, which matches
+Windows while the process has one thread. The exit closes every guest handle:
+kernel objects, Winsock sockets and task-queue handles, which
+`ServicesState::open_handle_count` counts together. Files stay on the synthetic `C:` drive, guest memory stays mapped so the host
+can inspect it, and `atexit` functions are not run: that belongs to the C
+runtime's `exit`, which is not implemented. `ServicesState::exit_status`
+reports the status. After an exit the `DbtEngine` that ran the guest executes
+no further guest instruction and answers every later `run` with the same
+`ProcessExit`. A service callback that was in progress is never resumed.
+
+A TLS callback may end the process too. Startup then reports the exit as its
+outcome, with the status, and runs neither the remaining callbacks nor the
+entry point; `StartupResult::tls_callbacks` counts the callbacks that finished.
+Any other stop inside a TLS callback is still a startup error.
+
+The engine recognises two return addresses, one under the entry point and one
+under a guest callback, before it executes anything at them. Both are in the
+4 KiB page at `imports::RETURN_SENTINEL_PAGE`, which startup reserves with no
+access. An image or layout that covers that page is refused, and a guest
+allocation there fails. The import trampolines above that page are intercepted
+in the same way and are not reserved.
 
 Loading an image maps its headers as well as its sections. The first
 `SizeOfHeaders` bytes of the file are mapped read-only at the image base, in

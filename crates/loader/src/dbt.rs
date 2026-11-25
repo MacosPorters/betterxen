@@ -48,6 +48,8 @@ pub struct DbtEngine {
     services: HashMap<u64, HostServiceFn>,
     pub import_registry: Option<crate::imports::ImportRegistry>,
     pub metrics: DbtMetrics,
+    /// Exit status of a guest that ended its process on this engine.
+    exited: Option<u32>,
 }
 
 impl DbtEngine {
@@ -62,6 +64,7 @@ impl DbtEngine {
             services: HashMap::new(),
             import_registry: None,
             metrics: DbtMetrics::default(),
+            exited: None,
         })
     }
 
@@ -79,6 +82,9 @@ impl DbtEngine {
     }
 
     /// Execute guest code starting at CPU RIP until HLT, budget exhaustion, or fault.
+    ///
+    /// Once the guest has ended its process, this engine executes nothing
+    /// further: every later call reports the same exit.
     pub fn run(
         &mut self,
         cpu: &mut CpuState,
@@ -101,7 +107,31 @@ impl DbtEngine {
         self.run_bounded(cpu, memory, max_instructions, false)
     }
 
+    /// Both entry points go through the process-exit latch: once the guest
+    /// process has exited, no guest instruction runs again, whichever guest
+    /// thread the caller tries to run.
     fn run_bounded(
+        &mut self,
+        cpu: &mut CpuState,
+        memory: &mut GuestMemory,
+        max_instructions: usize,
+        exact: bool,
+    ) -> ExecutionResult {
+        if let Some(status) = self.exited {
+            return ExecutionResult {
+                instructions_executed: 0,
+                final_state: cpu.clone(),
+                exit_reason: ExitReason::ProcessExit(status),
+            };
+        }
+        let result = self.execute(cpu, memory, max_instructions, exact);
+        if let ExitReason::ProcessExit(status) = result.exit_reason {
+            self.exited = Some(status);
+        }
+        result
+    }
+
+    fn execute(
         &mut self,
         cpu: &mut CpuState,
         memory: &mut GuestMemory,
