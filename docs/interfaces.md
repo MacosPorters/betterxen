@@ -78,10 +78,34 @@ Windows while the process has one thread. The exit closes every guest handle:
 kernel objects, Winsock sockets and task-queue handles, which
 `ServicesState::open_handle_count` counts together. Files stay on the synthetic `C:` drive, guest memory stays mapped so the host
 can inspect it, and `atexit` functions are not run: that belongs to the C
-runtime's `exit`, which is not implemented. `ServicesState::exit_status`
+runtime's `exit`, described below. `ServicesState::exit_status`
 reports the status. After an exit the `DbtEngine` that ran the guest executes
 no further guest instruction and answers every later `run` with the same
 `ProcessExit`. A service callback that was in progress is never resumed.
+
+A C program ends through the C runtime instead. `ucrtbase.dll` and
+`api-ms-win-crt-runtime-l1-1-0.dll` provide three ways out, each ending the
+guest with the same `ProcessExit` and the same cleanup as `ExitProcess`:
+
+| Service | Behaviour |
+| --- | --- |
+| `exit(status)` | Calls the functions registered with `atexit` and `_crt_atexit`, most recently registered first, then ends the process with `status` |
+| `_exit(status)` | Ends the process with `status` and calls no registered function |
+| `abort()` | Ends the process with exit code 3 and calls no registered function |
+
+`exit` takes one function at a time from the registered list. A function
+registered while `exit` runs is therefore called next, before the older ones
+that have not run yet, which is ISO C's rule. A registered function that calls
+`exit` again is undefined in ISO C; here the functions that have not run yet
+run once each and the process ends with the status of the later call.
+Functions that `_cexit` has already run are not run again.
+
+All three are partial. `exit` flushes no stream, because there are none, and
+runs no thread-local destructor. It does not walk a module's own `_onexit`
+table; that module's startup code runs it through `_execute_onexit_table`.
+`abort` prints no message and does not call a `SIGABRT` handler, which the
+documentation says it does when one is set. `_Exit`, `quick_exit` and
+`_c_exit` are not provided. None of this has been compared with Windows.
 
 A TLS callback may end the process too. Startup then reports the exit as its
 outcome, with the status, and runs neither the remaining callbacks nor the
@@ -450,8 +474,8 @@ The CRT uses this for:
   on the default guest heap, and they hold at most 65,536 entries. Execution
   resets the table first, then calls the functions in reverse order of
   registration. `atexit` and `_crt_atexit` record process exit functions,
-  which `_cexit` runs in reverse order. Process termination through `exit` is
-  not modeled.
+  which `_cexit` runs in reverse order and returns. `exit` runs them and
+  then ends the process; see "PE32+ fixture startup" above.
 
 Null comparators, null arrays with a nonzero count, and reversed or
 misaligned tables would reach the CRT invalid-parameter handler. That

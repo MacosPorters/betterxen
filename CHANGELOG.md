@@ -120,6 +120,8 @@ remains unsupported.
 
 - Added non-alertable extended event waits through both Win64 wait APIs.
 
+- Added the C runtime's `exit`, `_exit` and `abort` (#395, part of Gate A2), on top of the process exit from #329. A C program ends through `exit`, not `ExitProcess`, and a program built with the mingw-w64 runtime imports all three; the loader refused it before its entry point because they did not resolve. `exit` calls the functions registered with `atexit` and `_crt_atexit`, most recently registered first, and then ends the guest with `ExitReason::ProcessExit(status)`; `_exit` ends it with its status and `abort` with exit code 3, and neither calls a registered function. All three go through the same cleanup as `ExitProcess` and never end the host. A function registered while `exit` runs is called next, as ISO C requires; `exit` called again from a registered function, which ISO C leaves undefined, runs the remaining functions once and ends with the later status. All three are partial: no stream is flushed because there are none, `abort` prints no message and calls no `SIGABRT` handler, and thread-local destructors are not run. Nine tests in `crt_exit.rs` call them from guest code. `docs/testing/gate-a.md` now describes A2 as in progress and not passing. Not compared with Windows; awaiting independent review.
+
 - Added immediate wait-any and wait-all for guest event handles.
 
 - Added guest CRT signed and unsigned 64-bit conversions for narrow and wide strings.

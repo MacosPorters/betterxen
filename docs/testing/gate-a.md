@@ -8,7 +8,7 @@ when both pass.
 | Milestone | What it is | Status |
 | --- | --- | --- |
 | A1 | An original C program with no C library linked, importing documented `kernel32.dll` and `ucrtbase.dll` functions, run through the loader and the ARM64 DBT with proper process exit | Passes locally; awaiting independent review |
-| A2 | A hosted C program: a real C runtime startup, the standard C library, `argc` and `argv`, stdio and formatted output, normal exit and runtime cleanup | Not started |
+| A2 | A hosted C program: a real C runtime startup, the standard C library, `argc` and `argv`, stdio and formatted output, normal exit and runtime cleanup | In progress; does not pass |
 
 ## A1
 
@@ -47,7 +47,22 @@ whose entry point returns its status gives the same result as `ExitProcess`.
 
 ## A2
 
-Not started. It needs at least the C standard I/O functions, `exit` with
-`atexit` handlers, command-line and environment access, and a decision on
-which C runtime startup code may be linked and under what licence. None of
-those are registered today.
+In progress. It does not pass, and there is no A2 test in the repository yet.
+
+The target is an original C program built with the mingw-w64 runtime (UCRT),
+whose own startup code runs before `main`. Such a program needs pieces that
+are being added one issue at a time. This page records only what is in the
+tree it is part of:
+
+| Piece | State here |
+| --- | --- |
+| Normal exit: `exit` with its `atexit` functions, `_exit` and `abort` | Present (#395), on top of the process exit A1 added |
+| The PE headers mapped at the image base, which the startup code reads | Separate change (#333) |
+| `FNINIT`, the one instruction the startup code needs that was refused | Separate change (#378) |
+| The C runtime startup calls, and the functions a program imports but does not call | Separate changes (#382, #388) |
+| `argc`, `argv` and the environment table | Separate change (#392) |
+| Standard streams, files and formatted output | Not started |
+| The A2 program itself, its build and its test | Not started |
+
+Until the last two rows exist nothing here shows a hosted C program running,
+and A2 must not be reported as passing.
