@@ -3,9 +3,13 @@
 //! CRT calendar time against the injectable guest clock.
 //!
 //! `time` / `_time64` report Unix seconds derived from the same FILETIME clock
-//! as `GetSystemTimeAsFileTime`. `gmtime_s` / `localtime_s` and their 64-bit
-//! forms fill a Windows `tm` in UTC; there is no guest timezone database, so
-//! local time matches UTC and `tm_isdst` is always zero.
+//! as `GetSystemTimeAsFileTime`. `gmtime_s` / `localtime_s` and their explicit
+//! 64-bit forms fill a Windows `tm` in UTC; there is no guest timezone
+//! database, so local time matches UTC and `tm_isdst` is always zero.
+//!
+//! On 64-bit Windows `time_t` is 64 bits unless a program defines
+//! `_USE_32BIT_TIME_T` (Microsoft Learn, "time, _time32, _time64"), so the
+//! unsuffixed names here read and write 64-bit values, like the `64` forms.
 
 use super::ServicesState;
 use crate::cpu::ExitReason;
@@ -102,23 +106,14 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         Ok(now as u64)
     });
 
-    let time32 = Arc::clone(state);
+    let time = Arc::clone(state);
     registry.register(UCRT, "time", move |args, _, memory| {
-        let now = unix_from_filetime(time32.clock.now_filetime()).unwrap_or(0);
-        // 32-bit `time_t` saturates rather than wrapping past 2038.
-        let clipped = now.clamp(i32::MIN as i64, i32::MAX as i64) as i32;
-        if args.rcx != 0 {
-            memory.write_u32(args.rcx, clipped as u32).map_err(fault)?;
-        }
-        Ok(u64::from(clipped as u32))
+        let now = unix_from_filetime(time.clock.now_filetime()).unwrap_or(0);
+        store_time(memory, args.rcx, now)?;
+        Ok(now as u64)
     });
 
-    for (symbol, wide) in [
-        ("gmtime_s", false),
-        ("localtime_s", false),
-        ("_gmtime64_s", true),
-        ("_localtime64_s", true),
-    ] {
+    for symbol in ["gmtime_s", "localtime_s", "_gmtime64_s", "_localtime64_s"] {
         let clock = Arc::clone(state);
         registry.register(UCRT, symbol, move |args, cpu, memory| {
             let (tm, time_ptr) = (args.rcx, args.rdx);
@@ -126,11 +121,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 set_errno(memory, cpu.gs_base, EINVAL)?;
                 return Ok(u64::from(EINVAL));
             }
-            let unix = if wide {
-                memory.read_u64(time_ptr).map_err(fault)? as i64
-            } else {
-                memory.read_u32(time_ptr).map_err(fault)? as i32 as i64
-            };
+            let unix = memory.read_u64(time_ptr).map_err(fault)? as i64;
             let _ = clock; // timezone-free: local == UTC
             write_tm(memory, tm, unix)?;
             Ok(0)
@@ -210,5 +201,35 @@ mod tests {
         assert_eq!(memory.read_u32(tm + 16).unwrap(), 0); // mon
         assert_eq!(memory.read_u32(tm + 20).unwrap(), 70); // year
         assert_eq!(memory.read_u32(tm + 24).unwrap(), 4); // Thursday
+    }
+
+    #[test]
+    fn unsuffixed_time_names_use_a_64_bit_time_t() {
+        // 2040-01-01 00:00:00 UTC is past the 32-bit range.
+        let unix: u64 = 2_208_988_800;
+        let filetime = (SECS_1601_TO_1970 + unix) * FILETIME_TICKS_PER_SEC;
+        let state = Arc::new(ServicesState::new(Arc::new(MockClock::new(filetime))));
+        let mut registry = ImportRegistry::new();
+        register(&mut registry, &state);
+        let mut memory = GuestMemory::new();
+        let mut cpu = CpuState {
+            gs_base: 0x10000,
+            ..CpuState::default()
+        };
+        let slot = memory.map_heap_allocation(PROCESS_HEAP, 8).unwrap();
+        memory.write_u64(slot, u64::MAX).unwrap();
+        let returned = call(&registry, "time", [slot, 0, 0, 0], &mut cpu, &mut memory);
+        assert_eq!(returned, unix);
+        assert_eq!(memory.read_u64(slot).unwrap(), unix);
+        let tm = memory.map_heap_allocation(PROCESS_HEAP, 36).unwrap();
+        for symbol in ["gmtime_s", "localtime_s"] {
+            assert_eq!(
+                call(&registry, symbol, [tm, slot, 0, 0], &mut cpu, &mut memory),
+                0
+            );
+            assert_eq!(memory.read_u32(tm + 12).unwrap(), 1); // mday
+            assert_eq!(memory.read_u32(tm + 16).unwrap(), 0); // January
+            assert_eq!(memory.read_u32(tm + 20).unwrap(), 140); // 2040 - 1900
+        }
     }
 }

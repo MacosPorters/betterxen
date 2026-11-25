@@ -324,15 +324,18 @@ process environment is not visible unless an entry is installed here.
 `time`, `_time64`, `gmtime_s`, `localtime_s`, `_gmtime64_s` and
 `_localtime64_s` use the injectable guest clock (the same FILETIME source as
 `GetSystemTimeAsFileTime`). There is no guest timezone database: local time
-matches UTC and `tm_isdst` is always zero. 32-bit `time` saturates at the
-2038 bounds rather than wrapping.
+matches UTC and `tm_isdst` is always zero. Every one of these reads and
+writes a 64-bit `time_t`: on 64-bit Windows the unsuffixed names are 64-bit
+unless a program defines `_USE_32BIT_TIME_T` (Microsoft Learn, "time, _time32,
+_time64").
 
 ### CRT `rand`
 
-`srand`, `rand` and `rand_s` use the publicly documented MSVC LCG
+`srand` and `rand` use the publicly documented MSVC LCG
 (`seed = seed * 214013 + 2531011`, return `(seed >> 16) & 0x7fff`). The seed is
-process-wide. `rand_s` writes that 15-bit value into a guest `unsigned int`;
-it is not a CSPRNG.
+process-wide. `rand_s` has its own state (SplitMix64) and fills all 32 bits of
+a guest `unsigned int`, so it never moves the `rand` sequence. It is
+deterministic and not a CSPRNG.
 
 ### Process-local Winsock UDP and TCP loopback
 

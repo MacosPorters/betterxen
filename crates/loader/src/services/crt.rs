@@ -1035,6 +1035,18 @@ fn next_rand(seed: &std::sync::atomic::AtomicU32) -> u32 {
     produced
 }
 
+/// SplitMix64 (Steele, Lea and Flood, "Fast splittable pseudorandom number
+/// generators", 2014), truncated to its high 32 bits for `rand_s`.
+fn next_rand_s(state: &std::sync::atomic::AtomicU64) -> u32 {
+    let seed = state
+        .fetch_add(0x9E37_79B9_7F4A_7C15, Ordering::SeqCst)
+        .wrapping_add(0x9E37_79B9_7F4A_7C15);
+    let mut z = seed;
+    z = (z ^ (z >> 30)).wrapping_mul(0xBF58_476D_1CE4_E5B9);
+    z = (z ^ (z >> 27)).wrapping_mul(0x94D0_49BB_1331_11EB);
+    ((z ^ (z >> 31)) >> 32) as u32
+}
+
 pub(super) fn register_rand(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     let srand = Arc::clone(state);
     registry.register(UCRT, "srand", move |args, _, _| {
@@ -1051,9 +1063,10 @@ pub(super) fn register_rand(registry: &mut ImportRegistry, state: &Arc<ServicesS
             set_errno(memory, cpu.gs_base, EINVAL)?;
             return Ok(u64::from(EINVAL));
         }
-        // Fill a guest `unsigned int` with 15 bits of LCG output in the low
-        // half, matching `rand`, rather than claiming CSPRNG strength.
-        let value = next_rand(&rand_s.crt_rand);
+        // `rand_s` yields any value from 0 to UINT_MAX and does not use the
+        // `srand` seed (Microsoft Learn, "rand_s"). This is a deterministic
+        // generator with its own state, not a cryptographic one.
+        let value = next_rand_s(&rand_s.crt_rand_s);
         memory
             .write_u32(args.rcx, value)
             .map_err(ExitReason::MemoryFault)?;
@@ -1125,6 +1138,19 @@ fn srand_rand_match_msvc_lcg_sequence() {
     assert_eq!(call("rand", 0, &mut cpu, &mut memory), 41);
     assert_eq!(call("rand", 0, &mut cpu, &mut memory), 18_467);
     assert_eq!(call("rand", 0, &mut cpu, &mut memory), 6_334);
+
+    // rand_s neither reads nor moves the rand sequence, and uses all 32 bits.
+    let slot = memory
+        .map_heap_allocation(crate::memory::PROCESS_HEAP, 4)
+        .unwrap();
+    assert_eq!(call("srand", 1, &mut cpu, &mut memory), 0);
+    let mut high_bits = 0u32;
+    for _ in 0..8 {
+        assert_eq!(call("rand_s", slot, &mut cpu, &mut memory), 0);
+        high_bits |= memory.read_u32(slot).unwrap() & !0x7fff;
+    }
+    assert_ne!(high_bits, 0);
+    assert_eq!(call("rand", 0, &mut cpu, &mut memory), 41);
 }
 
 #[cfg(test)]

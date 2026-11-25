@@ -700,7 +700,26 @@ fn register_loopback(registry: &mut ImportRegistry, state: &Arc<ServicesState>) 
                 let socket = net.sockets.get_mut(&args.rcx).expect("validated socket");
                 let (source, data) = socket.pending.front().ok_or(WSAEWOULDBLOCK)?;
                 let copied = (length as usize).min(data.len());
+                let mut address = [0; 16];
+                // Check every output pointer before taking the datagram, so a
+                // bad pointer reports WSAEFAULT and leaves it queued.
+                if from != 0 {
+                    if fromlen == 0 {
+                        return Err(WSAEFAULT);
+                    }
+                    let capacity = memory.read_u32(fromlen).map_err(|_| WSAEFAULT)? as i32;
+                    if capacity < address.len() as i32 {
+                        return Err(WSAEFAULT);
+                    }
+                    memory
+                        .check_write(from, address.len())
+                        .map_err(|_| WSAEFAULT)?;
+                    memory.check_write(fromlen, 4).map_err(|_| WSAEFAULT)?;
+                }
                 if copied != 0 {
+                    memory
+                        .check_write(args.rdx, copied)
+                        .map_err(|_| WSAEFAULT)?;
                     memory
                         .write_bytes(args.rdx, &data[..copied])
                         .map_err(|_| WSAEFAULT)?;
@@ -709,18 +728,6 @@ fn register_loopback(registry: &mut ImportRegistry, state: &Arc<ServicesState>) 
                 let source = *source;
                 socket.pending.pop_front();
                 if from != 0 {
-                    if fromlen == 0 {
-                        return Err(WSAEFAULT);
-                    }
-                    let capacity = memory.read_u32(fromlen).map_err(|_| WSAEFAULT)? as i32;
-                    let mut address = [0; 16];
-                    if capacity < address.len() as i32 {
-                        return Err(WSAEFAULT);
-                    }
-                    memory
-                        .check_write(from, address.len())
-                        .map_err(|_| WSAEFAULT)?;
-                    memory.check_write(fromlen, 4).map_err(|_| WSAEFAULT)?;
                     address[..2].copy_from_slice(&2_u16.to_le_bytes());
                     address[2..4].copy_from_slice(&source.to_be_bytes());
                     address[4..8].copy_from_slice(&[127, 0, 0, 1]);
@@ -1207,7 +1214,9 @@ fn loopback_datagrams_preserve_boundaries_and_reject_external_addresses() {
         4
     );
     memory.write_u64(0x1900, 0x1a00).unwrap(); // from buffer ptr slot unused; pass from/fromlen
-    memory.write_u32(0x1b00, 16).unwrap();
+    // A `fromlen` too small for a sockaddr_in fails with WSAEFAULT and leaves
+    // the datagram queued for the next call.
+    memory.write_u32(0x1b00, 8).unwrap();
     cpu.set(Register::Rcx, server);
     cpu.set(Register::Rdx, 0x1400);
     cpu.set(Register::R8, 4);
@@ -1217,6 +1226,15 @@ fn loopback_datagrams_preserve_boundaries_and_reject_external_addresses() {
     let descriptor = registry
         .resolve(MODULE, &ImportName::Name("recvfrom".into()))
         .unwrap();
+    assert_eq!(
+        (descriptor.handler)(&Win64Args::new(&cpu), &mut cpu, &mut memory).unwrap(),
+        SOCKET_ERROR
+    );
+    assert_eq!(
+        call(&mut memory, "WSAGetLastError", &[]),
+        u64::from(WSAEFAULT)
+    );
+    memory.write_u32(0x1b00, 16).unwrap();
     assert_eq!(
         (descriptor.handler)(&Win64Args::new(&cpu), &mut cpu, &mut memory).unwrap(),
         4

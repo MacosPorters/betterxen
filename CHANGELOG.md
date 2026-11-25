@@ -33,6 +33,9 @@ remains unsupported.
 - Extended the read-only RDNA2 planning CLI (`python3 -m qa rdna2`) with family/status filters, compact summaries, Codex-ready manifests under `artifacts/`, active-claim exclusion (family claims exclude those families; path-only claims block overlapping permitted files), coverage reconcile against `semantic_coverage` without inflating counts, and inventory diffs. Covered by `tests/qa/test_rdna2_plan.py`; planning only, no GPU production edits.
 
 ### Fixed
+- CRT `time`, `gmtime_s` and `localtime_s` now use a 64-bit `time_t`, as 64-bit Windows does by default. Before, `time(&t)` wrote only the low half of `t`, so dates came out wrong.
+- CRT `rand_s` no longer shares the `rand`/`srand` state and now fills all 32 bits. It is deterministic, not a cryptographic generator.
+- Winsock `recvfrom` checks the `from`, `fromlen` and buffer pointers before taking a datagram, so a bad pointer returns `WSAEFAULT` and the datagram stays queued.
 - The import metadata classified `strtod`, `strtof` and `wcstod` as native libc calls with an identical ABI and `atof`/`_wtof` as stubs; they are now runtime services.
 - The import metadata classified `ungetc` as a native libc call with an identical ABI, although it takes a guest `FILE*`; it is now a runtime service.
 - The import metadata mapped `labs` and `ldiv` to the host libc as identical-ABI calls, but Windows `long` is 32 bits and macOS `long` is 64 bits; the integer functions are now runtime services. The generated `abs`/`labs` adapter no longer panics on the minimum integer. `crates/import-gen/tests/pipeline.rs` now exercises the adapter path through a test-only native entry, because no built-in symbol uses it any more.

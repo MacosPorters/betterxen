@@ -240,6 +240,9 @@ pub struct ServicesState {
     env: Mutex<crt_env::EnvState>,
     /// Seed for the CRT `rand` / `srand` LCG (process-wide, like UCRT).
     crt_rand: AtomicU32,
+    /// State for `rand_s`, kept apart from `crt_rand` so that `rand_s` never
+    /// moves the `rand` sequence.
+    crt_rand_s: AtomicU64,
     winsock_changed: Condvar,
     pub next_alloc_addr: AtomicU64,
     pub graphics: Arc<Mutex<crate::graphics::GraphicsContext>>,
@@ -276,6 +279,7 @@ impl ServicesState {
             stdio: Mutex::default(),
             env: Mutex::default(),
             crt_rand: AtomicU32::new(1),
+            crt_rand_s: AtomicU64::new(0x5845_4E4F_5241_5F53),
             winsock_changed: Condvar::new(),
             next_alloc_addr: AtomicU64::new(0x0000_0002_0000_0000), // 8GB guest heap
             graphics: Arc::new(Mutex::new(crate::graphics::GraphicsContext::new())),
