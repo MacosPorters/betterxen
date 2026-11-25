@@ -2,6 +2,7 @@
 
 //! Verified compilation for Xenora's synthetic compute and graphics ABIs.
 
+use std::collections::HashMap;
 use std::fmt::{self, Write};
 
 mod graphics;
@@ -34,8 +35,8 @@ pub struct CompiledShader {
 /// Optional translation passes applied after verification.
 ///
 /// Default options preserve the historical IR shape: constants from scalar
-/// evaluation and immediates remain, but pure vector expressions between
-/// constants are not rewritten.
+/// evaluation and immediates remain, pure vector expressions between
+/// constants are not rewritten, and duplicate pure expressions are not reused.
 #[derive(Clone, Copy, Debug, Default, PartialEq, Eq)]
 pub struct CompileOptions {
     /// Replace pure vector unary/binary ops whose operands are already
@@ -43,6 +44,12 @@ pub struct CompileOptions {
     /// the existing exact positive-normal rules accept the result. Loads,
     /// stores, lane masks, merges and branches are never folded.
     pub fold_constants: bool,
+    /// Reuse the first result of an equivalent pure vector unary or binary
+    /// expression. Equivalence is the same operation and the same operand
+    /// values in the same order; constant operands compare by bit pattern.
+    /// Loads, stores, constants, lane masks, merges, branches and other
+    /// mask-dependent or side-effecting ops are never reused.
+    pub eliminate_common_subexpressions: bool,
 }
 
 #[derive(Debug)]
@@ -155,6 +162,9 @@ enum Op {
         fallthrough: Value,
         taken: Value,
     },
+    /// The value is the earlier pure result `source`. The definition index stays
+    /// so later operands do not need renumbering.
+    Reuse(Value),
 }
 
 impl Op {
@@ -186,6 +196,7 @@ impl Op {
                 fallthrough,
                 taken,
             } => vec![mask, fallthrough, taken],
+            Self::Reuse(source) => vec![source],
         }
     }
 
@@ -262,6 +273,7 @@ impl Op {
                     _ => unreachable!("not a VCC arithmetic operation"),
                 }
             }
+            Self::Reuse(source) => name(source),
             Self::Store(_)
             | Self::ScalarBranch { .. }
             | Self::CarryMask { .. }
@@ -303,7 +315,7 @@ fn compare_expression(op: VectorCompareOp, left: &str, right: &str) -> String {
     }
 }
 
-#[derive(Clone, Copy)]
+#[derive(Clone, Copy, PartialEq, Eq)]
 enum Binary {
     FloatAdd,
     FloatMul,
@@ -506,6 +518,11 @@ pub fn compile_with(
     if options.fold_constants {
         fold_constant_ops(&mut operations);
     }
+    // Fold first so a constant expression is `const.u32` before reuse. CSE does
+    // not fold, and it does not turn those constants back into arithmetic.
+    if options.eliminate_common_subexpressions {
+        eliminate_common_subexpressions(&mut operations);
+    }
 
     let disassembly = decoded.iter().map(|line| format!("{line}\n")).collect();
     let mut ir = String::new();
@@ -684,6 +701,10 @@ pub fn compile_with(
             Op::Store(value) => (
                 format!("store.u32 output[index], {value}"),
                 format!("output[index] = {value};"),
+            ),
+            Op::Reuse(source) => (
+                format!("{dest} = reuse.u32 {source}"),
+                format!("uint {dest} = {source};"),
             ),
         };
         // Writing to a String is infallible.
@@ -1487,6 +1508,153 @@ fn lift(decoded: &[DecodedInstruction], code_len: usize) -> Result<Vec<(usize, O
         offset: code_len,
         reason: "missing program termination",
     })
+}
+
+/// Reuse the first equivalent pure vector unary or binary.
+///
+/// Equivalence is the operation plus its operand values in order. Constant
+/// operands match by bit pattern, so two temps folded to the same `const.u32`
+/// compare equal. That match only selects reuse: an op that is kept keeps
+/// its own constant operands, so a shader with no repeat compiles unchanged.
+/// Loads, stores, the constant definitions themselves, lane masks, merges,
+/// branches and other mask-dependent or side-effecting ops are never
+/// candidates. A reused definition stays at its index as `reuse.u32`.
+fn eliminate_common_subexpressions(operations: &mut [(usize, Op)]) {
+    let mut expr_alias = vec![None; operations.len()];
+    let mut const_bits: HashMap<u32, usize> = HashMap::new();
+    let mut seen: Vec<(PureExpr, usize)> = Vec::new();
+
+    for index in 0..operations.len() {
+        let current = operations[index].1;
+        if let Op::Constant(bits) = current {
+            const_bits.entry(bits).or_insert(index);
+            continue;
+        }
+        let canonical = match current {
+            Op::Unary(operator, source) => Op::Unary(
+                operator,
+                equivalent_value(&expr_alias, &const_bits, operations, source),
+            ),
+            Op::Binary(operator, left, right) => Op::Binary(
+                operator,
+                equivalent_value(&expr_alias, &const_bits, operations, left),
+                equivalent_value(&expr_alias, &const_bits, operations, right),
+            ),
+            other => other,
+        };
+        let rewritten = map_uses(current, |value| reused_value(&expr_alias, value));
+        if let Some(key) = pure_expr(canonical) {
+            if let Some(&(_, first)) = seen.iter().find(|(seen_key, _)| *seen_key == key) {
+                expr_alias[index] = Some(first);
+                operations[index].1 = Op::Reuse(Value(first));
+                continue;
+            }
+            seen.push((key, index));
+        }
+        operations[index].1 = rewritten;
+    }
+}
+
+fn reused_value(expr_alias: &[Option<usize>], value: Value) -> Value {
+    match expr_alias.get(value.0).and_then(|slot| *slot) {
+        Some(index) => Value(index),
+        None => value,
+    }
+}
+
+/// SSA value to use when matching a pure expression. Follows a reuse edge, then
+/// the earliest constant with the same bits.
+fn equivalent_value(
+    expr_alias: &[Option<usize>],
+    const_bits: &HashMap<u32, usize>,
+    operations: &[(usize, Op)],
+    value: Value,
+) -> Value {
+    let root = reused_value(expr_alias, value);
+    match operations.get(root.0).map(|(_, operation)| *operation) {
+        Some(Op::Constant(bits)) => const_bits.get(&bits).copied().map(Value).unwrap_or(root),
+        _ => root,
+    }
+}
+
+fn map_uses(operation: Op, map: impl Fn(Value) -> Value) -> Op {
+    match operation {
+        Op::Load | Op::Constant(_) | Op::ScalarBranch { .. } => operation,
+        Op::Binary(operator, left, right) => Op::Binary(operator, map(left), map(right)),
+        Op::Unary(operator, source) => Op::Unary(operator, map(source)),
+        Op::MergeLanes {
+            mask,
+            active,
+            inactive,
+        } => Op::MergeLanes {
+            mask,
+            active: map(active),
+            inactive: map(inactive),
+        },
+        Op::Store(value) => Op::Store(map(value)),
+        Op::VccArithmetic {
+            primitive,
+            left,
+            right,
+            mask,
+            flag,
+        } => Op::VccArithmetic {
+            primitive,
+            left: map(left),
+            right: map(right),
+            mask: map(mask),
+            flag,
+        },
+        Op::CarryMask { flag, exec } => Op::CarryMask {
+            flag: map(flag),
+            exec,
+        },
+        Op::LaneMask {
+            op,
+            name,
+            sdst,
+            src0,
+            src1,
+            high,
+            exec,
+        } => Op::LaneMask {
+            op,
+            name,
+            sdst,
+            src0: map(src0),
+            src1: map(src1),
+            high: high.map(|(left, right)| (map(left), map(right))),
+            exec,
+        },
+        Op::RuntimeBranch { mask, target } => Op::RuntimeBranch {
+            mask: map(mask),
+            target,
+        },
+        Op::JoinVccz {
+            mask,
+            fallthrough,
+            taken,
+        } => Op::JoinVccz {
+            mask: map(mask),
+            fallthrough: map(fallthrough),
+            taken: map(taken),
+        },
+        Op::Reuse(source) => Op::Reuse(map(source)),
+    }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+enum PureExpr {
+    Unary(VectorUnary, usize),
+    Binary(Binary, usize, usize),
+}
+
+fn pure_expr(operation: Op) -> Option<PureExpr> {
+    match operation {
+        Op::Unary(operator, source) => Some(PureExpr::Unary(operator, source.0)),
+        Op::Binary(operator, left, right) => Some(PureExpr::Binary(operator, left.0, right.0)),
+        _ => None,
+    }
 }
 
 /// Replace pure constant expressions with `Op::Constant` in place.
