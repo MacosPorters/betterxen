@@ -291,6 +291,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         let mut data = [0; WSADATA_SIZE];
         data[..2].copy_from_slice(&negotiated.to_le_bytes());
         data[2..4].copy_from_slice(&VERSION.to_le_bytes());
+        // Keep the legacy guest-visible description for fixture compatibility.
+
         let description = b"Xenora synthetic Winsock";
         data[16..16 + description.len()].copy_from_slice(description);
         if args.rdx == 0 || memory.write_bytes(args.rdx, &data).is_err() {

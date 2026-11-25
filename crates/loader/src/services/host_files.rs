@@ -128,8 +128,9 @@ impl HostMount {
     /// move the mount.
     ///
     /// For production, use a dedicated directory containing only guest files.
-    /// Never mount the host root or a sensitive directory. Set explicit byte
-    /// and entry quotas with [Self::with_quota] for writable mounts.
+    /// Writable mounts reject the host root. Keep sensitive directories
+    /// outside the mount and set explicit byte and entry quotas with
+    /// [Self::with_quota] for writable mounts.
     pub fn new(drive: char, root: &Path, writable: bool) -> io::Result<Self> {
         let drive = drive.to_ascii_lowercase();
         if !('d'..='z').contains(&drive) {
@@ -157,6 +158,18 @@ impl HostMount {
         let st = status(root.as_fd())?;
         if st.st_mode & libc::S_IFMT != libc::S_IFDIR {
             return Err(io::Error::from_raw_os_error(libc::ENOTDIR));
+        }
+        if writable {
+            // Compare the opened directory's identity so equivalent path
+            // spellings receive the same decision.
+            let host_root = File::open("/")?;
+            let host_root = status(host_root.as_fd())?;
+            if (st.st_dev, st.st_ino) == (host_root.st_dev, host_root.st_ino) {
+                return Err(io::Error::new(
+                    io::ErrorKind::PermissionDenied,
+                    "the host root cannot be mounted writable",
+                ));
+            }
         }
         Ok(Self {
             drive: drive as u8,
@@ -876,6 +889,19 @@ mod tests {
             used: Mutex::default(),
         };
         assert_eq!(unlimited.resize(0, u64::MAX), Ok(()));
+    }
+
+    #[test]
+    fn writable_mount_rejects_host_root_and_equivalent_paths() {
+        for path in ["/", "/."] {
+            match HostMount::new('d', Path::new(path), true) {
+                Ok(_) => panic!("writable host root should be rejected: {path}"),
+                Err(error) => assert_eq!(error.kind(), io::ErrorKind::PermissionDenied),
+            }
+        }
+        let path = tree("safe-writable-root");
+        assert!(HostMount::new('d', &path, true).is_ok());
+        std::fs::remove_dir_all(path).unwrap();
     }
 
     #[test]

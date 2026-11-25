@@ -743,9 +743,9 @@ asynchronous I/O remain outside this subset.
 letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Without
 a mount, nothing on the host is reachable through these services. Mounts are
 read-only unless created writable. For production, use a dedicated directory
-containing only files intended for the guest. Never mount the host root
-(`/`) or a sensitive tree such as a home directory, credentials directory,
-or system directory. Set explicit byte and entry quotas with
+containing only files intended for the guest. Writable mounts reject the host
+root (`/`). Keep sensitive trees such as home, credentials, and system
+directories outside the mount. Set explicit byte and entry quotas with
 `HostMount::with_quota` on writable mounts.
 
 The partial `GetFileAttributesExA/W` services return attributes and 64-bit
