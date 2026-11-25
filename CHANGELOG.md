@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Added
+- Added branch-loop and checked split-memory workloads to `dbt_bench` (#80). Each workload validates interpreter, cold DBT and cached DBT results before reporting timing and cache metrics.
 - Rewrote the README around the six development phases and the first-launchable-application target (#311), with colour-coded Mermaid diagrams (system flow, milestone roadmap, CPU, runtime-service and shader-form charts built from the generated registries), badges, a repository overview, a contributing section and corrected texture-sampling wording. The older X1–X25 capability map is kept in a collapsible section. The diagrams were not render-tested locally.
 - Added a fast "Repository hygiene" check (`.github/workflows/hygiene.yml`, `scripts/audit/docs_hygiene.py`). It runs on Ubuntu without a Rust toolchain or network access and fails only on merge-conflict markers, broken relative Markdown links and invalid workflow YAML in tracked files. A separate advisory step warns, without failing, when source or script changes have no changelog entry. A local run over the 626 tracked files found no problems, and planted failures of each kind were caught; it has not yet run on GitHub.
 - Documented the proposed guest AVX/AVX2 state and decoding contract and specified an original integer fixture with known results and fault controls (#299).

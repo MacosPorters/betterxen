@@ -2,6 +2,10 @@
 
 //! Synthetic interpreter and DBT timings.
 //!
+//! Set `XENORA_DBT_BENCH_WORKLOAD` to `branch_loop` or `checked_memory`
+//! to exercise taken branches or loads and stores spanning adjacent guest
+//! mappings. The default is `add_rax_chain`.
+//!
 //! Set `XENORA_DBT_BENCH_JSON=<path>` to also write the results as one JSON
 //! document (format version 1). The text output does not change. Values the
 //! benchmark cannot determine, such as the git revision outside a checkout,
@@ -24,7 +28,7 @@ use std::hint::black_box;
 use std::time::{Duration, Instant};
 use xenora_loader::cpu::{CpuState, ExecutionResult, ExitReason, Interpreter, Register};
 use xenora_loader::dbt::{DbtEngine, DbtMetrics};
-use xenora_loader::memory::MemoryPermissions;
+use xenora_loader::memory::{GuestMemory, MemoryPermissions};
 use xenora_loader::pe::{
     IMAGE_FILE_MACHINE_AMD64, IMAGE_SCN_MEM_EXECUTE, IMAGE_SCN_MEM_READ, PE32_PLUS_MAGIC, ParsedPe,
 };
@@ -101,11 +105,105 @@ const ADDS: usize = 10_000;
 const INSTRUCTIONS: usize = ADDS + 2;
 const BUDGET: usize = 20_000;
 const STACK_TOP: u64 = 0x2000_8000;
+const DEFAULT_WORKLOAD: &str = "add_rax_chain";
+const DATA_BASE: u64 = 0x3000_0000;
+const DATA_ADDRESS: u64 = DATA_BASE + 0x0ffc;
 
-fn check(result: ExecutionResult) {
-    assert_eq!(result.exit_reason, ExitReason::Halt);
-    assert_eq!(result.instructions_executed, INSTRUCTIONS);
-    assert_eq!(result.final_state.get(Register::Rax), ADDS as u64);
+struct Workload {
+    name: &'static str,
+    code: Vec<u8>,
+    instructions: usize,
+    expected_rax: u64,
+    expected_memory: Option<u64>,
+}
+
+impl Workload {
+    fn named(name: &str) -> Option<Self> {
+        const ITERATIONS: usize = 3_333;
+        const MEMORY_SEED: u32 = 7;
+        const ADD_RAX_ONE: [u8; 4] = [0x48, 0x83, 0xc0, 0x01];
+
+        let (name, mut code, instructions, expected_rax, expected_memory) = match name {
+            DEFAULT_WORKLOAD => {
+                let mut code = vec![0x48, 0xb8, 0, 0, 0, 0, 0, 0, 0, 0]; // mov rax, 0
+                for _ in 0..ADDS {
+                    code.extend_from_slice(&ADD_RAX_ONE);
+                }
+                (DEFAULT_WORKLOAD, code, INSTRUCTIONS, ADDS as u64, None)
+            }
+            "branch_loop" => {
+                let mut code = vec![0xb9]; // mov ecx, ITERATIONS
+                code.extend_from_slice(&(ITERATIONS as u32).to_le_bytes());
+                code.extend_from_slice(&ADD_RAX_ONE);
+                code.extend_from_slice(&[0xff, 0xc9]); // dec ecx
+                code.extend_from_slice(&[0x75, 0xf8]); // jnz back to add rax, 1
+                (
+                    "branch_loop",
+                    code,
+                    2 + 3 * ITERATIONS,
+                    ITERATIONS as u64,
+                    None,
+                )
+            }
+            "checked_memory" => {
+                let mut code = vec![0x48, 0xc7, 0x07]; // mov qword ptr [rdi], MEMORY_SEED
+                code.extend_from_slice(&MEMORY_SEED.to_le_bytes());
+                for _ in 0..ITERATIONS {
+                    code.extend_from_slice(&[0x48, 0x8b, 0x07]); // mov rax, [rdi]
+                    code.extend_from_slice(&ADD_RAX_ONE);
+                    code.extend_from_slice(&[0x48, 0x89, 0x07]); // mov [rdi], rax
+                }
+                let result = u64::from(MEMORY_SEED) + ITERATIONS as u64;
+                (
+                    "checked_memory",
+                    code,
+                    2 + 3 * ITERATIONS,
+                    result,
+                    Some(result),
+                )
+            }
+            _ => return None,
+        };
+        code.push(0xf4); // hlt
+        Some(Self {
+            name,
+            code,
+            instructions,
+            expected_rax,
+            expected_memory,
+        })
+    }
+
+    fn load(&self) -> (CpuState, GuestMemory) {
+        let pe_bytes = build_pe(&self.code);
+        let parsed = ParsedPe::parse(&pe_bytes).unwrap();
+        let mut loaded = parsed.load_into_memory(&pe_bytes).unwrap();
+        loaded
+            .memory
+            .map_region(0x2000_0000, 0x10000, MemoryPermissions::READ_WRITE)
+            .unwrap();
+        let mut cpu = CpuState::new(loaded.entry_point, STACK_TOP);
+        if self.expected_memory.is_some() {
+            for base in [DATA_BASE, DATA_BASE + 0x1000] {
+                loaded
+                    .memory
+                    .map_region(base, 0x1000, MemoryPermissions::READ_WRITE)
+                    .unwrap();
+            }
+            cpu.set(Register::Rdi, DATA_ADDRESS);
+        }
+        (cpu, loaded.memory)
+    }
+
+    fn check(&self, result: ExecutionResult, memory: &GuestMemory) {
+        assert_eq!(result.exit_reason, ExitReason::Halt);
+        assert_eq!(result.instructions_executed, self.instructions);
+        assert_eq!(result.final_state.get(Register::Rax), self.expected_rax);
+        assert_eq!(result.final_state.get(Register::Rcx), 0);
+        if let Some(expected) = self.expected_memory {
+            assert_eq!(memory.read_u64(DATA_ADDRESS).unwrap(), expected);
+        }
+    }
 }
 
 fn percentile(sorted: &[Duration], fraction: f64) -> Duration {
@@ -129,7 +227,7 @@ struct Summary {
     mips: f64,
 }
 
-fn summarize(samples: &mut [Duration]) -> Summary {
+fn summarize(samples: &mut [Duration], guest_instructions: usize) -> Summary {
     samples.sort_unstable();
     let median = percentile(samples, 0.50);
     Summary {
@@ -140,7 +238,7 @@ fn summarize(samples: &mut [Duration]) -> Summary {
         p95: percentile(samples, 0.95),
         p99: percentile(samples, 0.99),
         iqr: percentile(samples, 0.75) - percentile(samples, 0.25),
-        mips: INSTRUCTIONS as f64 / median.as_secs_f64() / 1_000_000.0,
+        mips: guest_instructions as f64 / median.as_secs_f64() / 1_000_000.0,
     }
 }
 
@@ -163,6 +261,8 @@ struct RunInfo {
     dirty: Option<bool>,
     debug_assertions: bool,
     build_label: Option<String>,
+    workload: &'static str,
+    guest_instructions: usize,
     guest_code_bytes: usize,
     warmup: usize,
 }
@@ -178,7 +278,7 @@ fn command_output(program: &str, args: &[&str]) -> Option<String> {
     Some(String::from_utf8(output.stdout).ok()?.trim().to_owned())
 }
 
-fn run_info(guest_code_bytes: usize, warmup: usize) -> RunInfo {
+fn run_info(workload: &Workload, warmup: usize) -> RunInfo {
     let non_empty = |value: Option<String>| value.filter(|v| !v.is_empty());
     RunInfo {
         unix_time: std::time::SystemTime::now()
@@ -197,7 +297,9 @@ fn run_info(guest_code_bytes: usize, warmup: usize) -> RunInfo {
             .map(|status| !status.is_empty()),
         debug_assertions: cfg!(debug_assertions),
         build_label: non_empty(std::env::var("XENORA_DBT_BENCH_BUILD_LABEL").ok()),
-        guest_code_bytes,
+        workload: workload.name,
+        guest_instructions: workload.instructions,
+        guest_code_bytes: workload.code.len(),
         warmup,
     }
 }
@@ -292,8 +394,8 @@ fn json_document(
         (
             "workload",
             json_object(&[
-                ("name", json_string("add_rax_chain")),
-                ("guest_instructions", INSTRUCTIONS.to_string()),
+                ("name", json_string(info.workload)),
+                ("guest_instructions", info.guest_instructions.to_string()),
                 ("guest_code_bytes", info.guest_code_bytes.to_string()),
                 ("instruction_budget", BUDGET.to_string()),
                 ("warmup_rounds", info.warmup.to_string()),
@@ -803,20 +905,16 @@ fn main() {
     let warmup_count = std::env::var("XENORA_DBT_BENCH_WARMUP")
         .map_or(10, |value| value.parse::<usize>().expect("warmup count"));
 
-    let mut code = vec![0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0]; // mov rax, 0
-    for _ in 0..ADDS {
-        code.extend_from_slice(&[0x48, 0x83, 0xC0, 0x01]); // add rax, 1
-    }
-    code.push(0xF4); // hlt
-
-    let pe_bytes = build_pe(&code);
-    let parsed = ParsedPe::parse(&pe_bytes).unwrap();
-    let mut loaded = parsed.load_into_memory(&pe_bytes).unwrap();
-    loaded
-        .memory
-        .map_region(0x2000_0000, 0x10000, MemoryPermissions::READ_WRITE)
-        .unwrap();
-    let initial_cpu = CpuState::new(loaded.entry_point, STACK_TOP);
+    let selected =
+        std::env::var_os("XENORA_DBT_BENCH_WORKLOAD").unwrap_or_else(|| DEFAULT_WORKLOAD.into());
+    let Some(workload) = selected.to_str().and_then(Workload::named) else {
+        eprintln!(
+            "dbt_bench: unknown workload {}. Choose add_rax_chain, branch_loop or checked_memory.",
+            selected.to_string_lossy()
+        );
+        std::process::exit(2);
+    };
+    let (initial_cpu, mut memory) = workload.load();
     let mut interpreter = Vec::with_capacity(sample_count);
     let mut cold = Vec::with_capacity(sample_count);
     let mut warm = Vec::with_capacity(sample_count);
@@ -825,31 +923,33 @@ fn main() {
     for record in
         std::iter::repeat_n(false, warmup_count).chain(std::iter::repeat_n(true, sample_count))
     {
-        let mut interp = Interpreter::new(initial_cpu.clone(), &mut loaded.memory, BUDGET);
+        let mut interp = Interpreter::new(initial_cpu.clone(), &mut memory, BUDGET);
         let start = Instant::now();
         let result = black_box(interp.run());
         let interpreter_time = start.elapsed();
-        check(result);
+        workload.check(result, &memory);
 
         let mut dbt = DbtEngine::new(4 * 1024 * 1024).unwrap();
         let mut cpu = initial_cpu.clone();
         let start = Instant::now();
-        let result = black_box(dbt.run(&mut cpu, &mut loaded.memory, BUDGET));
+        let result = black_box(dbt.run(&mut cpu, &mut memory, BUDGET));
         let cold_time = start.elapsed();
-        check(result);
+        workload.check(result, &memory);
         assert!(dbt.metrics.blocks_compiled > 0);
-        assert_eq!(dbt.metrics.cache_hits, 0);
         assert_eq!(dbt.metrics.cache_misses, dbt.metrics.blocks_compiled);
         let metrics = dbt.metrics;
 
         let mut cpu = initial_cpu.clone();
         let start = Instant::now();
-        let result = black_box(dbt.run(&mut cpu, &mut loaded.memory, BUDGET));
+        let result = black_box(dbt.run(&mut cpu, &mut memory, BUDGET));
         let warm_time = start.elapsed();
-        check(result);
+        workload.check(result, &memory);
         assert_eq!(dbt.metrics.blocks_compiled, metrics.blocks_compiled);
-        assert_eq!(dbt.metrics.cache_hits, dbt.metrics.blocks_compiled);
-        assert_eq!(dbt.metrics.cache_misses, dbt.metrics.blocks_compiled);
+        assert_eq!(dbt.metrics.cache_misses, metrics.cache_misses);
+        assert_eq!(
+            dbt.metrics.cache_hits - metrics.cache_hits,
+            dbt.metrics.dbt_dispatches - metrics.dbt_dispatches
+        );
 
         if record {
             interpreter.push(interpreter_time);
@@ -859,7 +959,13 @@ fn main() {
         }
     }
 
-    println!("{INSTRUCTIONS} guest instructions per sample, final RAX={ADDS}");
+    if workload.name != DEFAULT_WORKLOAD {
+        println!("Workload: {}", workload.name);
+    }
+    println!(
+        "{} guest instructions per sample, final RAX={}",
+        workload.instructions, workload.expected_rax
+    );
     println!("{warmup_count} warmup rounds excluded (XENORA_DBT_BENCH_WARMUP, default 10)");
     println!(
         "Cold DBT includes translation with a fresh engine; warm DBT reuses that engine's cache."
@@ -868,9 +974,9 @@ fn main() {
         "Percentiles describe this synthetic workload on this host; tail estimates vary with sample count."
     );
     println!("Even sample counts use the midpoint of the two middle values for the median.");
-    let interpreter = summarize(&mut interpreter);
-    let cold = summarize(&mut cold);
-    let warm = summarize(&mut warm);
+    let interpreter = summarize(&mut interpreter, workload.instructions);
+    let cold = summarize(&mut cold, workload.instructions);
+    let warm = summarize(&mut warm, workload.instructions);
     println!("{}", report_line("Interpreter", &interpreter));
     println!("{}", report_line("Cold DBT", &cold));
     println!("{}", report_line("Warm DBT", &warm));
@@ -881,7 +987,7 @@ fn main() {
     );
 
     if let Some(path) = std::env::var_os("XENORA_DBT_BENCH_JSON") {
-        let info = run_info(code.len(), warmup_count);
+        let info = run_info(&workload, warmup_count);
         let document = json_document(&info, &interpreter, &cold, &warm, &metrics);
         std::fs::write(&path, document + "\n").expect("write XENORA_DBT_BENCH_JSON");
         println!("JSON results written to {}", path.to_string_lossy());
@@ -890,6 +996,39 @@ fn main() {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn branch_and_memory_workloads_match_known_results() {
+        use super::{BUDGET, DATA_ADDRESS, DbtEngine, Interpreter, Workload};
+
+        for (name, rax, stored) in [
+            ("branch_loop", 3_333, None),
+            ("checked_memory", 3_340, Some(3_340)),
+        ] {
+            let workload = Workload::named(name).unwrap();
+            assert_eq!(workload.instructions, 10_001);
+            assert_eq!(workload.expected_rax, rax);
+            assert_eq!(workload.expected_memory, stored);
+
+            let (cpu, mut memory) = workload.load();
+            let mut engine = DbtEngine::new(4 * 1024 * 1024).unwrap();
+            let result = Interpreter::new(cpu.clone(), &mut memory, BUDGET).run();
+            workload.check(result, &memory);
+
+            for _ in 0..2 {
+                if stored.is_some() {
+                    // Each run must reinitialize the word instead of using the previous result.
+                    memory.write_u64(DATA_ADDRESS, u64::MAX).unwrap();
+                }
+                let result = engine.run(&mut cpu.clone(), &mut memory, BUDGET);
+                workload.check(result, &memory);
+            }
+
+            if name == "branch_loop" {
+                assert!(engine.metrics.cache_hits > workload.instructions / 2);
+            }
+        }
+    }
+
     #[test]
     fn single_sample_has_no_spread() {
         use super::{Duration, percentile};
@@ -972,6 +1111,8 @@ mod tests {
                 dirty: Some(false),
                 debug_assertions: false,
                 build_label: Some("fat-lto".to_owned()),
+                workload: super::DEFAULT_WORKLOAD,
+                guest_instructions: super::INSTRUCTIONS,
                 guest_code_bytes: 40_011,
                 warmup: 10,
             }
@@ -1049,7 +1190,7 @@ mod tests {
         use super::{Duration, INSTRUCTIONS, summarize};
 
         let mut samples = [100, 10, 30, 20].map(Duration::from_micros);
-        let s = summarize(&mut samples);
+        let s = summarize(&mut samples, INSTRUCTIONS);
         assert_eq!(s.samples, 4);
         assert_eq!(s.median, Duration::from_micros(25));
         assert_eq!(s.min, Duration::from_micros(10));
@@ -1187,7 +1328,9 @@ mod tests {
             dirty: Some(true),
             debug_assertions: true,
             build_label: Some("é label".to_owned()),
-            guest_code_bytes: 5,
+            workload: "branch_loop",
+            guest_instructions: 10_001,
+            guest_code_bytes: 14,
             warmup: 2,
         };
         let metrics = DbtMetrics {
@@ -1203,6 +1346,11 @@ mod tests {
         assert_eq!(doc.get("build.label").cloned(), string("é label"));
         assert_eq!(doc.get("host.os_version"), Some(&Json::Null));
         assert_eq!(doc.get("source.dirty"), Some(&Json::Bool(true)));
+        assert_eq!(doc.get("workload.name").cloned(), string("branch_loop"));
+        assert_eq!(
+            doc.get("workload.guest_instructions"),
+            Some(&Json::Number("10001".to_owned()))
+        );
         assert_eq!(
             doc.get("timings.cold_dbt.median_ns"),
             Some(&Json::Number("1234567".to_owned()))
