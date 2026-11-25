@@ -365,19 +365,27 @@ impl DbtEngine {
         let mut emitter = Emitter {
             asm,
             fault_guards: Vec::new(),
+            stored: false,
         };
         for (index, insn) in insns.iter().enumerate() {
             let native = is_native(insn);
+            emitter.stored = false;
             if native {
                 emitter.lower(insn, index, flags_live_after(&insns, index));
+                debug_assert!(
+                    !emitter.stored || stores_natively(insn),
+                    "flag liveness must know every lowered store: {insn:?}"
+                );
             } else {
                 emitter.call_semantics(insn, index);
             }
             // A write to executable memory may have rewritten a later
             // instruction of this block, so end the block once this one has
-            // committed everything. The last instruction ends it anyway. The
-            // shared semantics may store for any form, so they always check.
-            if index + 1 < insns.len() && (!native || stores_natively(insn)) {
+            // committed everything. The last instruction ends it anyway. A
+            // lowered instruction checks only if it called a store helper, so
+            // loads such as `mov eax, [rdi]` or `cmp [rdi], eax` pay nothing.
+            // The shared semantics may store for any form, so they always check.
+            if index + 1 < insns.len() && (!native || emitter.stored) {
                 emit_code_write_guard(
                     emitter.asm,
                     &mut emitter.fault_guards,
@@ -386,7 +394,9 @@ impl DbtEngine {
                 );
             }
         }
-        let Emitter { asm, fault_guards } = emitter;
+        let Emitter {
+            asm, fault_guards, ..
+        } = emitter;
 
         if !insns.last().is_some_and(|insn| insn.op.is_terminator()) {
             // End of basic block quota, update RIP.
@@ -597,6 +607,9 @@ fn flags_live_after(insns: &[Insn], index: usize) -> bool {
 struct Emitter<'a> {
     asm: &'a mut Arm64Assembler,
     fault_guards: Vec<usize>,
+    /// Set when lowering the current instruction emitted a call to a store
+    /// helper. Only such instructions need the code-write check.
+    stored: bool,
 }
 
 impl Emitter<'_> {
@@ -721,6 +734,7 @@ impl Emitter<'_> {
                 self.asm.mov_reg_64(X2, xs);
                 self.effective_address(&operand, true);
                 self.call_helper(store_helper(insn.rm_size));
+                self.stored = true;
                 self.guard(insn, completed);
             }
             None => {}
@@ -850,6 +864,7 @@ impl Emitter<'_> {
         self.asm
             .ldr_uoff_64(X1, X19, reg_offset(Register::Rsp as u8));
         self.call_helper(push_helper as *const () as u64);
+        self.stored = true;
         self.guard(insn, completed);
         self.asm
             .str_uoff_64(X0, X19, reg_offset(Register::Rsp as u8));
@@ -1111,6 +1126,7 @@ impl Emitter<'_> {
                     write_aligned_u128_helper as *const ()
                 };
                 self.call_helper(helper as u64);
+                self.stored = true;
                 self.guard(insn, completed);
             }
             Some(RmOperand::Mem(_)) => {
@@ -1333,15 +1349,10 @@ impl Emitter<'_> {
     }
 }
 
-/// Emit the post-helper fault check for a translated memory access.
-///
-/// The helper records a fault in the block context instead of unwinding through
-/// the native frame. This guard lets translated code observe that flag, restore
-/// nothing (no architectural effect may have been committed yet), report the
-/// number of fully executed instructions, point guest RIP at the faulting
-/// instruction, and jump to the shared epilogue.
 /// Whether a lowered `insn` may store to guest memory: an explicit memory
-/// operand, a stack push or a call.
+/// operand, a stack push or a call. This is a static superset of the forms
+/// whose lowering calls a store helper (`Emitter::stored`), so flag liveness
+/// can rely on it before the instruction is lowered.
 fn stores_natively(insn: &Insn) -> bool {
     insn.memory().is_some() || matches!(insn.op, Op::Push | Op::Call)
 }
@@ -1367,6 +1378,13 @@ fn emit_code_write_guard(
     asm.patch_cbz_64(skip, X5, resume as i32 - skip as i32);
 }
 
+/// Emit the post-helper fault check for a translated memory access.
+///
+/// The helper records a fault in the block context instead of unwinding through
+/// the native frame. This guard lets translated code observe that flag, restore
+/// nothing (no architectural effect may have been committed yet), report the
+/// number of fully executed instructions, point guest RIP at the faulting
+/// instruction, and jump to the shared epilogue.
 fn emit_fault_guard(
     asm: &mut Arm64Assembler,
     guards: &mut Vec<usize>,

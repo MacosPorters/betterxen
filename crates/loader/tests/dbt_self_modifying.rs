@@ -24,6 +24,7 @@ const DATA: u64 = 0x50_0000;
 const RAX: usize = 0;
 const RCX: usize = 1;
 const RBX: usize = 3;
+const RSP: usize = 4;
 
 fn memory(code: &[u8]) -> GuestMemory {
     let mut bytes = vec![0xF4; CODE_LEN];
@@ -62,10 +63,19 @@ fn code_bytes(memory: &GuestMemory) -> Vec<u8> {
 /// Runs `code` with each budget in turn on the interpreter and on one DBT engine,
 /// checks that the two agree after every slice, and returns the DBT's results.
 fn run_both(code: &[u8], budgets: &[usize]) -> (Vec<ExecutionResult>, GuestMemory, DbtEngine) {
+    run_both_from(code, cpu(), budgets)
+}
+
+/// [`run_both`] from a given starting state.
+fn run_both_from(
+    code: &[u8],
+    start: CpuState,
+    budgets: &[usize],
+) -> (Vec<ExecutionResult>, GuestMemory, DbtEngine) {
     let mut reference_memory = memory(code);
     let mut dbt_memory = memory(code);
-    let mut reference_cpu = cpu();
-    let mut dbt_cpu = cpu();
+    let mut reference_cpu = start.clone();
+    let mut dbt_cpu = start;
     let mut engine = DbtEngine::new(256 * 1024).unwrap();
     let mut results = Vec::new();
     for &budget in budgets {
@@ -231,4 +241,153 @@ fn a_data_store_does_not_end_the_block() {
     assert_eq!(result.final_state.gpr[RAX], 0x11);
     assert_eq!(engine.metrics.dbt_dispatches, 1);
     assert_eq!(engine.metrics.blocks_invalidated, 0);
+}
+
+/// `push rax` stores the eight bytes `B8 2A 00 00 00 90 90 90` (`mov eax, 0x2A`
+/// and three NOPs) over `mov eax, 0x11; nop; nop; nop` later in the same block.
+/// RSP starts on the code page, so the push writes CODE + 0x0C to CODE + 0x13.
+#[test]
+fn a_push_over_a_later_instruction_in_the_block_is_executed() {
+    let code = [
+        // 0: mov rax, 0x9090_9000_0000_2AB8
+        0x48, 0xB8, 0xB8, 0x2A, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90, //
+        0x50, // 10: push rax -> writes CODE + 0x0C..0x13
+        0x90, // 11: nop
+        0xB8, 0x11, 0x00, 0x00, 0x00, // 12: mov eax, 0x11
+        0x90, 0x90, 0x90, // 17: nop; nop; nop
+        0xF4, // 20: hlt
+    ];
+    let mut start = cpu();
+    start.gpr[RSP] = CODE + 0x14;
+    let (results, memory, engine) = run_both_from(&code, start, &[64]);
+    let result = &results[0];
+    assert_eq!(
+        &code_bytes(&memory)[0x0C..0x14],
+        &[0xB8, 0x2A, 0x00, 0x00, 0x00, 0x90, 0x90, 0x90]
+    );
+    assert_eq!(result.exit_reason, ExitReason::Halt);
+    // mov, push, nop, mov, three nops, hlt.
+    assert_eq!(result.instructions_executed, 8);
+    assert_eq!(result.final_state.gpr[RAX], 0x2A, "the pushed code ran");
+    assert_eq!(result.final_state.gpr[RSP], CODE + 0x0C);
+    assert_eq!(result.final_state.rip, CODE + 0x15);
+    assert_eq!(engine.metrics.dbt_dispatches, 2);
+}
+
+/// `movups [rip+2], xmm0` stores sixteen bytes over `mov eax, 0x11` and the
+/// eleven NOPs after it in the same block. XMM0 holds `mov eax, 0x2A` and NOPs.
+#[test]
+fn a_128_bit_store_over_a_later_instruction_in_the_block_is_executed() {
+    let mut code = vec![
+        0x0F, 0x11, 0x05, 0x02, 0x00, 0x00, 0x00, // 0: movups [rip+2], xmm0 -> CODE + 9
+        0x90, 0x90, // 7: nop; nop
+        0xB8, 0x11, 0x00, 0x00, 0x00, // 9: mov eax, 0x11
+    ];
+    code.extend([0x90; 11]); // 14: eleven nops, to CODE + 0x18
+    code.push(0xF4); // 25: hlt
+    let mut new_code = [0x90; 16];
+    new_code[..5].copy_from_slice(&[0xB8, 0x2A, 0x00, 0x00, 0x00]);
+    let mut start = cpu();
+    start.xmm[0] = u128::from_le_bytes(new_code);
+    let (results, memory, engine) = run_both_from(&code, start, &[64]);
+    let result = &results[0];
+    assert_eq!(&code_bytes(&memory)[9..25], &new_code);
+    assert_eq!(result.exit_reason, ExitReason::Halt);
+    // movups, two nops, mov, eleven nops, hlt.
+    assert_eq!(result.instructions_executed, 16);
+    assert_eq!(result.final_state.gpr[RAX], 0x2A, "the stored code ran");
+    assert_eq!(engine.metrics.dbt_dispatches, 2);
+}
+
+/// Control: CALL always ends its block, so the return address it pushes can
+/// only rewrite another block. Here it lands one byte into the target, turning
+/// `mov eax, 0x11111111; nop x4` into `mov eax, 0x400005` (the return address)
+/// followed by two `add byte ptr [rax], al`, which add 5 twice to the `hlt` at
+/// CODE + 5. The next dispatch translates the new bytes.
+#[test]
+fn a_call_that_rewrites_its_target_runs_the_new_code() {
+    let mut code = vec![0xE8, 0x0B, 0x00, 0x00, 0x00]; // 0: call CODE + 0x10
+    code.extend([0xF4; 11]); // 5: hlt, never reached
+    code.extend([0xB8, 0x11, 0x11, 0x11, 0x11]); // 16: mov eax, 0x11111111
+    code.extend([0x90; 4]); // 21: four nops
+    code.push(0xF4); // 25: hlt
+    let mut start = cpu();
+    start.gpr[RSP] = CODE + 0x19;
+    let (results, memory, _) = run_both_from(&code, start, &[64]);
+    let result = &results[0];
+    let bytes = code_bytes(&memory);
+    // The return address CODE + 5 = 0x400005, little-endian, at CODE + 0x11.
+    assert_eq!(
+        &bytes[0x11..0x19],
+        &[0x05, 0x00, 0x40, 0x00, 0x00, 0x00, 0x00, 0x00]
+    );
+    assert_eq!(bytes[5], 0xF4 + 5 + 5);
+    assert_eq!(result.exit_reason, ExitReason::Halt);
+    // call, mov, two adds, hlt.
+    assert_eq!(result.instructions_executed, 5);
+    assert_eq!(result.final_state.gpr[RAX], 0x40_0005);
+    assert_eq!(result.final_state.gpr[RSP], CODE + 0x11);
+}
+
+/// Times one translated loop body, as the median of `runs` whole runs after a
+/// warm-up run. Not a pass/fail check: run it on a revision with and without
+/// a change and compare, as in the #291 pull request.
+fn median_loop_time(body: &[u8], iterations: u32, runs: usize) -> std::time::Duration {
+    // mov ecx, iterations; mov edi, DATA; loop: body; dec ecx; jnz loop; hlt
+    let mut code = vec![0xB9];
+    code.extend(iterations.to_le_bytes());
+    code.push(0xBF);
+    code.extend((DATA as u32).to_le_bytes());
+    let top = code.len();
+    code.extend(body);
+    code.extend([0xFF, 0xC9, 0x0F, 0x85]); // dec ecx; jnz rel32
+    let rel = top as i64 - (code.len() as i64 + 4);
+    code.extend((rel as i32).to_le_bytes());
+    code.push(0xF4);
+    let mut engine = DbtEngine::new(256 * 1024).unwrap();
+    let mut times = Vec::new();
+    for run in 0..=runs {
+        let mut memory = memory(&code);
+        let mut cpu = cpu();
+        let started = std::time::Instant::now();
+        let result = engine.run(&mut cpu, &mut memory, usize::MAX);
+        let elapsed = started.elapsed();
+        assert_eq!(result.exit_reason, ExitReason::Halt);
+        if run > 0 {
+            times.push(elapsed);
+        }
+    }
+    times.sort();
+    times[times.len() / 2]
+}
+
+/// Reproducible timing for the cost of the code-write check (#291): a loop with
+/// one data store per iteration, and one with two memory loads and no store,
+/// each one dispatch of a short block per iteration, so per-dispatch costs
+/// show up fully. Compare revisions by running both alternately on an idle
+/// machine; the medians can shift between runs.
+///
+/// ```sh
+/// cargo test --release -p xenora-loader --test dbt_self_modifying -- \
+///     --ignored --nocapture --test-threads=1 code_write_check_timing
+/// ```
+#[test]
+#[ignore = "timing report, not a correctness check"]
+fn code_write_check_timing() {
+    let store = [
+        0x89, 0x07, // mov [rdi], eax
+        0x01, 0xD8, // add eax, ebx
+        0x31, 0xD3, // xor ebx, edx
+        0x01, 0xC2, // add edx, eax
+    ];
+    let loads = [
+        0x8B, 0x07, // mov eax, [rdi]
+        0x03, 0x5F, 0x08, // add ebx, [rdi + 8]
+        0x31, 0xD3, // xor ebx, edx
+        0x01, 0xC2, // add edx, eax
+    ];
+    for (name, body) in [("one store", &store[..]), ("two loads", &loads[..])] {
+        let median = median_loop_time(body, 100_000, 41);
+        println!("{name}: median {median:?} for 100000 iterations, 41 runs");
+    }
 }
