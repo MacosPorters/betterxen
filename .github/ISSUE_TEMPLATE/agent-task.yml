@@ -7,8 +7,9 @@ body:
     id: area
     attributes:
       label: Area
-      description: "cpu: translation, DBT, PE loading, guest startup, guest memory. gpu: RDNA2, shaders, Metal. runtime: Win32, CRT, C++ runtime, import generation, OS services, platform abstractions. shared: cross-subsystem interfaces. qa: verification, regression, security review."
+      description: "hybrid: CrossOver integration, configuration, diagnostics, benchmarks (active). The areas below are preserved native research unless hybrid work requires them. cpu: translation, DBT, PE loading, guest startup, guest memory. gpu: RDNA2, shaders, Metal. runtime: Win32, CRT, C++ runtime, import generation, OS services, platform abstractions. shared: cross-subsystem interfaces. qa: verification, regression, security review."
       options:
+        - hybrid
         - cpu
         - gpu
         - runtime
@@ -43,7 +44,7 @@ body:
     id: files
     attributes:
       label: Files
-      description: Paths the task may edit, one per line: exact paths, directories ending in "/", or globs with * and **. Two claimed tasks never overlap.
+      description: 'Paths the task may edit, one per line: exact paths, directories ending in "/", or globs with * and **. Two claimed tasks never overlap.'
       render: text
     validations:
       required: true

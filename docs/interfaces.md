@@ -141,6 +141,31 @@ pages count toward the 256 MiB mapping budget of one image, which is checked
 before anything is mapped. `ParsedPe::parse` does not make these checks, so
 static inspection of a file is unchanged.
 
+`betterxen run --experimental --pe <trusted-fixture> --startup-report <path>`
+writes a versioned JSON summary after the worker stops. The supervisor creates the new report path before launching the worker.
+The report is optional and uses the same exact-byte fixture admission, startup
+observer and wall deadline as an ordinary run.
+
+Schema version 1 lists the observed stages in order in `stages` and copies
+the last valid stage to `last_completed_stage` (null if none). The order is
+`parsed`, `mapped`, `relocated`, `imports_bound`, `tls_completed`, `entry`,
+`exit`, and `framebuffer`. `entry` records the handoff to guest entry.
+`exit` records the fixture halt, and `framebuffer` records verification of its
+offscreen readback. The supervisor reports an `outcome` of `verified`,
+`stage_failure`, `early_exit`, `timeout`, or `unknown`. It includes the
+worker exit code when available, termination detail when applicable, and the
+original reported error when available. Errors are capped at 2 KiB of UTF-8
+and carry an `error_truncated` flag.
+
+The supervisor reads at most 8 KiB plus one byte from the worker journal.
+`record_integrity` reports `complete`, `truncated`, `malformed`, `oversized`,
+`unreadable`, or `unwritable`. Worker exit codes 124 and 125 are reserved for
+its watchdog and journal I/O errors, respectively. `--startup-journal` is an
+internal worker option. Only the valid ordered prefix counts toward progress. A
+complete journal may still contain only a partial startup if the worker
+stopped between records. These records describe runtime observations from
+the trusted fixtures.
+
 `betterxen probe --mode static` inventories ordinary and delay-loaded PE imports
 without guest execution. Without `--report` it writes to `diagnostics/probe`,
 where `betterxen imports sync` also looks. `missing_imports.csv` lists unresolved ordinary keys

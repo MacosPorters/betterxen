@@ -1,0 +1,57 @@
+name: Hybrid engineering task
+description: Integration, configuration, diagnostics or tooling around CrossOver.
+title: "task: "
+labels: [track: hybrid]
+body:
+  - type: markdown
+    attributes:
+      value: 'Active work is the CrossOver-based hybrid architecture (docs/roadmap.md). Use independently authored or authorized workloads only; never link leaked builds, confidential SDKs or private documentation. Claim by replying on the issue.'
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: 'What is missing or wrong, and why it matters for the hybrid architecture.'
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Technical context
+      description: 'Versions (macOS, chip, CrossOver, Rosetta 2, graphics backend), related issues, upstream references.'
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: 'What is in and out. Avoid duplicating what CrossOver already provides.'
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: "Blocking issues or decisions; write 'none' if none."
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: 'Observable, checkable results.'
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation requirements
+      description: 'How an independent contributor verifies it; commands, workloads, evidence class.'
+    validations:
+      required: true
+  - type: textarea
+    id: licensing
+    attributes:
+      label: Licensing and provenance
+      description: "Licenses of any component involved, source and version, and whether anything would be bundled or copied. Write 'not applicable' if none."
+    validations:
+      required: true

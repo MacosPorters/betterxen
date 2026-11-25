@@ -1,40 +1,60 @@
 # BetterXen engineering rules
 
-### Native Apple Silicon
+These rules apply to every contributor and coding agent. They were rewritten on the `planning/hybrid-first-transition` branch when BetterXen moved from native-first to CrossOver-based hybrid development. `CLAUDE.md` is a symlink to this file. The decision is recorded in `docs/adr/0005-crossover-hybrid-direction.md`; the plan is `docs/roadmap.md`.
 
-Never introduce Rosetta 2, x86-64 host executables, MoltenVK, Vulkan runtime dependencies, Wine, CrossOver, Windows compatibility layers, OpenGL fallback rendering, or unnecessary graphics abstraction layers.
+### Direction
 
-- SPIR-V is permitted as a compiler intermediate representation. It does not justify a Vulkan runtime.
-- All host executables and native dependencies must support ARM64. Verify with file, lipo -archs and otool -L.
-- Never run Intel binaries through Rosetta, even temporarily. Never add a dependency that requires Rosetta to build or run. If a dependency cannot run natively, find an alternative or document the limitation.
-- The guest architecture being decoded may be x86-64, but BetterXen itself runs natively on ARM64.
+- BetterXen is hybrid-first Apple Silicon compatibility research. **CrossOver is the primary compatibility foundation and hybrid is the only active development direction.** CrossOver is an externally installed dependency unless its license explicitly permits another distribution model.
+- BetterXen's own work is the layer around it: integration, configuration, environment management, diagnostics, reproducible testing, benchmarking and measured optimization. Reuse established infrastructure before writing an independent replacement; write one only for a demonstrated limitation.
+- The independent native implementation (x86-64 decoder, ARM64 translator, runtime, gfx1030 shader compiler, Metal backend) is **preserved and paused**. Do not delete it, expand its roadmap, create speculative native issues or assign contributors to it by default. Native work is allowed only when hybrid development directly requires it, or after an explicit maintainer decision to resume (`docs/research/native-roadmap.md`). Keep its tests passing.
+- This is the intended architecture, not a verified Xbox compatibility stack. Do not assume CrossOver, Rosetta 2 or D3DMetal provide Xbox runtime compatibility; verify the actual capabilities and integration boundaries of the installed versions.
+
+### Planning
+
+- Planning is progressive. Only the current phase has a milestone and open issues; the roadmap outlines later phases provisionally and `Parked ideas` holds future items. Do not create speculative issues, trackers or milestones for distant phases; promote an idea when its prerequisites are met.
+- Every new issue states a specific problem, the evidence it is needed, a deliverable, upstream references, a reuse assessment, dependencies, acceptance criteria and a validation method. Do not create administrative issues to manage planning.
+- Do not open native-only issues. If hybrid work needs a native component, file a focused hybrid issue.
+
+### Dependencies and reuse
+
+- Wine-based compatibility infrastructure, CrossOver, Rosetta 2 where supported and technically appropriate, and D3DMetal (subject to its license terms) are permitted. DXMT, DXVK, VKD3D-Proton, MoltenVK, FEX and similar projects may be evaluated and used where appropriate. Legitimate external dependencies and open-source implementations are encouraged.
+- Before integrating or copying anything: verify the exact license of the component (the file for copied source, not just the repository), check compatibility with GPL-3.0-or-later and with every other selected component, preserve copyright notices, record the source repository and exact commit or version, document modifications, and add the entry to `docs/research/upstream-registry.md` and `docs/research/component-reuse-matrix.md`. If licensing is uncertain, do not use it until resolved. Never remove upstream notices.
+- Do not bundle, modify or redistribute proprietary components (CrossOver binaries, D3DMetal, Rosetta 2, Apple tools) unless their license explicitly allows it. Do not assume a proprietary component can be incorporated into GPL-licensed source. Distinguish open-source parts from proprietary parts in every assessment.
+- Do not bypass licensing or activation requirements of any dependency.
+- Provenance first: exclude anything derived from leaked proprietary material or unauthorized software. A project's license being GPL does not clear material it was built from or for. Projects whose stated purpose depends on leaked or unauthorized builds, including VIctory, its forks and similar efforts, are discovery references at documentation level; adopt nothing from them without a per-file provenance and license review recorded in the registry. Game-specific, asset-specific and decryption-related code is never adopted.
+
+### Native Apple Silicon host
+
+- BetterXen's own host executables, libraries and tools must support ARM64 natively; verify with file, lipo -archs and otool -L. Do not add x86-64 host executables that BetterXen itself builds or ships.
+- Rosetta 2 may be used where Apple supports it and CrossOver or another selected component relies on it for x86-64 guest code. Record versions and its support status; do not depend on it for BetterXen's own code.
 - Support M1 through M5 and future generations through runtime capability detection. Do not assume all Apple GPUs share capabilities.
-- Use aarch64-apple-darwin as the Rust target.
+- Use aarch64-apple-darwin as the Rust target. Metal is the host graphics API. Do not add graphics abstraction layers beyond what a selected component or a measured need justifies.
+- SPIR-V remains permitted as a compiler intermediate representation.
 
 ### Honesty and evidence
 
 - Never report a test as passed unless it ran and passed. Never count a skipped test as GPU verification.
-- Never invent benchmark results, hardware compatibility, API names, instruction encodings, hardware capabilities or implementation status.
+- Never invent benchmark results, hardware compatibility, API names, instruction encodings, hardware capabilities, interface details, product capabilities or implementation status. Never promise a performance improvement before measuring it.
 - Never claim a clean build unless the commands actually succeeded.
 - Never present planned features as working. State clearly that game execution is not supported unless demonstrated.
 - Never replace GPU tests with mocks and then claim GPU support.
-- Unknown information is classified as unknown and becomes a documented research task.
-- Every hardware claim carries an evidence class (section 9). Never present a lower-class claim as if it were a higher-class one.
+- Unknown information is classified as unknown and becomes a documented research task. Facts about CrossOver, Rosetta 2, D3DMetal and other upstreams must cite vendor or upstream documentation, or a recorded observation of a stated version.
+- Every hardware claim carries an evidence class (see docs/claims.toml). Never present a lower-class claim as if it were a higher-class one.
 - Never claim "verified on Xbox hardware". BetterXen has no Xbox hardware access. Agreement with a spec-derived reference is not agreement with Xbox hardware, and docs must say so.
 - Do not hide errors behind fallbacks. Do not translate unsupported instructions into silent no-ops. Do not weaken or delete tests to make them pass. Do not change mutation counting, tolerances or gate definitions to improve a score.
+- A phase is complete only with the evidence its exit conditions name. Do not derive progress from commits, lines of code, closed issues or isolated passing fixtures.
 
 ### Independence of verification
 
-- The agent that writes a component does not certify it. The two independent reviewers (section 5) re-derive expectations from primary sources and are not told the implementers' conclusions as ground truth.
+- The agent that writes a component does not certify it. Independent reviewers re-derive expectations from primary sources and are not told the implementers' conclusions as ground truth.
 - The same faulty code must never produce both the expected and the actual values in a test.
 
 ### Legal and clean-room
 
-- Use only publicly accessible documentation and authorized materials. Never obtain or use leaked SDKs, confidential Xbox documentation, restricted console tools, firmware, encryption keys, or proprietary game binaries and shader collections. Do not attempt to bypass documentation access restrictions.
+- Use only publicly accessible documentation, publicly licensed software and authorized materials. All validation uses independently authored or authorized workloads. Never obtain or use leaked executables or SDKs, confidential Xbox documentation, restricted console tools, firmware, encryption keys, unauthorized assets or source code, or proprietary game builds and shader collections. Do not attempt to bypass documentation access restrictions.
 - Contributors who have seen leaked or confidential Xbox materials must not contribute. State this in CONTRIBUTING.md and require a DCO sign-off (Signed-off-by) on contributions.
-- Include a plain statement in docs/legal.md: BetterXen does not circumvent console security or DRM, does not load encrypted or protected content, and is a research project built from public documentation. Add a note that this is not legal advice and that contributors should know their local laws, including anti-circumvention provisions such as DMCA section 1201.
-- Before copying or adapting any upstream code: verify the exact license of that file (not just the repo), check GPL-3.0-or-later compatibility, preserve copyright notices, record source repository and exact commit, document modifications, include required attribution. Never remove upstream copyright notices. If licensing is uncertain, stop using that code until resolved.
-- Keep BetterXen's emulator implementation original. Never copy, port, translate or adapt emulator source from PE-Vulkan project, KyTx, AnyPS5 or similar projects.
+- docs/legal.md states: BetterXen does not circumvent console security or DRM, does not load encrypted or protected content, and is a research project built from public documentation. This is not legal advice; contributors should know their local laws, including anti-circumvention provisions such as DMCA section 1201.
+- Keep BetterXen's own implementation original where it is original. Never copy, port, translate or adapt source from emulator projects built for leaked or unauthorized material (for example PE-Vulkan, KyTx, AnyPS5 and similar).
 - Validate the technical compatibility and safety of user-provided files. Do not ask for ownership receipts, accounts or acquisition provenance as part of file loading. Contributor provenance and licensing obligations still apply.
 - Never place restricted material in the repository or its Git history.
 - Do not push, publish, or change remote visibility without explicit user authorization. Prepare locally and report readiness.
@@ -43,7 +63,7 @@ Never introduce Rosetta 2, x86-64 host executables, MoltenVK, Vulkan runtime dep
 
 No AI slop (section 29).
 
-Read docs/interfaces.md and docs/progress.md before implementation.
+Read docs/roadmap.md, docs/interfaces.md and docs/progress.md before implementation.
 
 ## Claiming work before you start
 
@@ -84,7 +104,7 @@ A coding agent claims in the name of the person it works for and follows the sam
 - Lint: `cargo clippy --workspace --all-targets -- -D warnings`
 - Test: `cargo test --workspace`
 - Verify the synthetic fixtures: `scripts/assemble-fixture.sh --check`
-- Run native GPU correctness: `scripts/test-gpu.sh`
+- Run native GPU correctness (preserved native research): `scripts/test-gpu.sh`
 - Run the three RDNA-to-Metal fixtures: `scripts/demo.sh`
 - Run independent CPU validation: `cargo test --locked -p xenora-semantic-review`
 - Run the correctness-gated benchmark suite: `scripts/benchmark.sh` (idle machine, release, validation off)
@@ -101,4 +121,4 @@ Preserve the configured Git author and committer identity.
 
 ## Ownership
 
-Xbox and claims owns public console research. ISA owns the decoder and oracle fixtures. Compiler owns the parser, IR and MSL. Metal owns the native GPU backend. Testing owns the independent reference and fixture validation. Infrastructure owns shared Cargo configuration, policies and the CPU boundary. R1 independently audits claims and release evidence. R2 independently validates semantic expectations and mutation results.
+These are responsibility areas, not personal assignments; do not assign people without their agreement. Hybrid integration owns the CrossOver assessment, integration boundary, configuration, diagnostics and benchmarks. Xbox and claims owns public console research. ISA owns the decoder and oracle fixtures. Compiler owns the parser, IR and MSL. Metal owns the native GPU backend. Testing owns the independent reference and fixture validation. Infrastructure owns shared Cargo configuration, policies and the CPU boundary. R1 independently audits claims and release evidence. R2 independently validates semantic expectations and mutation results.

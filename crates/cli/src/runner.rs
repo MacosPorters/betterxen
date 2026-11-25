@@ -2,10 +2,10 @@
 
 use std::error::Error;
 use std::ffi::OsString;
-use std::fs::{self, File};
+use std::fs::{self, File, OpenOptions};
 use std::io::Read;
 use std::path::{Path, PathBuf};
-use std::process::{Command, ExitCode, Stdio};
+use std::process::{Child, Command, ExitCode, Stdio};
 use std::sync::{Arc, Mutex};
 use std::time::{Duration, Instant};
 
@@ -15,6 +15,10 @@ use xenora_loader::{
 };
 use xenora_metal::NativeCompute;
 use xenora_shader::{Architecture, PIXEL_ENTRY_POINT, VERTEX_ENTRY_POINT, compile_graphics};
+
+#[path = "startup_report.rs"]
+mod startup_report;
+use startup_report::{Events, JOURNAL_ERROR_EXIT, Journal, Termination, WATCHDOG_EXIT};
 
 const FIXTURE: &[u8] = include_bytes!("../../../fixtures/pe/trusted-runner.exe");
 const SERVICES_FIXTURE: &[u8] = include_bytes!("../../../fixtures/pe/runtime-services.exe");
@@ -27,7 +31,7 @@ const TICKET: u64 = 17;
 const DRAW_RESULT: u64 = 0x42;
 const EXTENT: [usize; 2] = [4, 3];
 const EXPECTED_PIXEL: [u8; 4] = [255, 0, 0, 255];
-const USAGE: &str = "usage: betterxen run --pe <trusted-fixture> --experimental [--trace] [--metal-hud] [--max-steps <1..=10000>]";
+const USAGE: &str = "usage: betterxen run --pe <trusted-fixture> --experimental [--trace] [--metal-hud] [--max-steps <1..=10000>] [--startup-report <path>]";
 
 struct Options {
     path: PathBuf,
@@ -35,6 +39,8 @@ struct Options {
     worker: bool,
     trace: bool,
     hud: bool,
+    report: Option<PathBuf>,
+    journal: Option<PathBuf>,
 }
 
 impl Options {
@@ -42,6 +48,8 @@ impl Options {
         let mut args = args.into_iter();
         let mut path = None;
         let mut max_steps = None;
+        let mut report = None;
+        let mut journal = None;
         let (mut experimental, mut trace, mut hud, mut worker) = (false, false, false, false);
         while let Some(arg) = args.next() {
             match arg.to_str() {
@@ -56,6 +64,16 @@ impl Options {
                             .ok_or("--max-steps must be in 1..=10000")?,
                     );
                 }
+                Some("--startup-report") if report.is_none() => {
+                    report = Some(PathBuf::from(
+                        args.next().ok_or("missing --startup-report path")?,
+                    ));
+                }
+                Some("--startup-journal") if journal.is_none() => {
+                    journal = Some(PathBuf::from(
+                        args.next().ok_or("missing worker journal path")?,
+                    ));
+                }
                 Some("--experimental") if !experimental => experimental = true,
                 Some("--trace") if !trace => trace = true,
                 Some("--metal-hud") if !hud => hud = true,
@@ -66,12 +84,17 @@ impl Options {
         if !experimental {
             return Err("run requires --experimental".into());
         }
+        if (worker && report.is_some()) || (!worker && journal.is_some()) {
+            return Err("invalid startup report option for this process".into());
+        }
         Ok(Self {
             path: path.ok_or("missing --pe path")?,
             max_steps: max_steps.unwrap_or(DEFAULT_STEPS),
             worker,
             trace,
             hud,
+            report,
+            journal,
         })
     }
 }
@@ -85,7 +108,7 @@ pub fn command(args: impl IntoIterator<Item = OsString>) -> ExitCode {
         }
     };
     let result = if options.worker {
-        run_worker(&options).map(|()| ExitCode::SUCCESS)
+        worker_command(&options)
     } else {
         launch_worker(&options)
     };
@@ -99,8 +122,26 @@ pub fn command(args: impl IntoIterator<Item = OsString>) -> ExitCode {
 }
 
 fn launch_worker(options: &Options) -> Result<ExitCode, Box<dyn Error>> {
+    let journal = options
+        .report
+        .as_ref()
+        .map(|_| Journal::create())
+        .transpose()?;
+    let executable = std::env::current_exe()?;
+    let destination = options
+        .report
+        .as_ref()
+        .map(|path| {
+            OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(path)
+                .map_err(|error| format!("could not create startup report: {error}"))
+        })
+        .transpose()?;
     let started = Instant::now();
-    let mut child = Command::new(std::env::current_exe()?)
+    let mut command = Command::new(executable);
+    command
         .args([
             "run",
             "--experimental",
@@ -112,27 +153,71 @@ fn launch_worker(options: &Options) -> Result<ExitCode, Box<dyn Error>> {
         .arg(options.max_steps.to_string())
         .arg("--pe")
         .arg(&options.path)
-        .stdin(Stdio::null())
-        .spawn()?;
+        .stdin(Stdio::null());
+    if let Some(journal) = &journal {
+        command.arg("--startup-journal").arg(journal.path());
+    }
+    let termination = command
+        .spawn()
+        .and_then(|child| supervise(child, started, WALL_LIMIT));
+    if let (Some(journal), Some(destination)) = (&journal, destination)
+        && let Err(error) = journal.finish(destination, &termination)
+    {
+        eprintln!("could not write startup report: {error}");
+        if matches!(&termination, Ok(Termination::Exited(status)) if status.success()) {
+            return Ok(ExitCode::FAILURE);
+        }
+    }
+    match termination? {
+        Termination::Exited(status) => match status.code() {
+            Some(code) => Ok(ExitCode::from(u8::try_from(code)?)),
+            None => Err(format!("worker terminated: {status}").into()),
+        },
+        Termination::Deadline => {
+            Err("experimental worker exceeded its 15 second wall deadline".into())
+        }
+    }
+}
+
+fn supervise(mut child: Child, started: Instant, limit: Duration) -> std::io::Result<Termination> {
     loop {
         match child.try_wait() {
-            Ok(Some(status)) => {
-                return match status.code() {
-                    Some(code) => Ok(ExitCode::from(u8::try_from(code)?)),
-                    None => Err(format!("worker terminated: {status}").into()),
-                };
-            }
-            Ok(None) if started.elapsed() < WALL_LIMIT => {
+            Ok(Some(status)) => return Ok(Termination::Exited(status)),
+            Ok(None) if started.elapsed() < limit => {
                 std::thread::sleep(Duration::from_millis(10));
             }
             status => {
                 let _ = child.kill();
                 child.wait()?;
                 status?;
-                return Err("experimental worker exceeded its 15 second wall deadline".into());
+                return Ok(Termination::Deadline);
             }
         }
     }
+}
+
+fn worker_command(options: &Options) -> Result<ExitCode, Box<dyn Error>> {
+    let mut events = match options.journal.as_deref().map(Events::open).transpose() {
+        Ok(events) => events,
+        Err(error) => {
+            eprintln!("could not open startup journal: {error}");
+            return Ok(ExitCode::from(JOURNAL_ERROR_EXIT));
+        }
+    };
+    let result = run_worker(options, events.as_mut());
+    if let Some(events) = events.as_mut() {
+        if let Err(error) = &result {
+            events.failure(error.as_ref());
+        }
+        if let Some(error) = events.write_error() {
+            if let Err(error) = result {
+                eprintln!("run failed: {error}");
+            }
+            eprintln!("could not write startup journal: {error}");
+            return Ok(ExitCode::from(JOURNAL_ERROR_EXIT));
+        }
+    }
+    result.map(|()| ExitCode::SUCCESS)
 }
 
 fn verify_fixture(path: &Path) -> Result<&'static [u8], Box<dyn Error>> {
@@ -158,14 +243,14 @@ fn verify_fixture(path: &Path) -> Result<&'static [u8], Box<dyn Error>> {
         .ok_or_else(|| rejection.into())
 }
 
-fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
+fn run_worker(options: &Options, mut events: Option<&mut Events>) -> Result<(), Box<dyn Error>> {
     std::thread::Builder::new()
         .name("xenora-deadline".into())
         .spawn(|| {
             std::thread::sleep(WALL_LIMIT);
             // The supervisor also enforces this deadline. The worker retains
             // its own deadline if it is invoked directly.
-            std::process::exit(124);
+            std::process::exit(i32::from(WATCHDOG_EXIT));
         })?;
     let fixture = verify_fixture(&options.path)?;
     let (name, ticket, bound_imports) = if fixture == SERVICES_FIXTURE {
@@ -232,6 +317,16 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
         imports,
         options.max_steps,
         |event| {
+            if let Some(events) = events.as_deref_mut() {
+                events.stage(match &event {
+                    StartupEvent::Parsed { .. } => "parsed",
+                    StartupEvent::Mapped { .. } => "mapped",
+                    StartupEvent::Relocated { .. } => "relocated",
+                    StartupEvent::ImportsBound { .. } => "imports_bound",
+                    StartupEvent::TlsCompleted { .. } => "tls_completed",
+                    StartupEvent::Entering { .. } => "entry",
+                });
+            }
             if options.trace {
                 trace_startup(event);
             }
@@ -244,6 +339,11 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
         .take();
     let exit = startup.execution.exit_reason;
     let rax = startup.execution.final_state.get(Register::Rax);
+    if exit == ExitReason::Halt
+        && let Some(events) = events.as_deref_mut()
+    {
+        events.stage("exit");
+    }
     if options.trace {
         println!(
             "trace stage=exit entry_steps={} exit={exit:?} rax={rax:#x}",
@@ -264,6 +364,9 @@ fn run_worker(options: &Options) -> Result<(), Box<dyn Error>> {
         return Err("trusted fixture startup or result differs from the expected values".into());
     }
     let frame = result.ok_or("guest halted without a draw")??;
+    if let Some(events) = events {
+        events.stage("framebuffer");
+    }
     if options.trace {
         println!(
             "trace stage=framebuffer extent={}x{} verified_pixels={}",

@@ -1,42 +1,57 @@
 name: Bug report
-description: Report a reproducible defect in Xenora or XenoMetal.
+description: A reproducible defect.
 title: "bug: "
 labels: [bug]
 body:
   - type: markdown
     attributes:
-      value: |
-        Use synthetic or authorized inputs only. For vulnerabilities, follow SECURITY.md. Remove personal paths, credentials and private data from logs.
+      value: 'Active work is the CrossOver-based hybrid architecture (docs/roadmap.md). Use independently authored or authorized workloads only; never link leaked builds, confidential SDKs or private documentation. Claim by replying on the issue. For vulnerabilities follow SECURITY.md.'
   - type: textarea
     id: description
     attributes:
       label: Description
-      description: What went wrong? Identify the affected subsystem and expected behavior.
+      description: 'What went wrong and what you expected.'
     validations:
       required: true
   - type: textarea
     id: steps
     attributes:
       label: Reproduction steps
-      description: Include exact commands and a minimal, legally distributable input if applicable.
+      description: 'Exact commands and a minimal, legally distributable input.'
     validations:
       required: true
   - type: textarea
     id: environment
     attributes:
       label: Environment
-      description: Commit, macOS, Apple GPU, RAM, Rust, Xcode and relevant tool versions. Include sanitized doctor output if available.
+      description: 'Commit, macOS, chip, memory, CrossOver and Rosetta 2 versions, graphics backend. Remove personal paths and credentials.'
     validations:
       required: true
   - type: textarea
-    id: output
+    id: scope
     attributes:
-      label: Actual output and diagnostics
-      description: Include expected versus actual results, validation-layer messages and relevant logs.
-  - type: checkboxes
-    id: confirmation
+      label: Scope and dependencies
+      description: 'Affected area; related issues.'
+    validations:
+      required: false
+  - type: textarea
+    id: acceptance
     attributes:
-      label: Confirmation
-      options:
-        - label: I searched for existing reports and have not included sensitive or unauthorized material.
-          required: true
+      label: Acceptance criteria
+      description: 'When is this fixed?'
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation requirements
+      description: 'How to confirm the fix independently.'
+    validations:
+      required: true
+  - type: textarea
+    id: licensing
+    attributes:
+      label: Licensing and provenance
+      description: 'Only if third-party code or a dependency is involved.'
+    validations:
+      required: false

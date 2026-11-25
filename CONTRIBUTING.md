@@ -1,6 +1,10 @@
 # Contributing to BetterXen
 
-BetterXen is an experimental Xbox Series X|S recompilation framework for Apple Silicon. Its graphics subsystem, XenoMetal, targets native Metal execution. Contributions should improve verified behavior rather than expand untested claims.
+BetterXen is hybrid-first Apple Silicon compatibility research built around an externally installed CrossOver, with a preserved but paused independent native implementation. Contributions should improve verified behavior rather than expand untested claims.
+
+## Which work is active
+
+The only active development track is the CrossOver-based hybrid architecture in [docs/roadmap.md](docs/roadmap.md). Planning is progressive: only the current milestone (Phase 1) has open issues; ideas for later phases are parked in the roadmap. Native research is paused, its backlog is closed and indexed in [docs/research/native-issue-archive.md](docs/research/native-issue-archive.md), and the few native issues still open only have assigned contributors with open pull requests. Do not start native work; if hybrid development needs a native component, file a focused hybrid issue. Pick an open issue in the current milestone and check its dependencies first. The engineering rules in `AGENTS.md` permit CrossOver, Wine-based infrastructure, Rosetta 2 and D3DMetal (subject to licensing) and allow evaluating DXMT, DXVK, VKD3D-Proton and MoltenVK. CrossOver is proprietary: do not bundle or redistribute any of it, and record the exact versions you test. Before adopting or copying any upstream code, verify its license and provenance and add it to the [upstream registry](docs/research/upstream-registry.md); projects built around leaked or unauthorized game builds are not a source of code. Use the issue templates (hybrid task, bug, research, performance, validation, documentation) and fill in the licensing and provenance section.
 
 ## Getting started
 

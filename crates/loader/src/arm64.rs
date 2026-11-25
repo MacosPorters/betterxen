@@ -633,15 +633,22 @@ impl Arm64Assembler {
         self.emit(0x92800000 | (hw << 21) | ((imm16 as u32) << 5) | (xd as u32 & 0x1f));
     }
 
-    /// Load a full 64-bit constant into register Xd with the fewest MOVZ or
-    /// MOVN plus MOVK instructions: one for each halfword that differs from
-    /// the background the first instruction leaves, and always at least one.
-    /// MOVZ leaves zero halfwords and MOVN leaves 0xFFFF ones, so MOVN is used
-    /// when more halfwords are 0xFFFF than zero.
+    /// Load a full 64-bit constant into Xd with the fewest wide moves.
+    /// A 32-bit MOVN leaves one low halfword set to 0xFFFF and zero-extends
+    /// the result into Xd. For other values, select a 64-bit MOVZ or MOVN
+    /// background and use MOVK for the remaining halfwords.
     pub fn load_imm_64(&mut self, xd: u8, val: u64) {
         let halves: [u16; 4] = std::array::from_fn(|i| (val >> (16 * i)) as u16);
         let zeros = halves.iter().filter(|&&h| h == 0).count();
         let ones = halves.iter().filter(|&&h| h == 0xffff).count();
+        // With only the top two halfwords zero, a 32-bit MOVN saves one
+        // instruction when either of the lower halfwords is all ones.
+        if zeros == 2 && ones != 0 && val >> 32 == 0 {
+            let index = usize::from(halves[1] != u16::MAX);
+            let imm16 = u32::from(!halves[index]);
+            self.emit(0x1280_0000 | ((index as u32) << 21) | (imm16 << 5) | u32::from(xd & 0x1f));
+            return;
+        }
         let background = if ones > zeros { 0xffff } else { 0 };
         // The first halfword that differs from the background, or halfword 0
         // when none does (val is 0 or all ones).
@@ -883,12 +890,14 @@ mod tests {
     }
 
     /// Constants at the halfword boundaries the MOVZ/MOVN choice depends on.
-    const IMMEDIATE_EDGES: [u64; 16] = [
+    const IMMEDIATE_EDGES: [u64; 18] = [
         0,
         1,
         0xffff,
         0x1_0000,
         0x8000_0000,
+        0xffff_1234,
+        0x1234_ffff,
         0xffff_ffff,
         0x1_0000_0000,
         0x1234_0000_0000_0000,
@@ -904,10 +913,13 @@ mod tests {
 
     #[test]
     fn immediate_sequences_match_llvm_encodings() {
-        // llvm-mc -triple=aarch64-apple-macos -show-encoding.
+        // A64 words from llvm-mc and Apple Clang's integrated assembler.
         let cases: &[(u64, &[u32])] = &[
             (0, &[0xd2800000]),                                 // movz x0, #0
             (u64::MAX, &[0x92800000]),                          // movn x0, #0
+            (0xffff_1234, &[0x129db960]),                       // movn w0, #0xedcb
+            (0x1234_ffff, &[0x12bdb960]),                       // movn w0, #0xedcb, lsl #16
+            (0xffff_ffff, &[0x12800000]),                       // movn w0, #0
             (0xffff_ffff_ffff_1234, &[0x929db960]),             // movn x0, #0xedcb
             (0x1234_0000_0000_0000, &[0xd2e24680]),             // movz x0, #0x1234, lsl #48
             (0xffff_0000_ffff_ffff, &[0x92dfffe0]),             // movn x0, #0xffff, lsl #32
@@ -930,9 +942,16 @@ mod tests {
         );
     }
 
-    /// Fewest MOVZ/MOVN/MOVK instructions for `value`: every halfword that is
-    /// neither zero (after MOVZ) nor 0xFFFF (after MOVN), and at least one.
+    /// A 32-bit MOVN can write a zero-extended value if its low word's
+    /// complement fits in a single halfword. Otherwise count the halfwords
+    /// that differ from either 64-bit initializer's background.
     fn shortest_wide_move(value: u64) -> usize {
+        if let Ok(low) = u32::try_from(value) {
+            let complement = !low;
+            if complement <= u32::from(u16::MAX) || complement.trailing_zeros() >= 16 {
+                return 1;
+            }
+        }
         let halves = (0..4).map(|i| (value >> (16 * i)) & 0xffff);
         let not_zero = halves.clone().filter(|&h| h != 0).count();
         let not_ones = halves.filter(|&h| h != 0xffff).count();
@@ -964,9 +983,13 @@ mod tests {
         for value in values {
             for register in [X0, X9] {
                 let mut asm = Arm64Assembler::new();
+                // Seed the destination so a W-register load must clear the high bits.
+                asm.movn_64(register, 0, 0);
+                // Assembler offsets count 32-bit instruction words.
+                let start = asm.current_offset();
                 asm.load_imm_64(register, value);
                 assert_eq!(
-                    asm.instructions().len(),
+                    asm.current_offset() - start,
                     shortest_wide_move(value),
                     "{value:#x}"
                 );

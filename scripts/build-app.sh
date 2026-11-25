@@ -72,4 +72,6 @@ for dependency in $dependencies; do
     esac
 done
 "$binary" --smoke
+"$binary" --smoke-inspection-order
+"$binary" --smoke-import-result
 echo "build-app: built $bundle"

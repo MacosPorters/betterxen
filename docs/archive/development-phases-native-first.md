@@ -1,3 +1,5 @@
+> **Archived 2026-11-25 (superseded). Not the active plan.** Native-first plan retained for history; the active roadmap is [../roadmap.md](../roadmap.md). Relative links below were written for `docs/` and may need `../`.
+
 # BetterXen development phases
 
 This is BetterXen's working development plan. Each phase ends with a reproducible
@@ -26,10 +28,10 @@ Historical results below remain evidence for their recorded candidates only.
 | Native app | Swift app, Rust C interface, controller input and audio/virtual-filesystem fixtures | Existing fixtures do not establish one integrated threaded C++ 3D application. |
 | Quality tools | CPU/runtime inventories, shader coverage reconciliation, task queue, PR checks and acceptance records | Some inventories and ledgers contain stale limitation text. A successful tool invocation does not prove every catalog entry is current. |
 
-Sources: [CPU registry](cpu/instruction-registry.md),
-[runtime registry](runtime/registry.md), [guest threads](runtime/threads.md),
-[interfaces](interfaces.md), [shader coverage](shaders/semantic-coverage.md),
-[Gate A](testing/gate-a.md), and [QA tooling](testing/infrastructure/README.md).
+Sources: [CPU registry](../cpu/instruction-registry.md),
+[runtime registry](../runtime/registry.md), [guest threads](../runtime/threads.md),
+[interfaces](../interfaces.md), [shader coverage](../shaders/semantic-coverage.md),
+[Gate A](../testing/gate-a.md), and [QA tooling](../testing/infrastructure/README.md).
 The read-only shader reconciliation reported zero mismatches during this task;
 that result is inventory consistency, not new GPU verification.
 
@@ -40,18 +42,18 @@ but their phase numbers are not the sequence for new BetterXen work.
 
 | Existing record or name | Meaning | How to use it now |
 | --- | --- | --- |
-| [Phase 01 checkpoints and assurance](testing/phase01-assurance.md), [risk register](risk-register.md), [review log](testing/review-log.md) and [mutation record](testing/mutation.md) | Earlier bounded shader research and candidate-specific gates | Consult the original gate definitions and unresolved findings; do not relabel them as current acceptance. |
-| [Phase 02 GPU/guest baseline](testing/phase-02-baseline.md) and [CPU feasibility](research/phase02-cpu-feasibility.md), [ecosystem](research/phase02-ecosystem.md), [collaboration](research/phase02-collaboration.md) research | Early graphics expansion and CPU feasibility work | Reuse documented public sources and evidence limits, checking them against current source. |
-| [CPU/runtime campaign ledger](coordination/cpu-campaign-ledger.md) | Implementation batches and local evidence | Its older limitations are not a current feature inventory: scheduler, atomic and string work has since landed. |
-| [Infrastructure Phase II/III tooling](testing/infrastructure/README.md) and [compatibility ledger](testing/infrastructure/phase3-compat-ledger.md) | A separate QA campaign | Tool code now includes compatibility-gap analysis and verification profiles beyond the ledger's early checkpoint. Coordinate with existing issue #219 rather than starting another QA framework. |
-| [Gate A](testing/gate-a.md) | Compiled C execution, split into A1 and hosted-C A2 | A1 has a main-branch test. A2 is under review in PR #283; the document's “not started” description predates that PR. Neither is independently accepted by this plan. |
+| [Phase 01 checkpoints and assurance](../testing/phase01-assurance.md), [risk register](../risk-register.md), [review log](../testing/review-log.md) and [mutation record](../testing/mutation.md) | Earlier bounded shader research and candidate-specific gates | Consult the original gate definitions and unresolved findings; do not relabel them as current acceptance. |
+| [Phase 02 GPU/guest baseline](../testing/phase-02-baseline.md) and [CPU feasibility](../research/phase02-cpu-feasibility.md), [ecosystem](../research/phase02-ecosystem.md), [collaboration](../research/phase02-collaboration.md) research | Early graphics expansion and CPU feasibility work | Reuse documented public sources and evidence limits, checking them against current source. |
+| [CPU/runtime campaign ledger](../coordination/cpu-campaign-ledger.md) | Implementation batches and local evidence | Its older limitations are not a current feature inventory: scheduler, atomic and string work has since landed. |
+| [Infrastructure Phase II/III tooling](../testing/infrastructure/README.md) and [compatibility ledger](../testing/infrastructure/phase3-compat-ledger.md) | A separate QA campaign | Tool code now includes compatibility-gap analysis and verification profiles beyond the ledger's early checkpoint. Coordinate with existing issue #219 rather than starting another QA framework. |
+| [Gate A](../testing/gate-a.md) | Compiled C execution, split into A1 and hosted-C A2 | A1 has a main-branch test. A2 is under review in PR #283; the document's “not started” description predates that PR. Neither is independently accepted by this plan. |
 | Native app numbered gates in `crates/ffi` and `app` | Bounded session, graphics, audio and filesystem fixtures | Inspect their tests before proposing integration. Gate numbers are separate from shader acceptance gates. |
 | README X1–X25 milestones | Broad capability map | Retain as a capability reference; use the phases below for the next work order. |
 | Supplied Discord III, III-B, IV, V and VI excerpts | Broad runtime, graphics, application and performance objectives | Only excerpts were supplied. Their omitted requirements and completion status are unknown; they are not execution instructions. |
 
 Bare issue numbers in historical documents may refer to the source repository.
 All issue and PR links in the work sections below refer to **MacosPorters/betterxen**.
-Use [migration records](migration.md) to resolve historical references.
+Use [migration records](../migration.md) to resolve historical references.
 
 ## Phase 1 — Establish a trustworthy working baseline
 

@@ -8,9 +8,16 @@ then read the [interface contracts](interfaces.md). Reproduce an
 [independent validation suite](../tests/validation/README.md) before changing
 either path. The [changelog](../CHANGELOG.md) records notable changes.
 
-Use the [BetterXen development phases](development-phases.md) for current work
-order, existing issue/PR dependencies and measurable completion criteria.
-Historical phase checkpoints retain their original evidence scope.
+Use the [roadmap](roadmap.md) for the active CrossOver-based hybrid plan, phases,
+critical path and completion criteria; see [ADR 0005](adr/0005-crossover-hybrid-direction.md)
+for the decision and [project board setup](planning/project-board.md). Native work is
+paused: [deferred native roadmap](research/native-roadmap.md) and the archived
+[native-first plan](archive/development-phases-native-first.md) with
+[retired milestones](archive/native-first-milestones.json), the
+[native issue archive](research/native-issue-archive.md) and the retired
+[H0 to H7 breakdown](archive/hybrid-phases-h0-h7.md). Research inputs: the [upstream research registry](research/upstream-registry.md) and
+[component reuse matrix](research/component-reuse-matrix.md). Historical phase
+checkpoints retain their original evidence scope.
 
 ## Architecture and technical design
 
@@ -50,7 +57,7 @@ Historical phase checkpoints retain their original evidence scope.
 - [Testing and acceptance index](testing/README.md) — Entry point for test procedures, evidence and review records.
 - [AMD RDNA2 desktop GPU (gfx1030) form acceptance](testing/shader-form-acceptance.md) — Independence, command, log and promotion rules for fixture-verified instruction forms.
 - [Engineering progress](progress.md) — Verification commands, metric definitions, and open release gates.
-- [CPU test runtime and shard selection](testing/cpu-coverage.md) — Measured CPU gate cost and deterministic test-target shards.
+- [CPU test runtime, shards and coverage map](testing/cpu-coverage.md) — Measured CPU gate cost, deterministic test-target shards, and a verified per-operation CPU/loader coverage map with exact test evidence.
 - [Test inventory comparison](testing/test-inventory.md) — Detect missing or newly ignored Cargo tests across commits.
 - [Native ARM64 and Metal capability receipts](testing/native-receipt.md) — One contributor's reproducible host report: architecture, tools, dependency evidence and bounded CPU/Metal fixture outcomes.
 - [Persistent resource and translated rendering acceptance](testing/x9-acceptance.md) — Pinned upstream tests, native ARM64 results and unsupported cases.
@@ -62,8 +69,11 @@ Historical phase checkpoints retain their original evidence scope.
 
 - [Public sources](research/sources.md), [RDNA 2 notes](research/rdna2.md), and [Xbox GPU evidence](research/xbox-gpu.md) — Specifications, evidence scope, and unknown console behavior.
 - [Shader inputs](research/shader-containers.md) and [risk register](risk-register.md) — Input provenance and unresolved engineering risks.
+- [Texture format inventory](research/texture-formats.md) — Formats and layouts by stage (decode, layout, native upload, sampling, guest), their public specifications, unknowns and ranked follow-ups.
 - [PortWatch native macOS research](research/portwatch-native-macos.md) — Screening of public Xbox-on-Windows port projects for native macOS planning; discovery only.
 - [Synthetic integration and upstream evidence](research/synthetic-integration.md) — Audited source snapshots and remaining commercial startup prerequisites.
+- [Hybrid backlog research record](research/hybrid-backlog-research-2026-11-25.md) — Findings, registry candidates and the issues they produced (2026-11-25); not verified on hardware.
+- [Primary-source verification](research/primary-source-verification-2026-11-25.md) — Which hybrid-research claims were confirmed, contradicted or left unverified against vendor documentation.
 
 ## Security, licensing, and contributions
 

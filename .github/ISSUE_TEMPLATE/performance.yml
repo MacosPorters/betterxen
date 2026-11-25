@@ -1,0 +1,57 @@
+name: Performance investigation
+description: Measure or improve performance with evidence.
+title: "perf: "
+labels: [performance,track: hybrid]
+body:
+  - type: markdown
+    attributes:
+      value: 'Active work is the CrossOver-based hybrid architecture (docs/roadmap.md). Use independently authored or authorized workloads only; never link leaked builds, confidential SDKs or private documentation. Claim by replying on the issue. Do not promise gains before measuring.'
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem and metric
+      description: 'Which metric (average FPS, 1% low, frame-time percentiles, CPU or GPU use, memory, startup, shader compile latency) and why.'
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Technical context
+      description: 'Workload, hardware (reference: M4, 24 GB), software versions, settings.'
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: 'Measurement only, or change as well.'
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: 'Measurement protocol (#353) and baseline (#355).'
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: 'Measured before-and-after under equivalent conditions, with variance.'
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation requirements
+      description: 'Correctness and rendering equivalence verified before the result counts.'
+    validations:
+      required: true
+  - type: textarea
+    id: licensing
+    attributes:
+      label: Licensing and provenance
+      description: "Licenses of any component involved, source and version, and whether anything would be bundled or copied. Write 'not applicable' if none."
+    validations:
+      required: true

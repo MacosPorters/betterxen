@@ -1,0 +1,50 @@
+name: Documentation
+description: Fix, add or restructure documentation.
+title: "docs: "
+labels: [documentation]
+body:
+  - type: markdown
+    attributes:
+      value: 'Active work is the CrossOver-based hybrid architecture (docs/roadmap.md). Use independently authored or authorized workloads only; never link leaked builds, confidential SDKs or private documentation. Claim by replying on the issue.'
+  - type: textarea
+    id: problem
+    attributes:
+      label: Problem
+      description: 'What is unclear, wrong or missing.'
+    validations:
+      required: true
+  - type: textarea
+    id: context
+    attributes:
+      label: Technical context
+      description: 'Pages and sources involved.'
+    validations:
+      required: true
+  - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: 'Files to change; update docs/README.md if pages are added or moved.'
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: 'None if none.'
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: 'Claims are scoped to their evidence; links work.'
+    validations:
+      required: true
+  - type: textarea
+    id: validation
+    attributes:
+      label: Validation requirements
+      description: 'scripts/audit/docs_hygiene.py and claims audit pass.'
+    validations:
+      required: true

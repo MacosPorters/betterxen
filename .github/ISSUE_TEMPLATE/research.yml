@@ -1,42 +1,57 @@
-name: Technical research
-description: Record an ISA, Metal or publicly documented graphics research finding.
+name: Upstream research or dependency evaluation
+description: Assess a project, component or license from public sources.
 title: "research: "
-labels: [research]
+labels: [research,track: hybrid]
 body:
   - type: markdown
     attributes:
-      value: Use only public, authorized sources. Do not link to leaked SDKs, private documentation or unauthorized game content.
+      value: 'Active work is the CrossOver-based hybrid architecture (docs/roadmap.md). Use independently authored or authorized workloads only; never link leaked builds, confidential SDKs or private documentation. Claim by replying on the issue.'
   - type: textarea
-    id: question
+    id: problem
     attributes:
-      label: Research question or finding
+      label: Question
+      description: 'The decision this research informs.'
     validations:
       required: true
   - type: textarea
-    id: sources
+    id: context
     attributes:
-      label: Sources and applicability
-      description: URLs, specification sections or revision, exact architecture and license/provenance if relevant.
+      label: Technical context
+      description: 'What is already known; link docs/research/upstream-registry.md entries.'
     validations:
       required: true
-  - type: dropdown
-    id: evidence
+  - type: textarea
+    id: scope
     attributes:
-      label: Evidence class (highest applicable)
-      options:
-        - A - Measured on named hardware
-        - B - Normative source for exact target
-        - C - Normative source for related target
-        - D - Non-normative official material
-        - E - Independent software behavior
-        - F - Uncorroborated community claim
-        - U - Unknown or assumption
+      label: Scope
+      description: 'Which versions or components; desk research or execution.'
+    validations:
+      required: true
+  - type: textarea
+    id: dependencies
+    attributes:
+      label: Dependencies
+      description: 'Other issues or decisions; execution may need a maintainer-approved environment.'
+    validations:
+      required: true
+  - type: textarea
+    id: acceptance
+    attributes:
+      label: Acceptance criteria
+      description: 'Each claim cites vendor or upstream documentation, or a recorded observation of a stated version; unknowns stay marked unknown.'
     validations:
       required: true
   - type: textarea
     id: validation
     attributes:
-      label: Validation, limitations and proposed next steps
-      description: Distinguish Apple or desktop RDNA observations from Xbox behavior.
+      label: Validation requirements
+      description: 'Independent re-derivation and evidence class (A to U).'
+    validations:
+      required: true
+  - type: textarea
+    id: licensing
+    attributes:
+      label: Licensing and provenance
+      description: "Licenses of any component involved, source and version, and whether anything would be bundled or copied. Write 'not applicable' if none."
     validations:
       required: true
