@@ -191,7 +191,7 @@ mod on_the_gpu {
         let _one = crate::emit::valu_tests::ONE_AT_A_TIME
             .lock()
             .unwrap_or_else(|e| e.into_inner());
-        let host = Host::new(false).expect("no SM 6.6 D3D12 hardware device: not verified");
+        let host = Host::hardware().expect("no SM 6.6 D3D12 hardware device: not verified");
         let mut ran = 0;
         for f in fixtures() {
             let got = run_on_gpu(&host, &f);
@@ -210,7 +210,7 @@ mod on_the_gpu {
         let _one = crate::emit::valu_tests::ONE_AT_A_TIME
             .lock()
             .unwrap_or_else(|e| e.into_inner());
-        let host = Host::new(false).expect("no SM 6.6 D3D12 hardware device: not verified");
+        let host = Host::hardware().expect("no SM 6.6 D3D12 hardware device: not verified");
         for f in fixtures() {
             let got = run_on_gpu(&host, &f);
             let mut wrong = f.expected.clone();
@@ -357,7 +357,7 @@ mod f64_on_the_gpu {
     #[test]
     fn f64_wave_sums_match_the_cpu_tree_bit_for_bit() {
         let _one = crate::emit::valu_tests::ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
-        let host = Host::new(false).expect("no SM 6.6 D3D12 hardware device: not verified");
+        let host = Host::hardware().expect("no SM 6.6 D3D12 hardware device: not verified");
         let mut ran = 0;
         for threads in [1u32, 4, 20, 32] {
             let shader = translate_native(&f64_wave_sum_program(threads)).expect("translate");
@@ -393,4 +393,99 @@ mod f64_on_the_gpu {
         }
         eprintln!("betterxen: {ran} f64 wave sums ran on the GPU and matched the CPU tree bit for bit");
     }
+}
+
+// ---- immediate samplers through translate_native ---------------------------------------------
+//
+// A compute program that builds its sampler from constants in the code (an immediate sampler)
+// needs a static sampler in the host's root signature. `translate_native` must report it, as the
+// container path does; the buffer-only fixtures above cannot notice.
+
+/// Samples texel (0.5, 0.5) of the 2D texture in table slot 0 with an immediate sampler and stores
+/// the red channel to the raw UAV in table slot 1.
+fn immediate_sampler_program() -> NativeProgram {
+    let s_mov_lit = |dst: u8, lit: u32| [0xBE80_03FF | (dst as u32) << 16, lit];
+    let smem = |op: u32, dst: u32, base: u32, off: u32| [0x3D << 26 | op << 18 | dst << 6 | base >> 1, 125 << 25 | off];
+    let mut w: Vec<u32> = Vec::new();
+    w.push(0xBE80_0300 | 2 << 16); // s_mov_b32 s2, s0 (table address)
+    w.push(0xBE80_0380 | 3 << 16); // s_mov_b32 s3, 0
+    w.extend(smem(0x03, 8, 2, 0)); // s_load_dwordx8 s[8:15]: the texture SRV
+    w.extend(smem(0x02, 20, 2, 32)); // s_load_dwordx4 s[20:23]: the UAV
+    w.push(0x7E00_02F0 | 2 << 17); // v_mov_b32 v2, 0.5
+    w.push(0x7E00_02F0 | 3 << 17); // v_mov_b32 v3, 0.5
+    for (i, word) in [0x0000_0092u32, 0x00C0_0000, 0x1850_0000, 0].into_iter().enumerate() {
+        w.extend(s_mov_lit(16 + i as u8, word)); // s[16:19]: the sampler, as constants
+    }
+    // image_sample_lz v4, v[2:3], s[8:15], s[16:19] dmask:0x1 dim:2D
+    w.extend([0x3C << 26 | 0x21 << 18 | 1 << 8 | 1 << 3, (16u32 >> 2) << 21 | (8u32 >> 2) << 16 | 4 << 8 | 2]);
+    w.extend([0x38 << 26 | 0x1C << 18, 0x80 << 24 | (20u32 >> 2) << 16 | 4 << 8]); // buffer_store_dword v4
+    w.push(0xBF81_0000); // s_endpgm
+    let used = |kind, table_offset_dwords, dwords| UsedResource {
+        kind,
+        root: RootType::Table,
+        table_offset_dwords,
+        lower_bound: 0,
+        stride: 0,
+        dwords,
+        user_data: 0,
+        slot: 0,
+    };
+    NativeProgram {
+        stage: HwStage::Cs,
+        wave64: false,
+        vgprs: 8,
+        layout: vec![RootParam {
+            root: RootType::Table,
+            table_offset_dwords: 0,
+            sgprs: 1,
+            base_register: 0,
+            user_data: 0,
+            slot: 0,
+        }],
+        used: vec![used(ResourceType::Srv, 0, 8), used(ResourceType::Uav, 8, 4)],
+        io: StageIo::Cs(ComputeIo { rsrc2: 1 << 1, threads: [1, 1, 1] }),
+        code: w.iter().flat_map(|x| x.to_le_bytes()).collect(),
+    }
+}
+
+#[test]
+fn translate_native_reports_immediate_samplers_as_static_samplers() {
+    let shader = translate_native(&immediate_sampler_program()).expect("translate");
+    assert_eq!(shader.samplers.len(), 1, "the program has one immediate sampler");
+    assert_eq!(shader.static_samplers.len(), 1, "the host builds s0 from this list");
+}
+
+#[cfg(windows)]
+#[test]
+fn immediate_sampler_samples_the_texture_on_the_gpu() {
+    use crate::emit::host::{Dispatch, Host, Root, View};
+    let _one = crate::emit::valu_tests::ONE_AT_A_TIME.lock().unwrap_or_else(|e| e.into_inner());
+    let host = Host::hardware().expect("no SM 6.6 D3D12 hardware device: not verified");
+    let shader = translate_native(&immediate_sampler_program()).expect("translate");
+    let (root, pso) = host.compute_pipeline(&shader).expect("compute pipeline");
+    let ud = vec![0u32; shader.user_data_dwords().max(1) as usize];
+    let texels = [[0.25f32, 0.5, 0.75, 1.0]];
+    let out = host
+        .dispatch(
+            &root,
+            &pso,
+            &Dispatch {
+                roots: vec![(0, Root::Constants(ud))],
+                views: &[View::Texture(1, 1, &texels), View::RawUav(1)],
+                samplers: &[],
+                groups: [1, 1, 1],
+            },
+        )
+        .expect("dispatch");
+    assert_eq!(out[0][0], 0.25f32.to_bits(), "red of the only texel");
+    eprintln!("betterxen: the immediate-sampler program sampled the texture on the GPU");
+}
+
+#[test]
+fn static_samplers_keep_the_comparison_filter_flag() {
+    let words = [0x0000_0092u32, 0x00C0_0000, 0x1850_0000, 0];
+    let list = super::static_samplers(&[words, words], 0b10);
+    assert_eq!(list.len(), 2);
+    assert_eq!(list[0].filter & 0x80, 0, "sampler 0 is not a comparison sampler");
+    assert_ne!(list[1].filter & 0x80, 0, "sampler 1 is");
 }

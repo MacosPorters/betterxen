@@ -15,6 +15,10 @@ Reviewed 2026-11-25. Every entry is **evidence class D** (non-normative official
 | VIctory-macOS | [pragyaangaur/VIctory-macOS](https://github.com/pragyaangaur/VIctory-macOS) | `485b230ef596` | GPL-3.0 (GitHub) | Discovery reference only | A macOS port of VIctory using Rosetta, CrossOver Wine and D3DMetal per its README (also noted in [portwatch-native-macos.md](portwatch-native-macos.md)). Same input concern. Its test and "works" claims are self-reported and not verified here. The repository has no parent fork, so the "canonical upstream" is VIctory. |
 | PortWatch VI | [portwatch-vi.xyz](https://portwatch-vi.xyz/), [4lwayz/portwatch-vi](https://github.com/4lwayz/portwatch-vi) | `ed00263cc0c9` | NOASSERTION | Project discovery reference | A tracker of community efforts; progress figures are editorial, with self-reported claims labelled. Not engineering evidence; flagged and ignored queues are not endorsed. |
 
+## victory-shader import under review
+
+`skakwy/victory-mac` `crates/victory-shader` at `22b3f8e45a59` is proposed for vendoring in PR #394. **Not approved.** See the [per-file provenance and licence review](victory-shader-provenance.md); the provenance decision below stands until a maintainer changes it.
+
 ## Additional candidates found by search (not reviewed)
 
 Found by GitHub search on 2026-11-25. Only repository metadata was read; none was evaluated, installed or run, and none is a recommendation. Licenses are what GitHub reported.

@@ -646,18 +646,7 @@ fn emit_program(
         stage: native.stage,
         dxil: l.dxil,
         user_data: l.user_data,
-        static_samplers: l
-            .samplers
-            .iter()
-            .enumerate()
-            .map(|(n, &w)| {
-                let mut s = StaticSampler::from_words(w);
-                if l.cmp_samplers >> n & 1 != 0 {
-                    s.filter |= 0x80;
-                }
-                s
-            })
-            .collect(),
+        static_samplers: static_samplers(&l.samplers, l.cmp_samplers),
         samplers: l.samplers,
         root_cbvs: l.root_cbvs,
         root_srvs: l.root_srvs,
@@ -665,6 +654,23 @@ fn emit_program(
         root_indexed_views: res.root_indexed_views.clone(),
     };
     Ok((shader, wave_size))
+}
+
+/// The static sampler descriptions for the immediate samplers a shader uses (`s<n>` at position
+/// n); bit n of `cmp` marks a sampler used for comparisons. BetterXen change: factored out so
+/// `translate_native` builds the same list as the container path.
+fn static_samplers(samplers: &[[u32; 4]], cmp: u64) -> Vec<StaticSampler> {
+    samplers
+        .iter()
+        .enumerate()
+        .map(|(n, &w)| {
+            let mut s = StaticSampler::from_words(w);
+            if cmp >> n & 1 != 0 {
+                s.filter |= 0x80;
+            }
+            s
+        })
+        .collect()
 }
 
 /// The rows of an `ISG1`/`OSG1` part.
