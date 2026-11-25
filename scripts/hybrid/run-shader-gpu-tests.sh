@@ -47,6 +47,8 @@ if [ "$WHICH" = all ]; then
     exec "$B" run --bottle "$BOTTLE" --timeout 900 --stall-timeout 120 --expect "test result: ok" \
         --out artifacts/hybrid-runs -- "$EXE" --test-threads=1
 else
-    exec "$B" run --bottle "$BOTTLE" --timeout 300 --stall-timeout 120 --expect "test result: ok. 4 passed" \
+    # The exact count is deliberate: a looser marker would also accept a filter that matches nothing
+    # ("0 passed"). Update it when BetterXen adds or removes tests in emit/betterxen_tests.rs.
+    exec "$B" run --bottle "$BOTTLE" --timeout 300 --stall-timeout 120 --expect "test result: ok. 7 passed" \
         --out artifacts/hybrid-runs -- "$EXE" betterxen --test-threads=1
 fi
