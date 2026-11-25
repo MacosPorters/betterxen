@@ -485,7 +485,8 @@ runtime-owned environment block (defaults include `OS=Windows_NT`).
 `_putenv` (`NAME=value`) and `SetEnvironmentVariableA` /
 `SetEnvironmentVariableW` update or delete entries in that block. The host
 process environment is not visible unless an entry is installed here.
-Changing or deleting an entry invalidates the `getenv` pointer for that entry.
+Changing or deleting an entry unmaps its previous `getenv` buffer. A guest
+read through the old pointer can fault.
 BetterXen caps the block at 256 entries, including its defaults. At capacity,
 new entries fail with `ERROR_NOT_ENOUGH_MEMORY` for the Win32 setters or
 `-1` and `ENOMEM` for `_putenv`. Replacement and deletion still succeed.
@@ -735,7 +736,11 @@ asynchronous I/O remain outside this subset.
 `ServicesState::mount` exposes a host directory to the guest as a drive
 letter from D: to Z:, through `HostMount::new(drive, root, writable)`. Without
 a mount, nothing on the host is reachable through these services. Mounts are
-read-only unless created writable.
+read-only unless created writable. For production, use a dedicated directory
+containing only files intended for the guest. Never mount the host root
+(`/`) or a sensitive tree such as a home directory, credentials directory,
+or system directory. Set explicit byte and entry quotas with
+`HostMount::with_quota` on writable mounts.
 
 The partial `GetFileAttributesExA/W` services return attributes and 64-bit
 sizes for `GetFileExInfoStandard`. Host-mounted entries carry access and

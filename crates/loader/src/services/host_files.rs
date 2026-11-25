@@ -126,6 +126,10 @@ impl HostMount {
     /// Mount `root` as guest drive `drive`, which must be D: to Z:. The
     /// directory is opened once; later changes to the host path name do not
     /// move the mount.
+    ///
+    /// For production, use a dedicated directory containing only guest files.
+    /// Never mount the host root or a sensitive directory. Set explicit byte
+    /// and entry quotas with [Self::with_quota] for writable mounts.
     pub fn new(drive: char, root: &Path, writable: bool) -> io::Result<Self> {
         let drive = drive.to_ascii_lowercase();
         if !('d'..='z').contains(&drive) {
@@ -866,8 +870,12 @@ mod tests {
                 entries: 0
             }
         );
-        let unlimited = HostMount::new('d', Path::new("/"), true).unwrap();
-        assert_eq!(unlimited.budget().resize(0, u64::MAX), Ok(()));
+        let unlimited = Budget {
+            max_bytes: None,
+            max_entries: None,
+            used: Mutex::default(),
+        };
+        assert_eq!(unlimited.resize(0, u64::MAX), Ok(()));
     }
 
     #[test]
