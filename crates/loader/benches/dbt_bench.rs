@@ -175,6 +175,22 @@ fn memory_workload() -> Family {
     }
 }
 
+/// Runs one family through a fresh cold DBT engine and returns the result and
+/// its compilation metrics. Shared by the report and the test below.
+fn run_family(family: &Family) -> (ExecutionResult, DbtMetrics) {
+    let pe_bytes = build_pe(&family.code);
+    let parsed = ParsedPe::parse(&pe_bytes).unwrap();
+    let mut image = parsed.load_into_memory(&pe_bytes).unwrap();
+    image
+        .memory
+        .map_region(0x2000_0000, 0x10000, MemoryPermissions::READ_WRITE)
+        .unwrap();
+    let mut cpu = CpuState::new(image.entry_point, STACK_TOP);
+    let mut dbt = DbtEngine::new(4 * 1024 * 1024).unwrap();
+    let result = dbt.run(&mut cpu, &mut image.memory, BUDGET);
+    (result, dbt.metrics)
+}
+
 fn percentile(sorted: &[Duration], fraction: f64) -> Duration {
     // Interpolate between adjacent values at rank (n - 1) * fraction.
     let rank = (sorted.len() - 1) as f64 * fraction;
@@ -953,16 +969,7 @@ fn main() {
         "Family", "Guest bytes", "Instructions", "Blocks", "Native bytes", "Native/insn"
     );
     for family in [arithmetic_workload(), branch_workload(), memory_workload()] {
-        let pe_bytes = build_pe(&family.code);
-        let parsed = ParsedPe::parse(&pe_bytes).unwrap();
-        let mut image = parsed.load_into_memory(&pe_bytes).unwrap();
-        image
-            .memory
-            .map_region(0x2000_0000, 0x10000, MemoryPermissions::READ_WRITE)
-            .unwrap();
-        let mut cpu = CpuState::new(image.entry_point, STACK_TOP);
-        let mut dbt = DbtEngine::new(4 * 1024 * 1024).unwrap();
-        let result = dbt.run(&mut cpu, &mut image.memory, BUDGET);
+        let (result, metrics) = run_family(&family);
         assert_eq!(
             result.exit_reason,
             ExitReason::Halt,
@@ -980,15 +987,15 @@ fn main() {
             "{} workload final RAX",
             family.name
         );
-        assert!(dbt.metrics.blocks_compiled > 0);
+        assert!(metrics.blocks_compiled > 0);
         let guest_bytes = family.code.len();
-        let native_bytes = dbt.metrics.native_bytes_emitted;
+        let native_bytes = metrics.native_bytes_emitted;
         println!(
             "{:<12} {:>12} {:>13} {:>7} {:>13} {:>13.2}",
             family.name,
             guest_bytes,
             family.instructions,
-            dbt.metrics.blocks_compiled,
+            metrics.blocks_compiled,
             native_bytes,
             native_bytes as f64 / family.instructions as f64
         );
@@ -1059,6 +1066,44 @@ mod tests {
         assert_eq!(memory.code.len(), 10 + 10 + 500 * 6 + 1);
         assert_eq!(&memory.code[10..16], &[0x48, 0xB8, 0, 0, 0, 0]);
         assert_eq!(&memory.code[20..26], &[0x48, 0x89, 0x03, 0x48, 0x8B, 0x13]);
+    }
+
+    #[test]
+    fn family_workloads_run_with_expected_results() {
+        use super::{
+            ExitReason, Register, arithmetic_workload, branch_workload, memory_workload, run_family,
+        };
+
+        for family in [arithmetic_workload(), branch_workload(), memory_workload()] {
+            let (result, metrics) = run_family(&family);
+            assert_eq!(
+                result.exit_reason,
+                ExitReason::Halt,
+                "{} halted",
+                family.name
+            );
+            assert_eq!(
+                result.instructions_executed, family.instructions,
+                "{} instruction count",
+                family.name
+            );
+            assert_eq!(
+                result.final_state.get(Register::Rax),
+                family.final_rax,
+                "{} final RAX",
+                family.name
+            );
+            assert!(
+                metrics.blocks_compiled > 0,
+                "{} compiled blocks",
+                family.name
+            );
+            assert!(
+                metrics.native_bytes_emitted > 0,
+                "{} emitted native bytes",
+                family.name
+            );
+        }
     }
 
     #[test]
