@@ -1192,6 +1192,7 @@ f3 90 | pause
 0f ae e8 | lfence
 0f ae f0 | mfence
 0f ae f8 | sfence
+db e3 | fninit
 0f c3 5c be 10 | movnti dword ptr [rsi + 4*rdi + 16], ebx
 48 0f c3 5c be 10 | movnti qword ptr [rsi + 4*rdi + 16], rbx
 44 0f c3 4c be 10 | movnti dword ptr [rsi + 4*rdi + 16], r9d
