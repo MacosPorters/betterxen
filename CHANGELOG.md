@@ -116,6 +116,8 @@ remains unsupported.
 
 - Added a bounded synthetic guest drive with synchronous file open, read, write, and size queries.
 
+- Added files for a hosted C program (#402, part of Gate A2): `fopen`, `fclose`, `fgets` and `perror`, and file streams for the output services from #400, so `fprintf`, `fwrite` and `fputs` write to a file `fopen` returned. The files are the ones on the in-memory `C:` drive behind `CreateFileW`, so a file written through a C stream is the file `ReadFile` reads, and the reverse. `fopen` takes `r`, `w` or `a` with `+`, `b` and `t` as Microsoft's page describes them; text mode, the default, stores a line feed as carriage return and line feed, reads the pair back as a line feed and ends input at `CTRL+Z`. Failures return their documented results; the `errno` values beyond `EINVAL` for a null or empty argument are Xenora's choice. Nothing is buffered, there is no seeking, a C stream takes no part in Win32 sharing, and the other mode characters are refused. All four services are `partial`. Eight tests in `runtime_services.rs`, four in the new `crt_files.rs` that cross-check with `ReadFile` and `WriteFile`, and a unit test of the mode strings cover it. Not compared with Windows; awaiting independent review.
+
 - Added unnamed guest semaphores with checked release and immediate mixed-object waits.
 
 - Added non-alertable extended event waits through both Win64 wait APIs.
@@ -125,6 +127,8 @@ remains unsupported.
 - Added guest CRT signed and unsigned 64-bit conversions for narrow and wide strings.
 
 - Added bounded guest CRT long-integer parsing for byte and wide strings.
+
+- Added standard output for a hosted C program (#400, part of Gate A2): a `printf` formatting engine, the standard streams, and capture of what the guest writes to `stdout` and `stderr`. The services are `__acrt_iob_func`, `__stdio_common_vfprintf` (what `printf` and `fprintf` call in a program built with the mingw-w64 runtime), `fwrite`, `fputs`, `fflush` and `setvbuf`; a host reads the output through `ServicesState::standard_output` and `standard_error`. The engine handles the flags, width, precision and size prefixes of `d`, `i`, `u`, `o`, `x`, `X`, `c`, `s`, `p` and `%%` as Microsoft's format specification page and ISO C describe, reading arguments from the guest's `va_list`. The standard streams are text-mode streams, so a line feed is captured as carriage return and line feed. Floating-point and wide conversions, a locale object, other streams and files are not modelled and stop the guest with the runtime-limit fault instead of printing something wrong; `%n` and unknown conversions return -1 with `EINVAL`. All six services are `partial`. The engine's output matches the host C library's `snprintf` on 2,600 generated cases whose result ISO C defines (`crates/loader/tests/printf/reference.py`), with hand-written cases for the Windows-specific rules, and seven tests in `runtime_services.rs` call the services from guest code. Not compared with Windows; awaiting independent review.
 
 - Added guest CRT errno accessors and allocation failure reporting for the synthetic main thread.
 
