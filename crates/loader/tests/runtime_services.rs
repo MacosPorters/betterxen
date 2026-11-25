@@ -132,7 +132,8 @@ fn standard_with_state(clock: u64) -> (ImportRegistry, Arc<MockClock>, Arc<Servi
     (registry, clock, state)
 }
 
-/// A guest whose image imports every generated service from its own library.
+/// A guest whose image imports every generated service from its own library,
+/// and `_errno` after them, which is registered by hand.
 struct Guest {
     engine: DbtEngine,
     memory: GuestMemory,
@@ -145,10 +146,11 @@ struct Guest {
 
 impl Guest {
     fn new() -> Self {
-        let imports: Vec<(&str, Symbol)> = SERVICES
+        let mut imports: Vec<(&str, Symbol)> = SERVICES
             .iter()
             .map(|service| (service.library, Symbol::Name(service.symbol)))
             .collect();
+        imports.push(("ucrtbase.dll", Symbol::Name("_errno")));
         let image = build(&imports);
         let pe = ParsedPe::parse(&image.bytes).unwrap();
         let mut memory = pe.load_into_memory(&image.bytes).unwrap().memory;
@@ -162,7 +164,7 @@ impl Guest {
         let bound = registry
             .bind_imports(&pe, &image.bytes, BASE, &mut memory)
             .unwrap();
-        assert_eq!(bound, SERVICES.len());
+        assert_eq!(bound, SERVICES.len() + 1);
         let mut engine = DbtEngine::new(256 * 1024).unwrap();
         engine.set_import_registry(registry);
         Self {
@@ -179,6 +181,7 @@ impl Guest {
         let index = SERVICES
             .iter()
             .position(|service| service.symbol == symbol)
+            .or((symbol == "_errno").then_some(SERVICES.len()))
             .unwrap();
         let mut cpu = CpuState::new(BASE + u64::from(CODE_RVA) + 16 * index as u64, STACK_TOP);
         cpu.gs_base = self.teb;
@@ -222,6 +225,17 @@ impl Guest {
 
     fn last_error(&mut self) -> u64 {
         self.call("GetLastError", &[])
+    }
+
+    /// The calling thread's `errno`, read through the pointer `_errno` returns.
+    fn errno(&mut self) -> u32 {
+        let address = self.call("_errno", &[]);
+        self.memory.read_u32(address).unwrap()
+    }
+
+    fn set_errno(&mut self, value: u32) {
+        let address = self.call("_errno", &[]);
+        self.memory.write_u32(address, value).unwrap();
     }
 }
 
@@ -735,6 +749,269 @@ fn arguments_are_assigned_by_position_and_read_the_stack_after_the_fourth() {
 }
 
 // --- registry ----------------------------------------------------------------
+
+/// Bits above an `int` argument are not part of it.
+const JUNK: u64 = 0xFFFF_FFFF_0000_0000;
+/// The low 32 bits of an `int` result of -1.
+const MINUS_ONE: u64 = 0xFFFF_FFFF;
+const EINVAL: u32 = 22;
+
+/// `_set_new_mode` (new.h) and `_configthreadlocale` (locale.h), from their
+/// Microsoft Learn pages: each returns the setting before the call, and -1 for
+/// an argument outside its documented set, with `errno` set to `EINVAL`.
+#[test]
+fn crt_startup_modes_return_the_previous_setting() {
+    let mut guest = Guest::new();
+    let result = |value: u64| value & 0xFFFF_FFFF;
+    // malloc does not call the new handler by default, so the first mode is 0.
+    assert_eq!(result(guest.call("_set_new_mode", &[1])), 0);
+    assert_eq!(result(guest.call("_set_new_mode", &[1])), 1);
+    assert_eq!(result(guest.call("_set_new_mode", &[JUNK])), 1);
+    assert_eq!(result(guest.call("_set_new_mode", &[JUNK | 1])), 0);
+    guest.set_errno(0);
+    for invalid in [2, 3, MINUS_ONE, 0x8000_0000] {
+        assert_eq!(result(guest.call("_set_new_mode", &[invalid])), MINUS_ONE);
+        assert_eq!(guest.errno(), EINVAL, "{invalid:#x}");
+        guest.set_errno(0);
+    }
+    // A refused mode changes nothing, and a valid call leaves errno alone.
+    assert_eq!(result(guest.call("_set_new_mode", &[0])), 1);
+    assert_eq!(guest.errno(), 0);
+
+    // _ENABLE_PER_THREAD_LOCALE is 1, _DISABLE_PER_THREAD_LOCALE is 2, and 0
+    // only asks. A program starts with the global locale.
+    let locale =
+        |guest: &mut Guest, request: u64| result(guest.call("_configthreadlocale", &[request]));
+    assert_eq!(locale(&mut guest, 0), 2);
+    assert_eq!(locale(&mut guest, 0), 2);
+    assert_eq!(locale(&mut guest, 1), 2);
+    assert_eq!(locale(&mut guest, 0), 1);
+    assert_eq!(locale(&mut guest, JUNK | 2), 1);
+    assert_eq!(locale(&mut guest, JUNK), 2);
+    assert_eq!(locale(&mut guest, 1), 2);
+    assert_eq!(guest.errno(), 0);
+    for invalid in [3, 4, MINUS_ONE, 0x8000_0001] {
+        assert_eq!(locale(&mut guest, invalid), MINUS_ONE, "{invalid:#x}");
+        assert_eq!(guest.errno(), EINVAL, "{invalid:#x}");
+        guest.set_errno(0);
+    }
+    // A refused request changes nothing, and a valid one leaves errno alone.
+    assert_eq!(locale(&mut guest, 0), 1);
+    assert_eq!(guest.errno(), 0);
+    // The two settings are separate.
+    assert_eq!(result(guest.call("_set_new_mode", &[0])), 0);
+}
+
+/// `_set_invalid_parameter_handler` (stdlib.h), `SetUnhandledExceptionFilter`
+/// (errhandlingapi.h) and `signal` (signal.h), from their Microsoft Learn
+/// pages: each returns the handler it replaces. The first two start with none,
+/// which is a null pointer; a signal starts at `SIG_DFL`, which is zero.
+/// `signal` returns `SIG_ERR`, which is -1 as a pointer, and sets `errno` to
+/// `EINVAL` for a signal that is not one of the six its page lists.
+#[test]
+fn crt_startup_handlers_return_the_previous_handler() {
+    let mut guest = Guest::new();
+    const A: u64 = 0x1_4000_1230;
+    const B: u64 = 0x7FFF_FFFF_FFFF_FFF0;
+    for symbol in [
+        "_set_invalid_parameter_handler",
+        "SetUnhandledExceptionFilter",
+    ] {
+        assert_eq!(guest.call(symbol, &[A]), 0, "{symbol}");
+        assert_eq!(guest.call(symbol, &[B]), A, "{symbol}");
+        assert_eq!(guest.call(symbol, &[0]), B, "{symbol}");
+        assert_eq!(guest.call(symbol, &[0]), 0, "{symbol}");
+    }
+    // One does not see the other's handler.
+    assert_eq!(guest.call("_set_invalid_parameter_handler", &[A]), 0);
+    assert_eq!(guest.call("SetUnhandledExceptionFilter", &[B]), 0);
+    assert_eq!(guest.call("_set_invalid_parameter_handler", &[0]), A);
+    assert_eq!(guest.call("SetUnhandledExceptionFilter", &[0]), B);
+
+    // SIGINT 2, SIGILL 4, SIGFPE 8, SIGSEGV 11, SIGTERM 15, SIGABRT 22.
+    const SIGNALS: [u64; 6] = [2, 4, 8, 11, 15, 22];
+    guest.set_errno(0);
+    for signal in SIGNALS {
+        assert_eq!(guest.call("signal", &[signal, A + signal]), 0, "{signal}");
+    }
+    // Each signal has its own handler, and the number is an int.
+    for signal in SIGNALS {
+        assert_eq!(
+            guest.call("signal", &[JUNK | signal, B]),
+            A + signal,
+            "{signal}"
+        );
+    }
+    // SIG_DFL is 0 and SIG_IGN is 1; either is stored like a function.
+    assert_eq!(guest.call("signal", &[2, 1]), B);
+    assert_eq!(guest.call("signal", &[2, 0]), 1);
+    assert_eq!(guest.call("signal", &[2, A]), 0);
+    assert_eq!(guest.errno(), 0);
+    for unlisted in [
+        0,
+        1,
+        3,
+        5,
+        7,
+        9,
+        10,
+        12,
+        14,
+        16,
+        23,
+        64,
+        MINUS_ONE,
+        0x8000_0002,
+    ] {
+        assert_eq!(
+            guest.call("signal", &[unlisted, B]),
+            u64::MAX,
+            "{unlisted:#x}"
+        );
+        assert_eq!(guest.errno(), EINVAL, "{unlisted:#x}");
+        guest.set_errno(0);
+    }
+    // A refused call changed no handler.
+    assert_eq!(guest.call("signal", &[2, 0]), A);
+    for signal in &SIGNALS[1..] {
+        assert_eq!(guest.call("signal", &[*signal, 0]), B, "{signal}");
+    }
+}
+
+/// `__p__fmode` and `__p__commode`, from their Microsoft Learn pages: each
+/// returns a pointer to a global `int`, `_fmode` and `_commode`. The `_fmode`
+/// page gives its default as `_O_TEXT`, which fcntl.h defines as 0x4000. No
+/// page gives `_commode` an initial value; zero, "no commit", is Xenora's.
+#[test]
+fn crt_file_mode_variables_are_guest_memory() {
+    let mut guest = Guest::new();
+    let fmode = guest.call("__p__fmode", &[]);
+    let commode = guest.call("__p__commode", &[]);
+    assert_ne!(fmode, 0);
+    assert_ne!(commode, 0);
+    // Two ints that do not overlap.
+    assert!(fmode.abs_diff(commode) >= 4);
+    assert_eq!(guest.memory.read_u32(fmode).unwrap(), 0x4000);
+    assert_eq!(guest.memory.read_u32(commode).unwrap(), 0);
+    // The program assigns through the pointers: _O_BINARY is 0x8000 and
+    // _IOCOMMIT is 0x4000.
+    guest.memory.write_u32(fmode, 0x8000).unwrap();
+    assert_eq!(guest.memory.read_u32(commode).unwrap(), 0);
+    guest.memory.write_u32(commode, 0x4000).unwrap();
+    // The variables stay where they are and keep what was stored.
+    assert_eq!(guest.call("__p__fmode", &[]), fmode);
+    assert_eq!(guest.call("__p__commode", &[]), commode);
+    assert_eq!(guest.memory.read_u32(fmode).unwrap(), 0x8000);
+    assert_eq!(guest.memory.read_u32(commode).unwrap(), 0x4000);
+
+    // The order of the first calls does not matter.
+    let mut other = Guest::new();
+    let commode = other.call("__p__commode", &[]);
+    assert_eq!(other.memory.read_u32(commode).unwrap(), 0);
+    let fmode = other.call("__p__fmode", &[]);
+    assert_eq!(other.memory.read_u32(fmode).unwrap(), 0x4000);
+    assert!(fmode.abs_diff(commode) >= 4);
+}
+
+/// `_set_app_type` and `__setusermatherr` (corecrt_startup.h) return nothing.
+/// What they were given is visible to the host only.
+#[test]
+fn crt_app_type_and_math_error_handler_are_recorded() {
+    let mut guest = Guest::new();
+    assert_eq!(guest.state.crt_app_type(), 0); // _crt_unknown_app
+    assert_eq!(guest.state.crt_user_math_error(), 0);
+    guest.call("_set_app_type", &[JUNK | 1]); // _crt_console_app
+    assert_eq!(guest.state.crt_app_type(), 1);
+    assert_eq!(guest.state.crt_user_math_error(), 0);
+    guest.call("__setusermatherr", &[0x1_4000_2340]);
+    assert_eq!(guest.state.crt_user_math_error(), 0x1_4000_2340);
+    assert_eq!(guest.state.crt_app_type(), 1);
+    guest.call("_set_app_type", &[2]); // _crt_gui_app
+    guest.call("__setusermatherr", &[0]);
+    assert_eq!(guest.state.crt_app_type(), 2);
+    assert_eq!(guest.state.crt_user_math_error(), 0);
+    // Neither touched errno or the last error.
+    assert_eq!(guest.errno(), 0);
+    assert_eq!(guest.last_error(), 0);
+}
+
+/// The module and symbol pairs a program built with mingw-w64 14.0.0 (UCRT)
+/// imports these services by, read from such a program's import table.
+#[test]
+fn crt_startup_services_resolve_as_mingw_w64_imports_them() {
+    let (registry, _) = standard(0);
+    for (module, symbol, canonical) in [
+        (
+            "api-ms-win-crt-runtime-l1-1-0.dll",
+            "_set_app_type",
+            "ucrtbase.dll",
+        ),
+        (
+            "api-ms-win-crt-heap-l1-1-0.dll",
+            "_set_new_mode",
+            "ucrtbase.dll",
+        ),
+        (
+            "api-ms-win-crt-locale-l1-1-0.dll",
+            "_configthreadlocale",
+            "ucrtbase.dll",
+        ),
+        (
+            "api-ms-win-crt-math-l1-1-0.dll",
+            "__setusermatherr",
+            "ucrtbase.dll",
+        ),
+        (
+            "api-ms-win-crt-runtime-l1-1-0.dll",
+            "_set_invalid_parameter_handler",
+            "ucrtbase.dll",
+        ),
+        (
+            "api-ms-win-crt-stdio-l1-1-0.dll",
+            "__p__fmode",
+            "ucrtbase.dll",
+        ),
+        (
+            "api-ms-win-crt-stdio-l1-1-0.dll",
+            "__p__commode",
+            "ucrtbase.dll",
+        ),
+        (
+            "api-ms-win-crt-runtime-l1-1-0.dll",
+            "signal",
+            "ucrtbase.dll",
+        ),
+        (
+            "KERNEL32.dll",
+            "SetUnhandledExceptionFilter",
+            "kernel32.dll",
+        ),
+        (
+            "api-ms-win-crt-private-l1-1-0.dll",
+            "memcpy",
+            "ucrtbase.dll",
+        ),
+    ] {
+        let service = registry
+            .resolve(module, &named(symbol))
+            .unwrap_or_else(|| panic!("{module}!{symbol}"));
+        let target = registry.resolve(canonical, &named(symbol)).unwrap();
+        assert!(std::ptr::eq(service, target), "{module}!{symbol}");
+        assert_eq!(service.status, ServiceStatus::Partial, "{symbol}");
+    }
+    // An API set forwards only the symbols listed for it.
+    for (module, symbol) in [
+        ("api-ms-win-crt-heap-l1-1-0.dll", "_set_app_type"),
+        ("api-ms-win-crt-runtime-l1-1-0.dll", "_set_new_mode"),
+        ("api-ms-win-crt-stdio-l1-1-0.dll", "signal"),
+        ("api-ms-win-crt-private-l1-1-0.dll", "_set_app_type"),
+    ] {
+        assert!(
+            registry.resolve(module, &named(symbol)).is_none(),
+            "{module}!{symbol}"
+        );
+    }
+}
 
 fn named(name: &str) -> ImportName {
     ImportName::Name(name.to_owned())

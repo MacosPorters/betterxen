@@ -6,14 +6,14 @@ A declared service is not a claim of compatibility. `implemented` and `partial` 
 
 | Measure | Count |
 | --- | ---: |
-| Services with a declared ABI | 20 |
-| Generated adapters | 20 |
-| Unique handler implementations | 20 |
+| Services with a declared ABI | 29 |
+| Generated adapters | 29 |
+| Unique handler implementations | 29 |
 | Implemented | 7 |
-| Partial | 13 |
+| Partial | 22 |
 | Stub | 0 |
-| Conformance-tested through guest dispatch | 20 |
-| API-set aliases (not services) | 20 |
+| Conformance-tested through guest dispatch | 29 |
+| API-set aliases (not services) | 29 |
 | Independently accepted | 0 |
 
 | Service | Signature | Status | Failure |
@@ -38,3 +38,12 @@ A declared service is not a claim of compatibility. `implemented` and `partial` 
 | `ucrtbase.dll!sqrtf` | `(x: f32) -> f32` | partial | NaN for a negative argument; errno is not set |
 | `ucrtbase.dll!fabs` | `(x: f64) -> f64` | implemented | never |
 | `ucrtbase.dll!fabsf` | `(x: f32) -> f32` | implemented | never |
+| `ucrtbase.dll!_set_app_type` | `(kind: i32) -> void` | partial | never |
+| `ucrtbase.dll!_set_new_mode` | `(mode: i32) -> i32` | partial | -1 with errno EINVAL for a mode other than 0 or 1 |
+| `ucrtbase.dll!_configthreadlocale` | `(request: i32) -> i32` | partial | -1 with errno EINVAL for a request other than 0, 1 or 2 |
+| `ucrtbase.dll!__setusermatherr` | `(handler: ptr) -> void` | partial | never |
+| `ucrtbase.dll!_set_invalid_parameter_handler` | `(handler: ptr) -> ptr` | partial | never |
+| `ucrtbase.dll!__p__fmode` | `() -> ptr` | partial | stops the guest when the variable cannot be allocated |
+| `ucrtbase.dll!__p__commode` | `() -> ptr` | partial | stops the guest when the variable cannot be allocated |
+| `ucrtbase.dll!signal` | `(signal: i32, handler: ptr) -> ptr` | partial | SIG_ERR with errno EINVAL for a signal the documentation does not list |
+| `kernel32.dll!SetUnhandledExceptionFilter` | `(filter: ptr) -> ptr` | partial | never |

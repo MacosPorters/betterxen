@@ -8,7 +8,7 @@ use crate::runtime::{Call, Parameter, Return, ServiceContext, ServiceMetadata};
 use crate::services::{ServicesState, handlers};
 use std::sync::Arc;
 
-pub static SERVICES: [ServiceMetadata; 20] = [
+pub static SERVICES: [ServiceMetadata; 29] = [
     ServiceMetadata {
         library: "kernel32.dll",
         symbol: "SetProcessPriorityBoost",
@@ -229,6 +229,105 @@ pub static SERVICES: [ServiceMetadata; 20] = [
         reference: "math.h fabsf (ISO C, IEC 60559 abs)",
         tests: &["floating_arguments_and_results_use_xmm_registers"],
     },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "_set_app_type",
+        parameters: &[Parameter { name: "kind", kind: "i32" }],
+        result: "void",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-runtime-l1-1-0.dll"],
+        failure: "never",
+        reference: "corecrt_startup.h _set_app_type",
+        tests: &["crt_app_type_and_math_error_handler_are_recorded"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "_set_new_mode",
+        parameters: &[Parameter { name: "mode", kind: "i32" }],
+        result: "i32",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-heap-l1-1-0.dll"],
+        failure: "-1 with errno EINVAL for a mode other than 0 or 1",
+        reference: "new.h _set_new_mode",
+        tests: &["crt_startup_modes_return_the_previous_setting"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "_configthreadlocale",
+        parameters: &[Parameter { name: "request", kind: "i32" }],
+        result: "i32",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-locale-l1-1-0.dll"],
+        failure: "-1 with errno EINVAL for a request other than 0, 1 or 2",
+        reference: "locale.h _configthreadlocale",
+        tests: &["crt_startup_modes_return_the_previous_setting"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "__setusermatherr",
+        parameters: &[Parameter { name: "handler", kind: "ptr" }],
+        result: "void",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-math-l1-1-0.dll"],
+        failure: "never",
+        reference: "corecrt_startup.h __setusermatherr",
+        tests: &["crt_app_type_and_math_error_handler_are_recorded"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "_set_invalid_parameter_handler",
+        parameters: &[Parameter { name: "handler", kind: "ptr" }],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-runtime-l1-1-0.dll"],
+        failure: "never",
+        reference: "stdlib.h _set_invalid_parameter_handler",
+        tests: &["crt_startup_handlers_return_the_previous_handler"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "__p__fmode",
+        parameters: &[],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-stdio-l1-1-0.dll"],
+        failure: "stops the guest when the variable cannot be allocated",
+        reference: "Microsoft Learn, C runtime library reference, __p__fmode",
+        tests: &["crt_file_mode_variables_are_guest_memory"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "__p__commode",
+        parameters: &[],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-stdio-l1-1-0.dll"],
+        failure: "stops the guest when the variable cannot be allocated",
+        reference: "Microsoft Learn, C runtime library reference, __p__commode",
+        tests: &["crt_file_mode_variables_are_guest_memory"],
+    },
+    ServiceMetadata {
+        library: "ucrtbase.dll",
+        symbol: "signal",
+        parameters: &[Parameter { name: "signal", kind: "i32" }, Parameter { name: "handler", kind: "ptr" }],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-crt-runtime-l1-1-0.dll"],
+        failure: "SIG_ERR with errno EINVAL for a signal the documentation does not list",
+        reference: "signal.h signal",
+        tests: &["crt_startup_handlers_return_the_previous_handler"],
+    },
+    ServiceMetadata {
+        library: "kernel32.dll",
+        symbol: "SetUnhandledExceptionFilter",
+        parameters: &[Parameter { name: "filter", kind: "ptr" }],
+        result: "ptr",
+        status: ServiceStatus::Partial,
+        aliases: &["api-ms-win-core-errorhandling-l1-1-0.dll"],
+        failure: "never",
+        reference: "errhandlingapi.h SetUnhandledExceptionFilter",
+        tests: &["crt_startup_handlers_return_the_previous_handler"],
+    },
 ];
 
 /// Register every generated service and its API-set aliases.
@@ -396,6 +495,77 @@ pub fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
         let a0 = call.f32(0)?;
         let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
         let result: crate::runtime::Float32 = handlers::fabsf(&mut context, a0)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "_set_app_type", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.i32(0)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let () = handlers::set_app_type(&mut context, a0)?;
+        Ok(0)
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "_set_new_mode", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.i32(0)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: i32 = handlers::set_new_mode(&mut context, a0)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "_configthreadlocale", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.i32(0)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: i32 = handlers::configure_thread_locale(&mut context, a0)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "__setusermatherr", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.u64(0)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let () = handlers::set_user_math_error(&mut context, a0)?;
+        Ok(0)
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "_set_invalid_parameter_handler", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.u64(0)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::set_invalid_parameter_handler(&mut context, a0)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "__p__fmode", ServiceStatus::Partial, move |args, cpu, memory| {
+        let _ = args;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::file_mode_pointer(&mut context)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "__p__commode", ServiceStatus::Partial, move |args, cpu, memory| {
+        let _ = args;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::commit_mode_pointer(&mut context)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("ucrtbase.dll", "signal", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.i32(0)?;
+        let a1 = call.u64(1)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::signal(&mut context, a0, a1)?;
+        Ok(result.place(cpu))
+    });
+    let s = state.clone();
+    registry.register_with_status("kernel32.dll", "SetUnhandledExceptionFilter", ServiceStatus::Partial, move |args, cpu, memory| {
+        let call = Call::new(args, cpu, memory);
+        let a0 = call.u64(0)?;
+        let mut context = ServiceContext { state: &s, memory, teb: cpu.gs_base };
+        let result: u64 = handlers::set_unhandled_exception_filter(&mut context, a0)?;
         Ok(result.place(cpu))
     });
     for service in &SERVICES {

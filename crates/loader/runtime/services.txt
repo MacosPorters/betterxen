@@ -179,3 +179,78 @@ service ucrtbase.dll fabsf(x: f32) -> f32
     fails never
     ref math.h fabsf (ISO C, IEC 60559 abs)
     test floating_arguments_and_results_use_xmm_registers
+
+# What a C program's startup code configures before `main`. Each value is
+# recorded and returned as documented; nothing in the runtime acts on it.
+
+service ucrtbase.dll _set_app_type(kind: i32) -> void
+    handler set_app_type
+    status partial
+    alias api-ms-win-crt-runtime-l1-1-0.dll
+    fails never
+    ref corecrt_startup.h _set_app_type
+    test crt_app_type_and_math_error_handler_are_recorded
+
+service ucrtbase.dll _set_new_mode(mode: i32) -> i32
+    handler set_new_mode
+    status partial
+    alias api-ms-win-crt-heap-l1-1-0.dll
+    fails -1 with errno EINVAL for a mode other than 0 or 1
+    ref new.h _set_new_mode
+    test crt_startup_modes_return_the_previous_setting
+
+service ucrtbase.dll _configthreadlocale(request: i32) -> i32
+    handler configure_thread_locale
+    status partial
+    alias api-ms-win-crt-locale-l1-1-0.dll
+    fails -1 with errno EINVAL for a request other than 0, 1 or 2
+    ref locale.h _configthreadlocale
+    test crt_startup_modes_return_the_previous_setting
+
+service ucrtbase.dll __setusermatherr(handler: ptr) -> void
+    handler set_user_math_error
+    status partial
+    alias api-ms-win-crt-math-l1-1-0.dll
+    fails never
+    ref corecrt_startup.h __setusermatherr
+    test crt_app_type_and_math_error_handler_are_recorded
+
+service ucrtbase.dll _set_invalid_parameter_handler(handler: ptr) -> ptr
+    handler set_invalid_parameter_handler
+    status partial
+    alias api-ms-win-crt-runtime-l1-1-0.dll
+    fails never
+    ref stdlib.h _set_invalid_parameter_handler
+    test crt_startup_handlers_return_the_previous_handler
+
+service ucrtbase.dll __p__fmode() -> ptr
+    handler file_mode_pointer
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails stops the guest when the variable cannot be allocated
+    ref Microsoft Learn, C runtime library reference, __p__fmode
+    test crt_file_mode_variables_are_guest_memory
+
+service ucrtbase.dll __p__commode() -> ptr
+    handler commit_mode_pointer
+    status partial
+    alias api-ms-win-crt-stdio-l1-1-0.dll
+    fails stops the guest when the variable cannot be allocated
+    ref Microsoft Learn, C runtime library reference, __p__commode
+    test crt_file_mode_variables_are_guest_memory
+
+service ucrtbase.dll signal(signal: i32, handler: ptr) -> ptr
+    handler signal
+    status partial
+    alias api-ms-win-crt-runtime-l1-1-0.dll
+    fails SIG_ERR with errno EINVAL for a signal the documentation does not list
+    ref signal.h signal
+    test crt_startup_handlers_return_the_previous_handler
+
+service kernel32.dll SetUnhandledExceptionFilter(filter: ptr) -> ptr
+    handler set_unhandled_exception_filter
+    status partial
+    alias api-ms-win-core-errorhandling-l1-1-0.dll
+    fails never
+    ref errhandlingapi.h SetUnhandledExceptionFilter
+    test crt_startup_handlers_return_the_previous_handler

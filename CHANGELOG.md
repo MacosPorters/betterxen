@@ -128,6 +128,8 @@ remains unsupported.
 
 - Added guest CRT errno accessors and allocation failure reporting for the synthetic main thread.
 
+- Added nine C runtime services that a C program's startup code calls or imports before `main`, and one alias (#382, part of Gate A2): `_set_app_type`, `_set_new_mode`, `_configthreadlocale`, `__setusermatherr`, `_set_invalid_parameter_handler`, `__p__fmode`, `__p__commode`, `signal` and `SetUnhandledExceptionFilter`, plus `memcpy` through `api-ms-win-crt-private-l1-1-0.dll`. A program built with the mingw-w64 runtime imports all of them, and the loader refused it before its entry point because they did not resolve. Each records what it is given and returns what its public documentation says: the previous mode, setting or handler, the documented failure value, or the address of the guest variables `_fmode` and `_commode`. All nine are declared `partial` in the typed registry because nothing acts on a recorded value: no handler or filter is ever called, no signal is raised, there is no locale, and nothing reads `_fmode` yet. `ServicesState` gains two read-only accessors, `crt_app_type` and `crt_user_math_error`. Five tests in `runtime_services.rs` call the services from guest code through a bound import table. Not compared with Windows; awaiting independent review.
+
 - Added guest CRT allocation, zeroed array allocation, resizing, and release.
 
 - Added private guest heap creation and destruction with per-heap allocation ownership.
