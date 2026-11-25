@@ -111,6 +111,7 @@ impl SymbolDb {
         db.populate_win32_profile();
         db.populate_win32_sysinfo();
         db.populate_win32_file();
+        db.populate_registered_services();
         db.populate_unsupported();
         db
     }
@@ -600,6 +601,128 @@ impl SymbolDb {
             false,
             "Thread locale config — no-op",
         );
+    }
+
+    // ---- Services the loader registry provides ------------------------------
+
+    /// Standard services registered by `crates/loader/src/services` that no
+    /// other table classifies. Synthetic fixture modules are left out.
+    fn populate_registered_services(&mut self) {
+        for (module, symbols) in [
+            (
+                "kernel32.dll",
+                &[
+                    "CloseHandle",
+                    "FreeLibrary",
+                    "GetCurrentDirectoryA",
+                    "GetCurrentDirectoryW",
+                    "GetLastError",
+                    "GetModuleFileNameA",
+                    "GetModuleFileNameW",
+                    "GetProcessId",
+                    "GetProcessPriorityBoost",
+                    "LoadLibraryA",
+                    "LoadLibraryW",
+                    "OpenThread",
+                    "SetCurrentDirectoryA",
+                    "SetCurrentDirectoryW",
+                    "SetEnvironmentVariableA",
+                    "SetEnvironmentVariableW",
+                    "SetLastError",
+                    "SetProcessPriorityBoost",
+                    "VirtualAlloc",
+                    "VirtualFree",
+                ][..],
+            ),
+            (
+                "ucrtbase.dll",
+                &[
+                    "_atoi64",
+                    "_gmtime64_s",
+                    "_localtime64_s",
+                    "_putenv",
+                    "_stricmp",
+                    "_strnicmp",
+                    "_time64",
+                    "_wcsicmp",
+                    "_wcsnicmp",
+                    "_wtoi",
+                    "_wtoi64",
+                    "_wtol",
+                    "atoi",
+                    "atol",
+                    "atoll",
+                    "gmtime_s",
+                    "localtime_s",
+                    "rand",
+                    "rand_s",
+                    "srand",
+                    "time",
+                ][..],
+            ),
+            (
+                "ws2_32.dll",
+                &[
+                    "WSACleanup",
+                    "WSAGetLastError",
+                    "WSAPoll",
+                    "WSASetLastError",
+                    "WSAStartup",
+                    "accept",
+                    "bind",
+                    "closesocket",
+                    "connect",
+                    "getpeername",
+                    "getsockname",
+                    "getsockopt",
+                    "htonl",
+                    "htons",
+                    "inet_ntop",
+                    "inet_pton",
+                    "ioctlsocket",
+                    "listen",
+                    "ntohl",
+                    "ntohs",
+                    "recv",
+                    "recvfrom",
+                    "send",
+                    "sendto",
+                    "shutdown",
+                    "socket",
+                ][..],
+            ),
+            (
+                "xgameruntime.dll",
+                &[
+                    "XAsyncCancel",
+                    "XAsyncGetResultSize",
+                    "XAsyncGetStatus",
+                    "XAsyncRun",
+                    "XTaskQueueCloseHandle",
+                    "XTaskQueueCreate",
+                    "XTaskQueueCreateComposite",
+                    "XTaskQueueDispatch",
+                    "XTaskQueueDuplicateHandle",
+                    "XTaskQueueGetPort",
+                    "XTaskQueueSubmitCallback",
+                    "XTaskQueueSubmitDelayedCallback",
+                    "XTaskQueueTerminate",
+                ][..],
+            ),
+            (
+                "xinput1_4.dll",
+                &[
+                    "XInputEnable",
+                    "XInputGetCapabilities",
+                    "XInputGetState",
+                    "XInputSetState",
+                ][..],
+            ),
+        ] {
+            for symbol in symbols {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
     }
 
     // ---- VCRUNTIME140 / VCRUNTIME140_1 -------------------------------------
