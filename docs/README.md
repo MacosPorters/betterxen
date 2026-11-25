@@ -8,6 +8,10 @@ then read the [interface contracts](interfaces.md). Reproduce an
 [independent validation suite](../tests/validation/README.md) before changing
 either path. The [changelog](../CHANGELOG.md) records notable changes.
 
+Use the [BetterXen development phases](development-phases.md) for current work
+order, existing issue/PR dependencies and measurable completion criteria.
+Historical phase checkpoints retain their original evidence scope.
+
 ## Architecture and technical design
 
 - [Interface contracts](interfaces.md) — Translated shader stages, guest services, native command submission, and synthetic textures.

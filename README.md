@@ -1,6 +1,6 @@
 # BetterXen
 
-BetterXen is an independent continuation copied from [XenoraOSS/Xenora](https://github.com/XenoraOSS/Xenora). The original Git history, licenses and contributor attribution are retained. See the [migration notes](docs/migration.md) for imported issue and pull-request history.
+BetterXen is a community-maintained continuation. Original Git history, licenses and contributor attribution are retained. See the [project history and migration notes](docs/migration.md) for source attribution and imported issue and pull-request records.
 
 **Experimental Xbox Series X|S emulation research for Apple Silicon Macs.**
 
@@ -53,7 +53,7 @@ The latest verified milestones include **translated gfx1030 vertex and pixel sha
 | X24 — Gameplay and performance | Expand rendering correctness, input, audio, memory management, shader caching and execution performance | Long-term goal |
 | X25 — Running games | Achieve reproducible, stable execution of compatible games on native Apple Silicon macOS using Metal | Long-term goal |
 
-**Roadmap note:** X10–X25 are proposed engineering milestones, not completed implementations or a guaranteed sequence. Actual priorities will change as compatibility testing reveals new blockers. Successfully completing one milestone does not guarantee that a particular game will run.
+**Roadmap note:** X10–X25 are proposed engineering milestones, not completed implementations or a guaranteed sequence. Follow the [BetterXen development phases](docs/development-phases.md) for the current work order and existing issue/PR dependencies. Actual priorities will change as compatibility testing reveals new blockers. Successfully completing one milestone does not guarantee that a particular game will run.
 
 All existing verification refers to independently authored synthetic programs and shaders. Commercial-game compatibility remains unverified.
 
@@ -360,10 +360,6 @@ See the [roadmap table](#development-milestones) for proposed milestones, and th
 **The goal is to build a trustworthy native Apple Silicon compatibility framework, one verifiable subsystem at a time.**
 
 ---
-
-### Contributors
-
-[![Contributors](https://contrib.rocks/image?repo=MacosPorters/betterxen)](https://github.com/MacosPorters/betterxen/graphs/contributors)
 
 ## License
 
