@@ -318,6 +318,27 @@ next datagram; `WSAEINVAL` on a listening socket) and `FIONBIO` with a nonzero
 argument. Every socket is already non-blocking, so asking for blocking mode
 returns `WSAEOPNOTSUPP` instead of being ignored.
 
+### XInput controllers
+
+`XInputGetState`, `XInputSetState`, `XInputGetCapabilities` and
+`XInputEnable` are registered on `xinput1_4.dll`; `xinput1_3.dll` and
+`xinput9_1_0.dll` reach the same services (`xinput9_1_0.dll` has no
+`XInputEnable`). Readings come from a `ControllerSource` the host connects
+with `ServicesState::set_controllers`. Without one, every slot reports
+`ERROR_DEVICE_NOT_CONNECTED`. `SimulatedControllers` is a deterministic source
+for tests; no physical controller or app input path is connected yet.
+
+The functions return their error code and leave last-error alone: a slot of 4
+or more, a null buffer or unknown capability flags return
+`ERROR_BAD_ARGUMENTS`, and an unmapped buffer returns `ERROR_NOACCESS`.
+`dwPacketNumber` advances only when the reading changes. While
+`XInputEnable(FALSE)` is in effect, `XInputGetState` reports a neutral
+controller and the motors stop; the last vibration request is applied again
+when XInput is enabled. Capabilities report a gamepad with every defined
+button, full trigger and stick resolution, and force feedback only when the
+source says the controller can vibrate. Battery, keystroke and audio-device
+functions are not implemented.
+
 ### XAsync helpers
 
 `XAsyncRun`, `XAsyncGetStatus`, `XAsyncCancel` and `XAsyncGetResultSize` are

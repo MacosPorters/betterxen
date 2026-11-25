@@ -28,6 +28,7 @@ mod synch;
 pub mod sysinfo;
 mod task_fixture;
 mod winsock;
+pub mod xinput;
 
 use crate::runtime::HResult;
 
@@ -206,6 +207,9 @@ pub struct ServicesState {
     /// Functions registered with `atexit`, run in reverse order by `_cexit`.
     atexit: Mutex<Vec<u64>>,
     winsock: Mutex<winsock::Winsock>,
+    /// Where XInput readings come from; see [`ServicesState::set_controllers`].
+    controllers: Arc<dyn xinput::ControllerSource>,
+    xinput: Mutex<xinput::XInput>,
     task_fixture: Mutex<task_fixture::TaskFixture>,
     platform_fixture: Mutex<platform_fixture::PlatformFixture>,
     gdk_queues: Mutex<gdk_queue::QueueHandles>,
@@ -236,6 +240,8 @@ impl ServicesState {
             synch: Mutex::default(),
             atexit: Mutex::default(),
             winsock: Mutex::default(),
+            controllers: Arc::new(xinput::NoControllers),
+            xinput: Mutex::default(),
             task_fixture: Mutex::default(),
             platform_fixture: Mutex::default(),
             gdk_queues: Mutex::default(),
@@ -250,6 +256,12 @@ impl ServicesState {
             graphics: Arc::new(Mutex::new(crate::graphics::GraphicsContext::new())),
         }
     }
+    /// Connect a controller source to XInput. Without one, every slot reports
+    /// that no controller is connected.
+    pub fn set_controllers(&mut self, source: Arc<dyn xinput::ControllerSource>) {
+        self.controllers = source;
+    }
+
     /// Expose a host directory to the guest. Each drive letter can be mounted
     /// once. Nothing on the host is reachable unless it is mounted here.
     pub fn mount(&mut self, mount: host_files::HostMount) -> Result<(), host_files::HostMount> {
@@ -640,6 +652,7 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
         ServiceStatus::Implemented,
     );
     winsock::register(registry, &state);
+    xinput::register(registry, &state);
     task_fixture::register(registry, &state);
     platform_fixture::register(registry, &state);
     gdk_queue::register(registry, &state);
