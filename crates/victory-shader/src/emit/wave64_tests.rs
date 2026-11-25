@@ -235,6 +235,23 @@ fn a_sum_of_halves_where_lanes_have_left_is_the_consoles_tree_bit_for_bit() {
     words[1] = 0xBF88_0000 | (words.len() as u32 - 2);
     let native = native(&words);
     let p = ir::build(&native.code, native.wave64, native.vgprs).expect("ir::build");
+    // BetterXen correction (research/shader-wave-semantics): this program is lowered for a host
+    // of 64-lane waves. A device whose waves are narrower cannot run that lowering: its lanes 32
+    // and up do not exist, and the observed result was 0 instead of the tree. Such a device
+    // must be offered the lowering for its own width instead, which the recompiler refuses for
+    // this program ("a wave sum of 16-bit floats where not every lane runs"): the test then
+    // asserts that refusal, which is the correct behaviour, rather than reporting a failure
+    // or silently skipping.
+    if let Some(w) = Host::new(false).ok().and_then(|h| h.wave_lane_count_max()).filter(|&w| w < 64) {
+        let refused = lowered_on(&native, &p, &HashSet::new(), w);
+        assert!(
+            matches!(&refused, Err(ShaderError::Unsupported { what, .. }) if what.contains("16-bit floats where not every lane runs")),
+            "a {w}-lane device must be refused this program, got {:?}",
+            refused.as_ref().map(|_| "a shader")
+        );
+        eprintln!("device waves are {w} lanes; refused for that width as expected; not run on the device");
+        return;
+    }
     let shader = lowered_on(&native, &p, &HashSet::new(), 64).expect("lower");
     if let Ok(mut v) = validator::Validator::load(validator::Validator::default_path().as_deref()) {
         let mut copy = shader.dxil.clone();

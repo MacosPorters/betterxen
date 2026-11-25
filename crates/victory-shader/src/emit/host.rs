@@ -82,6 +82,24 @@ fn err(e: windows::core::Error) -> String {
 }
 
 impl Host {
+    /// The widest wave the device reports (`D3D12_OPTIONS1.WaveLaneCountMax`), or `None` when the
+    /// device does not report wave operations. BetterXen addition: tests that lower for a given
+    /// host wave width must not run on a narrower device (see wave64_tests.rs).
+    pub fn wave_lane_count_max(&self) -> Option<u32> {
+        let mut o = D3D12_FEATURE_DATA_D3D12_OPTIONS1::default();
+        // SAFETY: `o` is a correctly sized, writable feature-data struct for this feature.
+        unsafe {
+            self.device
+                .CheckFeatureSupport(
+                    D3D12_FEATURE_D3D12_OPTIONS1,
+                    (&mut o as *mut D3D12_FEATURE_DATA_D3D12_OPTIONS1).cast(),
+                    std::mem::size_of::<D3D12_FEATURE_DATA_D3D12_OPTIONS1>() as u32,
+                )
+                .ok()?;
+        }
+        (o.WaveOps.as_bool() && o.WaveLaneCountMax > 0).then_some(o.WaveLaneCountMax)
+    }
+
     /// The default adapter, or WARP with `warp` (or `VICTORY_WARP=1`).
     pub fn new(warp: bool) -> Result<Self, String> {
         let warp = warp || std::env::var("VICTORY_WARP").is_ok_and(|v| v == "1");
