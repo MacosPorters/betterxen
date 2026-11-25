@@ -41,6 +41,8 @@
 //!   `f=*` and `keep=` require the initial value. A case without `f=` on the
 //!   left runs with all flags clear and again with all flags set.
 //! * `mx=` is MXCSR; `mx=~20:1b88` ignores the bits in `20`. `=?` ignores a value.
+//! * `fcw=`, `fsw=` and `ftw=` are the x87 control, status and tag words. Every
+//!   case starts with all three away from their FNINIT values.
 //! * Symbols: `D` writable data, `U` the unmapped page after it, `R` read-only
 //!   data, `S` stack, `C` code, `FSB` and `GSB` segment bases.
 //! * Faults: `DE`, `GP`, `UD`, `XM`, and page faults `PFR`, `PFW`, `PFX` with
@@ -50,7 +52,7 @@
 
 use std::collections::{BTreeMap, BTreeSet};
 use std::fmt::Write as _;
-use xenora_loader::cpu::{CpuState, ExitReason, Interpreter, Mxcsr, RFlags};
+use xenora_loader::cpu::{CpuState, ExitReason, Interpreter, Mxcsr, RFlags, X87State};
 use xenora_loader::dbt::{DbtEngine, is_native};
 use xenora_loader::memory::{GuestMemory, MemoryError, MemoryPermissions};
 use xenora_loader::x86_decode::decode;
@@ -1533,6 +1535,36 @@ fences_change_no_register_or_flag: rax=1122334455667788 rbx=99aabbccddeeff00 => 
 fences_ignore_the_rm_field: rax=1122334455667788 => f=*
 ";
 
+/// FNINIT, the only x87 instruction (#378). The three words it sets are all the
+/// x87 state there is: no data register, pointer or last opcode is modelled, and
+/// nothing can read the words back yet, so the cases look at guest state.
+const X87_INIT: &str = r"
+@ fninit
+  dbe3
+  SDM 2A FINIT/FNINIT (Operation); 1 8.1.5 (control word 037FH); 1 8.1.7 (tag FFFFH)
+fninit_sets_control_status_and_tag: fcw=0040 fsw=3a41 ftw=0000 => fcw=037f fsw=0 ftw=ffff f=*
+fninit_from_every_bit_set: fcw=ffff fsw=ffff ftw=0000 => fcw=037f fsw=0 ftw=ffff f=*
+fninit_from_every_bit_clear: fcw=0 fsw=0 ftw=0 => fcw=037f fsw=0 ftw=ffff f=*
+fninit_twice_is_the_same: fcw=037f fsw=0 ftw=ffff => fcw=037f fsw=0 ftw=ffff f=*
+fninit_from_the_harness_default: => fcw=037f fsw=0 ftw=ffff f=*
+@ fninit
+  dbe3
+  SDM 2A FINIT/FNINIT (the x87 words only; Flags Affected: C0 to C3 cleared, which are status-word bits)
+fninit_keeps_registers_flags_xmm_and_mxcsr: rax=1122334455667788 rbx=99aabbccddeeff00 x3=q:0123456789abcdef,fedcba9876543210 mx=5fbf => fcw=037f fsw=0 ftw=ffff f=*
+@ mov [rdi], rax; fninit; mov rbx, [rdi]
+  488907 dbe3 488b1f
+  SDM 2A FINIT/FNINIT
+fninit_touches_no_memory: rdi=D rax=1122334455667788 m0=0000000000000000 => rbx=1122334455667788 m0=8877665544332211 fcw=037f fsw=0 ftw=ffff f=*
+@ fninit; add al, bl
+  dbe3 00d8
+  SDM 2A FINIT/FNINIT; 2A ADD
+fninit_then_integer_code_runs_on: rax=7f rbx=1 => rax=80 fcw=037f fsw=0 ftw=ffff f=cpAzSO
+@ add al, bl
+  00d8
+  SDM 2A ADD (no x87 state is named)
+integer_code_keeps_the_x87_words: rax=7f rbx=1 fcw=1a2b fsw=3c4d ftw=5e6f => rax=80 f=cpAzSO
+";
+
 const MEMORY_FAULTS: &str = r"
 @ mov r8d, 1; add al, bl; mov rcx, [rsi]; mov r9d, 2
   41b801000000 00d8 !488b0e 41b902000000
@@ -2875,6 +2907,7 @@ const GROUPS: &[(&str, &str)] = &[
     ("fs_gs", FS_GS),
     ("decoding", DECODING),
     ("fences", FENCES),
+    ("x87_init", X87_INIT),
     ("memory_faults", MEMORY_FAULTS),
     ("straddling_fault_address", STRADDLING_FAULT_ADDRESS),
     ("noncanonical_address", NONCANONICAL_ADDRESS),
@@ -3219,6 +3252,13 @@ fn initial_cpu() -> CpuState {
     }
     cpu.fs_base = FS_BASE;
     cpu.gs_base = GS_BASE;
+    // None of the three is what FNINIT sets, so a reset is always visible and
+    // an instruction that wrongly resets one is caught by any case.
+    cpu.x87 = X87State {
+        control: 0x0c40,
+        status: 0x2b05,
+        tag: 0x5a5a,
+    };
     cpu
 }
 
@@ -3279,6 +3319,13 @@ fn apply(text: &str, expected: &mut Expected) {
             expected.cpu.rip = value(data);
         } else if key == "gsbase" {
             expected.cpu.gs_base = value(data);
+        } else if let Some(word) = match key {
+            "fcw" => Some(&mut expected.cpu.x87.control),
+            "fsw" => Some(&mut expected.cpu.x87.status),
+            "ftw" => Some(&mut expected.cpu.x87.tag),
+            _ => None,
+        } {
+            *word = u16::try_from(value(data)).expect("a 16-bit x87 word");
         } else if key == "mx" {
             if data == "?" {
                 expected.mxcsr_mask = 0;
@@ -3513,6 +3560,9 @@ fn check(case: &Case, engine: Engine, initial_flags: u8) -> Result<(), String> {
     if (cpu.fs_base, cpu.gs_base) != (want.cpu.fs_base, want.cpu.gs_base) {
         text.push_str(" segment base changed;");
     }
+    if cpu.x87 != want.cpu.x87 {
+        let _ = write!(text, " x87={:04x?} want {:04x?};", cpu.x87, want.cpu.x87);
+    }
     let memory_text = Image::store(&memory).differences(&want.image);
     if !memory_text.is_empty() {
         let _ = write!(text, " memory{memory_text};");
@@ -3653,6 +3703,11 @@ fn decoding() {
 #[test]
 fn fences() {
     check_group(FENCES);
+}
+
+#[test]
+fn x87_init() {
+    check_group(X87_INIT);
 }
 
 #[test]

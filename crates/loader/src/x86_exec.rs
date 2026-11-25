@@ -10,7 +10,7 @@
 //! the state unchanged. Flags that the architecture leaves undefined keep their
 //! previous value, which is permitted but not something guests may rely on.
 
-use crate::cpu::{CpuState, ExitReason, RFlags, Register, cpuid};
+use crate::cpu::{CpuState, ExitReason, RFlags, Register, X87State, cpuid};
 use crate::memory::GuestMemory;
 use crate::x86_decode::{Encoding, Insn, MemOperand, RegOperand, RmOperand, Segment};
 use crate::x86_simd;
@@ -700,6 +700,12 @@ pub fn execute(
         // instruction starts, on one host thread, so guest accesses are already
         // totally ordered and a fence has nothing further to enforce.
         Op::Lfence | Op::Mfence | Op::Sfence => {}
+        // The control, status and tag words take their initial values. The
+        // no-wait form checks no pending exception, and the data registers,
+        // which Xenora does not model, are left alone and only tagged empty
+        // (Intel SDM Vol. 2A, "FINIT/FNINIT"). FNINIT also clears the x87
+        // instruction and data pointers and last opcode, which are not modelled.
+        Op::Fninit => cpu.x87 = X87State::INIT,
         Op::Cpuid => {
             // The leaf is EAX and the subleaf ECX. Each result is a 32-bit
             // register write, so the upper halves are cleared.

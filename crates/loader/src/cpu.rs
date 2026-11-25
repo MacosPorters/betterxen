@@ -85,6 +85,36 @@ impl Default for Mxcsr {
     }
 }
 
+/// x87 FPU control, status and tag words.
+///
+/// FNINIT is the only instruction that writes them and nothing reads them yet.
+/// The x87 data registers and every other x87 instruction are not modelled.
+/// The host's floating-point state is never involved.
+#[repr(C)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub struct X87State {
+    pub control: u16,
+    pub status: u16,
+    pub tag: u16,
+}
+
+impl X87State {
+    /// What FINIT and FNINIT set (Intel SDM Vol. 2A, "FINIT/FNINIT"; Vol. 1,
+    /// 8.1.3 to 8.1.7): every exception masked, 64-bit precision, round to
+    /// nearest; no flag, top of stack 0; every register tagged empty.
+    pub const INIT: Self = Self {
+        control: 0x037F,
+        status: 0,
+        tag: 0xFFFF,
+    };
+}
+
+impl Default for X87State {
+    fn default() -> Self {
+        Self::INIT
+    }
+}
+
 /// x86-64 CPU state. Native DBT accesses the general registers and RIP by offset.
 #[repr(C)]
 #[derive(Clone, Debug, Default, PartialEq, Eq)]
@@ -99,6 +129,9 @@ pub struct CpuState {
     pub mxcsr: Mxcsr,
     /// Direction flag: string instructions step RSI and RDI down when set.
     pub df: bool,
+    /// Starts as FNINIT leaves it. The value an operating system gives a new
+    /// thread is not modelled.
+    pub x87: X87State,
 }
 
 impl CpuState {
@@ -114,6 +147,7 @@ impl CpuState {
             xmm: [0; 16],
             mxcsr: Mxcsr::default(),
             df: false,
+            x87: X87State::INIT,
         }
     }
 
@@ -212,7 +246,21 @@ impl std::error::Error for ExitReason {}
 
 #[cfg(test)]
 mod layout_tests {
-    use super::{CpuState, RFlags, Register};
+    use super::{CpuState, RFlags, Register, X87State};
+
+    /// Intel SDM Vol. 2A, "FINIT/FNINIT", Operation.
+    #[test]
+    fn a_new_guest_starts_with_the_x87_words_fninit_sets() {
+        let init = X87State {
+            control: 0x037F,
+            status: 0,
+            tag: 0xFFFF,
+        };
+        assert_eq!(X87State::INIT, init);
+        assert_eq!(X87State::default(), init);
+        assert_eq!(CpuState::default().x87, init);
+        assert_eq!(CpuState::new(0x1000, 0x2000).x87, init);
+    }
 
     /// The native translator addresses guest registers and RIP by raw byte
     /// offset. Keep these assertions next to the struct so a layout change

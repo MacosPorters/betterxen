@@ -47,6 +47,9 @@ pub struct Form {
     pub has_modrm: bool,
     pub memory_only: bool,
     pub register_only: bool,
+    /// The only ModRM r/m field value the form accepts. Set only on
+    /// register-only forms, so such a form matches exactly one ModRM byte.
+    pub fixed_rm: Option<u8>,
     pub no_rex_b: bool,
     /// A 16-byte memory operand may have any alignment.
     pub unaligned: bool,
@@ -430,7 +433,7 @@ pub fn decode<E>(
         reg = register((modrm >> 3) & 7, rex_r, size);
         let mode = modrm >> 6;
         if mode == 3 {
-            if form.memory_only {
+            if form.memory_only || form.fixed_rm.is_some_and(|field| field != modrm & 7) {
                 return Err(DecodeError::Unsupported(opcode));
             }
             rm = Some(RmOperand::Reg(register(modrm & 7, rex_b, rm_size)));
