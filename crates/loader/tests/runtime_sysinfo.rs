@@ -250,3 +250,57 @@ fn sleeping_advances_the_injected_clock() {
     assert_eq!(guest.fails("SleepEx", &[60_000, 0]), RUNTIME_LIMIT);
     assert_eq!(guest.call("GetTickCount64", &[]), 255);
 }
+
+/// `IsProcessorFeaturePresent` must agree with what translated guest code sees
+/// when it executes `CPUID`, bit for bit, per the CPUID feature flags in the
+/// public Intel and AMD manuals and the `PF_*` numbers in winnt.h.
+#[test]
+fn processor_features_agree_with_guest_cpuid() {
+    const FEATURES: &[(&str, &str)] = &[
+        ("kernel32.dll", "IsProcessorFeaturePresent"),
+        (
+            "api-ms-win-core-processthreads-l1-1-0.dll",
+            "IsProcessorFeaturePresent",
+        ),
+    ];
+    // mov eax, leaf; xor ecx, ecx; cpuid; hlt
+    let leaf = |n: u8| vec![0xB8, n, 0, 0, 0, 0x31, 0xC9, 0x0F, 0xA2, 0xF4];
+    let mut guest = Guest::new(FEATURES, &[leaf(1), leaf(7)]);
+    let registers = |guest: &mut Guest, index| {
+        use xenora_loader::cpu::{ExitReason, Register};
+        let (cpu, exit) = guest.execute(routine(index), 16);
+        assert_eq!(exit, ExitReason::Halt);
+        (
+            cpu.get(Register::Rbx) as u32,
+            cpu.get(Register::Rcx) as u32,
+            cpu.get(Register::Rdx) as u32,
+        )
+    };
+    let (_, ecx1, edx1) = registers(&mut guest, 0);
+    let (ebx7, _, _) = registers(&mut guest, 1);
+    let cases = [
+        (2, edx1 & (1 << 8) != 0),
+        (3, edx1 & (1 << 23) != 0),
+        (6, edx1 & (1 << 25) != 0),
+        (8, edx1 & (1 << 4) != 0),
+        (10, edx1 & (1 << 26) != 0),
+        (13, ecx1 & 1 != 0),
+        (14, ecx1 & (1 << 13) != 0),
+        (17, ecx1 & (3 << 26) == 3 << 26),
+        (28, ecx1 & (1 << 30) != 0),
+        (36, ecx1 & (1 << 9) != 0),
+        (37, ecx1 & (1 << 19) != 0),
+        (38, ecx1 & (1 << 20) != 0),
+        (39, ecx1 & (1 << 28) != 0),
+        (40, ebx7 & (1 << 5) != 0),
+    ];
+    for (feature, expected) in cases {
+        let answer = guest.call("IsProcessorFeaturePresent", &[feature]);
+        assert_eq!(answer, u64::from(expected), "PF {feature}");
+    }
+    // No CPUID test exists for these, so they are not claimed:
+    // PF_NX_ENABLED (12), PF_FASTFAIL_AVAILABLE (23), and unknown numbers.
+    for feature in [12, 23, 9999, u32::MAX as u64] {
+        assert_eq!(guest.call("IsProcessorFeaturePresent", &[feature]), 0);
+    }
+}

@@ -621,8 +621,13 @@ impl SymbolDb {
     fn populate_registered_services(&mut self) {
         for (module, symbols) in [
             (
+                "api-ms-win-core-processthreads-l1-1-0.dll",
+                &["IsProcessorFeaturePresent"][..],
+            ),
+            (
                 "kernel32.dll",
                 &[
+                    "IsProcessorFeaturePresent",
                     "CloseHandle",
                     "FreeLibrary",
                     "GetCurrentDirectoryA",

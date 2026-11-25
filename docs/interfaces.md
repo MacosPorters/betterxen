@@ -671,6 +671,12 @@ separately, for diagnostics.
   `0x10000`–`0x7FFFFFFEFFFF`. The processor count comes from the profile and
   defaults to one, because guest code runs on one thread at a time. The
   processor level and revision are zero, because no CPU model is simulated.
+- `IsProcessorFeaturePresent` answers from the same fixed table that guest
+  `CPUID` returns, so the two always agree. A feature is present only when
+  every CPUID bit it depends on is set; today that table sets none of the
+  features the function can report, so every answer is `FALSE`. Features
+  with no CPUID test, such as `PF_NX_ENABLED` and `PF_FASTFAIL_AVAILABLE`,
+  and unknown numbers report `FALSE`.
 - `GlobalMemoryStatusEx` requires `dwLength` to be 64. Guest physical memory is
   the virtual-allocation and heap budgets together, 128 MiB. Available memory
   and `dwMemoryLoad` reflect current guest allocations. There is no paging

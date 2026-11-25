@@ -254,7 +254,57 @@ fn write_system_info(
     memory.write_bytes(address, &info).map_err(fault)
 }
 
+/// `IsProcessorFeaturePresent` feature numbers from the public `winnt.h`
+/// list, each with the guest CPUID bits that must all be set for it.
+///
+/// Answers come from [`crate::cpu::cpuid`], the table that also defines what
+/// guest `CPUID` returns, so the two never disagree. A feature with no CPUID
+/// test here (for example `PF_NX_ENABLED` or `PF_FASTFAIL_AVAILABLE`) and any
+/// unknown number report `FALSE`.
+/// A CPUID leaf, the result register index (EAX = 0 … EDX = 3) and a mask.
+type CpuidBit = (u32, usize, u32);
+
+const PROCESSOR_FEATURES: [(u32, &[CpuidBit]); 14] = [
+    (2, &[(1, 3, 1 << 8)]),   // PF_COMPARE_EXCHANGE_DOUBLE: CMPXCHG8B
+    (3, &[(1, 3, 1 << 23)]),  // PF_MMX_INSTRUCTIONS_AVAILABLE
+    (6, &[(1, 3, 1 << 25)]),  // PF_XMMI_INSTRUCTIONS_AVAILABLE: SSE
+    (8, &[(1, 3, 1 << 4)]),   // PF_RDTSC_INSTRUCTION_AVAILABLE
+    (10, &[(1, 3, 1 << 26)]), // PF_XMMI64_INSTRUCTIONS_AVAILABLE: SSE2
+    (13, &[(1, 2, 1)]),       // PF_SSE3_INSTRUCTIONS_AVAILABLE
+    (14, &[(1, 2, 1 << 13)]), // PF_COMPARE_EXCHANGE128: CMPXCHG16B
+    (17, &[(1, 2, 1 << 26), (1, 2, 1 << 27)]), // PF_XSAVE_ENABLED: XSAVE, OSXSAVE
+    (28, &[(1, 2, 1 << 30)]), // PF_RDRAND_INSTRUCTION_AVAILABLE
+    (36, &[(1, 2, 1 << 9)]),  // PF_SSSE3_INSTRUCTIONS_AVAILABLE
+    (37, &[(1, 2, 1 << 19)]), // PF_SSE4_1_INSTRUCTIONS_AVAILABLE
+    (38, &[(1, 2, 1 << 20)]), // PF_SSE4_2_INSTRUCTIONS_AVAILABLE
+    (39, &[(1, 2, 1 << 28)]), // PF_AVX_INSTRUCTIONS_AVAILABLE
+    (40, &[(7, 1, 1 << 5)]),  // PF_AVX2_INSTRUCTIONS_AVAILABLE
+];
+
+/// Whether guest CPUID reports every bit `feature` needs.
+pub fn processor_feature_present(feature: u32) -> bool {
+    PROCESSOR_FEATURES
+        .iter()
+        .find(|(number, _)| *number == feature)
+        .is_some_and(|(_, bits)| {
+            bits.iter()
+                .all(|&(leaf, register, mask)| crate::cpu::cpuid(leaf, 0)[register] & mask == mask)
+        })
+}
+
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
+    registry.register_with_status(
+        KERNEL32,
+        "IsProcessorFeaturePresent",
+        ServiceStatus::Partial,
+        |args, _, _| Ok(u64::from(processor_feature_present(args.rcx as u32))),
+    );
+    registry.alias(
+        "api-ms-win-core-processthreads-l1-1-0.dll",
+        KERNEL32,
+        "IsProcessorFeaturePresent",
+    );
+
     for symbol in ["GetSystemInfo", "GetNativeSystemInfo"] {
         let s = Arc::clone(state);
         registry.register(KERNEL32, symbol, move |args, _, mem| {
