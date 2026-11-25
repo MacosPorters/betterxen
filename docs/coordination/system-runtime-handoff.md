@@ -157,6 +157,14 @@ GitHub PR subscribe MCP returned 403 earlier; the local loop is the reliable pat
 - Auto-fix cannot be enabled by the agent (no push rights to upstream); the user can enable it from the PR bar.
 - #392 is claimed by zachdoxsee; #206 still awaits maintainer scope confirmation. Do not take either.
 
+## Session 2026-11-25 additions
+
+- XInput controller services (`626de36`) with a host-connected `ControllerSource`; tests use `SimulatedControllers`. No physical controller or app input path is connected; `crates/ffi/src/frame_loop.rs` input belongs to the app lane.
+- C++ `type_info` helpers on `vcruntime140.dll` (`9f472c9`). Exception handling, `dynamic_cast` and thread-safe statics remain open.
+- `xenora imports coverage` report. It lists 107 registered services with no import metadata; classifying them is open work.
+- Audio mixer is #306, claimed by elforeign on 2026-11-24. Do not take it.
+- Platform settings, saves with quota, profiles, notifications and capability reporting already exist as the synthetic `xenora_fixture.dll` platform fixture.
+
 ## Next actions (priority order)
 
 1. **Check both PRs** using the timestamp under Resume here.

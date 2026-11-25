@@ -708,32 +708,22 @@ impl SymbolDb {
                 "TerminateProcess — calls exit(1)",
             );
             self.win32_stub(m, "GetStartupInfoW", false, "GetStartupInfoW — fills zeros");
-            self.win32_stub(
-                m,
-                "GetCurrentThreadId",
-                false,
-                "returns synthetic thread ID",
-            );
-            self.win32_stub(
-                m,
-                "GetCurrentProcessId",
-                false,
-                "returns synthetic process ID",
-            );
-            self.win32_stub(m, "GetCurrentThread", false, "returns pseudo-handle");
-            self.win32_stub(m, "GetCurrentProcess", false, "returns pseudo-handle -1");
-            self.win32_stub(
-                m,
-                "SetThreadPriority",
-                false,
-                "no-op in single-thread context",
-            );
-            self.win32_stub(
-                m,
-                "GetThreadPriority",
-                false,
-                "returns THREAD_PRIORITY_NORMAL",
-            );
+            // Typed services in crates/loader/runtime/services.txt, which
+            // does not list the l1-1-2 API set for them.
+            for (symbol, note) in [
+                ("GetCurrentThreadId", "returns synthetic thread ID"),
+                ("GetCurrentProcessId", "returns synthetic process ID"),
+                ("GetCurrentThread", "returns pseudo-handle"),
+                ("GetCurrentProcess", "returns pseudo-handle -1"),
+                ("SetThreadPriority", "no-op in single-thread context"),
+                ("GetThreadPriority", "returns THREAD_PRIORITY_NORMAL"),
+            ] {
+                if *m == p2 {
+                    self.win32_stub(m, symbol, false, note);
+                } else {
+                    self.ins(m, symbol, Classification::StandardService);
+                }
+            }
             self.win32_stub(m, "Sleep", false, "Sleep — no-op (single-threaded)");
             self.win32_stub(m, "ExitProcess", false, "ExitProcess — calls exit(0)");
             self.win32_stub(m, "ExitThread", false, "ExitThread — calls exit(0)");
