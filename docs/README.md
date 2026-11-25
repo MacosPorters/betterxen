@@ -36,6 +36,7 @@ Historical phase checkpoints retain their original evidence scope.
 
 ## Guest CPU and runtime experiments
 
+- [Compiled launch fixture](../tests/launchable/README.md) — Native ARM64 source-build recipe and diagnostic variants.
 - [Guest experiment guide](../experiments/x1/README.md) — Bounded x86-64 execution, executable loading, experimental services, native compute, and offscreen rendering.
 - [x86-64 instruction registry](cpu/instruction-registry.md) — Shared decoder, generated tables, semantics, native lowering and how to add a verified instruction form.
 - [Runtime service registry](runtime/registry.md) and [generated coverage](runtime/services.md) — Import resolution, typed Win64 adapters and how to add a tested service.
