@@ -19,6 +19,10 @@
 //! Cargo's test harness. To run its tests directly, build with
 //! `cargo rustc --locked -p xenora-loader --bench dbt_bench --message-format=json -- --test`
 //! and run the executable named by the benchmark's compiler-artifact message.
+//!
+//! The text report also splits cold-DBT code expansion by guest instruction
+//! family. Those workloads measure emitted native bytes, not time; they do not
+//! claim an improvement or a regression.
 
 use std::hint::black_box;
 use std::time::{Duration, Instant};
@@ -106,6 +110,69 @@ fn check(result: ExecutionResult) {
     assert_eq!(result.exit_reason, ExitReason::Halt);
     assert_eq!(result.instructions_executed, INSTRUCTIONS);
     assert_eq!(result.final_state.get(Register::Rax), ADDS as u64);
+}
+
+/// One hand-encoded workload used to report native code expansion per guest
+/// instruction family. `instructions` and `final_rax` come from the source
+/// description, not from a run.
+struct Family {
+    name: &'static str,
+    code: Vec<u8>,
+    instructions: usize,
+    final_rax: u64,
+}
+
+/// `mov rax, 0`; 1,000 x `add rax, 1`; `hlt`.
+fn arithmetic_workload() -> Family {
+    const ADDS: usize = 1_000;
+    let mut code = vec![0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0];
+    for _ in 0..ADDS {
+        code.extend_from_slice(&[0x48, 0x83, 0xC0, 0x01]);
+    }
+    code.push(0xF4);
+    Family {
+        name: "arithmetic",
+        code,
+        instructions: ADDS + 2,
+        final_rax: ADDS as u64,
+    }
+}
+
+/// `mov ecx, 1024`; `dec ecx`; `jnz` back to `dec ecx`; `hlt`. The branch is
+/// taken 1,023 times, so `dec` and `jnz` each run 1,024 times.
+fn branch_workload() -> Family {
+    const ITERATIONS: u32 = 1_024;
+    let mut code = vec![0xB9];
+    code.extend_from_slice(&ITERATIONS.to_le_bytes());
+    code.extend_from_slice(&[0xFF, 0xC9, 0x75, 0xFC]);
+    code.push(0xF4);
+    Family {
+        name: "branch",
+        code,
+        instructions: 1 + ITERATIONS as usize * 2 + 1,
+        final_rax: 0,
+    }
+}
+
+/// `mov rbx, scratch`; `mov rax, 0`; 500 x (`mov [rbx], rax`; `mov rdx, [rbx]`);
+/// `hlt`.
+fn memory_workload() -> Family {
+    const TRANSFERS: usize = 500;
+    const SCRATCH: u64 = 0x2000_0100;
+    let mut code = vec![0x48, 0xBB];
+    code.extend_from_slice(&SCRATCH.to_le_bytes());
+    code.extend_from_slice(&[0x48, 0xB8, 0, 0, 0, 0, 0, 0, 0, 0]);
+    for _ in 0..TRANSFERS {
+        code.extend_from_slice(&[0x48, 0x89, 0x03]); // mov [rbx], rax
+        code.extend_from_slice(&[0x48, 0x8B, 0x13]); // mov rdx, [rbx]
+    }
+    code.push(0xF4);
+    Family {
+        name: "memory",
+        code,
+        instructions: 2 + TRANSFERS * 2 + 1,
+        final_rax: 0,
+    }
 }
 
 fn percentile(sorted: &[Duration], fraction: f64) -> Duration {
@@ -879,6 +946,53 @@ fn main() {
         "Cold DBT compiled {} blocks and emitted {} native bytes in {} dispatches",
         metrics.blocks_compiled, metrics.native_bytes_emitted, metrics.dbt_dispatches
     );
+    println!();
+    println!("Code expansion by guest instruction family (cold DBT, one fresh engine each):");
+    println!(
+        "{:<12} {:>12} {:>13} {:>7} {:>13} {:>13}",
+        "Family", "Guest bytes", "Instructions", "Blocks", "Native bytes", "Native/insn"
+    );
+    for family in [arithmetic_workload(), branch_workload(), memory_workload()] {
+        let pe_bytes = build_pe(&family.code);
+        let parsed = ParsedPe::parse(&pe_bytes).unwrap();
+        let mut image = parsed.load_into_memory(&pe_bytes).unwrap();
+        image
+            .memory
+            .map_region(0x2000_0000, 0x10000, MemoryPermissions::READ_WRITE)
+            .unwrap();
+        let mut cpu = CpuState::new(image.entry_point, STACK_TOP);
+        let mut dbt = DbtEngine::new(4 * 1024 * 1024).unwrap();
+        let result = dbt.run(&mut cpu, &mut image.memory, BUDGET);
+        assert_eq!(
+            result.exit_reason,
+            ExitReason::Halt,
+            "{} workload did not halt",
+            family.name
+        );
+        assert_eq!(
+            result.instructions_executed, family.instructions,
+            "{} workload instruction count",
+            family.name
+        );
+        assert_eq!(
+            result.final_state.get(Register::Rax),
+            family.final_rax,
+            "{} workload final RAX",
+            family.name
+        );
+        assert!(dbt.metrics.blocks_compiled > 0);
+        let guest_bytes = family.code.len();
+        let native_bytes = dbt.metrics.native_bytes_emitted;
+        println!(
+            "{:<12} {:>12} {:>13} {:>7} {:>13} {:>13.2}",
+            family.name,
+            guest_bytes,
+            family.instructions,
+            dbt.metrics.blocks_compiled,
+            native_bytes,
+            native_bytes as f64 / family.instructions as f64
+        );
+    }
 
     if let Some(path) = std::env::var_os("XENORA_DBT_BENCH_JSON") {
         let info = run_info(code.len(), warmup_count);
@@ -920,6 +1034,31 @@ mod tests {
 
         let samples = [10, 20, 100].map(Duration::from_micros);
         assert_eq!(percentile(&samples, 0.50), Duration::from_micros(20));
+    }
+
+    #[test]
+    fn family_workloads_have_hand_derived_shapes() {
+        use super::{arithmetic_workload, branch_workload, memory_workload};
+
+        let arithmetic = arithmetic_workload();
+        assert_eq!(arithmetic.instructions, 1_002);
+        assert_eq!(arithmetic.final_rax, 1_000);
+        assert_eq!(arithmetic.code.len(), 10 + 1_000 * 4 + 1);
+
+        let branch = branch_workload();
+        assert_eq!(branch.instructions, 2_050);
+        assert_eq!(branch.final_rax, 0);
+        assert_eq!(
+            branch.code,
+            vec![0xB9, 0x00, 0x04, 0x00, 0x00, 0xFF, 0xC9, 0x75, 0xFC, 0xF4]
+        );
+
+        let memory = memory_workload();
+        assert_eq!(memory.instructions, 1_003);
+        assert_eq!(memory.final_rax, 0);
+        assert_eq!(memory.code.len(), 10 + 10 + 500 * 6 + 1);
+        assert_eq!(&memory.code[10..16], &[0x48, 0xB8, 0, 0, 0, 0]);
+        assert_eq!(&memory.code[20..26], &[0x48, 0x89, 0x03, 0x48, 0x8B, 0x13]);
     }
 
     #[test]
