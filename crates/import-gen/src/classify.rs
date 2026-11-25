@@ -881,6 +881,21 @@ impl SymbolDb {
             self.win32_stub(m, "ExitProcess", false, "ExitProcess — calls exit(0)");
             self.win32_stub(m, "ExitThread", false, "ExitThread — calls exit(0)");
         }
+        // The guest thread scheduler provides these on kernel32 and the
+        // l1-1-0 API set only; l1-1-2 keeps its stub classification.
+        for module in [p1, "kernel32.dll"] {
+            for symbol in [
+                "CreateThread",
+                "ExitThread",
+                "TerminateThread",
+                "GetExitCodeThread",
+                "SuspendThread",
+                "ResumeThread",
+                "SwitchToThread",
+            ] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
         let err = "api-ms-win-core-errorhandling-l1-1-0.dll";
         self.win32_stub(err, "GetLastError", false, "returns last_error from TEB");
         self.win32_stub(err, "SetLastError", false, "sets last_error in TEB");

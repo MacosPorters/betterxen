@@ -84,7 +84,7 @@ fn test_manifest_and_codegen_pipeline() {
 "api-ms-win-crt-math-l1-1-0.dll","acos",0x1000
 "api-ms-win-crt-utility-l1-1-0.dll","llabs",0x1008
 "API-MS-WIN-CRT-UTILITY-L1-1-0.DLL","llabs",0x1048
-"api-ms-win-core-processthreads-l1-1-0.dll","CreateThread",0x1010
+"api-ms-win-core-processthreads-l1-1-2.dll","CreateThread",0x1010
 "custom.dll","UnknownCustomFunc",0x1018
 "kernel32.dll","QueryPerformanceCounter",0x1020
 "api-ms-win-core-profile-l1-1-0.dll","QueryPerformanceFrequency",0x1028
