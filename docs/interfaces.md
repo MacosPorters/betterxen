@@ -293,24 +293,6 @@ C-locale `ctype.h` predicates (`isalnum`, `isalpha`, `isdigit`, `islower`,
 `tolower` / `toupper` accept `EOF` or an `unsigned char` value. Other
 `int` arguments stop the guest.
 
-`sprintf` and `snprintf` implement a bounded C-locale subset: `%%`, `%c`,
-`%s`, `%d`/`%i`, `%u`, `%x`/`%X`, `%p`, optional zero-pad widths, and
-`l`/`ll`/`z`/`t` length modifiers. Null string arguments render as
-`(null)`. Other conversions stop the guest. Transfers stay within the 1 MiB
-service budget.
-
-FILE streams implement `fopen`, `fclose`, `fread`, `fwrite`, `fseek`, `ftell`,
-`feof`, `ferror`, `rewind` and `__acrt_iob_func`. Single path components (no
-separators) use an in-memory store. Paths with a mounted drive letter open
-through the same host mount policy as `CreateFileW`: the file is loaded into a
-bounded buffer (up to 16 MiB, and not past the mount's size cap), and a
-writable stream replaces the host contents on `fclose`. Up to 32 streams.
-Stdin is empty, stdout/stderr discard writes. `printf` and `fprintf` use the
-same format subset as `sprintf` (stdout discards the payload and returns the
-length). The `__stdio_common_*` helpers remain unimplemented. Concurrent host
-edits while a stream is open are not visible; this is a research subset, not
-full CRT or Win32 file semantics.
-
 ### Process environment
 
 `getenv`, `GetEnvironmentVariableA` and `GetEnvironmentVariableW` read a
@@ -368,23 +350,6 @@ IPv6, blocking waits on streams and host interfaces remain unsupported.
 next datagram; `WSAEINVAL` on a listening socket) and `FIONBIO` with a nonzero
 argument. Every socket is already non-blocking, so asking for blocking mode
 returns `WSAEOPNOTSUPP` instead of being ignored.
-
-### CRT character and line streams
-
-`fputc`, `putc`, `puts`, `fgetc` and `getc` are registered on `ucrtbase.dll`
-and `api-ms-win-crt-stdio-l1-1-0.dll` and share the stream state of `fopen`.
-The character functions return the byte as an unsigned char or `EOF`; writing
-a read-only stream or reading a write-only one returns `EOF` and sets the
-error indicator. `puts` adds a newline; standard output accepts and discards
-output. A host-backed stream reaches its mounted file at `fclose`. `fputs`,
-`fflush` and `fgets` are left to the separate hosted-C-program stdio tasks.
-
-`ungetc` pushes back one byte after at least one byte has been read: the
-position steps back, and the next read returns the pushed-back byte. It
-clears the end-of-file indicator and is never written to the file; a seek,
-`rewind` or write discards it. Pushing back `EOF`, a second byte, or a byte at
-the start of the stream returns `EOF`. C guarantees only one byte of
-push-back, and Xenora does not provide more.
 
 ### Bounds-checked string copies
 
@@ -660,11 +625,10 @@ security-review and implementation-review agents (not a human audit).
   the net bytes and the net number of files and directories that guest
   operations add to a writable mount, relative to its contents when mounted.
   Writes, extending `SetEndOfFile`, `CreateFileW`, `CreateDirectoryW`,
-  `GetTempFileNameW` and CRT `fopen` are charged; shrinking, `DeleteFileW`
+  and `GetTempFileNameW` are charged; shrinking, `DeleteFileW`
   and `RemoveDirectoryW` give the amount back, never below zero. An operation
   that would exceed a limit fails with `ERROR_DISK_FULL` (CRT: `ENOSPC`) and
-  leaves the host unchanged. CRT streams are charged when `fclose` writes them
-  back. Changes made by host processes are not counted, and
+  leaves the host unchanged. Changes made by host processes are not counted, and
   `HostMount::usage` reports the current amounts. No quota is set by default.
 - **Errors.** Errors from reading a directory or examining an entry are
   reported, except an entry removed while it is being listed. Host errors map

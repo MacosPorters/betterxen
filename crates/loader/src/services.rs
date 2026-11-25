@@ -19,7 +19,6 @@ mod crt_heap;
 mod crt_integer;
 mod crt_locale;
 mod crt_safe_string;
-mod crt_stdio;
 mod crt_time;
 mod cxx;
 mod events;
@@ -236,7 +235,6 @@ pub struct ServicesState {
     gdk_queue_changed: Condvar,
     gdk_async: Arc<Mutex<gdk_async::AsyncOps>>,
     locale: Mutex<crt_locale::LocaleState>,
-    stdio: Mutex<crt_stdio::StdioState>,
     env: Mutex<crt_env::EnvState>,
     /// Seed for the CRT `rand` / `srand` LCG (process-wide, like UCRT).
     crt_rand: AtomicU32,
@@ -276,7 +274,6 @@ impl ServicesState {
             gdk_queue_changed: Condvar::new(),
             gdk_async: Arc::new(Mutex::default()),
             locale: Mutex::default(),
-            stdio: Mutex::default(),
             env: Mutex::default(),
             crt_rand: AtomicU32::new(1),
             crt_rand_s: AtomicU64::new(0x5845_4E4F_5241_5F53),
@@ -550,7 +547,6 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     crt::register_rand(registry, &state);
     crt_locale::register(registry, &state);
     crt_ctype::register(registry);
-    crt_stdio::register(registry, &state);
     crt_env::register(registry, &state);
     crt_time::register(registry, &state);
     crt_callbacks::register(registry, &state);
