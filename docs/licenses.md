@@ -12,6 +12,8 @@ The workspace is GPL-3.0-or-later. The following is the lead's preliminary compa
 | bitflags | 2.13.2, `80ce9b545acb0bd42150695fc351889cac1d8eb4` | MIT from MIT OR Apache-2.0 | Runtime transitive dependency |
 | AMD RDNA 2 ISA XML | 2026-02-20, schema 1.1.1 | MIT | Source for generated decoder constants |
 | LLVM AMDGPU tools | 23.1.6 | Apache-2.0 WITH LLVM-exception | External fixture tool, not linked |
+| victory-shader (vendored) | victory-mac `22b3f8e45a59`, directory snapshot | GPL-3.0 (same as BetterXen's GPL-3.0-or-later); Mesa-derived opcode table MIT | GFX10-to-DXIL shader recompiler; see its UPSTREAM.md |
+| thiserror, zlib-rs, windows, windows-sys | 2.0.21, 0.6.8, 0.62.2, 0.61.2 | MIT OR Apache-2.0; Zlib; MIT OR Apache-2.0 | Dependencies of victory-shader; licences from each crate's metadata, not independently audited |
 | Xcode and Metal tools | Xcode 27.2 | Apple proprietary terms | External host tools, not distributed |
 
 ## Runtime redistribution review

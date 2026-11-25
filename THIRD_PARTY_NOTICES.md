@@ -15,3 +15,5 @@ Cargo resolves the Rust packages from crates.io at the source checksums in [Carg
 [LLVM 23.1.6](https://github.com/llvm/llvm-project/tree/5b10d2d74929eae78912771222c9855af97496f4) is used as an external fixture tool under Apache-2.0 WITH LLVM-exception. Xcode and Metal are separate Apple tools under Apple's license terms.
 
 The [isolated fuzz workspace](fuzz/Cargo.lock) resolves developer-only dependencies, including [libfuzzer-sys](https://github.com/rust-fuzz/libfuzzer/tree/719e4efb9b8857ebaa782ae59376c8cbb78fed0f). See the [fuzz dependency inventory](docs/licenses.md#fuzz-development-dependencies) for locked revisions and selected licenses.
+
+`crates/victory-shader` is vendored from skakwy's [victory-mac](https://github.com/skakwy/victory-mac) (GPL-3.0; authors and provenance in [its UPSTREAM.md](crates/victory-shader/UPSTREAM.md)); it contains opcode names generated from Mesa (MIT, Copyright (c) 2018 Valve Corporation) with the notice kept in `src/gfx10/opcodes.rs`. Its Rust dependencies are `thiserror` (MIT OR Apache-2.0), `zlib-rs` (Zlib), and on Windows targets `windows`/`windows-sys` (MIT OR Apache-2.0); versions are in `Cargo.lock`.
