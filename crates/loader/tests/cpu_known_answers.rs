@@ -5629,10 +5629,9 @@ fn interpreter_executes_modified_code_after_a_jump() {
     assert_eq!(self_modified_result(Engine::Interpreter), wanted);
 }
 
-/// Known defect: the DBT keeps running the block it translated before the store.
+/// The DBT must not keep running the block it translated before the store (#84).
 #[test]
-#[ignore = "known defect (#155): the DBT keeps translated blocks after the guest rewrites their code"]
-fn defect_dbt_executes_modified_code_after_a_jump() {
+fn dbt_executes_modified_code_after_a_jump() {
     for engine in [Engine::Dbt, Engine::DbtStepped] {
         let wanted = (1, 2, ExitReason::Halt);
         assert_eq!(self_modified_result(engine), wanted, "{engine:?}");
