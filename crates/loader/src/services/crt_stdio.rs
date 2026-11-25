@@ -820,14 +820,6 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         });
     }
 
-    let fputs = Arc::clone(state);
-    registry.register(UCRT, "fputs", move |args, _, memory| {
-        let text = read_c_string(memory, args.rcx, MAX_OUTPUT)?;
-        with_stream(&fputs, memory, args.rdx, |stream, _| {
-            Ok(if put_bytes(stream, &text)? { 0 } else { EOF })
-        })
-    });
-
     let puts = Arc::clone(state);
     registry.register(UCRT, "puts", move |args, _, memory| {
         let mut text = read_c_string(memory, args.rcx, MAX_OUTPUT)?;
@@ -884,74 +876,6 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             stream.eof = false;
             Ok(u64::from(byte))
         })
-    });
-
-    let fgets = Arc::clone(state);
-    registry.register(UCRT, "fgets", move |args, cpu, memory| {
-        let (buffer, count, cookie) = (args.rcx, args.rdx as i32, args.r8);
-        if buffer == 0 || count <= 0 {
-            set_errno(memory, cpu.gs_base, EINVAL)?;
-            return Ok(0);
-        }
-        with_stream(&fgets, memory, cookie, |stream, memory| {
-            if !stream.readable {
-                stream.error = true;
-                return Ok(0);
-            }
-            // At most count - 1 bytes, stopping after a newline.
-            let mut line = Vec::new();
-            while line.len() < count as usize - 1 {
-                let Some(byte) = read_byte(stream) else {
-                    stream.eof = true;
-                    break;
-                };
-                line.push(byte);
-                if byte == b'\n' {
-                    break;
-                }
-            }
-            if line.is_empty() && count > 1 {
-                // End of file before any byte: the buffer is left unchanged.
-                return Ok(0);
-            }
-            line.push(0);
-            memory.write_bytes(buffer, &line).map_err(fault)?;
-            Ok(buffer)
-        })
-    });
-
-    let fflush = Arc::clone(state);
-    registry.register(UCRT, "fflush", move |args, cpu, memory| {
-        let mut stdio = fflush.stdio.lock().expect("stdio state");
-        let stdio = &mut *stdio;
-        let ids: Vec<u32> = if args.rcx == 0 {
-            // A null stream flushes every open stream.
-            stdio.streams.keys().copied().collect()
-        } else {
-            vec![read_cookie(memory, args.rcx)?]
-        };
-        let mut failure = None;
-        for id in ids {
-            let Some(stream) = stdio.streams.get_mut(&id) else {
-                failure.get_or_insert(EINVAL);
-                continue;
-            };
-            if !stream.writable {
-                // Flushing an input stream has no effect.
-                continue;
-            }
-            if let Err(error) = flush_stream(stream, &mut stdio.files) {
-                stream.error = true;
-                failure.get_or_insert(error);
-            }
-        }
-        match failure {
-            None => Ok(0),
-            Some(error) => {
-                set_errno(memory, cpu.gs_base, error)?;
-                Ok(EOF)
-            }
-        }
     });
 
     let fseek = Arc::clone(state);
@@ -1115,13 +1039,10 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "printf",
         "fputc",
         "putc",
-        "fputs",
         "puts",
         "fgetc",
         "getc",
-        "fflush",
         "ungetc",
-        "fgets",
     ] {
         registry.alias(STDIO_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);

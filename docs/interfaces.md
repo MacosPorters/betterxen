@@ -368,27 +368,20 @@ returns `WSAEOPNOTSUPP` instead of being ignored.
 
 ### CRT character and line streams
 
-`fputc`, `putc`, `fputs`, `puts`, `fgetc`, `getc` and `fflush` are registered
-on `ucrtbase.dll` and `api-ms-win-crt-stdio-l1-1-0.dll` and share the stream
-state of `fopen`. The character functions return the byte as an unsigned char
-or `EOF`; writing a read-only stream or reading a write-only one returns `EOF`
-and sets the error indicator. `fputs` adds no newline and `puts` adds one;
-standard output accepts and discards output. `fflush` writes a dirty
-host-backed stream to its mounted file now rather than at `fclose`, charging
-the mount quota, and publishes an in-memory file so a second `fopen` sees it.
-A null stream flushes every open stream, and flushing an input stream has no
-effect.
+`fputc`, `putc`, `puts`, `fgetc` and `getc` are registered on `ucrtbase.dll`
+and `api-ms-win-crt-stdio-l1-1-0.dll` and share the stream state of `fopen`.
+The character functions return the byte as an unsigned char or `EOF`; writing
+a read-only stream or reading a write-only one returns `EOF` and sets the
+error indicator. `puts` adds a newline; standard output accepts and discards
+output. A host-backed stream reaches its mounted file at `fclose`. `fputs`,
+`fflush` and `fgets` are left to the separate hosted-C-program stdio tasks.
 
 `ungetc` pushes back one byte after at least one byte has been read: the
 position steps back, and the next read returns the pushed-back byte. It
 clears the end-of-file indicator and is never written to the file; a seek,
 `rewind` or write discards it. Pushing back `EOF`, a second byte, or a byte at
 the start of the stream returns `EOF`. C guarantees only one byte of
-push-back, and Xenora does not provide more. `fgets` reads at most
-`count - 1` bytes, stops after a newline (kept in the buffer) and adds a
-terminator. At end of file with nothing read it returns null and leaves the
-buffer unchanged. A null buffer or a count of zero or less sets `EINVAL` and
-returns null.
+push-back, and Xenora does not provide more.
 
 ### Bounds-checked string copies
 
@@ -456,19 +449,18 @@ under abnormal termination below.
 
 ### Abnormal CRT termination
 
-`abort`, `terminate` and `_purecall` (on `ucrtbase.dll` and
+`terminate` and `_purecall` (on `ucrtbase.dll` and
 `api-ms-win-crt-runtime-l1-1-0.dll`) and `__std_terminate` and `_purecall` (on
-`vcruntime140.dll`) end the guest process with exit code 3, the code the
-Microsoft C runtime documents for `abort` without a `SIGABRT` handler. The
-default `terminate` and pure-virtual-call handlers call `abort`. `_exit` ends
-the process with the low 32 bits of its status and runs no `atexit`
-functions. All of them use the same process exit as `ExitProcess`: handles
-close, the first exit decides the status, and the host process never ends.
+`vcruntime140.dll`) end the guest process with exit code 3. Their default
+handlers call `abort`, and 3 is the code the Microsoft C runtime documents for
+`abort` without a `SIGABRT` handler. They use the same process exit as
+`ExitProcess`: handles close, the first exit decides the status, and the host
+process never ends. `abort` and `_exit` themselves are left to the separate
+CRT exit task.
 
 No handler can be installed: `signal`, `set_terminate` and
 `_set_purecall_handler` are not runtime services, so a guest that calls them
-stops there instead of getting a handler that is silently ignored. `exit`,
-which must run `atexit` functions first, is not provided. Debug-CRT message
+stops there instead of getting a handler that is silently ignored. Debug-CRT message
 boxes and error reporting are not modelled.
 
 ### CRT integer absolute value and division

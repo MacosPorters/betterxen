@@ -1,13 +1,13 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! Abnormal CRT termination: `abort`, `_exit`, `terminate`,
-//! `__std_terminate` and `_purecall`.
+//! Abnormal CRT termination: `terminate`, `__std_terminate` and `_purecall`.
 //!
-//! Expected behaviour is from the public Microsoft C runtime pages. `abort`
-//! ends the process with exit code 3 when no `SIGABRT` handler takes over.
-//! `_exit` ends it with the given status and runs no `atexit` functions. The
+//! Expected behaviour is from the public Microsoft C runtime pages. The
 //! default `terminate` handler calls `abort`, and so does the default
-//! pure-virtual-call handler behind `_purecall`.
+//! pure-virtual-call handler behind `_purecall`; `abort` ends the process with
+//! exit code 3 when no `SIGABRT` handler takes over. `abort` and `_exit`
+//! themselves are not registered here; they belong to the separate CRT exit
+//! task.
 //!
 //! No handler can be installed in Xenora yet: `signal`, `set_terminate` and
 //! `_set_purecall_handler` are not runtime services, so a guest that tries
@@ -31,7 +31,6 @@ const ABORT_EXIT_CODE: u32 = 3;
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     // Each of these reaches abort's default path.
     for (module, symbol) in [
-        (UCRT, "abort"),
         (UCRT, "terminate"),
         (UCRT, "_purecall"),
         (VCRUNTIME, "__std_terminate"),
@@ -43,13 +42,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         });
     }
 
-    let s = Arc::clone(state);
-    registry.register_with_status(UCRT, "_exit", ServiceStatus::Partial, move |args, _, _| {
-        // The status is an int; the process exit code is its 32 bits.
-        Err(ExitReason::ProcessExit(s.exit_process(args.rcx as u32)))
-    });
-
-    for symbol in ["abort", "terminate", "_purecall", "_exit"] {
+    for symbol in ["terminate", "_purecall"] {
         registry.alias(CRT_RUNTIME_API, UCRT, symbol);
     }
 }

@@ -299,19 +299,18 @@ impl SymbolDb {
                 "printf",
                 "fputc",
                 "putc",
-                "fputs",
                 "puts",
                 "fgetc",
                 "getc",
-                "fflush",
                 "ungetc",
-                "fgets",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }
         for (sym, libc) in &[
+            ("fflush", "fflush"),
             ("fgetpos", "fgetpos"),
+            ("fputs", "fputs"),
             ("fsetpos", "fsetpos"),
             ("remove", "remove"),
             ("rename", "rename"),
@@ -372,7 +371,9 @@ impl SymbolDb {
     fn populate_crt_runtime(&mut self) {
         let m = "api-ms-win-crt-runtime-l1-1-0.dll";
         for (sym, libc) in &[
+            ("abort", "abort"),
             ("exit", "exit"),
+            ("_exit", "_exit"),
             ("rand", "rand"),
             ("srand", "srand"),
             ("atoi", "atoi"),
@@ -386,7 +387,7 @@ impl SymbolDb {
                 self.ins(module, symbol, Classification::StandardService);
             }
             // Abnormal termination ends the guest process, never the host.
-            for symbol in ["abort", "_exit", "terminate", "_purecall"] {
+            for symbol in ["terminate", "_purecall"] {
                 self.ins(module, symbol, Classification::StandardService);
             }
         }

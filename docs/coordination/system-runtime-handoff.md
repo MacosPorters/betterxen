@@ -166,7 +166,7 @@ GitHub PR subscribe MCP returned 403 earlier; the local loop is the reliable pat
 - Platform settings, saves with quota, profiles, notifications and capability reporting already exist as the synthetic `xenora_fixture.dll` platform fixture.
 
 - Waitable timers are written and tested but **parked**, not pushed: waiting on a timer needs `services/events.rs`, which #323 (jelly013, PR #339) claims along with blocking waits. The patch and its test are in the ignored `artifacts/system-runtime/parked/`. Offer them on #323 or wait for #339 to land before reusing them.
-- `std::terminate`, `_purecall`, `abort` and `_exit` are built on #331's process exit (`crt_exit.rs`). `exit` (runs `atexit` first), `signal`, `set_terminate` and `_set_purecall_handler` are still missing.
+- `std::terminate` and `_purecall` are built on #331's process exit (`crt_exit.rs`). `abort`, `_exit`, `exit`, `fputs`, `fflush` and `fgets` were claimed by other contributors first (upstream #395, #400, #402) and are deliberately left out of this branch. `signal`, `set_terminate` and `_set_purecall_handler` are still missing.
 - Files claimed by other open work, avoid: `events.rs`, `synch.rs`, `threads.rs`, `scheduler.rs`, `cpu.rs`, `dbt.rs`, `imports.rs`, `memory.rs` (#323/#339); `process.rs`, `startup.rs`, `gdk_queue.rs`, `winsock.rs` (#329/#331); mock clock in `services.rs` (#204/#338). `services.rs` registration lines are shared by everyone; keep edits there to one field and one registration line.
 
 ## Next actions (priority order)
