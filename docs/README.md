@@ -29,6 +29,7 @@ Historical phase checkpoints retain their original evidence scope.
 - [Semantic coverage](shaders/semantic-coverage.md) — Generated per-family counts of identified, declared, decoded, lowered and verified gfx1030 forms.
 - [SOP2 scalar ALU](shaders/scalar-alu.md) — Supported scalar add, subtract and bitwise forms, their SCC rules and sources.
 - [Semantic registry](shaders/semantic-registry.md) — How to add an instruction form: registry fields, validation, generation and the independence rule.
+- [Proposed shader entry and resource bindings](shaders/resource-entry-contract.md) — A versioned pixel-stage binding layout and original two-texture fixture specification.
 - [VOP1 vector unary and swap](shaders/vector-unary.md) — Wave32 integer bit operations, register exchange, and operand limits.
 - [VOP2 select and carry](shaders/vector-vcc.md) — Wave32 lane selection, carry and borrow through the vector condition code.
 - [VOPC integer compares](shaders/vector-compare.md) — Wave32 compare forms, the VCC/EXEC contract, runtime `s_cbranch_vccz` and the Metal mapping.
