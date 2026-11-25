@@ -490,7 +490,13 @@ read through the old pointer can fault.
 BetterXen caps the block at 256 entries, including its defaults. At capacity,
 new entries fail with `ERROR_NOT_ENOUGH_MEMORY` for the Win32 setters or
 `-1` and `ENOMEM` for `_putenv`. Replacement and deletion still succeed.
-The shared block, cap, and error mapping are BetterXen's choices.
+The shared block, cap, and error mapping are BetterXen's choices. Names
+longer than the runtime's 256-byte (A) or 256-code-unit (W) input limit
+read as absent. A too-small Win32 query buffer returns the required
+length including the terminator. BetterXen leaves that buffer and the
+previous last-error value alone. Wide names and values preserve unpaired
+UTF-16 units. Narrow reads of a wide value use UTF-8 with replacement for
+unpaired units, a BetterXen conversion choice.
 
 ### CRT calendar time
 
