@@ -52,6 +52,7 @@ Historical phase checkpoints retain their original evidence scope.
 - [Engineering progress](progress.md) — Verification commands, metric definitions, and open release gates.
 - [CPU test runtime and shard selection](testing/cpu-coverage.md) — Measured CPU gate cost and deterministic test-target shards.
 - [Test inventory comparison](testing/test-inventory.md) — Detect missing or newly ignored Cargo tests across commits.
+- [Native ARM64 and Metal capability receipts](testing/native-receipt.md) — One contributor's reproducible host report: architecture, tools, dependency evidence and bounded CPU/Metal fixture outcomes.
 - [Persistent resource and translated rendering acceptance](testing/x9-acceptance.md) — Pinned upstream tests, native ARM64 results and unsupported cases.
 - [Baseline acceptance](testing/phase-02-baseline.md), [Phase 01 assurance](testing/phase01-assurance.md), and [independent reviews](testing/review-log.md) — Candidate-specific results and release findings.
 - [Gate A: a compiled C program](testing/gate-a.md) — The two milestones, what the A1 and A2 tests check and what they do not show.
