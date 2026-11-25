@@ -21,8 +21,26 @@ rustup run 1.100.0 cargo build -q -p betterxen-hybrid
 export PATH="$TC/bin:$PATH"
 export CARGO_TARGET_X86_64_PC_WINDOWS_GNULLVM_LINKER="$TC/bin/x86_64-w64-mingw32-clang"
 export CARGO_TARGET_DIR="$ROOT/artifacts/victory-win"
-rustup run 1.100.0 cargo test -q -p victory-shader --target x86_64-pc-windows-gnullvm --no-run
-EXE=$(ls -t "$CARGO_TARGET_DIR"/x86_64-pc-windows-gnullvm/debug/build/victory-shader/*/out/victory_shader-*.exe | head -1)
+# Build the Windows test executable and take its path from cargo's own build message. It normally
+# lands in <target>/x86_64-pc-windows-gnullvm/debug/deps/, but cargo's layout can differ with the
+# build configuration, so the path is not guessed; `deps/` is only the fallback.
+EXE=$(rustup run 1.100.0 cargo test -q -p victory-shader --target x86_64-pc-windows-gnullvm --no-run \
+    --message-format=json | python3 -I -c '
+import json, sys
+exe = None
+for line in sys.stdin:
+    try:
+        m = json.loads(line)
+    except ValueError:
+        continue
+    if m.get("reason") == "compiler-artifact" and m.get("profile", {}).get("test") \
+            and m.get("target", {}).get("name") in ("victory_shader", "victory-shader") and m.get("executable"):
+        exe = m["executable"]
+print(exe or "")')
+if [ -z "$EXE" ]; then
+    EXE=$(ls -t "$CARGO_TARGET_DIR"/x86_64-pc-windows-gnullvm/debug/deps/victory_shader-*.exe 2>/dev/null | head -1)
+fi
+[ -n "$EXE" ] && [ -f "$EXE" ] || { echo "could not find the victory-shader test executable" >&2; exit 1; }
 file "$EXE" | grep -q "PE32+ executable.*x86-64" || { echo "not an x86-64 PE: $EXE" >&2; exit 1; }
 B="$ROOT/target/debug/betterxen-hybrid"
 if [ "$WHICH" = all ]; then
