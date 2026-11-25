@@ -14,8 +14,9 @@
 //! refused, with exit status 1, unless both runs used the same host, workload,
 //! build settings and sample counts.
 //!
-//! The benchmark target disables Cargo's test harness. To run the percentile
-//! unit tests, build with
+//! Report, comparison and percentile tests run in ordinary workspace tests
+//! through `tests/dbt_benchmark_report.rs`. The benchmark target itself disables
+//! Cargo's test harness. To run its tests directly, build with
 //! `cargo rustc --locked -p xenora-loader --bench dbt_bench --message-format=json -- --test`
 //! and run the executable named by the benchmark's compiler-artifact message.
 
@@ -982,6 +983,7 @@ mod tests {
             blocks_compiled: 626,
             cache_hits: 0,
             cache_misses: 626,
+            blocks_invalidated: 0,
             native_bytes_emitted: 245_168,
             dbt_dispatches: 626,
             instructions_executed: 10_002,

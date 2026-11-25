@@ -1,5 +1,6 @@
 # Testing and acceptance
 
+- [Migrated pull-request integration review](migration-pr-review.md) — Merge decisions, fixes, native verification and remaining scope limits.
 - [AMD RDNA2 desktop GPU (gfx1030) form acceptance](shader-form-acceptance.md) — Rule and evidence required to promote a form from local results to `fixture verified`.
 - [Test inventory comparison](test-inventory.md) — Detect missing or newly ignored Cargo tests across commits.
 - [Persistent resource and translated rendering acceptance](x9-acceptance.md) — Native ARM64 results and unsupported cases.

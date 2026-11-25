@@ -45,6 +45,7 @@ Historical phase checkpoints retain their original evidence scope.
 
 ## Testing, validation, and benchmarks
 
+- [Migrated pull-request integration review](testing/migration-pr-review.md) — Merge decisions, integration fixes, native verification and excluded concurrent work.
 - [Testing and acceptance index](testing/README.md) — Entry point for test procedures, evidence and review records.
 - [AMD RDNA2 desktop GPU (gfx1030) form acceptance](testing/shader-form-acceptance.md) — Independence, command, log and promotion rules for fixture-verified instruction forms.
 - [Engineering progress](progress.md) — Verification commands, metric definitions, and open release gates.
