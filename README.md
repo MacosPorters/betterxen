@@ -25,6 +25,9 @@ BetterXen is a community-maintained, open-source project written primarily in Ru
 
 ---
 
+[Run BetterXen.app](#run-betterxenapp) to build the native app and check its
+bundled synthetic frame.
+
 ## How it fits together
 
 One guest program travels through three native subsystems. Every stage is checked against an independently derived expectation.
@@ -415,6 +418,45 @@ cd betterxen
 scripts/bootstrap.sh
 cargo build --locked -p betterxen
 ```
+
+### Run BetterXen.app
+
+Use an Apple Silicon Mac and a native ARM64 terminal. The app bundle targets
+macOS 14 or later. For development, use macOS supported by your Xcode version,
+Xcode with Swift 6 and the Metal Toolchain, and `rustup` to install native
+Rust 1.100.0. The verified setup uses Xcode 27.2.
+
+From a [local checkout](#clone), run:
+
+```sh
+rustup toolchain install 1.100.0-aarch64-apple-darwin --profile minimal
+rustup run 1.100.0-aarch64-apple-darwin scripts/bootstrap.sh
+rustup run 1.100.0-aarch64-apple-darwin scripts/build-app.sh
+open build/BetterXen.app
+```
+
+If bootstrap reports that `xcodebuild` requires Xcode, select the full Xcode
+installation in Xcode’s Locations settings or set `DEVELOPER_DIR` for your
+shell. If `xcrun metal` reports a missing Metal Toolchain, install it from
+Xcode’s Components settings. The AMDGPU tools `llvm-mc`, `llvm-objcopy` and
+`llvm-objdump` are optional for this quick start. They are used to regenerate
+and verify shader fixtures.
+[Selecting Xcode](https://developer.apple.com/documentation/xcode/configuring-command-line-tools-settings)
+and [installing the Metal Toolchain](https://developer.apple.com/documentation/xcode/downloading-and-installing-additional-xcode-components)
+
+The build creates an ad-hoc-signed `build/BetterXen.app` and runs `--smoke`,
+which checks the Rust interface and the bundled executable’s headers. In
+the app, choose **Run trusted fixture** to render and display a checked
+frame from the bundled synthetic guest program. To run the same Metal
+render and readback check from the terminal:
+
+```sh
+build/BetterXen.app/Contents/MacOS/BetterXen --smoke-frame
+```
+
+In the app, expect a red 4×3 frame with all 12 pixels matching. The terminal
+check reports `status=0 frame=4x3 first_pixel=255,0,0,255` on success.
+Commercial game execution remains unsupported.
 
 ### Run core tests
 
