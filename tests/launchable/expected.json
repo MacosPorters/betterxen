@@ -1,0 +1,244 @@
+{
+  "schema": 1,
+  "status": "proposed",
+  "status_note": "Proposed before implementation for #159/#313 to accept or amend. Not reviewer-accepted (R2) yet; see docs/testing/first-launch.md.",
+  "fixture": "first compiled guest launch (#311, #313)",
+  "frame": {
+    "width": 4,
+    "height": 3,
+    "format": "RGBA8 unorm",
+    "row_order": "top row first, left to right"
+  },
+  "frames_per_session": 60,
+  "sessions": 2,
+  "state_by_frame": [
+    {
+      "first": 0,
+      "last": 29,
+      "state": "A"
+    },
+    {
+      "first": 30,
+      "last": 59,
+      "state": "B"
+    }
+  ],
+  "states": {
+    "A": {
+      "how": "guest-selected constant-colour pixel pipeline covering the frame; shader constants are 255/255, 128/255, 0/255, 255/255",
+      "rule": "every pixel = (255, 128, 0, 255)",
+      "pixels": [
+        [
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ]
+        ],
+        [
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ]
+        ],
+        [
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ],
+          [
+            255,
+            128,
+            0,
+            255
+          ]
+        ]
+      ]
+    },
+    "B": {
+      "how": "guest-written 4x3 RGBA8 texture, sampled by a guest-selected textured pipeline with nearest filtering and clamp-to-edge over a full-frame quad, so pixel (x, y) samples texel (x, y) at its centre",
+      "rule": "pixel (x, y) = texel (x, y) = (64*x, 96*y, 255 - 64*x, 255)",
+      "pixels": [
+        [
+          [
+            0,
+            0,
+            255,
+            255
+          ],
+          [
+            64,
+            0,
+            191,
+            255
+          ],
+          [
+            128,
+            0,
+            127,
+            255
+          ],
+          [
+            192,
+            0,
+            63,
+            255
+          ]
+        ],
+        [
+          [
+            0,
+            96,
+            255,
+            255
+          ],
+          [
+            64,
+            96,
+            191,
+            255
+          ],
+          [
+            128,
+            96,
+            127,
+            255
+          ],
+          [
+            192,
+            96,
+            63,
+            255
+          ]
+        ],
+        [
+          [
+            0,
+            192,
+            255,
+            255
+          ],
+          [
+            64,
+            192,
+            191,
+            255
+          ],
+          [
+            128,
+            192,
+            127,
+            255
+          ],
+          [
+            192,
+            192,
+            63,
+            255
+          ]
+        ]
+      ]
+    }
+  },
+  "guest_exit": {
+    "status": 1280197448,
+    "status_note": "ASCII 'LNCH' as a big-endian u32; any other status is a failure",
+    "frames_submitted": 60
+  },
+  "restart": "after a clean close, a second session in the same app process repeats frames 0-59 from state A with the same pixels and exit status; nothing carries over",
+  "negative_controls": [
+    {
+      "name": "no_metal",
+      "change": "no Metal device or no BC/compute capability needed by the fixture",
+      "expected": "capability unavailable, reported separately from implementation failure; no frame"
+    },
+    {
+      "name": "no_frame",
+      "change": "guest loops without calling frame submit",
+      "expected": "bounded stop by the worker deadline (#318); classified as no frame"
+    },
+    {
+      "name": "unsupported_instruction",
+      "change": "an instruction the decoder refuses, placed before the first frame",
+      "expected": "IllegalInstruction exit at that instruction; no frame"
+    },
+    {
+      "name": "unresolved_import",
+      "change": "an import no service provides",
+      "expected": "refused before guest entry"
+    },
+    {
+      "name": "bad_shader_or_binding",
+      "change": "an unsupported shader form or an empty binding slot",
+      "expected": "rejected when the object is created or bound; that draw never reaches Metal"
+    },
+    {
+      "name": "wrong_expected_pixel",
+      "change": "one channel of one expected pixel changed in a copy of this file",
+      "expected": "mismatch reported with session, frame, x, y and channel"
+    },
+    {
+      "name": "low_step_budget",
+      "change": "a budget that ends before the guest's exit",
+      "expected": "StepLimitExceeded, not a clean exit"
+    },
+    {
+      "name": "worker_timeout",
+      "change": "a wall deadline shorter than the run",
+      "expected": "timeout classification with the last completed stage"
+    }
+  ]
+}

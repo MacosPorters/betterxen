@@ -55,6 +55,7 @@ Historical phase checkpoints retain their original evidence scope.
 - [Persistent resource and translated rendering acceptance](testing/x9-acceptance.md) — Pinned upstream tests, native ARM64 results and unsupported cases.
 - [Baseline acceptance](testing/phase-02-baseline.md), [Phase 01 assurance](testing/phase01-assurance.md), and [independent reviews](testing/review-log.md) — Candidate-specific results and release findings.
 - [Gate A: a compiled C program](testing/gate-a.md) — The two milestones, what the A1 and A2 tests check and what they do not show.
+- [First compiled launch](testing/first-launch.md) — Proposed acceptance protocol, expected frames and negative controls for the first compiled guest launch; every checkpoint is pending.
 - [Mutation testing](testing/mutation.md) and [benchmark protocol](testing/benchmarks.md) — Test sensitivity, benchmark inputs, and timing requirements.
 
 ## Research and engineering decisions
