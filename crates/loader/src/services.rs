@@ -14,6 +14,7 @@ mod crt_callbacks;
 mod crt_ctype;
 mod crt_env;
 mod crt_exit;
+mod crt_float;
 mod crt_heap;
 mod crt_integer;
 mod crt_locale;
@@ -781,6 +782,7 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     process::register(registry, &state);
     crt_exit::register(registry, &state);
     crt_integer::register(registry);
+    crt_float::register(registry);
 }
 
 /// Implementations behind the generated adapters. A failure the guest can

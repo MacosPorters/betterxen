@@ -484,6 +484,25 @@ Quotients truncate toward zero. The absolute value of the minimum integer
 wraps to itself. Division by zero and the minimum divided by -1 stop the guest
 with a divide error, as the x86 `idiv` instruction does.
 
+### CRT floating-point string conversion
+
+`strtod`, `strtof`, `wcstod`, `wcstof`, `atof` and `_wtof` are registered on
+`ucrtbase.dll` and `api-ms-win-crt-convert-l1-1-0.dll` and return their
+result in XMM0. They parse the ISO C grammar in the "C" locale: leading white
+space, an optional sign, then decimal digits with an optional `.` and an
+optional exponent (consumed only if a digit follows `e`), `inf`, `infinity`,
+or `nan` with an optional closed `(n-char-sequence)`, all case-insensitive.
+Decimal input is rounded once, directly to the result type, so `strtof` does
+not round through `double`. With no conversion the result is 0 and the end
+pointer is the string itself.
+
+Overflow returns a signed infinity and sets `ERANGE`, and so do nonzero digits
+that round to zero. Whether the UCRT also sets `ERANGE` for a subnormal
+nonzero result is not established from public documentation, so Xenora
+leaves `errno` unchanged there. A NaN payload is accepted and ignored; the
+result is the default quiet NaN with the parsed sign. Hexadecimal floating
+constants such as `0x1.8p3` stop the guest rather than being parsed as `0`.
+
 ### XInput controllers
 
 `XInputGetState`, `XInputSetState`, `XInputGetCapabilities` and

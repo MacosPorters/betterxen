@@ -27,6 +27,7 @@ remains unsupported.
 - Extended the read-only RDNA2 planning CLI (`python3 -m qa rdna2`) with family/status filters, compact summaries, Codex-ready manifests under `artifacts/`, active-claim exclusion (family claims exclude those families; path-only claims block overlapping permitted files), coverage reconcile against `semantic_coverage` without inflating counts, and inventory diffs. Covered by `tests/qa/test_rdna2_plan.py`; planning only, no GPU production edits.
 
 ### Fixed
+- The import metadata classified `strtod`, `strtof` and `wcstod` as native libc calls with an identical ABI and `atof`/`_wtof` as stubs; they are now runtime services.
 - The import metadata classified `ungetc` as a native libc call with an identical ABI, although it takes a guest `FILE*`; it and `fgets` are now runtime services.
 - The import metadata mapped `labs` and `ldiv` to the host libc as identical-ABI calls, but Windows `long` is 32 bits and macOS `long` is 64 bits; the integer functions are now runtime services. The generated `abs`/`labs` adapter no longer panics on the minimum integer. `crates/import-gen/tests/pipeline.rs` now exercises the adapter path through a test-only native entry, because no built-in symbol uses it any more.
 - The import metadata still classified `ExitProcess` on `kernel32.dll` and `api-ms-win-core-processthreads-l1-1-0.dll` as a stub that "calls exit(0)" after guest process exit landed (#331). It is now a runtime service; the coverage report shows no disagreements.
@@ -52,6 +53,7 @@ remains unsupported.
 - Abnormal CRT termination: `abort`, `terminate`, `_purecall`, `__std_terminate` and `_exit` end the guest process through the same exit as `ExitProcess` (exit code 3 for the abort family, the given status for `_exit`). Handlers cannot be installed yet, and `exit` is not provided.
 - CRT `abs`, `labs`, `llabs`, `div`, `ldiv` and `lldiv` with Windows' 32-bit `long` and the Win64 struct-return rules (`lldiv_t` through a hidden pointer). Division by zero stops the guest with a divide error.
 - CRT `ungetc` (one byte of push-back that is never written to the file) and `fgets` (line reads up to the count) on the shared `fopen` streams.
+- CRT `strtod`, `strtof`, `wcstod`, `wcstof`, `atof` and `_wtof` in the "C" locale, returning in XMM0, correctly rounded straight to the result type, with `ERANGE` on overflow and on underflow to zero. Hexadecimal floating constants stop the guest. The guest test harness gains `Guest::run_state` to read XMM results.
 - `SymbolDb::insert` lets a project classify a module the built-in import metadata does not describe.
 - `IsProcessorFeaturePresent`, answered from the guest CPUID table so startup code never selects instruction sets the translator does not report. It currently reports no optional features.
 - `GetTimeZoneInformation` (the guest zone is UTC) and `GetLogicalProcessorInformation` (cores and package from the guest profile; no simulated caches are reported).

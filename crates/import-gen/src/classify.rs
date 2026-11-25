@@ -545,11 +545,8 @@ impl SymbolDb {
             }
         }
         for (sym, libc) in &[
-            ("strtod", "strtod"),
-            ("strtof", "strtof"),
             ("mbstowcs", "mbstowcs"),
             ("wcstombs", "wcstombs"),
-            ("wcstod", "wcstod"),
             ("wctob", "wctob"),
             ("btowc", "btowc"),
         ] {
@@ -559,9 +556,12 @@ impl SymbolDb {
         self.win32_stub(m, "_itoa_s", false, "Windows itoa_s — safe variant");
         self.win32_stub(m, "_wtoi", false, "Wide char to int");
         self.win32_stub(m, "_wtol", false, "Wide char to long");
-        self.win32_stub(m, "_wtof", false, "Wide char to float");
-        self.win32_stub(m, "atof", false, "atof ISO C — maps to libc");
-        // Note: atof already in runtime; just stub if it appears here too
+        // Floating conversions return in XMM0 and parse in the "C" locale.
+        for module in [m, "ucrtbase.dll"] {
+            for symbol in ["strtod", "strtof", "wcstod", "wcstof", "atof", "_wtof"] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
+        }
     }
 
     // ---- api-ms-win-crt-utility --------------------------------------------
