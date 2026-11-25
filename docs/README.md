@@ -36,6 +36,9 @@ Historical phase checkpoints retain their original evidence scope.
 
 ## Guest CPU and runtime experiments
 
+- [Remill adapter design](../experiments/remill/adapter-design.md) — Proposed numerical and instruction-budget contracts, state/result ownership and planned regression gates; not implemented.
+- [Isolated Remill evaluation](../experiments/remill/README.md) — Native ARM64 prototype, checked-memory comparison, floating-point/budget blockers, exploratory measurements and adoption requirements; local evidence only.
+
 - [Guest experiment guide](../experiments/x1/README.md) — Bounded x86-64 execution, executable loading, experimental services, native compute, and offscreen rendering.
 - [x86-64 instruction registry](cpu/instruction-registry.md) — Shared decoder, generated tables, semantics, native lowering and how to add a verified instruction form.
 - [Runtime service registry](runtime/registry.md) and [generated coverage](runtime/services.md) — Import resolution, typed Win64 adapters and how to add a tested service.

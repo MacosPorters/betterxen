@@ -42,6 +42,8 @@ remains unsupported.
 - Added a Python 3 fallback for `timeout` in `scripts/test-gpu.sh`, so the native Metal suite runs on stock macOS without GNU coreutils while preserving bounded execution and the usual timeout exit status.
 
 ### Added
+- Documented proposed Remill numerical and per-instruction execution adapters, including explicit ABI/state ownership, exception commits, exact budget exits and regression requirements. This is a design only; the recorded numerical and budget failures remain open.
+- Added an isolated Remill native ARM64 experiment with original x86-64 fixtures, a bridge to checked guest memory, and comparisons against the existing interpreter and DBT. The local Apple M4 run passed 32 case/path checks; a wrong-answer control fails explicitly. The extended evaluation retains eight failing floating-point cases and a missing guest-budget exit, alongside narrow vector/control results and exploratory toy-workload timings. Production CPU behavior is unchanged; adoption and independent acceptance remain open.
 - Recorded the migrated PR integration decisions, native verification and scope exclusions in the testing documentation.
 - Added `xenora-bench startup` (#178), which measures Metal startup in fresh processes and in repeated
   submissions within one process, phase by phase (launch, device and queue, translation, library, pipeline,
