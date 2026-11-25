@@ -9,10 +9,12 @@ From the repository root, with native Rust on PATH and the Xcode command
 line tools installed, run:
 
 ```sh
-/usr/bin/python3 tests/launchable/build.py
-/usr/bin/python3 tests/launchable/build.py --output artifacts/launchable-repeat
-diff artifacts/launchable-build/build.json artifacts/launchable-repeat/build.json
+/usr/bin/python3 tests/launchable/build.py --verify-reproducible
 ```
+
+The reproducibility check builds twice in fresh directories and compares all
+four executable hashes and header listings before publishing outputs. The build
+also rejects identical outputs from different variants.
 
 The recipe defaults to Xcode clang and the active Rust toolchain's
 `rust-lld`. It records concrete versions, ARM64 tool evidence, compiler

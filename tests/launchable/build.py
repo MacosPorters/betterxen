@@ -71,9 +71,50 @@ def verify_imports(headers, variant):
     return {"kernel32.dll": sorted(symbols)}
 
 
+
+def build_variants(stage, clang, link, objdump, compile_flags, link_flags):
+    stage.mkdir()
+    variants = {}
+    (stage / "kernel32.def").write_text(
+        "LIBRARY kernel32.dll\nEXPORTS\n    ExitProcess\n    LaunchMissingFixtureImport\n",
+        encoding="ascii",
+    )
+    subprocess.run(
+        [*link, "/lib", "/machine:x64", "/def:kernel32.def", "/out:kernel32.lib"],
+        cwd=stage, check=True,
+    )
+    for name, define in VARIANTS.items():
+        extra = [f"-D{define}"] if define else []
+        subprocess.run(
+            [clang, *compile_flags, *extra, "-c", SOURCE, "-o", f"{name}.obj"],
+            cwd=stage, check=True,
+        )
+        subprocess.run(
+            [*link, *link_flags, f"/out:{name}.exe", f"{name}.obj", "kernel32.lib"],
+            cwd=stage, check=True,
+        )
+        binary = stage / f"{name}.exe"
+        facts = pe_facts(binary)
+        if facts["relocation_directory"] != (0, 0):
+            raise ValueError(f"{name}: unexpected base relocations")
+        headers = subprocess.check_output(
+            [objdump, "-p", binary.name], cwd=stage, text=True,
+        )
+        facts["imports"] = verify_imports(headers, name)
+        variants[name] = facts
+        (stage / f"{name}.headers.txt").write_text(headers, encoding="utf-8")
+    if len({facts["sha256"] for facts in variants.values()}) != len(variants):
+        raise ValueError("fixture variants must produce distinct executables")
+    return variants
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--output", type=Path, default=ROOT / "artifacts" / "launchable-build")
+    parser.add_argument(
+        "--verify-reproducible", action="store_true",
+        help="build twice in separate directories and compare PE hashes and listings",
+    )
     options = parser.parse_args()
     if platform.system() != "Darwin" or platform.machine() != "arm64":
         parser.error("use native ARM64 macOS")
@@ -109,41 +150,24 @@ def main():
         "source_sha256": sha256(SOURCE), "tools": tools, "compile_flags": compile_flags,
         "link_flags": link_flags, "variants": {},
     }
-    with tempfile.TemporaryDirectory(dir=output) as stage:
-        stage = Path(stage)
-        (stage / "kernel32.def").write_text(
-            "LIBRARY kernel32.dll\nEXPORTS\n    ExitProcess\n    LaunchMissingFixtureImport\n",
-            encoding="ascii",
-        )
-        subprocess.run(
-            [*link, "/lib", "/machine:x64", "/def:kernel32.def", "/out:kernel32.lib"],
-            cwd=stage, check=True,
-        )
-        for name, define in VARIANTS.items():
-            extra = [f"-D{define}"] if define else []
-            subprocess.run(
-                [clang, *compile_flags, *extra, "-c", SOURCE, "-o", f"{name}.obj"],
-                cwd=stage, check=True,
-            )
-            subprocess.run(
-                [*link, *link_flags, f"/out:{name}.exe", f"{name}.obj", "kernel32.lib"],
-                cwd=stage, check=True,
-            )
-            binary = stage / f"{name}.exe"
-            facts = pe_facts(binary)
-            if facts["relocation_directory"] != (0, 0):
-                raise ValueError(f"{name}: unexpected base relocations")
-            headers = subprocess.check_output(
-                [objdump, "-p", binary.name], cwd=stage, text=True,
-            )
-            facts["imports"] = verify_imports(headers, name)
-            receipt["variants"][name] = facts
-            (stage / f"{name}.headers.txt").write_text(headers, encoding="utf-8")
-        for name in VARIANTS:
-            for suffix in (".exe", ".headers.txt"):
-                binary = stage / f"{name}{suffix}"
-                binary.replace(output / binary.name)
-    (output / "build.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+    with tempfile.TemporaryDirectory(dir=output) as scratch:
+        first = Path(scratch) / "first"
+        receipt["variants"] = build_variants(first, clang, link, objdump, compile_flags, link_flags)
+        if options.verify_reproducible:
+            second = Path(scratch) / "second"
+            variants = build_variants(second, clang, link, objdump, compile_flags, link_flags)
+            if receipt["variants"] != variants:
+                changed = [name for name in VARIANTS if receipt["variants"][name] != variants[name]]
+                raise ValueError(f"non-reproducible PE artifacts: {', '.join(changed)}")
+            for name in VARIANTS:
+                listing = f"{name}.headers.txt"
+                if (first / listing).read_bytes() != (second / listing).read_bytes():
+                    raise ValueError(f"non-reproducible PE listing: {listing}")
+        receipt["reproducibility_verified"] = options.verify_reproducible
+        (first / "build.json").write_text(json.dumps(receipt, indent=2) + "\n", encoding="utf-8")
+        for artifact in first.iterdir():
+            if artifact.suffix in (".exe", ".txt", ".json"):
+                artifact.replace(output / artifact.name)
     print(f"Built {len(VARIANTS)} source fixtures in {output}")
 
 
