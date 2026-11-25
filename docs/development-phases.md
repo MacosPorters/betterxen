@@ -1,238 +1,347 @@
 # BetterXen development phases
 
-This is BetterXen's working development plan. Each phase ends with a reproducible
-application or engineering result. The plan is based on the current repository,
-not on completing an inherited prompt or reaching a compatibility percentage.
-No phase authorizes a release, publication, or commercial-game compatibility claim.
+BetterXen's objective is to execute supported Xbox Series software through an
+original native ARM64 runtime and direct Metal on macOS. Commercial game
+execution, including GTA VI, is currently unsupported. The demonstrated results
+are bounded, independently authored programs and shaders.
 
-## Starting point
+This is the sole active phase sequence. It replaces the previous phase plan and
+the README's X1–X25 roadmap. Historical fixture names and acceptance records
+retain their meaning as evidence for their original candidates; they are not a
+second development schedule.
 
-The source review used `19a905c30ea85166c05084da4fba67e356920912` on destination
-`main`, with the local documentation work starting after the separate CODEOWNERS
-commit `f02eb2678e76e91876be5706ce91dca25dcc3017`. The latter changes governance,
-not runtime behavior. Open issues and PRs were inspected on November 24, 2026
-(America/Chicago). Recheck their current heads and claims before taking work.
+## Starting position
 
-This task performed source inspection and read-only inventories. It did not
-rerun the Rust, native GPU, application, fuzz, mutation, or performance suites.
-Historical results below remain evidence for their recorded candidates only.
+The reviewed main revision is
+[`b2654e93a42e74e29570183da1f31bb8cdc6f721`](https://github.com/MacosPorters/betterxen/tree/b2654e93a42e74e29570183da1f31bb8cdc6f721),
+checked on November 24, 2026 (America/Chicago). Research began from a working
+tree at `f02eb2678e76e91876be5706ce91dca25dcc3017` and inspected newer main in a
+separate snapshot. This documentation change is based on the reviewed main
+revision; it changes no runtime implementation.
 
-| Area | Present in the inspected source | Boundary for this plan |
+On inspected main, the source contains an x86-64 interpreter, an ARM64 dynamic
+binary translator (DBT), PE32+ loading, a partial runtime, a deterministic guest
+scheduler, translated graphics, texture/sampler bindings and a native Swift app.
+The hosted C fixtures A1 and A2 are implemented and reported locally passing;
+both still await independent acceptance. These pieces have not established a
+complete commercial game or one integrated threaded 3D application.
+
+The [public-project review](research/portwatch-native-macos.md) explains the
+external comparisons and current-source limits. Windows projects often execute
+x86-64 instructions directly and use Windows/D3D12 services. The inspected Mac
+guest-execution projects use Rosetta; native asset renderers demonstrate a
+different workload. Their progress is a research lead, not BetterXen evidence.
+No competitor emulator implementation may be copied or adapted.
+
+No phase is declared complete by this planning task. It ran documentation and
+inventory checks, not new CPU/GPU execution, fuzzing, mutation or benchmarks.
+
+## Delivery sequence
+
+| Phase | Demonstrable result | Principal dependency |
 | --- | --- | --- |
-| Guest CPU | Generated x86-64 decoder, interpreter, ARM64 dynamic binary translator (DBT), integer and vector tests; inventory reports 491 declared forms and 206 operations | Declarations and lowering classifications do not establish independent acceptance or broad application compatibility. |
-| Runtime | PE loading, import resolution, service handlers, process-exit tests and the compiled-C A1 fixture | The typed registry inventories only 20 services: 7 marked implemented and 13 partial. Many handwritten handlers are outside that inventory; 20 is not the total runtime service count. |
-| Threads | Deterministic scheduler, guest thread contexts and guarded stacks, thread services and compiled-C thread tests | Guest threads execute serially on one host thread. Blocking synchronization, sleep behavior and thread lifecycle callbacks still have documented gaps. |
-| Graphics | gfx1030 shader decoder/compiler/reference, native Metal execution paths, texture and draw tests | Synthetic desktop instruction fixtures do not establish Xbox behavior. Acceptance is tracked separately from local readback. |
-| Native app | Swift app, Rust C interface, controller input and audio/virtual-filesystem fixtures | Existing fixtures do not establish one integrated threaded C++ 3D application. |
-| Quality tools | CPU/runtime inventories, shader coverage reconciliation, task queue, PR checks and acceptance records | Some inventories and ledgers contain stale limitation text. A successful tool invocation does not prove every catalog entry is current. |
+| 1 | A reproducible compiled guest boots and exits on native ARM64 | Existing A1/A2 and native tool evidence |
+| 2 | One modular guest program runs workers and cleans up correctly | Module startup, scheduling and lifecycle contracts |
+| 3 | Guest code controls a translated textured Metal scene | Validated guest graphics calls, bindings and completion |
+| 4 | An original interactive application combines execution, graphics, input, audio and saves | The supported paths from phases 2 and 3 |
+| 5 | A varied original workload corpus exposes and closes specific compatibility gaps | A repeatable integrated application and diagnostics |
+| 6 | Sustained execution is measured and verified across native Apple Silicon hosts | Checked workloads, resource bounds and actual host reports |
+| 7 | A separately admitted Xbox compatibility experiment has documented contracts and reproducible results | Public console evidence and all behavior required by that input |
 
-Sources: [CPU registry](cpu/instruction-registry.md),
-[runtime registry](runtime/registry.md), [guest threads](runtime/threads.md),
-[interfaces](interfaces.md), [shader coverage](shaders/semantic-coverage.md),
-[Gate A](testing/gate-a.md), and [QA tooling](testing/infrastructure/README.md).
-The read-only shader reconciliation reported zero mismatches during this task;
-that result is inventory consistency, not new GPU verification.
+Each result has its own admission profile. A simple scene need not wait for all
+AVX2 instructions, mesh shaders or ray tracing. A workload needing an unsupported
+feature stops explicitly. Research, diagnostics, CPU expansion and performance
+measurement can proceed alongside these phases on independently claimed paths.
+A phase's number does not grant exclusive ownership of a subsystem.
 
-## How previous phase names fit
+## Phase 1 — Boot a reproducible compiled guest
 
-Keep historical evidence and attribution intact. These records remain useful,
-but their phase numbers are not the sequence for new BetterXen work.
+**Deliverable:** a contributor can build an original guest from source, start it
+through BetterXen's supported test entry point and reproduce its output and exit
+without an Intel host executable or Windows compatibility runtime.
 
-| Existing record or name | Meaning | How to use it now |
-| --- | --- | --- |
-| [Phase 01 checkpoints and assurance](testing/phase01-assurance.md), [risk register](risk-register.md), [review log](testing/review-log.md) and [mutation record](testing/mutation.md) | Earlier bounded shader research and candidate-specific gates | Consult the original gate definitions and unresolved findings; do not relabel them as current acceptance. |
-| [Phase 02 GPU/guest baseline](testing/phase-02-baseline.md) and [CPU feasibility](research/phase02-cpu-feasibility.md), [ecosystem](research/phase02-ecosystem.md), [collaboration](research/phase02-collaboration.md) research | Early graphics expansion and CPU feasibility work | Reuse documented public sources and evidence limits, checking them against current source. |
-| [CPU/runtime campaign ledger](coordination/cpu-campaign-ledger.md) | Implementation batches and local evidence | Its older limitations are not a current feature inventory: scheduler, atomic and string work has since landed. |
-| [Infrastructure Phase II/III tooling](testing/infrastructure/README.md) and [compatibility ledger](testing/infrastructure/phase3-compat-ledger.md) | A separate QA campaign | Tool code now includes compatibility-gap analysis and verification profiles beyond the ledger's early checkpoint. Coordinate with existing issue #219 rather than starting another QA framework. |
-| [Gate A](testing/gate-a.md) | Compiled C execution, split into A1 and hosted-C A2 | A1 has a main-branch test. A2 is under review in PR #283; the document's “not started” description predates that PR. Neither is independently accepted by this plan. |
-| Native app numbered gates in `crates/ffi` and `app` | Bounded session, graphics, audio and filesystem fixtures | Inspect their tests before proposing integration. Gate numbers are separate from shader acceptance gates. |
-| README X1–X25 milestones | Broad capability map | Retain as a capability reference; use the phases below for the next work order. |
-| Supplied Discord III, III-B, IV, V and VI excerpts | Broad runtime, graphics, application and performance objectives | Only excerpts were supplied. Their omitted requirements and completion status are unknown; they are not execution instructions. |
+Use the existing [Gate A fixtures](testing/gate-a.md). On inspected main,
+[PR #283](https://github.com/MacosPorters/betterxen/pull/283) already supplies the
+hosted C program. Reproduce and review that implementation; do not create a
+competing CRT startup or mark it unimplemented because this checkout is older.
 
-Bare issue numbers in historical documents may refer to the source repository.
-All issue and PR links in the work sections below refer to **MacosPorters/betterxen**.
-Use [migration records](migration.md) to resolve historical references.
+The candidate record identifies the exact source revision, local modifications,
+native compiler/linker, linked support-code licenses, execution path and limits.
+Check host executables/dependencies with `file`, `lipo -archs` and `otool -L`.
+Guest x86-64 bytes are permitted data; native host tools must support ARM64.
+Use `aarch64-apple-darwin` for BetterXen.
 
-## Phase 1 — Establish a trustworthy working baseline
+**Completion checks:**
 
-**Outcome:** contributors can tell what exists on main, what is pending review,
-and which checks actually ran on the candidate they are using.
+- A1/A2 reproduce the specified stdout/stderr, files, callback order, exit status
+  and cleanup on the named candidate. Missing compilers fail visibly.
+- Existing wrong-input, unresolved-import and instruction-budget controls still
+  fail for their specified reasons. A trapped stub is not implemented behavior.
+- The admission profile states which CPU forms, imports and startup features it
+  supports. The test entry point is distinguished from CLI/app execution.
+- Independent reviewers accept the semantic expectations and the scope of the
+  native evidence. A local pass alone does not close this phase.
 
-1. Reconcile the current source with the CPU campaign ledger, Gate A document,
-   runtime inventory scope, and QA compatibility ledger. In particular, the QA
-   CPU inventory's intentional-rejection catalog still lists strings and
-   atomics/fences despite source and tests for supported subsets. Correct the
-   catalog through its existing owner; do not remove explicit unsupported forms.
-2. Preserve all imported attribution. Repair destination links in migrated PRs
-   without recreating sign-offs or treating archived reviews as current approval.
-3. Reproduce the applicable existing CPU, generator and repository checks for a
-   pinned candidate. Run GPU and app checks separately on an eligible native host.
-   Record errors, unavailable tools and skipped tests separately.
-4. Review conflicting PR branches with their authors. Changing descriptions
-   cannot resolve source conflicts or provide missing ARM64 build checks.
-5. Finish BetterXen's active branding where needed. Preserve copyright notices,
-   licenses and accurate historical records. Package names, C symbols, guest ABI
-   names and environment variables require a compatibility migration, not a
-   blanket search-and-replace. Do not rewrite authorship to imply new ownership.
+**Contributor work:** [CPU coverage #154](https://github.com/MacosPorters/betterxen/issues/154),
+[native reports #303](https://github.com/MacosPorters/betterxen/issues/303), and
+[existing compatibility report #254](https://github.com/MacosPorters/betterxen/issues/254).
+Use existing audit/test tooling and coordinate schema changes with its owners.
 
-Existing work: [migration checks #286](https://github.com/MacosPorters/betterxen/issues/286),
-[QA scope #219](https://github.com/MacosPorters/betterxen/issues/219),
-[app CI #248](https://github.com/MacosPorters/betterxen/issues/248).
+## Phase 2 — Run a modular program with guest workers
 
-**Exit criteria:** a candidate SHA, a current capability/blocker inventory,
-links to retained logs for each executed gate, explicit pending reviews, and
-usable PR descriptions. Independent acceptance remains a separate decision.
-No release is required.
+**Deliverable:** an original executable and companion libraries initialize,
+start workers, exchange results, block/resume and exit with checked teardown.
 
-## Phase 2 — Finish a reproducible hosted C application
+Begin with [the EXE/two-DLL startup contract #301](https://github.com/MacosPorters/betterxen/issues/301)
+and [worker lifecycle design #305](https://github.com/MacosPorters/betterxen/issues/305).
+The fixture records dependency initialization, per-module static thread-local
+storage (TLS), worker-visible values and supported detach/destructor calls.
+Expected order must be derived before implementing the loader or callbacks.
+Built-in service-module lookup is not general guest DLL loading.
 
-**Outcome:** an original hosted C program starts, uses the runtime, reports
-results and exits through the guest path with checked cleanup.
+Extend the existing serial scheduler under
+[#228](https://github.com/MacosPorters/betterxen/issues/228). Its documented
+`Sleep` behavior can stall every worker; [#304](https://github.com/MacosPorters/betterxen/issues/304)
+owns the narrow yielding fix after parent/runtime ownership coordination.
+Handle critical sections, condition variables and other waits as separately
+specified gaps, not incidental additions to that fix.
 
-Review and integrate existing work rather than creating a competing runtime:
+Broader CPU behavior is driven by the admitted fixture. Start
+[AVX/YMM design #299](https://github.com/MacosPorters/betterxen/issues/299) and
+[unwind design #300](https://github.com/MacosPorters/betterxen/issues/300) in
+parallel, but do not require their entire future scope for a simpler program.
+A workload using those features must wait for real support. CPU feature bits
+must not advertise unsupported behavior. Stack walking, structured exception
+handling (SEH) and C++ exceptions are separate capabilities.
 
-| Prerequisite | Existing destination work |
-| --- | --- |
-| CRT startup calls | [issue #237](https://github.com/MacosPorters/betterxen/issues/237), [PR #273](https://github.com/MacosPorters/betterxen/pull/273) |
-| Arguments and environment | [issue #242](https://github.com/MacosPorters/betterxen/issues/242), [PR #277](https://github.com/MacosPorters/betterxen/pull/277) |
-| Normal termination and exit handlers | [issue #243](https://github.com/MacosPorters/betterxen/issues/243), [PR #280](https://github.com/MacosPorters/betterxen/pull/280) |
-| Formatted standard output | [issue #245](https://github.com/MacosPorters/betterxen/issues/245), [PR #281](https://github.com/MacosPorters/betterxen/pull/281) |
-| File streams | [issue #246](https://github.com/MacosPorters/betterxen/issues/246), [PR #282](https://github.com/MacosPorters/betterxen/pull/282) |
-| Integrated hosted-C fixture | [issue #262](https://github.com/MacosPorters/betterxen/issues/262), [PR #283](https://github.com/MacosPorters/betterxen/pull/283) |
+**Completion checks:**
 
-Check dependency order and stacked branches against their actual heads. Audit
-the compiler and linked CRT's per-file licensing and native ARM64 build tools.
-An x86-64 guest fixture is permitted; its compiler must run natively on ARM64.
+- The source-built module graph has independently derived results and
+  initialization/teardown records, with explicit forwarder/cycle/search policy.
+- One worker progresses while another waits. Results hold across specified
+  scheduling quanta; the injected clock and timeout units remain consistent.
+- Static TLS, dynamic TLS, fiber-local storage (FLS), errors, errno and CPU state
+  retain their specified per-thread isolation. Dropping a value does not count
+  as executing its registered guest callback.
+- Missing exports, failed attach, invalid callback targets, stack faults,
+  timeouts, deadlock and exhausted budgets have precise, bounded outcomes.
+- Repeated runs reclaim owned modules, handles, stacks and callback state.
+  Unsupported delayed imports or lifecycle paths are rejected explicitly.
 
-**Exit criteria:** reproducible original fixture build; checked stdout/stderr,
-arguments, file contents, exit status, callback order and cleanup; unresolved
-imports and exhausted budgets fail explicitly. Existing A1 behavior still passes.
-Independent reviewers derive expected results from public specifications and the
-fixture contract. No general C++ or Xbox startup claim follows from this result.
+**Contributor work:** reuse [package census #211](https://github.com/MacosPorters/betterxen/issues/211)
+and the existing scheduler. Runtime PRs #263/#290 overlap; their authors and
+maintainers must resolve ownership before shared production edits. Parallel
+host-thread execution remains outside the serial scheduler's ordering claim.
 
-## Phase 3 — Make threaded application behavior coherent
+## Phase 3 — Render a scene controlled by guest code
 
-**Outcome:** an original worker-based application can block and resume without
-stalling unrelated guest work or leaking per-thread state.
+**Deliverable:** a compiled original guest creates resources, uploads a texture
+and geometry, submits translated rendering, waits for completion and checks the
+resulting frame through its guest-visible interface.
 
-Extend the existing scheduler under [issue #228](https://github.com/MacosPorters/betterxen/issues/228).
-Prioritize a small fixture that exposes a documented gap: guest sleep currently
-delays all guest threads, and critical-section/SRW/condition-variable waits are
-not fully connected to scheduling. Claim one gap and its paths before editing.
+Use [startup-to-frame integration #256](https://github.com/MacosPorters/betterxen/issues/256)
+as the integration task. A Rust test calling a host graphics method does not
+alone prove the compiled guest can call it. Specify the supported service/call
+boundary and check its Win64 argument/return and nonvolatile-state behavior.
+Guest addresses must resolve to checked ranges and opaque handles, never host
+pointers.
 
-Then add the thread lifecycle behavior required by that workload, including
-static thread-local storage (TLS), library attach/detach and fiber-local storage
-(FLS) cleanup where supported. Keep unsupported callbacks explicit until their
-semantics and safety are implemented. Preserve Win64 nonvolatile register checks
-and coordinate with [issue #193 / PR #268](https://github.com/MacosPorters/betterxen/pull/268).
+Existing translated `image_sample_lz`, guest descriptor-table bindings, texture
+upload paths, blend/index/depth tests and packed compressed-texture footprints
+are starting components. [Binding/entry design #302](https://github.com/MacosPorters/betterxen/issues/302)
+specifies expansion beyond the bounded texture/sampler contract. Use an original
+scene with distinguishable textures and resource updates so wrong bindings or
+stale data change checked pixels.
 
-**Exit criteria:** deterministic results at several scheduling quanta; another
-worker progresses while one waits; timeouts, cancellation, abandoned objects,
-thread-local errors, stack bounds and cleanup have negative controls. Repeat
-runs reclaim thread resources. Serial guest scheduling remains the execution
-model unless a separately reviewed memory-ordering design replaces it.
+**Completion checks:**
 
-## Phase 4 — Connect resource updates to translated rendering
+- Actual native Metal execution produces frame readback matching expectations
+  derived independently of the decoder, compiler and production renderer.
+- Changing one guest texture, transform or binding changes the expected frame;
+  a skipped draw or substituted shader cannot pass as correct rendering.
+- Update, submit, completion, readback and retirement order are checked.
+  Resources remain valid for in-flight work and stale handles are rejected.
+- Bad descriptors, overflowing ranges, unsupported shader forms and invalid
+  resource states fail before unsupported work reaches Metal.
+- The report records device capability queries, validation settings, candidate,
+  commands and hardware. Synthetic gfx1030 success is not Xbox GPU verification.
 
-**Outcome:** one original guest workload updates a texture and geometry, submits
-translated rendering, waits for completion and produces an independently checked
-frame through the existing native Metal backend.
+**Contributor work:** [resource-update workload #147](https://github.com/MacosPorters/betterxen/issues/147),
+[shared lifetime #148](https://github.com/MacosPorters/betterxen/issues/148),
+[fences #224](https://github.com/MacosPorters/betterxen/issues/224), and
+[format inventory #260](https://github.com/MacosPorters/betterxen/issues/260).
+Respect the active format claim; do not duplicate its inventory.
 
-Start with a bounded scene and its concrete missing features. Do not make all
-RDNA2 instructions, mesh shaders or ray tracing prerequisites for a first scene.
-Reuse the semantic registry and distinguish declared, decoded, lowered,
-reference-tested, locally GPU-tested and independently accepted forms.
+## Phase 4 — Run an original interactive application
 
-Coordinate [RDNA2 expansion #205](https://github.com/MacosPorters/betterxen/issues/205),
-[mip footprints #241 / PR #278](https://github.com/MacosPorters/betterxen/pull/278),
-[graphics fences #224](https://github.com/MacosPorters/betterxen/issues/224),
-[shared resource lifetime #148](https://github.com/MacosPorters/betterxen/issues/148),
-and [texture-update workload #147](https://github.com/MacosPorters/betterxen/issues/147).
-Wave divergence, cross-lane operations and additional formats get separate
-fixture contracts and claims when this workload needs them.
+**Deliverable:** one small original game-like application runs through the guest
+CPU/runtime and native app with translated graphics, scripted input, bounded
+audio and a save/load cycle in a persistent session.
 
-**Exit criteria:** actual Metal execution and frame readback against an
-independently derived expectation; update/submission/retirement order is checked;
-invalid descriptors, stale handles and unsupported shader forms fail explicitly.
-Record host capability detection, hardware, validation settings and evidence
-class. Test counts and tolerances retain their existing definitions. Results
-remain synthetic desktop-gfx1030 evidence, never Xbox hardware verification.
+Compose the admitted paths from phases 2 and 3. Define the application source,
+input replay, frame checkpoints, sample-data checks and save format before
+implementation. Start with the CPU/shader subset already justified by the scene.
+Add C++ or additional runtime functionality only when an original failing
+fixture demonstrates the requirement and linked runtime terms are reviewed.
 
-## Phase 5 — Run one integrated interactive application reliably
+Wire the application through the existing Swift/Rust interface and worker
+lifecycle. Existing native audio, controller and filesystem demonstrations are
+components, not proof that guest code reaches each service. This phase must
+exercise those guest connections in one session.
 
-**Outcome:** a small, original application joins guest execution, rendering,
-input, bounded audio, filesystem access and lifecycle behavior in one session.
+**Completion checks:**
 
-Start from [multi-module startup #256](https://github.com/MacosPorters/betterxen/issues/256)
-and the existing app/FFI fixtures. First prove a compiled workload can reach a
-checked frame. Add C++ language/runtime features only when an independently
-authored failing fixture demonstrates the need. Audit any linked runtime first.
-Do not treat the Swift audio/input demonstrations as guest integration evidence.
+- A deterministic replay reaches independently specified state/frame checkpoints.
+- Input reaches guest logic; expected audio samples are checked before device
+  playback; save/load preserves specified state and reports I/O failures.
+- Start, pause, resume, stop, restart and worker failure have defined outcomes.
+  Commands do not report success after a worker has failed.
+- Resource/handle counts and cleanup remain bounded across repeated sessions;
+  invalid guest paths and resource requests fail according to the interface.
+- The native app/CLI provide a reproducible quick start and useful stage-specific
+  failure reports. This fixture still establishes no commercial compatibility.
 
-Coordinate [audio #227](https://github.com/MacosPorters/betterxen/issues/227),
+**Contributor work:** [audio #227](https://github.com/MacosPorters/betterxen/issues/227),
 [session errors #250](https://github.com/MacosPorters/betterxen/issues/250),
-[report schema #254](https://github.com/MacosPorters/betterxen/issues/254),
 [worker diagnostics #255](https://github.com/MacosPorters/betterxen/issues/255),
-and [application quick start #247](https://github.com/MacosPorters/betterxen/issues/247).
-Execution-admission changes remain owned by [issue #212](https://github.com/MacosPorters/betterxen/issues/212).
+[app CI #248](https://github.com/MacosPorters/betterxen/issues/248), and
+[quick start #247](https://github.com/MacosPorters/betterxen/issues/247).
+Execution-admission policy remains with
+[#212](https://github.com/MacosPorters/betterxen/issues/212).
 
-**Exit criteria:** scripted input and deterministic checkpoints; start, pause,
-resume, stop and restart behavior; checked audio sample data before device
-playback; bounded memory and handle use; sandbox escape attempts rejected;
-useful failure reports and a repeatable soak protocol. Specify soak duration,
-resource limits and acceptance conditions before measuring. A fixture worker
-passing does not certify arbitrary files safe or commercial titles playable.
+## Phase 5 — Expand compatibility through a varied workload corpus
 
-## Phase 6 — Improve measured bottlenecks
+**Deliverable:** a versioned set of original source-built workloads exercises
+meaningfully different CPU, runtime and graphics behavior through the integrated
+path, with precise accepted/rejected profiles and reproducible regressions.
 
-**Outcome:** faster or lower-resource execution of workloads whose correctness
-is already checked, with measurements that another contributor can reproduce.
+Choose additions from actual failures. Examples include another compiler or
+runtime profile, vector-heavy arithmetic, runtime-dependent shader branches,
+bounded loops, multiple resource views and streaming texture updates. Each
+addition must demonstrate a gap not already owned by an existing task.
 
-Performance analysis can begin earlier; changes must preserve the relevant
-phase's correctness. Select bottlenecks from actual measurements rather than
-assuming every shared-semantics call, allocation or cache miss needs replacement.
-Potential work includes CPU helper lowering, bounded translation-cache policy,
-Metal startup, texture transfers and frame-loop overhead.
+Use [CPU design #299](https://github.com/MacosPorters/betterxen/issues/299),
+[unwind design #300](https://github.com/MacosPorters/betterxen/issues/300),
+[runtime uniform branches #179](https://github.com/MacosPorters/betterxen/issues/179),
+[bounded shader loops #180](https://github.com/MacosPorters/betterxen/issues/180),
+and [RDNA2 expansion #205](https://github.com/MacosPorters/betterxen/issues/205).
+Wave divergence, cross-lane operations, local data share (LDS), barriers, mesh
+stages and ray tracing require their own public contracts, fixtures and native
+capability checks when a selected workload needs them.
 
-Reuse [startup measurements #171 / PR #266](https://github.com/MacosPorters/betterxen/pull/266),
-[TLS optimization #107 / PR #284](https://github.com/MacosPorters/betterxen/pull/284),
-[DBT comparison #110 / PR #272](https://github.com/MacosPorters/betterxen/pull/272),
-and [conditional cache prewarming #258](https://github.com/MacosPorters/betterxen/issues/258).
+**Completion checks:**
 
-**Exit criteria:** correctness gates pass on the changed candidate; baseline and
-candidate use equivalent inputs, toolchains, settings and hardware; idle-machine
-samples include variance and separate cold/warm startup. Report regressions as
-well as gains. Run validation-off benchmarks separately from validation-on GPU
-correctness. Capability differences across Apple Silicon generations remain
-unknown until measured; runtime detection controls optional paths.
+- Each workload identifies its source/build recipe, required forms/services,
+  original expected outputs, limits and exact independently accepted candidate.
+- Coverage separates declared, decoded, lowered, CPU-tested, locally GPU-tested
+  and independently accepted behavior. Compilation counts are not compatibility.
+- Unsupported behavior retains explicit diagnostic controls; expected values do
+  not come from the same implementation being tested.
+- Targeted mutation/fuzz/regression checks demonstrate sensitivity to the changed
+  behavior without altering tolerances, gate definitions or mutation counting.
+- Earlier integrated workloads still pass. Failures become bounded tasks with
+  proposed files and dependencies, not a generic rewrite of a subsystem.
 
-## Taking the next task
+**Contributor work:** [original corpus #150](https://github.com/MacosPorters/betterxen/issues/150),
+[shader acceptance #225](https://github.com/MacosPorters/betterxen/issues/225),
+CPU coverage #154 and the existing QA owner #219. Reuse their tools and acceptance
+rules; do not create another competing status or test framework.
 
-Begin with Phase 1's evidence reconciliation and review Phase 2's existing PRs.
-The phase-plan issue does not claim their implementation files. Read every
-comment on a target issue and inspect linked PRs; never take a live claim.
-Issue #219's QA paths and subsystem owners remain independent of this plan.
+## Phase 6 — Sustain execution across Apple Silicon
 
-Each implementation task needs a bounded outcome, permitted files, dependencies,
-public semantic sources, a failing fixture or other meaningful acceptance check,
-and the required independent reviewers. Use original code and expectations;
-never copy another emulator to satisfy a phase. Do not require a fixed number
-of agents: use available resources only within the repository's LOW-reasoning
-and independent-review rules.
+**Deliverable:** admitted workloads run for a specified duration under bounded
+memory/resource use, and performance/correctness reports are reproducible on
+the actual native hosts contributors test.
 
-Useful existing commands for the candidate record:
+Specify soak duration, replay, resource limits and failure conditions before the
+run. Measure guest execution, translation, service calls, transfers, Metal
+startup, submission and readback to identify the actual bottleneck. Record
+cold/warm behavior, variance and regressions as well as improvements.
 
-```sh
-PYTHONPATH=scripts python3 -m qa cpu-inventory --compact
-PYTHONPATH=scripts python3 -m qa runtime-inventory --compact
-PYTHONPATH=scripts python3 -m qa rdna2 reconcile --compact
-python3 scripts/audit/status.py --check
-scripts/audit/claims.sh
-scripts/audit/dependencies.sh
-```
+Use the existing native audit, GPU tests and benchmarks. Reuse merged startup
+measurements and DBT comparison tooling; evaluate prewarming/persistence only
+under [#258](https://github.com/MacosPorters/betterxen/issues/258) when measurements
+justify it. Guest code-cache lifetime and same-block executable writes remain
+explicit CPU correctness risks under #95 and #291.
 
-For implementation, run the applicable checkout commands in `AGENTS.md` and the
-subsystem acceptance protocol. Keep logs under ignored `artifacts/`. Use at most
-four Cargo jobs across two CPU-heavy jobs, one GPU job and one fuzz or mutation
-campaign at a time. New verification must name the exact candidate; skipped
-tests never count as GPU evidence. Passing a phase does not authorize a release.
+**Completion checks:**
+
+- The agreed soak/restart protocol passes on the pinned candidate with recorded
+  resource accounting and no hidden fallback or silent loss of work.
+- Baseline/candidate measurements use equivalent inputs, toolchains, settings
+  and hardware. Validation-on correctness and validation-off performance are
+  separate runs; benchmarks use an idle host as required by the protocol.
+- [Native reports #303](https://github.com/MacosPorters/betterxen/issues/303)
+  distinguish host binary architecture, documented capabilities, actual execution,
+  failure, unavailable tools and skipped tests. Skips are never GPU passes.
+- Runtime capability detection selects optional paths. M1–M5/future-device cells
+  stay unknown until actual reports exist; one machine cannot verify them all.
+- Contributor preview preparation follows app/native gates. Signing, notarization,
+  redistribution review and publication require their own evidence and explicit
+  release authorization; this phase does not authorize uploads.
+
+**Contributor work:** [soak #149](https://github.com/MacosPorters/betterxen/issues/149),
+[memory pressure #204](https://github.com/MacosPorters/betterxen/issues/204),
+[dependency evidence #158](https://github.com/MacosPorters/betterxen/issues/158),
+and [preview preparation #259](https://github.com/MacosPorters/betterxen/issues/259).
+
+## Phase 7 — Attempt documented Xbox compatibility
+
+**Deliverable:** a separately reviewed compatibility experiment with admissible
+inputs demonstrates exactly the supported startup/execution/rendering stages,
+or records a specific unresolved contract that prevents the attempt.
+
+Begin [public console-contract research #306](https://github.com/MacosPorters/betterxen/issues/306)
+now, alongside the earlier engineering phases. Maintain evidence for launch and
+CPU entry state, executable admission, service ABI, shader entry/bindings,
+resource and command layouts, synchronization and memory aliases. Public PE,
+AMD desktop ISA and D3D12 documents establish their documented contracts; they
+do not automatically establish Xbox behavior. Unknown console details remain
+unknown rather than becoming guessed implementations.
+
+An actual execution attempt depends on demonstrated technical support for its
+input, project-permitted authorized/unprotected material, explicit admission
+and independent review. Do not obtain or use leaked executables, restricted
+SDKs, confidential headers, proprietary shader collections, firmware or keys;
+do not implement protection bypasses. A torrent filename or container does not
+establish a supported executable, launch environment or compatibility result.
+User files stay outside the repository. File validation concerns technical
+compatibility and safety; it must not demand receipts, accounts or ownership
+provenance uploads.
+
+**Completion checks:**
+
+- Required contracts have precise public sources and repository evidence classes,
+  or are visible blockers. Restricted/unavailable evidence is not bypassed.
+- The admitted input profile, candidate, runtime capabilities and expected
+  outcomes are reviewed before execution and precisely bounded.
+- Actual results separately identify inspection, loading, entry, menu/frame,
+  world simulation, interaction and sustained play. Reaching one does not
+  certify the next; crashes and missing behavior remain in the report.
+- R1 audits evidence/provenance and R2 independently derives semantic expectations.
+  BetterXen has no Xbox hardware access and must never claim such verification.
+- No game title is called supported or playable without a demonstrated repeatable
+  result. No date, compatibility percentage or release follows from this plan.
+
+This phase can remain blocked while earlier original workloads continue to
+improve. There is currently no demonstrated GTA VI execution in BetterXen.
+
+## How contributors start
+
+The [research tracker #298](https://github.com/MacosPorters/betterxen/issues/298)
+links the eight new bounded tasks #299–#306 and the existing work they depend on.
+The phase plan claims no implementation files. Research/design tasks can begin
+on their documented paths; production changes must coordinate subsystem owners
+and active claims. Read all comments, including imported archived claims, and
+inspect linked open PRs before claiming one issue in a plain reply.
+
+Every task needs an outcome, proposed files, dependencies, public semantic
+sources, meaningful positive/negative checks and independent reviewers. Update
+the changelog for meaningful changes. Record candidate-specific results and raw
+logs under ignored `artifacts/`; distinguish implementation, local verification
+and independent acceptance. Preserve historical evidence and attribution.
+
+Run the applicable commands from `AGENTS.md`. Across simultaneous work use at
+most four Cargo jobs across two CPU-heavy jobs, one GPU job and one fuzz or
+mutation campaign. Never count unrun or skipped checks as passes. No commit,
+push, merge or release is authorized by a phase or an issue claim.

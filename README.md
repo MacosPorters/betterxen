@@ -23,37 +23,26 @@ BetterXen has progressed from executing individual x86-64 instructions to runnin
 
 The latest verified milestones include **translated gfx1030 vertex and pixel shaders executing through native Apple Metal**, the native Metal **blend pass** (`NativeCompute::render_blend`) and **indexed triangle draws** (`NativeCompute::render_indexed`) into offscreen targets, with rendered pixels compared against independently calculated reference results.
 
-### Development milestones
+### Development phases
 
-| Milestone | Implementation | Status |
-| --- | --- | --- |
-| X1 — Guest CPU | Bounded x86-64 instruction execution on ARM64 macOS | Verified |
-| X2 — Executable loading | Loading original fixed-base PE32+ test executables | Verified |
-| X3 — GPU compute | Guest-submitted Metal compute workloads and readback | Verified |
-| X4 — Metal rendering | Guest-driven offscreen rendering using authored Metal shaders | Verified |
-| X5 — Guest execution expansion | Additional bounded CPU execution and fixture coverage | Implemented |
-| X6 — Guest control flow | Nested calls, returns, checked memory and synthetic PE execution | Verified |
-| X7 — Imported services | Named imports, guest-to-host service dispatch and result validation | Verified |
-| X8 — Translated compute | Original gfx1030 compute shaders executing on Metal, partial Wave32 handling and BC1 readback | Verified subset |
-| X9 — Translated graphics | Persistent resource handles, translated vertex/pixel stages and offscreen Metal rendering | Verified subset |
-| X10 — Texture sampling | Translated image instructions are still planned; upload, readback and decode of BC compressed formats is implemented (see [Texture support](#texture-support)) | Planned |
-| X11 — Graphics pipeline | Bounded multi-draw passes into offscreen RGBA8 targets: translated vertex and pixel stages, indexed triangle draws, colour write masks and blend state | Implemented |
-| X12 — Wave execution | Expand Wave32/Wave64 semantics, divergent control flow, cross-lane operations, LDS and barriers | Planned |
-| X13 — Advanced shaders | Mesh, geometry and additional compute shader capabilities with verified Metal execution | Planned |
-| X14 — CPU recompilation | Native ARM64 dynamic recompilation of supported x86-64 instructions in synthetic fixtures | Implemented subset |
-| X15 — Executable compatibility | Static PE inspection reports sections, relocations, thread-local storage (TLS) callbacks, imports and entry-point instructions | Static probe implemented |
-| X16 — Guest memory and threading | Virtual memory mapping, thread scheduling, synchronization primitives and atomic operations | Implemented subset |
-| X17 — System services | Implement a tested subset of Xbox-compatible runtime APIs, memory services, filesystem access and application lifecycle | Implemented subset |
-| X18 — Graphics API translation | Translate supported Xbox graphics commands, resource descriptors, command queues, barriers and fences into Metal operations | Planned |
-| X19 — Advanced GPU features | Indirect rendering, asynchronous compute, additional texture formats and ray-tracing compatibility research | Planned |
-| X20 — Integrated guest runtime | Connect CPU recompilation, executable loading, system services and graphics translation into one persistent runtime | Planned |
-| X21 — Application compatibility | Execute increasingly complex independently authored applications through the complete guest CPU and GPU pipeline | Planned |
-| X22 — First application boot | Establish a reproducible startup and error-reporting path for supported game-like applications | Planned |
-| X23 — Initial game compatibility | Investigate startup and execution of legally supported game software, identifying missing runtime and graphics behavior | Long-term goal |
-| X24 — Gameplay and performance | Expand rendering correctness, input, audio, memory management, shader caching and execution performance | Long-term goal |
-| X25 — Running games | Achieve reproducible, stable execution of compatible games on native Apple Silicon macOS using Metal | Long-term goal |
+The active plan follows demonstrable native macOS workloads. Every phase has
+completion checks, dependencies and contributor issues in the
+[full development plan](docs/development-phases.md).
 
-**Roadmap note:** X10–X25 are proposed engineering milestones, not completed implementations or a guaranteed sequence. Follow the [BetterXen development phases](docs/development-phases.md) for the current work order and existing issue/PR dependencies. Actual priorities will change as compatibility testing reveals new blockers. Successfully completing one milestone does not guarantee that a particular game will run.
+| Phase | Result to demonstrate |
+| --- | --- |
+| 1 — Compiled guest boot | Reproduce and independently accept the existing original C execution path on native ARM64. |
+| 2 — Modular guest runtime | Run an original executable with companion libraries, workers, checked waits and lifecycle cleanup. |
+| 3 — Guest-controlled Metal scene | Reach translated textured rendering through compiled guest calls, with checked resource lifetime and pixels. |
+| 4 — Interactive application | Combine guest execution, rendering, input, audio, saves and session controls in one original application. |
+| 5 — Compatibility corpus | Expand CPU/runtime/shader behavior using varied original workloads and independently derived regressions. |
+| 6 — Sustained native execution | Verify bounded long runs and measured performance on the Apple Silicon hosts actually tested. |
+| 7 — Xbox compatibility experiments | Resolve public console contracts and demonstrate each separately admitted execution stage before claiming support. |
+
+These phases replace the previous roadmap. They are targets, not completed
+acceptance claims or a game-release timeline. Console-contract research and
+bounded subsystem work can proceed in parallel. Historical fixture identifiers
+such as X9 remain labels for their original test/evidence records.
 
 All existing verification refers to independently authored synthetic programs and shaders. Commercial-game compatibility remains unverified.
 
@@ -353,7 +342,7 @@ Compiling a shader is not equivalent to proving its GPU output is correct.
 
 ### Where the work is heading
 
-See the [roadmap table](#development-milestones) for proposed milestones, and the [changelog](CHANGELOG.md) for the current unreleased additions, such as the native blend pass, indexed draws and the depth pass. The remaining research steps are the outstanding items in [current limitations](#current-limitations).
+See the [development phases](docs/development-phases.md) for the current work order, and the [changelog](CHANGELOG.md) for the current unreleased additions, such as the native blend pass, indexed draws and the depth pass. The remaining research steps are the outstanding items in [current limitations](#current-limitations).
 
 ---
 

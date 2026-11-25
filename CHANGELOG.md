@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Changed
+- Replaced the active phase plan and README X1–X25 roadmap with one native macOS workload sequence and added a pinned PortWatch ecosystem review linked to eight contributor follow-ups. The plan distinguishes existing synthetic execution from future Xbox compatibility; no new runtime behavior, execution result or independent acceptance is claimed.
 - TLS setup now copies templates from 64 KiB up to 1 MiB straight into the zeroed thread data block, after checking that every template byte is readable, instead of staging them in a second buffer (#111). The pointer array and data block layout, the TLS index write and the error for an unreadable template are unchanged, and nothing is mapped when the template cannot be read. On an Apple M2 Pro, median setup time for original synthetic templates over 31 interleaved samples fell by 21.7 % at 64 KiB, 19.0 % at 256 KiB and 14.2 % at 768 KiB. Smaller and larger templates keep the single staged read and showed no change beyond run-to-run variation.
 - Removed the contributor avatar section from the README.
 - Added `.github/CODEOWNERS` so pull requests request review from the `MacosPorters/maintainers` team. With the `main` branch rule that requires code-owner review, a maintainer must approve each change before it merges.
