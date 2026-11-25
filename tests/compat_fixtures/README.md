@@ -110,3 +110,54 @@ Provenance. The source, the name lists and the script were written for BetterXen
 and are GPL-3.0-or-later. Nothing from a Windows SDK, a C runtime or another
 project is compiled or linked. The compiler and linker are LLVM projects
 under the Apache License 2.0 with LLVM exceptions; they are tools, not inputs.
+
+## Gate A2: a hosted C program
+
+`gate_a2.c` is an original C program that uses the standard C library as an
+ordinary program does. It includes only `<stdio.h>`, `<stdlib.h>` and
+`<string.h>`. It prints its arguments, fills heap memory from a small
+generator, sorts it with `qsort` and a callback, checksums it, writes a
+report with `fprintf` and `fputs`, reads it back with `fgets`, `strtoul` and
+`strtoull`, confirms that a missing file is reported, registers a function
+with `atexit`, and returns from `main`. It checks every result itself and
+exits with the number of the first check that fails. It uses no floating
+point and reads no input.
+
+`build-gate-a2.sh [output directory]` builds it. `cargo test -p xenora-loader
+--test gate_a2` runs that script and then runs the result through
+`run_synthetic_startup`, the standard services and the DBT. No built
+executable is committed: the test builds from source every time, in CI too.
+The test fails, and does not skip, when the compiler is missing.
+
+Compiler configuration:
+
+| Step | Command |
+| --- | --- |
+| Compile and link | `x86_64-w64-mingw32-gcc -O<level> -Wall -Wextra -Werror -o <name>.exe gate_a2.c` |
+
+It is built at `-O0`, `-O1`, `-O2` and `-Os`, and three more times at `-O1` as
+controls: `GATE_BREAK` (one wrong expectation), `GATE_EXIT` (`exit(42)` half
+way) and `GATE_ABORT` (`abort()` half way).
+
+Tools. `MINGW_GCC` defaults to Homebrew's mingw-w64 when it is installed and
+otherwise to the `x86_64-w64-mingw32-gcc` on `PATH`. The toolchain must use
+the Universal C Runtime, which Homebrew's does; a toolchain built for the
+older `msvcrt.dll` produces a program that imports other functions. On macOS
+the script requires the compiler driver, the compiler proper, the assembler
+and the linker, and every library they load that is a file on disk, to be
+ARM64: it checks each with `file` and `lipo -archs`, and each library
+`otool -L` lists with `lipo -archs`. It writes the compiler version to
+`toolchain.txt`, which the test prints, and what the native checks looked at
+to `toolchain-native.txt`. The test builds into a directory of its own for
+each test process under the Cargo target directory.
+
+Provenance. The source and the script were written for Xenora and are
+GPL-3.0-or-later. Unlike the Gate A1 program, each built executable contains
+code that is not Xenora's: mingw-w64's startup objects and a little of GCC's
+support library, as any program built with that toolchain does. Neither is
+stored in the repository or in its history; the executables are test output.
+mingw-w64's `COPYING` file says its runtime is under the Zope Public License
+2.1 except for parts marked as public domain, BSD or LGPL; GCC's support
+library is GPL-3.0-or-later with the GCC Runtime Library Exception. The C
+library itself is not linked: the program imports it by name, and Xenora's
+own services answer.

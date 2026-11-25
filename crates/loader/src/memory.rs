@@ -5,7 +5,7 @@
 //! Provides isolated, page-aligned guest virtual memory with permission checking
 //! (Read, Write, Execute) and bounds enforcement without host OS mapping tricks.
 
-use std::{fmt, ops::Range};
+use std::{fmt, ops::Range, sync::Arc};
 
 pub(crate) const ALLOCATION_GRANULARITY: u64 = 65_536;
 
@@ -119,8 +119,13 @@ impl MappedRegion {
 }
 
 /// Guest virtual memory address space.
-#[derive(Default, Clone)]
+#[derive(Default)]
 pub struct GuestMemory {
+    // A retained token identifies a validated executable snapshot. Independent
+    // address spaces get distinct tokens. A deep clone may share its identical
+    // snapshot; an executable mutation detaches only the changed address space.
+    // Cached translations retain tokens, preventing allocator-address reuse.
+    executable_generation: Arc<()>,
     regions: Vec<MappedRegion>,
     private_heaps: std::collections::BTreeSet<u64>,
     private_heap_serial: u64,
@@ -131,7 +136,33 @@ pub struct GuestMemory {
         std::collections::BTreeMap<(u64, u64), crate::imports::CallbackFrame>,
 }
 
+impl Clone for GuestMemory {
+    fn clone(&self) -> Self {
+        Self {
+            executable_generation: Arc::clone(&self.executable_generation),
+            regions: self.regions.clone(),
+            private_heaps: self.private_heaps.clone(),
+            private_heap_serial: self.private_heap_serial,
+            crt_errno: self.crt_errno.clone(),
+            crt_token_cursors: self.crt_token_cursors.clone(),
+            callback_frames: self.callback_frames.clone(),
+        }
+    }
+}
+
 impl GuestMemory {
+    pub(crate) fn code_generation(&self) -> Arc<()> {
+        Arc::clone(&self.executable_generation)
+    }
+
+    pub(crate) fn code_is_current(&self, generation: &Arc<()>) -> bool {
+        Arc::ptr_eq(&self.executable_generation, generation)
+    }
+
+    fn invalidate_executable_code(&mut self) {
+        self.executable_generation = Arc::new(());
+    }
+
     /// Create a new empty guest address space.
     pub fn new() -> Self {
         Self::default()
@@ -198,6 +229,9 @@ impl GuestMemory {
             allocation,
         });
         self.regions.sort_by_key(|r| r.base);
+        if permissions.execute && size != 0 {
+            self.invalidate_executable_code();
+        }
         Ok(())
     }
 
@@ -257,8 +291,14 @@ impl GuestMemory {
         if !self.private_heaps.remove(&heap) {
             return false;
         }
+        let executable = self.regions.iter().any(|region| {
+            region.allocation == AllocationKind::Heap(heap) && region.permissions.execute
+        });
         self.regions
             .retain(|region| region.allocation != AllocationKind::Heap(heap));
+        if executable {
+            self.invalidate_executable_code();
+        }
         true
     }
 
@@ -378,9 +418,13 @@ impl GuestMemory {
         if size < previous {
             region.data.shrink_to_fit();
         }
+        let executable = region.permissions.execute;
         if destination != base {
             region.base = destination;
             self.regions.sort_by_key(|region| region.base);
+        }
+        if executable && (size != previous || destination != base) {
+            self.invalidate_executable_code();
         }
         Ok(destination)
     }
@@ -421,7 +465,10 @@ impl GuestMemory {
         else {
             return false;
         };
-        self.regions.remove(index);
+        let removed = self.regions.remove(index);
+        if removed.permissions.execute && !removed.data.is_empty() {
+            self.invalidate_executable_code();
+        }
         true
     }
 
@@ -511,10 +558,15 @@ impl GuestMemory {
         required: Option<&'static str>,
     ) -> Result<(), MemoryError> {
         let mut done = 0;
+        let mut executable = false;
         for (index, offset, take) in self.resolve(address, src.len(), required)? {
+            executable |= take != 0 && self.regions[index].permissions.execute;
             self.regions[index].data[offset..offset + take]
                 .copy_from_slice(&src[done..done + take]);
             done += take;
+        }
+        if executable {
+            self.invalidate_executable_code();
         }
         Ok(())
     }
@@ -525,6 +577,9 @@ impl GuestMemory {
             && self.regions[index].permissions.write
         {
             self.regions[index].data[range].copy_from_slice(src);
+            if !src.is_empty() && self.regions[index].permissions.execute {
+                self.invalidate_executable_code();
+            }
             return Ok(());
         }
         self.write_checked(address, src, Some("write"))

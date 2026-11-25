@@ -16,6 +16,9 @@
 # lock = true accepts the LOCK prefix (F0) when the ModRM operand is memory.
 # Every other use of LOCK is rejected, as the architecture's #UD.
 #
+# rm = N requires the ModRM r/m field to be N. It needs register_only, so the
+# form matches exactly one ModRM byte. At most one form per opcode and digit.
+#
 # prefix is a mandatory prefix: "66", "f3" or "f2". SSE forms use size x (XMM)
 # and give the ModRM operand width in src: x = 16 bytes, q = 8, d = 4, w = 2.
 # A 16-byte memory operand must be aligned unless unaligned = true.
@@ -90,6 +93,11 @@ leave = { ref = "sdm LEAVE" }
 call = { terminator = true, ref = "sdm CALL" }
 jmp = { terminator = true, ref = "sdm JMP" }
 jcc = { reads = "cf zf sf of pf", terminator = true, ref = "sdm Jcc" }
+# The count is RCX: the address-size prefix that would select ECX is rejected.
+loopne = { reads = "zf", terminator = true, ref = "sdm LOOP/LOOPcc" }
+loope = { reads = "zf", terminator = true, ref = "sdm LOOP/LOOPcc" }
+loop = { terminator = true, ref = "sdm LOOP/LOOPcc" }
+jrcxz = { terminator = true, ref = "sdm Jcc" }
 ret = { terminator = true, ref = "sdm RET" }
 nop = { ref = "sdm NOP" }
 hlt = { terminator = true, ref = "sdm HLT" }
@@ -97,9 +105,14 @@ syscall = { terminator = true, ref = "sdm SYSCALL" }
 clc = { writes = "cf", ref = "sdm CLC" }
 stc = { writes = "cf", ref = "sdm STC" }
 cmc = { reads = "cf", writes = "cf", ref = "sdm CMC" }
+# AH holds SF, ZF, AF, PF and CF; valid in 64-bit mode when CPUID
+# 8000_0001h ECX bit 0 is set.
+lahf = { reads = "cf zf sf pf af", ref = "sdm LAHF" }
+sahf = { writes = "cf zf sf pf af", ref = "sdm SAHF" }
 cpuid = { ref = "sdm CPUID" }
 cld = { ref = "sdm CLD" }
 std = { ref = "sdm STD" }
+fninit = { ref = "sdm FINIT/FNINIT" }
 # A REP form repeats by leaving RIP on itself, so these end a translated block.
 movs = { terminator = true, ref = "sdm MOVS/MOVSB/MOVSW/MOVSD/MOVSQ" }
 stos = { terminator = true, ref = "sdm STOS/STOSB/STOSW/STOSD/STOSQ" }
@@ -513,6 +526,18 @@ enc = "none"
 size = "v"
 
 [[form]]
+op = "sahf"
+opcode = 0x9E
+enc = "none"
+size = "n"
+
+[[form]]
+op = "lahf"
+opcode = 0x9F
+enc = "none"
+size = "n"
+
+[[form]]
 op = "mov"
 opcode = 0xB0
 count = 8
@@ -562,6 +587,34 @@ op = "leave"
 opcode = 0xC9
 enc = "none"
 size = "q"
+
+[[form]]
+op = "loopne"
+opcode = 0xE0
+enc = "rel"
+size = "n"
+imm = "rel8"
+
+[[form]]
+op = "loope"
+opcode = 0xE1
+enc = "rel"
+size = "n"
+imm = "rel8"
+
+[[form]]
+op = "loop"
+opcode = 0xE2
+enc = "rel"
+size = "n"
+imm = "rel8"
+
+[[form]]
+op = "jrcxz"
+opcode = 0xE3
+enc = "rel"
+size = "n"
+imm = "rel8"
 
 [[form]]
 op = "call"
@@ -671,6 +724,18 @@ op = "std"
 opcode = 0xFD
 enc = "none"
 size = "n"
+
+# FNINIT is DB E3 and nothing else: the other register bytes of digit 4 are
+# different instructions (DB E2 is FNCLEX) and the memory forms are not x87
+# initialisation at all. No other x87 form is declared.
+[[form]]
+op = "fninit"
+opcode = 0xDB
+digit = 4
+enc = "rm_unread"
+size = "n"
+register_only = true
+rm = 3
 
 [[form]]
 op = "movzx"
