@@ -47,8 +47,10 @@ pub struct DbtMetrics {
 /// An unchanged token takes a constant-time check. After a generation or address
 /// space change, bytes and execute permissions are revalidated once before an
 /// identical translation may be reused in that generation.
-/// Validation occurs at dispatch boundaries: a store into the currently running
-/// block's later instructions still needs a separate dispatch-boundary design.
+/// Validation occurs at dispatch boundaries. A store that changes executable
+/// memory while a block runs ends that block after the storing instruction
+/// (`emit_code_write_guard`), so a later instruction it rewrote is validated and
+/// translated again at the next dispatch.
 struct CachedBlock {
     code: *const u8,
     generation: Arc<()>,
@@ -225,8 +227,8 @@ impl DbtEngine {
             {
                 block = self.get_or_compile_block(cpu.rip, memory, 1);
             }
-            let block_fn_ptr = match block {
-                Ok(ptr) => ptr,
+            let (block_fn_ptr, generation) = match block {
+                Ok(block) => block,
                 Err(reason) => {
                     return ExecutionResult {
                         instructions_executed: instructions_count,
@@ -245,6 +247,8 @@ impl DbtEngine {
             let mut ctx = BlockContext {
                 memory_ptr: memory as *mut GuestMemory,
                 faulted: 0,
+                code_written: 0,
+                generation,
                 exit_reason: None,
                 helper_instructions: 0,
             };
@@ -277,20 +281,23 @@ impl DbtEngine {
         rip: u64,
         memory: &GuestMemory,
         block_limit: usize,
-    ) -> Result<*const u8, ExitReason> {
+    ) -> Result<(*const u8, *const Arc<()>), ExitReason> {
         if block_limit == MAX_BLOCK_INSTRUCTIONS {
             if let Some(cached) = self.block_cache.get_mut(&rip) {
                 if cached.is_current(memory) {
                     self.metrics.cache_hits += 1;
-                    return Ok(cached.code);
+                    return Ok((cached.code, &cached.generation));
                 }
                 self.metrics.blocks_invalidated += 1;
             }
             self.metrics.cache_misses += 1;
             let compiled = self.compile_block(rip, memory, block_limit)?;
-            let code = compiled.code;
-            self.block_cache.insert(rip, compiled);
-            return Ok(code);
+            let cached = self
+                .block_cache
+                .entry(rip)
+                .insert_entry(compiled)
+                .into_mut();
+            return Ok((cached.code, &cached.generation));
         }
 
         // Keep budget-limited blocks separate so they cannot shorten a later run.
@@ -298,15 +305,18 @@ impl DbtEngine {
         if let Some(cached) = self.limited_block_cache.get_mut(&key) {
             if cached.is_current(memory) {
                 self.metrics.cache_hits += 1;
-                return Ok(cached.code);
+                return Ok((cached.code, &cached.generation));
             }
             self.metrics.blocks_invalidated += 1;
         }
         self.metrics.cache_misses += 1;
         let compiled = self.compile_block(rip, memory, block_limit)?;
-        let code = compiled.code;
-        self.limited_block_cache.insert(key, compiled);
-        Ok(code)
+        let cached = self
+            .limited_block_cache
+            .entry(key)
+            .insert_entry(compiled)
+            .into_mut();
+        Ok((cached.code, &cached.generation))
     }
 
     fn compile_block(
@@ -357,11 +367,23 @@ impl DbtEngine {
             fault_guards: Vec::new(),
         };
         for (index, insn) in insns.iter().enumerate() {
-            let flags = flags_live_after(&insns, index);
-            if is_native(insn) {
-                emitter.lower(insn, index, flags);
+            let native = is_native(insn);
+            if native {
+                emitter.lower(insn, index, flags_live_after(&insns, index));
             } else {
                 emitter.call_semantics(insn, index);
+            }
+            // A write to executable memory may have rewritten a later
+            // instruction of this block, so end the block once this one has
+            // committed everything. The last instruction ends it anyway. The
+            // shared semantics may store for any form, so they always check.
+            if index + 1 < insns.len() && (!native || stores_natively(insn)) {
+                emit_code_write_guard(
+                    emitter.asm,
+                    &mut emitter.fault_guards,
+                    index + 1,
+                    insn.next_rip(),
+                );
             }
         }
         let Emitter { asm, fault_guards } = emitter;
@@ -549,6 +571,12 @@ fn neon_operation(op: Op) -> Option<(u32, bool)> {
 /// a later instruction in the block overwrites all of them before anything reads
 /// them or could leave the block.
 fn flags_live_after(insns: &[Insn], index: usize) -> bool {
+    // The block can end right after an instruction that writes memory (see
+    // `emit_code_write_guard`), so that instruction's flags must be stored.
+    // Only lowered instructions ask: the shared semantics always store flags.
+    if index + 1 < insns.len() && stores_natively(&insns[index]) {
+        return true;
+    }
     for insn in &insns[index + 1..] {
         let can_exit = insn.op.is_terminator()
             || insn.memory().is_some()
@@ -1312,6 +1340,33 @@ impl Emitter<'_> {
 /// nothing (no architectural effect may have been committed yet), report the
 /// number of fully executed instructions, point guest RIP at the faulting
 /// instruction, and jump to the shared epilogue.
+/// Whether a lowered `insn` may store to guest memory: an explicit memory
+/// operand, a stack push or a call.
+fn stores_natively(insn: &Insn) -> bool {
+    insn.memory().is_some() || matches!(insn.op, Op::Push | Op::Call)
+}
+
+/// Ends the block after an instruction whose write changed executable memory:
+/// the instruction has completed, so RIP is the next instruction and it counts
+/// as executed. Dispatch then sees the new generation and retranslates.
+fn emit_code_write_guard(
+    asm: &mut Arm64Assembler,
+    guards: &mut Vec<usize>,
+    executed: usize,
+    next_rip: u64,
+) {
+    asm.ldr_uoff_64(X5, X20, BLOCK_CTX_CODE_WRITTEN_OFFSET);
+    let skip = asm.current_offset();
+    asm.cbz_64(X5, 0);
+    asm.load_imm_64(X6, next_rip);
+    asm.str_uoff_64(X6, X19, RIP_OFFSET);
+    asm.load_imm_64(X0, executed as u64);
+    guards.push(asm.current_offset());
+    asm.b(0);
+    let resume = asm.current_offset();
+    asm.patch_cbz_64(skip, X5, resume as i32 - skip as i32);
+}
+
 fn emit_fault_guard(
     asm: &mut Arm64Assembler,
     guards: &mut Vec<usize>,
@@ -1336,6 +1391,14 @@ struct BlockContext {
     /// Set to 1 by a memory helper when a guest access faults. Translated code
     /// tests this word before committing any further architectural effect.
     faulted: u64,
+    /// Set to 1 by a helper whose write changed executable memory. Translated
+    /// code tests it after each instruction that may write memory and then ends
+    /// the block, so a later instruction it rewrote is translated again (#291).
+    code_written: u64,
+    /// The running block's cached generation token, which equals the memory's
+    /// token when the block starts. The cache is not modified while a block
+    /// runs, so the pointer stays valid; no reference count changes per dispatch.
+    generation: *const Arc<()>,
     exit_reason: Option<ExitReason>,
     /// Instructions executed through [`execute_helper`].
     helper_instructions: u64,
@@ -1343,6 +1406,18 @@ struct BlockContext {
 
 const BLOCK_CTX_FAULTED_OFFSET: u32 = 8;
 const _: () = assert!(std::mem::offset_of!(BlockContext, faulted) == 8);
+const BLOCK_CTX_CODE_WRITTEN_OFFSET: u32 = 16;
+const _: () = assert!(std::mem::offset_of!(BlockContext, code_written) == 16);
+
+/// Records whether the helper's write replaced the executable-memory generation.
+/// Ordinary data writes keep the token, so this is one pointer comparison.
+fn note_code_write(ctx: *mut BlockContext) {
+    unsafe {
+        if !(*(*ctx).memory_ptr).code_is_current(&*(*ctx).generation) {
+            (*ctx).code_written = 1;
+        }
+    }
+}
 
 fn check_guest_address(ctx: *mut BlockContext, address: u64, size: u8) -> bool {
     if x86_exec::canonical_access(address, size) {
@@ -1364,8 +1439,10 @@ extern "C" fn write_u64_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
         if let Err(e) = mem.write_u64(addr, val) {
             (*ctx).faulted = 1;
             (*ctx).exit_reason = Some(ExitReason::MemoryFault(e));
+            return;
         }
     }
+    note_code_write(ctx);
 }
 
 extern "C" fn read_u64_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
@@ -1446,7 +1523,9 @@ extern "C" fn write_u128_helper(ctx: *mut BlockContext, addr: u64, value: u128) 
     let memory = unsafe { &mut *(*ctx).memory_ptr };
     if let Err(error) = memory.write_bytes(addr, &value.to_le_bytes()) {
         fault(ctx, ExitReason::MemoryFault(error));
+        return;
     }
+    note_code_write(ctx);
 }
 
 extern "C" fn write_aligned_u128_helper(ctx: *mut BlockContext, addr: u64, value: u128) {
@@ -1467,8 +1546,10 @@ extern "C" fn execute_helper(ctx: *mut BlockContext, cpu: *mut CpuState, insn: *
             Err(reason) => {
                 (*ctx).faulted = 1;
                 (*ctx).exit_reason = Some(reason);
+                return;
             }
         }
+        note_code_write(ctx);
     }
 }
 
@@ -1497,8 +1578,10 @@ extern "C" fn write_u16_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
         if let Err(e) = mem.write_u16(addr, val as u16) {
             (*ctx).faulted = 1;
             (*ctx).exit_reason = Some(ExitReason::MemoryFault(e));
+            return;
         }
     }
+    note_code_write(ctx);
 }
 
 extern "C" fn write_u32_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
@@ -1513,8 +1596,10 @@ extern "C" fn write_u32_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
         if let Err(e) = mem.write_u32(addr, val as u32) {
             (*ctx).faulted = 1;
             (*ctx).exit_reason = Some(ExitReason::MemoryFault(e));
+            return;
         }
     }
+    note_code_write(ctx);
 }
 
 extern "C" fn read_u32_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
@@ -1549,8 +1634,10 @@ extern "C" fn write_u8_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
         if let Err(e) = mem.write_u8(addr, val as u8) {
             (*ctx).faulted = 1;
             (*ctx).exit_reason = Some(ExitReason::MemoryFault(e));
+            return;
         }
     }
+    note_code_write(ctx);
 }
 
 extern "C" fn read_u8_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
