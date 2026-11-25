@@ -66,6 +66,10 @@ struct Stream {
     host_backed: bool,
     dirty: bool,
     max_bytes: usize,
+    /// A byte `ungetc` pushed back: the next read at `position` returns it
+    /// instead of `data[position]`. It is never written to the file, and any
+    /// seek or write discards it.
+    pushback: Option<u8>,
 }
 
 #[derive(Default)]
@@ -248,6 +252,7 @@ fn ensure_std_cookies(
                 host_backed: false,
                 dirty: false,
                 max_bytes: MAX_FILE_BYTES,
+                pushback: None,
             },
         );
         stdio = locked;
@@ -442,6 +447,7 @@ fn open_stream(
             host_backed,
             dirty,
             max_bytes,
+            pushback: None,
         },
     );
     Ok(cookie)
@@ -482,6 +488,19 @@ fn flush_stream(stream: &mut Stream, files: &mut BTreeMap<String, Vec<u8>>) -> R
     Ok(())
 }
 
+/// Read one byte from a file stream, honouring an `ungetc` push-back.
+fn read_byte(stream: &mut Stream) -> Option<u8> {
+    if stream.kind != Kind::File {
+        return None;
+    }
+    let byte = match stream.pushback.take() {
+        Some(byte) => byte,
+        None => *stream.data.get(stream.position)?,
+    };
+    stream.position += 1;
+    Some(byte)
+}
+
 /// Write `bytes` at the stream position, as `fwrite` does. Standard output
 /// and error accept and discard output. Returns whether it was written.
 fn put_bytes(stream: &mut Stream, bytes: &[u8]) -> Result<bool, ExitReason> {
@@ -492,6 +511,7 @@ fn put_bytes(stream: &mut Stream, bytes: &[u8]) -> Result<bool, ExitReason> {
     if matches!(stream.kind, Kind::StdOut | Kind::StdErr) {
         return Ok(true);
     }
+    stream.pushback = None;
     if stream.append {
         stream.position = stream.data.len();
     }
@@ -754,12 +774,11 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 stream.eof = true;
                 return Ok(0);
             }
-            memory
-                .write_bytes(
-                    buffer,
-                    &stream.data[stream.position..stream.position + complete],
-                )
-                .map_err(fault)?;
+            let mut bytes = stream.data[stream.position..stream.position + complete].to_vec();
+            if let Some(byte) = stream.pushback.take() {
+                bytes[0] = byte;
+            }
+            memory.write_bytes(buffer, &bytes).map_err(fault)?;
             stream.position += complete;
             if stream.position >= stream.data.len() {
                 stream.eof = true;
@@ -828,12 +847,9 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                     stream.error = true;
                     return Ok(EOF);
                 }
-                match stream.data.get(stream.position) {
-                    Some(&byte) if stream.kind == Kind::File => {
-                        stream.position += 1;
-                        Ok(u64::from(byte))
-                    }
-                    _ => {
+                match read_byte(stream) {
+                    Some(byte) => Ok(u64::from(byte)),
+                    None => {
                         stream.eof = true;
                         Ok(EOF)
                     }
@@ -841,6 +857,68 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             })
         });
     }
+
+    let ungetc = Arc::clone(state);
+    registry.register(UCRT, "ungetc", move |args, _, memory| {
+        let c = args.rcx as i32;
+        if c == -1 {
+            // Pushing back EOF fails and leaves the stream unchanged.
+            return Ok(EOF);
+        }
+        with_stream(&ungetc, memory, args.rdx, |stream, _| {
+            // One byte of push-back, after at least one byte has been read:
+            // the byte replaces the one before the position, as far as reads
+            // are concerned. A second push-back or one at the start fails.
+            if !stream.readable
+                || stream.kind != Kind::File
+                || stream.pushback.is_some()
+                || stream.position == 0
+            {
+                return Ok(EOF);
+            }
+            let byte = c as u8;
+            stream.position -= 1;
+            if stream.data.get(stream.position) != Some(&byte) {
+                stream.pushback = Some(byte);
+            }
+            stream.eof = false;
+            Ok(u64::from(byte))
+        })
+    });
+
+    let fgets = Arc::clone(state);
+    registry.register(UCRT, "fgets", move |args, cpu, memory| {
+        let (buffer, count, cookie) = (args.rcx, args.rdx as i32, args.r8);
+        if buffer == 0 || count <= 0 {
+            set_errno(memory, cpu.gs_base, EINVAL)?;
+            return Ok(0);
+        }
+        with_stream(&fgets, memory, cookie, |stream, memory| {
+            if !stream.readable {
+                stream.error = true;
+                return Ok(0);
+            }
+            // At most count - 1 bytes, stopping after a newline.
+            let mut line = Vec::new();
+            while line.len() < count as usize - 1 {
+                let Some(byte) = read_byte(stream) else {
+                    stream.eof = true;
+                    break;
+                };
+                line.push(byte);
+                if byte == b'\n' {
+                    break;
+                }
+            }
+            if line.is_empty() && count > 1 {
+                // End of file before any byte: the buffer is left unchanged.
+                return Ok(0);
+            }
+            line.push(0);
+            memory.write_bytes(buffer, &line).map_err(fault)?;
+            Ok(buffer)
+        })
+    });
 
     let fflush = Arc::clone(state);
     registry.register(UCRT, "fflush", move |args, cpu, memory| {
@@ -904,6 +982,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
                 return Ok(u64::from(u32::MAX));
             }
             stream.position = position as usize;
+            stream.pushback = None;
             stream.eof = false;
             Ok(0)
         })
@@ -938,6 +1017,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
     registry.register(UCRT, "rewind", move |args, _, memory| {
         with_stream(&rewind, memory, args.rcx, |stream, _| {
             stream.position = 0;
+            stream.pushback = None;
             stream.eof = false;
             stream.error = false;
             Ok(0)
@@ -985,6 +1065,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if end > stream.data.len() {
                 stream.data.resize(end, 0);
             }
+            stream.pushback = None;
             stream.data[stream.position..end].copy_from_slice(&formatted);
             stream.position = end;
             stream.eof = false;
@@ -1039,6 +1120,8 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         "fgetc",
         "getc",
         "fflush",
+        "ungetc",
+        "fgets",
     ] {
         registry.alias(STDIO_API, UCRT, symbol);
         registry.set_status(UCRT, symbol, ServiceStatus::Partial);

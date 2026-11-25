@@ -377,7 +377,18 @@ standard output accepts and discards output. `fflush` writes a dirty
 host-backed stream to its mounted file now rather than at `fclose`, charging
 the mount quota, and publishes an in-memory file so a second `fopen` sees it.
 A null stream flushes every open stream, and flushing an input stream has no
-effect. `ungetc` is not provided.
+effect.
+
+`ungetc` pushes back one byte after at least one byte has been read: the
+position steps back, and the next read returns the pushed-back byte. It
+clears the end-of-file indicator and is never written to the file; a seek,
+`rewind` or write discards it. Pushing back `EOF`, a second byte, or a byte at
+the start of the stream returns `EOF`. C guarantees only one byte of
+push-back, and Xenora does not provide more. `fgets` reads at most
+`count - 1` bytes, stops after a newline (kept in the buffer) and adds a
+terminator. At end of file with nothing read it returns null and leaves the
+buffer unchanged. A null buffer or a count of zero or less sets `EINVAL` and
+returns null.
 
 ### Bounds-checked string copies
 

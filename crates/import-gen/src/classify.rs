@@ -304,6 +304,8 @@ impl SymbolDb {
                 "fgetc",
                 "getc",
                 "fflush",
+                "ungetc",
+                "fgets",
             ] {
                 self.ins(module, symbol, Classification::StandardService);
             }
@@ -314,7 +316,6 @@ impl SymbolDb {
             ("remove", "remove"),
             ("rename", "rename"),
             ("setvbuf", "setvbuf"),
-            ("ungetc", "ungetc"),
             ("vsprintf", "vsprintf"),
             ("vsnprintf", "vsnprintf"),
             ("vfprintf", "vfprintf"),
