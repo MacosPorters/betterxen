@@ -1,5 +1,7 @@
 # Phase 01 engineering checkpoint
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 **NOT RELEASE-READY.** The evidence below was recorded on 2026-11-22 against the integrated local working tree based on `9ab5bf9`. The release brief requires evidence against one final candidate commit. Every formal gate therefore remains **NOT MET**. A passing local check is identified separately from outstanding work.
 
 | Gate | Local evidence and remaining requirement |

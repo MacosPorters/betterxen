@@ -1,5 +1,7 @@
 # Execution contract: bounded Wave32 VOPC integer compares (issue #186)
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 Status: v2, after independent review (codex-contract.log); findings 1-7 addressed. Scope is the Xenora compute-fixture ABI
 (one input word and one output word per dispatched thread; dispatch index `i`
 is wave `i / 32`, lane `i % 32`; every wave starts with EXEC_LO = 0xffffffff;

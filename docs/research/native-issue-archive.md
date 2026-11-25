@@ -1,5 +1,7 @@
 # Native issue archive
 
+Issue/PR states and “active work” labels below are a snapshot of the transition, not a live assignment list. An open historical native PR does not reopen the native roadmap; check its current discussion and the hybrid priorities before taking work.
+
 **Preserved history, not a backlog.** BetterXen's active direction is the CrossOver-based hybrid architecture ([roadmap](../roadmap.md)). The independent native implementation is paused indefinitely; this page replaces its GitHub issue backlog so the work can be found without occupying the active Issues tab. Native source code, tests, benchmarks, Git history and attribution are untouched. Resuming native work needs an explicit maintainer decision ([native roadmap](native-roadmap.md)).
 
 Every issue below keeps its full text, comments and attribution on GitHub and can be reopened; closing used the reason "not planned". Issues imported from the earlier Xenora repository say so in their first lines, and their original author is recorded below. Excerpts are the first sentence of the issue's objective, not a summary of acceptance criteria.

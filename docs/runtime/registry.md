@@ -1,5 +1,7 @@
 # Runtime service registry
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 Guest imports resolve through one lookup, `ImportRegistry::resolve`. Binding, the static probe and the command-line reports all use it, and they read the import directory with one bounded parser, `import_table::parse_imports`.
 
 | Part | File | Role |

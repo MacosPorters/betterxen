@@ -1,5 +1,7 @@
 # Infrastructure QA campaign ledger
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 Running record for the infrastructure and engineering-quality campaign.
 Update after each meaningful commit batch. Do not invent passing tests.
 

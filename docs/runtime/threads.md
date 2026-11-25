@@ -1,5 +1,7 @@
 # Guest threads
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 `crates/loader/src/scheduler.rs` runs guest threads deterministically on one host thread. A guest thread is a CPU context, a guarded stack and a TEB; it is never a host thread. Guest threads never execute at the same time, so no guest memory-ordering model is relied on (#199).
 
 ## Scheduling

@@ -1,5 +1,7 @@
 # Xenora CPU/Runtime Expansion Campaign — Progress Ledger
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 Evidence below is local to the named host unless stated. Nothing here is independently reviewed yet.
 
 ## Continuation checkpoint

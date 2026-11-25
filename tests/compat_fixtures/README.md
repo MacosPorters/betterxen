@@ -1,5 +1,7 @@
 # Synthetic PE32+ import fixtures
 
+**Preserved native research.** This fixture or validation procedure is for the paused independent native path, not CrossOver integration. Retain existing regression checks; proposed expansion is historical unless a specific hybrid need or maintainer decision authorizes it. See the [active architecture](../../docs/architecture.md).
+
 Run `tests/compat_fixtures/build.sh` on ARM64 macOS with native LLVM and LLD.
 The script writes two x86-64 guest executables and their import listings under
 `artifacts/compat-fixtures/`. Both variants come from the original C source

@@ -1,5 +1,7 @@
 # AMD RDNA2 desktop GPU (gfx1030) form acceptance
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 This is the promotion rule for AMD RDNA2 desktop GPU (`gfx1030`) instruction
 forms in [`docs/status.toml`](../status.toml). It implements the documentation
 step of [#302](https://github.com/ranveersoni98/Xenora/issues/302). It does not

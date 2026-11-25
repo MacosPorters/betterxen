@@ -1,5 +1,9 @@
 # Primary-source verification (2026-11-25)
 
+This is a dated desk-research and toolchain checkpoint. Later local shader
+fixture observations are in the [integration report](victory-shader-integration.md);
+its results do not resolve every unknown listed here.
+
 Re-checks claims first taken from search summaries in [hybrid-backlog-research-2026-11-25.md](hybrid-backlog-research-2026-11-25.md). Evidence class D (public documentation read; nothing installed or run). Not legal advice. #363 still has to re-derive these independently.
 
 | Claim | Result | Primary source read |

@@ -1,5 +1,7 @@
 # Phase 01 mutation testing
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 The source campaign covers the decoder, fixture parser,
 verifier, lowering and reference interpreter through the default CPU workspace
 tests. The independent semantic and oracle campaigns are separate requirements.

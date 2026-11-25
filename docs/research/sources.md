@@ -1,6 +1,6 @@
 # Public graphics sources
 
-Reviewed 2026-11-22. Evidence classes apply to the specific claims in [claims.toml](../claims.toml). The sources below were consulted for original research notes. No upstream files or binary artifacts were imported.
+Reviewed 2026-11-22. Evidence classes apply to the specific claims in [claims.toml](../claims.toml). The sources below were consulted for original research notes. No upstream files or binary artifacts were imported by that source review. Later component reuse, including the vendored shader compiler, is recorded separately in the [upstream registry](upstream-registry.md).
 
 | Publisher and version | Consulted sections | License and access |
 |---|---|---|

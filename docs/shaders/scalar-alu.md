@@ -1,5 +1,7 @@
 # SOP2 scalar ALU subset
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 Xenora decodes and executes thirty-three gfx1030 SOP2 forms. Each takes 32-bit
 operands and writes a normal SGPR (s0-s105). The seventeen below set SCC; the
 sixteen in [Arithmetic, select and bit-field forms](#arithmetic-select-and-bit-field-forms)

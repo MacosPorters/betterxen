@@ -1,5 +1,7 @@
 # SOPK scalar immediate forms
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 Xenora decodes and translates sixteen gfx1030 SOPK integer forms through the
 semantic registry (`crates/isa/semantics/rdna2/sopk.toml`, operand rules
 `sopk_sgpr` and `sopk_compare`). Each is one 32-bit word: SIMM16 in bits 0-15,

@@ -1,5 +1,7 @@
 # Original AVX integer fixture specification
 
+**Preserved native research.** This fixture or validation procedure is for the paused independent native path, not CrossOver integration. Retain existing regression checks; proposed expansion is historical unless a specific hybrid need or maintainer decision authorizes it. See the [active architecture](../../../docs/architecture.md).
+
 This fixture is a proposed known-answer test for the
 [guest AVX contract](../../../docs/cpu/avx-contract.md). It uses only the
 source below, fixed register values and synthetic guest memory. Run the

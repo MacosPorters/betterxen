@@ -1,5 +1,7 @@
 # Synthetic compute lowering
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 The compiler accepts explicitly tagged raw gfx1030 code up to 1,024 bytes and requires a whole number of 32-bit words. The verifier checks source initialization, exact resource slots and address operands, immutability of VGPR 0, memory ordering, one completed output store and program termination. VGPR 0 is reserved for resource indexing. Keeping it out of arithmetic means the host's grid position is never exposed as a guest register value.
 
 Verification maps each initialized register to its latest typed temporary. Reads after a load require a load wait. Because generated memory accesses are synchronous expressions within a thread and buffers are disjoint, waits can be discharged during verification. Metal completion is still required before host readback. Store and load aliases between lanes are excluded by the [fixture ABI](../adr/0003-demo-memory-model.md). The output buffer uses Metal index 1 and the read-only input uses index 0.

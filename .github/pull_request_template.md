@@ -1,6 +1,7 @@
 ## Related issue
 
-Closes #
+Closes #<number>, or state the direct maintainer assignment if no issue applies.
+For stacked work, name the base PR and any dependencies absent from its base.
 
 ## Summary
 

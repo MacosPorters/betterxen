@@ -11,10 +11,10 @@
 ![Status: experimental](https://img.shields.io/badge/status-experimental-d29922)
 ![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-2ea043)
 
-**The paused native implementation described below uses no Wine, CrossOver, Rosetta or Vulkan runtime. The active hybrid direction intends to use CrossOver and Rosetta 2, subject to research and licensing review.**
+**Active work integrates an externally installed CrossOver. The independent native runtime and Metal compiler are preserved and paused.**
 
 > [!IMPORTANT]
-> **Current direction.** BetterXen's only active development track is a CrossOver-based hybrid architecture: CrossOver (installed externally) as the compatibility foundation, with BetterXen providing whatever integration, configuration, diagnostics, benchmarking and optimization research shows is missing. This is the *intended* architecture, **not a verified Xbox compatibility stack**: no Xbox title has been shown to run through it, and CrossOver is not assumed to provide Xbox runtime compatibility. Work is at the research stage (Phase 1). Planning is progressive: only the current phase has open issues. The independent native implementation described below is **preserved but paused indefinitely**. See the [roadmap](docs/roadmap.md), [ADR 0005](docs/adr/0005-crossover-hybrid-direction.md), the [upstream research registry](docs/research/upstream-registry.md) and the [deferred native roadmap](docs/research/native-roadmap.md). The rewritten engineering rules are in [AGENTS.md](AGENTS.md).
+> **Current direction.** BetterXen's only active development track is a CrossOver-based hybrid architecture: CrossOver (installed externally) as the compatibility foundation, with BetterXen providing whatever integration, configuration, diagnostics, benchmarking and optimization research shows is missing. This is the *intended* architecture, **not a verified Xbox compatibility stack**: no Xbox title has been shown to run through it, and CrossOver is not assumed to provide Xbox runtime compatibility. Phase 1 remains active; integration work and local fixture results do not establish phase completion. Planning is progressive: only the current phase has open issues. The independent native implementation described below is **preserved but paused indefinitely**. See the [roadmap](docs/roadmap.md), [ADR 0005](docs/adr/0005-crossover-hybrid-direction.md), the [upstream research registry](docs/research/upstream-registry.md) and the [deferred native roadmap](docs/research/native-roadmap.md). The rewritten engineering rules are in [AGENTS.md](AGENTS.md).
 
 </div>
 
@@ -27,6 +27,35 @@ BetterXen is a community-maintained, open-source project written primarily in Ru
 > **BetterXen strictly opposes piracy.** BetterXen is an independent, clean-room, general-purpose emulation research project that neither distributes copyrighted game files nor supports unauthorized content, DRM circumvention, or leaked materials. Use only legally obtained software. BetterXen is not affiliated with Microsoft or any other publisher or platform holder.
 
 ---
+
+## Active hybrid architecture
+
+BetterXen develops integration, environment configuration, diagnostics, reproducible
+workloads, run records and measured optimization around CrossOver. Wine-based
+runtime services and the installed CPU/graphics translation components belong to
+the external compatibility stack; BetterXen does not replace them by default.
+Backend capabilities and integration interfaces must be verified per version.
+
+| Component | Scope at this stack revision |
+| --- | --- |
+| CrossOver, Rosetta 2, D3DMetal and other selected backends | External dependencies, subject to their own licenses and host support. No proprietary binaries are bundled. |
+| `victory-shader` | Vendored GFX10-to-DXIL recompiler and bridge for original compute fixtures. Local GPU observations and failures are recorded in the [integration report](docs/research/victory-shader-integration.md); no console shader corpus was validated. |
+| `scripts/hybrid/run-shader-gpu-tests.sh` | Cross-builds a Windows test executable and invokes `betterxen-hybrid run`. It requires the runner from [PR #384](https://github.com/MacosPorters/betterxen/pull/384) and [PR #388](https://github.com/MacosPorters/betterxen/pull/388), absent from this split stack's base. |
+| Native `xenora-*` crates and Swift app | Preserved synthetic research and regression tests, paused as an independent development track. Not the CrossOver runtime. |
+
+See the [architecture and integration boundaries](docs/architecture.md),
+[crate guide](crates/README.md), [testing guide](docs/testing/README.md) and
+[roadmap](docs/roadmap.md). The six original compute fixtures have recorded
+single-host results, with independent reproduction outstanding. No Xbox title
+execution, general console runtime compatibility or performance improvement is claimed.
+
+## Preserved native implementation
+
+The detailed diagrams, capability counts, results and build instructions below
+refer to the **paused native research path**, unless explicitly labelled hybrid.
+They remain useful for regression testing, not as instructions to expand native
+CPU, runtime or Metal coverage. Native work needs a demonstrated hybrid dependency
+or an explicit maintainer decision. Earlier phase and X-number milestones are historical.
 
 ## How it fits together
 
@@ -240,7 +269,7 @@ The texture upload and readback paths use authored Metal kernels. They should no
 
 Xbox-specific texture layouts and additional compression formats require further research and validation.
 
-## Architecture
+## Preserved native architecture
 
 BetterXen is organized around three connected subsystems: guest execution, shader translation and native GPU execution.
 
@@ -302,13 +331,17 @@ BetterXen's host execution environment is native ARM64. The guest architecture b
 
 The native graphics pipeline runs translated vertex and pixel stages, the indexed-draw and blend passes and the depth pass into offscreen Metal targets, with GPU readback compared against independent CPU references.
 
-The native ARM64 dynamic recompiler covers a bounded subset of x86-64 instructions; the rest run through the shared interpreter semantics (see the [CPU coverage map](docs/testing/cpu-coverage.md) once it lands). The project does not provide a complete Xbox operating-system implementation.
+The native ARM64 dynamic recompiler covers a bounded subset of x86-64 instructions; the rest run through the shared interpreter semantics (see the [CPU coverage map](docs/testing/cpu-coverage.md)). The project does not provide a complete Xbox operating-system implementation.
 
 See [Interface Contracts](docs/interfaces.md) for the documented execution and resource boundaries.
 
 ---
 
 ## Current limitations
+
+Hybrid limitations include version-specific external interfaces, incomplete independent
+reproduction and the absence of demonstrated Xbox execution. The table below
+describes the preserved native implementation; it is not an active backlog.
 
 BetterXen is an engineering research project, not a working commercial-game emulator.
 
@@ -419,12 +452,12 @@ Compiling a shader is not equivalent to proving its GPU output is correct.
 
 ### Contributing
 
-Contributions are welcome, and several people and coding agents work in this repository at once. To avoid duplicated work:
+Contributions are welcome, and several people and coding agents work in this repository at once. For issue-based work, follow these steps. Direct maintainer assignments without an issue need no new issue; record their scope and stack base in the PR.
 
 1. Read every comment on an issue and check for open pull requests that link it.
 2. Claim the issue with a plain reply (for example "I'm taking this. Plan: ...") before you edit anything. The earliest live claim wins, and a claim is stale only after about seven days without a pull request.
 3. Stay inside the files the issue lists, and put `Closes #<n>` in the pull request description.
-4. Sign off every commit (DCO) and use only public documentation and original code. Anyone who has seen leaked or confidential Xbox material must not contribute.
+4. Sign off every commit (DCO); use public documentation, original code and reviewed, compatibly licensed upstream code. Anyone who has seen leaked or confidential Xbox material must not contribute.
 5. Update `CHANGELOG.md` for meaningful changes. Changes to `main` need maintainer review through [CODEOWNERS](.github/CODEOWNERS).
 
 See [CONTRIBUTING.md](CONTRIBUTING.md), [docs/legal.md](docs/legal.md) and the [documentation index](docs/README.md) for the full rules.
@@ -435,7 +468,7 @@ See the [roadmap](docs/roadmap.md) for the current phase and the [changelog](CHA
 
 ---
 
-**The goal is to build a trustworthy native Apple Silicon compatibility framework, one verifiable subsystem at a time.**
+**Active work builds reproducible CrossOver integration on Apple Silicon, with evidence before compatibility or performance claims.**
 
 ---
 

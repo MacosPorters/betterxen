@@ -19,14 +19,22 @@ BetterXen provides integration, configuration, environment management, diagnosti
 
 ## Unverified integration assumptions
 
-- That CrossOver, Rosetta 2, D3DMetal or DXMT run any authorized workload BetterXen needs. Assumed not until measured (#355).
+- General workload coverage and a reproducible baseline (#355). Later local compute-fixture observations are bounded evidence, not general compatibility.
 - That CrossOver offers supported interfaces for bottle management, configuration, launching and diagnostics (#350).
 - Rosetta 2's support lifetime and D3DMetal's license terms (#349, #354).
 - That any of this provides Xbox runtime compatibility. It is assumed not to.
 
 ## Verified implementation capabilities
 
-None for the hybrid architecture. Verified native-research capabilities (synthetic evidence only) are unchanged and listed in `docs/progress.md`.
+At the decision date, no hybrid capability had been verified. Subsequent split
+integration work adds a vendored GFX10-to-DXIL compiler and an original compute
+fixture bridge; single-host CrossOver results and known failures are recorded in
+the [integration report](../research/victory-shader-integration.md). The test
+script also requires the separate hybrid runner PRs. See the
+[current architecture](../architecture.md) for checkout boundaries. These
+observations do not accept the full proposed architecture, complete Phase 1 or
+establish Xbox compatibility. Preserved native evidence remains in
+[progress](../progress.md).
 
 ## Planning consequence
 

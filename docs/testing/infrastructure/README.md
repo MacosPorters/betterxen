@@ -1,5 +1,7 @@
 # Infrastructure QA tooling
 
+**Scope:** the Phase II/III tooling names below belong to the earlier infrastructure campaign, not the active hybrid roadmap. Native CPU/RDNA2 candidate lists are read-only inventories, not authorized work queues. Use the [hybrid testing guide](../README.md) for current validation scope; reuse these helpers only where applicable.
+
 Standalone helpers under `scripts/qa/` and `scripts/release/`. They do not replace
 `scripts/audit/*`, `scripts/benchmark.sh` or `scripts/test-gpu.sh`. New checks are
 advisory until reviewed.

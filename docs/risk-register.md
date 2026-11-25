@@ -1,5 +1,7 @@
 # Open Phase 01 risks
 
+**Historical native Phase 01 register.** Owners and next experiments below retain their original candidate scope; they are not current assignments or hybrid priorities. Active hybrid risks and exit conditions are in the [roadmap](roadmap.md), with component boundaries in [architecture.md](architecture.md).
+
 | ID | Risk and impact | Current evidence | Owner and next experiment |
 |---|---|---|---|
 | R1 | Console shader container, launch state and resource descriptors remain unknown, so the fixture cannot establish console compatibility. | Public related-target specifications, class C | Xbox research. Seek an authorized exact-target specification before proposing a parser. |

@@ -1,5 +1,7 @@
 > **Superseded in part (2026-11-25).** This review recommended against Rosetta, Wine and CrossOver under the native-first plan. BetterXen's direction is now the CrossOver-based hybrid architecture ([roadmap](../roadmap.md), [ADR 0005](../adr/0005-crossover-hybrid-direction.md)); the screening facts below remain useful, the native-first recommendations do not. See the [upstream registry](upstream-registry.md) for the current provenance decision on VIctory-family projects.
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 # PortWatch review and a native macOS execution plan
 
 Reviewed November 24, 2026 (America/Chicago). This is a public-documentation and
@@ -201,8 +203,8 @@ texture inventory respectively. Runtime PRs #263/#290 overlap substantially;
 their author/maintainer must resolve them before new runtime edits. These
 references are destination-repository numbers, not imported source numbers.
 
-The replacement [development phases](../archive/development-phases-native-first.md) define the sole
-active work order, from compiled guest boot through modular workers, a
+At this historical review, the [native development phases](../archive/development-phases-native-first.md) defined the
+then-active work order, from compiled guest boot through modular workers, a
 guest-controlled Metal scene, an interactive application, a compatibility
 corpus, sustained native execution and conditional Xbox experiments.
 Hosted C is implemented on inspected main, awaiting independent acceptance;

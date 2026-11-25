@@ -1,5 +1,7 @@
 # BetterXen roadmap
 
+The [architecture guide](architecture.md) separates code present in the split integration stack from the separate hybrid runner PRs. Local synthetic results do not satisfy the independent baseline or advance the phase automatically. Issue lists and parked items below record the transition plan; consult current issue state before selecting work.
+
 **This is the single authoritative active roadmap.** GitHub Issues hold the current phase's tasks, the open milestone names the current phase, and this file explains strategy, phase order, parked work and completion criteria. If another document disagrees, this one governs, except [ADR 0005](adr/0005-crossover-hybrid-direction.md) for the decision itself.
 
 ## Direction
@@ -24,7 +26,7 @@ Only the current phase has a GitHub milestone and detailed issues. Later phases 
 
 ## Engineering rules
 
-[AGENTS.md](../AGENTS.md) (`CLAUDE.md` is a symlink to it) was rewritten to permit CrossOver, Wine-based infrastructure, Rosetta 2 and D3DMetal subject to licensing; ADR 0005 records the decision. The honesty, verification, provenance and clean-room rules are unchanged. Both are on the local branch `planning/hybrid-first-transition` and await maintainer review; nothing has been pushed.
+[AGENTS.md](../AGENTS.md) (`CLAUDE.md` is a symlink to it) was rewritten to permit CrossOver, Wine-based infrastructure, Rosetta 2 and D3DMetal subject to licensing; ADR 0005 records the decision. The honesty, verification, provenance and clean-room rules are unchanged. The transition is recorded in repository history; use the requested PR base or current `main`, not the former planning branch, for new work.
 
 ## How progress is reported
 
@@ -46,7 +48,7 @@ Phase status is one of: Not started, Researching, In development, Blocked, In va
 6. A reproducible CrossOver environment and a recorded baseline of CPU, GPU, memory and stability, reproduced by a second contributor ([#355](https://github.com/MacosPorters/betterxen/issues/355)).
 7. BetterXen's responsibilities versus CrossOver's recorded in an ADR a maintainer accepts ([#351](https://github.com/MacosPorters/betterxen/issues/351)).
 
-**Open issues:** #145, #348, #350, #351, #353, #354, #355, #363, #364, #365, plus #346 (project board, needs the GitHub `project` token scope; does not block engineering).
+**Transition issue inventory (not a live status query):** #145, #348, #350, #351, #353, #354, #355, #363, #364, #365, plus #346 (project board, needs the GitHub `project` token scope; does not block engineering).
 
 **Known risks:** CrossOver is proprietary, so bundling or modifying may be prohibited; integration interfaces may be undocumented (see below); Xbox titles may not run at all.
 

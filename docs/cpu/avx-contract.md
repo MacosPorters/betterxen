@@ -1,5 +1,7 @@
 # Proposed AVX and AVX2 guest contract
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 [Issue #299](https://github.com/MacosPorters/betterxen/issues/299) defines a
 reviewable first step for Advanced Vector Extensions (AVX) in the x86-64 guest.
 The current [instruction registry](instruction-registry.md) rejects VEX prefixes.

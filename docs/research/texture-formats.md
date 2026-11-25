@@ -1,5 +1,7 @@
 # Texture format and layout inventory
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 This page records which texture formats and memory layouts BetterXen handles today, and at which stage. It also records which gaps are worth closing and which are deferred. It is an inventory of the repository at the time of writing, built from the code and tests it links. It is not a support claim: a format listed here works only for the original synthetic fixtures named, on desktop specifications, and nothing here says anything about Xbox hardware or commercial titles.
 
 ## Stages

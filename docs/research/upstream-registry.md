@@ -1,5 +1,15 @@
 # Upstream research registry
 
+## Split integration update
+
+The original discovery assessment below is retained as a dated research snapshot. The split shader integration subsequently included only `crates/victory-shader` from `skakwy/victory-mac` at `22b3f8e45a59f7d11fef7718988c58d0b3f1d0f9`, plus BetterXen fixture additions. Its [provenance record](../../crates/victory-shader/UPSTREAM.md), [license record](../licenses.md) and [local integration results](victory-shader-integration.md) are the component-specific records, not an approval of the wider VIctory family. This documentation audit does not independently certify that review. Other upstream runtime, loader, game-specific and decryption components remain excluded.
+
+| Component | Selected scope | Recorded license and limits |
+| --- | --- | --- |
+| `victory-shader` | Vendored GFX10-to-DXIL snapshot and original compute-fixture bridge | Upstream GPL record and retained MIT opcode-table notice; exact files, modifications and attribution in `UPSTREAM.md`. Independent provenance/acceptance review is not claimed here. |
+
+## Original discovery assessment (2026-11-25)
+
 Reviewed 2026-11-25. Every entry is **evidence class D** (non-normative official or project material) in the sense used by the issue templates and [claims.toml](../claims.toml): a review of public documentation and repository metadata. Nothing here was installed, built or run, so none of it is a statement that a project works for BetterXen's goals. Licenses are what the repository's own license file or GitHub's license detection reported; they still need the per-file check in the [reuse matrix](component-reuse-matrix.md) and are not legal advice. Pins are the default-branch head observed with `git ls-remote` on the review date. Independent re-derivation of this table is tracked in issue #363.
 
 | Project | Source | Pin (head) | License as reported | Role for BetterXen | Findings |
@@ -33,4 +43,4 @@ Apple's Game Porting Toolkit documentation and license (D3DMetal's actual terms)
 
 ## Provenance decision
 
-VIctory-family projects are not adopted. Their GPL grants apply to their own source; they do not establish that the material they were built for is authorized. The registry records them for architecture ideas visible in public documentation (cache identity, upload visibility, test structure). No code, shader corpus, asset or tooling from them enters BetterXen without a recorded per-file review, and anything game-specific or decryption-related is excluded.
+At this initial discovery review, VIctory-family projects were not adopted. The later shader-only snapshot is recorded above; no broader adoption follows from it. Their GPL grants apply to their own source; they do not establish that the material they were built for is authorized. The registry records them for architecture ideas visible in public documentation (cache identity, upload visibility, test structure). No code, shader corpus, asset or tooling from them enters BetterXen without a recorded per-file review, and anything game-specific or decryption-related is excluded.

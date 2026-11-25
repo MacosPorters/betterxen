@@ -1,5 +1,7 @@
 # gfx1030 instruction coverage
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 For counts of every gfx1030 form in AMD's metadata against forms Xenora can execute, run `xenora shaders coverage`. Its "discovered" column is metadata coverage, not execution support.
 
 The decoder accepts an explicitly tagged, little-endian gfx1030 Wave32

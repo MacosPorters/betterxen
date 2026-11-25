@@ -19,6 +19,14 @@ The workspace is GPL-3.0-or-later. The following is the lead's preliminary compa
 
 ## Runtime redistribution review
 
+**Historical native artifact review.** The six-package graph and G11 findings below
+apply to the named native candidate, not the current whole-workspace graph or
+external CrossOver stack. The vendored shader compiler adds the dependencies
+listed above; its independent license/provenance audit is not established by
+this older review. CrossOver, Rosetta 2 and D3DMetal remain externally supplied
+and unbundled; use the [reuse records](research/component-reuse-matrix.md) for
+selected component scope. No redistribution permission is inferred here.
+
 Reviewed 2026-11-22 against the locked Apple Silicon graph. Run `cargo tree --locked --target aarch64-apple-darwin --edges normal,build` and `cargo metadata --locked --format-version 1` to reproduce the graph and declared licenses. The external runtime graph comprises the six Cargo packages listed above. The reviewed registry packages identify their source revisions in `.cargo_vcs_info.json`. The five objc2 registry packages declare the listed licenses but contain no standalone license text. Each of the three pinned upstream `LICENSE.md` files matches the preserved copy byte for byte.
 
 The declared MIT terms are compatible with GPL-3.0-or-later for code the upstream authors have rights to license. MIT remains the selected option for objc2-core-foundation, objc2-metal and bitflags. Distribution of copies or substantial portions subject to MIT requires retaining the applicable copyright and permission notice. Preserve the project GPL text, AMD's MIT notice, the bitflags MIT notice, and the objc2 notices. For a linked Xenora binary, also satisfy the GPLv3 section 6 Corresponding Source requirements for the shipped build, including applicable linked dependency source and build scripts, subject to the license's System Libraries exception. See the [project GPL text](../LICENSE).

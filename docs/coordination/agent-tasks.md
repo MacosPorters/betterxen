@@ -1,7 +1,9 @@
 # Agent task queue
 
+Only current hybrid work is active; legacy queue areas do not authorize native expansion. Follow [AGENTS.md](../../AGENTS.md) for claim precedence, direct maintainer assignments and current scope. The optional bot lease is not permission to override a plain-reply claim or a claim with an open PR.
+
 Work items are GitHub issues. Contributors and coding agents claim them with a comment, work in
-their own branch, and open a pull request that is checked against the claim. The claim rules for
+their own branch, and open a pull request linked to the issue. Claims must be read manually; the former Agent PR checks workflow has been removed. The claim rules for
 everyone are in `AGENTS.md` ("Claiming work before you start"): a plain reply is a valid claim, and
 a claim goes stale after about one week without a pull request. The commands below are an optional
 layer for contributors listed in `.github/agent-queue.json`; the bot only sees `/claim` comments, so
@@ -9,10 +11,10 @@ read the issue's comments before using it and never `/claim` over a plain-reply 
 deterministic: the rules live in `scripts/agent_queue/` (standard-library Python, no network, no
 model or external service), and GitHub Actions and the shell helpers only call it.
 
-Status: implemented and unit-tested locally. **Not yet run on GitHub**: the workflows are untested
-against the real API until the first live run. Until a live smoke test has passed and existing issues
-have been migrated into the queue, the pull request check is **advisory**: it reports problems but
-never blocks a merge, and it must not be made a required check.
+The original queue implementation was unit-tested locally; the subsequent
+[smoke record](agent-queue-smoke.md) preserves the disposable-repository results.
+Those records do not establish current production configuration. The former
+Agent PR checks workflow is removed; manual claiming and review rules still apply.
 
 ## Areas
 

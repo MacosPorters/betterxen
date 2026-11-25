@@ -1,5 +1,7 @@
 # Phase 01 assurance checkpoint
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 **NOT RELEASE-READY.** The full source mutation campaign and native
 technical evidence in this checkpoint ran from the clean
 `aff46b0904a0182a6f0543125e4491ab67270f64` candidate on 2026-11-22. The

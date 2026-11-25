@@ -1,5 +1,7 @@
 # Independent gfx1030 CPU reference
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 `xenora_ref::execute` reads raw little-endian code bytes and input words without dependencies on the production ISA crate, the compiler or Metal. It accepts at most 1024 instruction bytes and 4096 input words. The synthetic ABI gives every invocation its own input and output word. The indexed load and store forms need no host address arithmetic, and V0 is reserved for that indexing. Dispatch indices form Wave32 waves of 32 consecutive invocations, executed in lockstep with shared scalar state. The reference accepts uniform forward branches driven by scalar register state or by a compare mask in VCC_LO. Cross-lane register access other than compare masks, and EXEC derived from lane data, are outside the subset. Floating-point arithmetic is restricted to positive normal inputs and exact normal results.
 
 | AMD RDNA 2 ISA guide instruction | Reference operation |

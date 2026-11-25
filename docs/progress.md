@@ -1,5 +1,7 @@
 # Engineering progress
 
+**Scope:** generated counts and historical host results below describe preserved native research. For active hybrid components, dependencies and bounded local results, see the [architecture guide](architecture.md) and [shader integration report](research/victory-shader-integration.md). No hybrid phase is certified complete by these tables.
+
 BetterXen is an experimental research project. Verified work is restricted to
 independently authored synthetic programs and shaders; commercial game
 execution and authentic Xbox startup are unsupported. Progress is measured by
@@ -20,7 +22,7 @@ reproducible tests, not by estimated game compatibility percentages.
 | xbox-execution | Xbox Series X\|S | unsupported | untested | unverified | U | Game execution, proprietary guest containers and full guest execution-mask divergence are unsupported. The console launch ABI is unknown. |
 <!-- status:features:end -->
 
-## Reproduce
+## Reproduce preserved native checks
 
 Run on native Apple Silicon with Rust 1.100.0, Xcode 27.2, Python 3.11 or later and LLVM 23.1.6. The verified host was Apple M5 with macOS 27.3. Metal's safe and precise compile options must be available. Use up to four Cargo jobs total across at most two builds, one GPU workload and one fuzz or mutation campaign at a time. The final checkpoint used two Cargo jobs.
 
@@ -41,6 +43,13 @@ scripts/audit/dependencies.sh
 
 The independent CPU validation tests are part of the workspace. The native suite and optional LLVM oracle run separately so CPU-only CI can report them accurately. Final local logs are under ignored `artifacts/`. Keep the historical lab and candidate logs separate.
 
-## Remaining work
+## Active priorities and retained findings
 
-See the [current limitations](../README.md#current-limitations) for the outstanding items. The active research steps are: finish the remaining RDNA2 wave execution and mesh stages, translated texture sampling, broader resource binding and synchronization. Close independent claims, status, history and review findings against the current candidates, and verify the [runtime redistribution blockers](licenses.md#runtime-redistribution-review) before closing the redistribution gate (G11).
+Follow the [hybrid roadmap](roadmap.md): establish supported integration
+interfaces, exact dependency versions, reproducible authorized workloads,
+independent baseline reproduction and the responsibility boundary with CrossOver.
+
+Native wave execution, mesh stages, texture sampling and resource expansion are
+paused research findings, not the active work queue. Historical G-number gates
+remain attached to their original candidates; they neither certify hybrid
+acceptance nor authorize redistribution. Keep existing regression tests passing.

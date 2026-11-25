@@ -1,5 +1,7 @@
 # Synthetic guest execution experiments
 
+**Preserved native research.** This fixture or validation procedure is for the paused independent native path, not CrossOver integration. Retain existing regression checks; proposed expansion is historical unless a specific hybrid need or maintainer decision authorizes it. See the [active architecture](../../docs/architecture.md).
+
 The bounded x86-64 guest interpreter (X1) runs on native ARM64 macOS.
 
 This isolated Cargo workspace implements the original fixtures in the

@@ -1,5 +1,7 @@
 # Phase 02 Track B CPU feasibility
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 This historical feasibility study predates the [implemented guest experiments](../../experiments/x1/README.md). This review used the local dual-track brief and public sources. Local inspection reported `Darwin arm64` and macOS 27.3 (26C5047e). No CPU engine, loader, JIT or GPU workload was built or run for this report. [Existing CPU research](cpu-boundary.md) · [CPU boundary decision](../adr/0004-cpu-boundary.md)
 
 ## Engine comparison

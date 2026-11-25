@@ -1,5 +1,7 @@
 # Independent review
 
+**Scope:** retained independent reviews of native synthetic candidates. Their named commits, gates and required follow-ups are historical evidence, not certification of CrossOver or the vendored DXIL compiler. Active validation scope is in the [testing guide](README.md).
+
 ## gfx1030 form acceptance
 
 Use the [AMD RDNA2 desktop GPU (gfx1030) form acceptance rule](shader-form-acceptance.md) for entries that

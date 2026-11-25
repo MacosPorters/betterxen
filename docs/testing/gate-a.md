@@ -1,5 +1,7 @@
 # Gate A: a compiled C program
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 Gate A asks for an independently compiled C program, exercising allocation,
 file operations, arithmetic, function calls and error handling, to run through
 Xenora. The maintainer split it into two milestones. Gate A is complete only

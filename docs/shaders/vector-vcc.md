@@ -1,5 +1,7 @@
 # Wave32 vector select, carry and borrow
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 The gfx1030 compute fixture ABI supports four 32-bit vector two-operand
 instruction (VOP2) forms that read the vector condition code (VCC).
 In Wave32, bit `n` of `VCC_LO` supplies lane `n`'s input `c`.

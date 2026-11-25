@@ -1,5 +1,7 @@
 # Benchmark protocol
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 The benchmark harness measures each fixture in its manifest that passes its
 correctness test in the same run. It never reports a number for a shader that
 failed or was skipped.

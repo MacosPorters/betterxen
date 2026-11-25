@@ -1,5 +1,7 @@
 # Adding an instruction through the semantic registry
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 The semantic registry is a data file that declares what each supported gfx1030
 instruction form does. A generator checks it and turns it into Rust tables that
 the decoder uses. This page explains where entries live, what each field means,

@@ -3,10 +3,11 @@
 ## Getting started
 
 Start with the [project README](../README.md) for scope and build commands,
-then read the [interface contracts](interfaces.md). Reproduce an
-[original guest test program](../experiments/x1/README.md) or run the
-[independent validation suite](../tests/validation/README.md) before changing
-either path. The [changelog](../CHANGELOG.md) records notable changes.
+then read the [hybrid architecture](architecture.md), [crate guide](../crates/README.md)
+and [testing guide](testing/README.md). The [interface contracts](interfaces.md),
+[original guest experiments](../experiments/x1/README.md) and
+[independent native validation](../tests/validation/README.md) describe preserved
+research, not the active runtime. The [changelog](../CHANGELOG.md) records notable changes.
 
 Use the [roadmap](roadmap.md) for the active CrossOver-based hybrid plan, phases,
 critical path and completion criteria; see [ADR 0005](adr/0005-crossover-hybrid-direction.md)
@@ -19,18 +20,27 @@ paused: [deferred native roadmap](research/native-roadmap.md) and the archived
 [component reuse matrix](research/component-reuse-matrix.md). Historical phase
 checkpoints retain their original evidence scope.
 
-## Architecture and technical design
+## Active hybrid architecture
+
+- [Architecture and integration boundaries](architecture.md) — Responsibilities, split-stack dependencies, implemented fixture bridge and unverified capabilities.
+- [Crate guide](../crates/README.md) — Active vendored compiler versus preserved native components.
+- [Shader integration report](research/victory-shader-integration.md) — Recorded local CrossOver results, known failures and reproduction limits.
+
+## Preserved native architecture and technical design
+
+The native sections below document regression contracts and historical evidence.
+Their extension recipes and next tasks are not an active roadmap.
 
 - [Interface contracts](interfaces.md) — Translated shader stages, guest services, native command submission, and synthetic textures.
 - [Fixture memory model](adr/0003-demo-memory-model.md) and [CPU boundary](adr/0004-cpu-boundary.md) — Buffer bindings, guest address translation, and dependency direction.
 
-## Native Metal graphics
+## Preserved native Metal graphics
 
 - [Translated offscreen stages](interfaces.md#translated-offscreen-stages) — Translated vertex and pixel stages for the bounded gfx1030 subset.
 - [Blend and depth passes](interfaces.md) — Native blend and depth graphics passes with per-draw state.
 - [Apple GPU evidence](research/apple-gpu.md) and [host lab record](research/host-lab.md) — Observed behavior and historical floating-point results.
 
-## RDNA 2 decoding and shader translation
+## Preserved native RDNA 2 decoding and shader translation
 
 - [Instruction coverage](shaders/instruction-coverage.md) — Desktop gfx1030 instruction forms, operand limits, and CPU and GPU results.
 - [Semantic coverage](shaders/semantic-coverage.md) — Generated per-family counts of identified, declared, decoded, lowered and verified gfx1030 forms.
@@ -41,7 +51,7 @@ checkpoints retain their original evidence scope.
 - [VOPC integer compares](shaders/vector-compare.md) — Wave32 compare forms, the VCC/EXEC contract, runtime `s_cbranch_vccz` and the Metal mapping.
 - [Metal Shading Language generation](shaders/msl.md) and [independent CPU reference](shaders/reference-interpreter.md) — Translation rules and separate CPU execution models.
 
-## Guest CPU and runtime experiments
+## Preserved native guest CPU and runtime experiments
 
 - [Guest experiment guide](../experiments/x1/README.md) — Bounded x86-64 execution, executable loading, experimental services, native compute, and offscreen rendering.
 - [x86-64 instruction registry](cpu/instruction-registry.md) — Shared decoder, generated tables, semantics, native lowering and how to add a verified instruction form.
@@ -82,9 +92,10 @@ checkpoints retain their original evidence scope.
 - [Legal scope](legal.md), [dependency licensing](licenses.md), and [third-party notices](../THIRD_PARTY_NOTICES.md) — Input policy, attribution, and redistribution findings.
 - [Contribution guidelines](../CONTRIBUTING.md) — Original authorship, Developer Certificate of Origin sign-off, and evidence requirements.
 - [Agent task queue](coordination/agent-tasks.md) — Areas, claiming, leases, upstream sync, verification and the security model for parallel contributors and coding agents.
-- [CPU/runtime expansion campaign ledger](coordination/cpu-campaign-ledger.md) — Progress ledger for the BetterXen native CPU and runtime compatibility campaign: starting/current commits, completed batches, new forms, verification evidence and the next implementation target.
+- [CPU/runtime expansion campaign ledger](coordination/cpu-campaign-ledger.md) — Historical native campaign checkpoints, batches and evidence; its next target is paused.
 - [Infrastructure QA ownership](coordination/infrastructure-qa-ownership.md) — Non-overlapping paths for infrastructure and QA tooling.
 - [Agent queue smoke evidence](coordination/agent-queue-smoke.md) — Live Actions results from the disposable smoke repository.
 - [Infrastructure QA tooling](testing/infrastructure/README.md) — Advisory orchestration, PR validation, benchmark analysis and release checks.
 
+- [Documentation alignment audit](testing/documentation-alignment.md) — Audit coverage, retained history and documentation checks for the hybrid transition.
 - [Migration to BetterXen](migration.md): source attribution, imported history and compatibility names.

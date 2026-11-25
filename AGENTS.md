@@ -1,6 +1,6 @@
 # BetterXen engineering rules
 
-These rules apply to every contributor and coding agent. They were rewritten on the `planning/hybrid-first-transition` branch when BetterXen moved from native-first to CrossOver-based hybrid development. `CLAUDE.md` is a symlink to this file. The decision is recorded in `docs/adr/0005-crossover-hybrid-direction.md`; the plan is `docs/roadmap.md`.
+These rules apply to every contributor and coding agent. They reflect the accepted CrossOver-based hybrid direction; earlier native-first instructions are historical. `CLAUDE.md` is a symlink to this file. The decision is recorded in `docs/adr/0005-crossover-hybrid-direction.md`; the plan is `docs/roadmap.md`.
 
 ### Direction
 
@@ -63,11 +63,11 @@ These rules apply to every contributor and coding agent. They were rewritten on 
 
 No AI slop (section 29).
 
-Read docs/roadmap.md, docs/interfaces.md and docs/progress.md before implementation.
+Read docs/roadmap.md, docs/architecture.md, docs/interfaces.md and docs/progress.md before implementation. Read crates/README.md and docs/testing/README.md for component scope and validation. Native contracts, generated coverage tables and historical gate checklists do not authorize native expansion or establish hybrid acceptance.
 
 ## Claiming work before you start
 
-Several people and coding agents work on this repository at the same time. Claim an issue before you edit anything, and never take work someone else has claimed.
+Several people and coding agents work on this repository at the same time. For issue-based work, claim the issue before editing and never take work someone else has claimed. A direct maintainer task with no issue (including a documentation-only stacked PR) does not require creating an issue; record that assignment and scope in the PR and check overlapping open work.
 
 1. **Check.** Read every comment on the issue and look for open pull requests that link it. A claim is any comment in which someone says they are taking the issue, in any words (for example "I'll take this" or `/claim`). If a claim exists and is not stale (step 4), pick another issue.
 2. **Claim.** Reply on the issue in plain words, for example: "I'm taking this. Plan: …". No command, label or bot step is needed. The earliest claim wins. Claim one issue per comment.
@@ -99,6 +99,10 @@ A coding agent claims in the name of the person it works for and follows the sam
 **Every spawned subagent must use LOW reasoning effort.** Explicitly select LOW and verify the resolved configuration. Never use Medium, High or Extra High. If LOW cannot be guaranteed, proceed without that subagent. The lead agent may use the user-selected reasoning setting.
 
 ## Checkout commands
+
+These maintain workspace regressions, including the paused native implementation.
+They do not certify CrossOver execution. Hybrid checks and prerequisites are in
+`docs/testing/README.md`; documentation-only changes use its documentation checks.
 
 - Format: `cargo fmt --all -- --check`
 - Lint: `cargo clippy --workspace --all-targets -- -D warnings`

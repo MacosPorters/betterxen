@@ -8,15 +8,16 @@ The only active development track is the CrossOver-based hybrid architecture in 
 
 ## Getting started
 
-- Read `README.md` and, when present, `AGENTS.md`, `docs/interfaces.md`, `docs/status.toml` and the relevant architecture decisions.
-- Discuss substantial changes in an issue before implementing them; small fixes do not require prior approval.
-- Claim an issue before working on it by replying on it in plain words, after checking its comments for an existing claim. Never claim over someone else. A claim with no pull request after about one week may be taken over with a reply saying so. Coding agents follow the same rules; see "Claiming work before you start" in `AGENTS.md`.
+- Read `README.md`, `AGENTS.md`, `CHANGELOG.md`, `docs/roadmap.md`, `docs/architecture.md`, `docs/interfaces.md`, `docs/progress.md` and the relevant architecture decisions. Generated native status tables describe fixtures, not active priorities.
+- Discuss substantial changes in an issue before implementing them, unless directly assigned by a maintainer. Small fixes do not require prior approval; direct assignments without an issue do not require a new issue.
+- For issue-based work, claim the issue before working on it by replying on it in plain words, after checking its comments for an existing claim. Never claim over someone else. A claim with no pull request after about one week may be taken over with a reply saying so. Coding agents follow the same rules; see "Claiming work before you start" in `AGENTS.md`.
 - Use a native ARM64 macOS environment with Rust and the appropriate Xcode/Metal tools. LLVM AMDGPU tools are needed for ISA fixture generation; extra tooling depends on the subsystem.
 - Keep changes focused and preserve existing public interfaces unless a change is justified and documented.
 
 ## Development and verification
 
-When the Cargo workspace exists, run from its root:
+Use the [testing guide](docs/testing/README.md) to select hybrid, documentation or
+preserved-native checks. The workspace regression commands are:
 
 ```sh
 cargo fmt --all -- --check
@@ -26,7 +27,7 @@ cargo test --workspace
 
 Follow repository documentation for actual GPU tests, fuzzing, mutation testing and benchmarks. Report commands, versions, pass/fail/skip counts and hardware used. A successful shader compile is not successful GPU execution. Do not report unavailable tools or skipped tests as passes.
 
-For an instruction or compiler change, cite the applicable ISA section, state the exact architecture, document operand and execution-mask semantics, and add tests for encodings, edge cases, unsupported cases and independent expected results. Where applicable, verify the resulting MSL through actual Metal execution. Do not convert unsupported instructions into silent no-ops.
+For an explicitly authorized native instruction or compiler change, cite the applicable ISA section, state the exact architecture, document operand and execution-mask semantics, and add tests for encodings, edge cases, unsupported cases and independent expected results. Where applicable, verify the resulting MSL through actual Metal execution. Do not convert unsupported instructions into silent no-ops.
 
 For a performance change, provide reproducible before-and-after results using equivalent inputs, hardware and settings. For a new dependency, explain why it is needed, verify its license and native ARM64 compatibility, and record its provenance.
 
@@ -36,19 +37,21 @@ Use publicly accessible specifications and authorized materials only. Do not sub
 
 Distinguish desktop RDNA behavior from Xbox-specific behavior. Cite primary sources with exact applicable architectures and record uncertainties using the project's evidence classification when available. Tests on Apple GPUs do not establish verification on Xbox hardware.
 
-BetterXen implements its own Rust guest runtime, decoder, typed IR, shader
-compiler and native Metal backend from public technical specifications
-and independently derived tests. Contributions must not copy, port or
-adapt code, decoder tables, internal metadata or implementation
-architecture from other emulators. External results can inform test
-selection. Author the resulting code and fixtures independently.
+The preserved native runtime, decoder, typed intermediate representation, shader
+compiler and Metal backend use original implementations and independent tests.
+Active hybrid work reuses established upstream infrastructure after per-file
+license and provenance review. The vendored `victory-shader` snapshot has a
+separate [provenance record](crates/victory-shader/UPSTREAM.md); its inclusion
+does not authorize adopting other VIctory-family components or game material.
+Do not copy from projects built around leaked or unauthorized inputs without the
+recorded review required by `AGENTS.md`. Game-specific and decryption code stay excluded.
 
 Before incorporating third-party code, verify per-file license compatibility with GPL-3.0-or-later, record the exact upstream revision and original paths, preserve copyright notices and document changes. Update applicable attribution records. Public visibility alone is not proof of authorization or license compatibility.
 
 ## Pull requests
 
-- Branch from the current main branch, keep commits focused, and link relevant issues.
-- Describe what changes and why, link the issue you claimed with `Closes #<number>`, state which checks you actually ran, and disclose material AI assistance. Separate unverified work from supported behavior.
+- Branch from current `main`, or the explicitly requested top of a PR stack. For stacked work, name the base PR and dependencies. Keep commits focused and link relevant issues; a direct maintainer assignment without an issue needs no new issue.
+- Describe what changes and why, link the issue you claimed with `Closes #<number>` when applicable, state which checks you actually ran, and disclose material AI assistance. Separate unverified work from supported behavior.
 - Include a clear explanation, tests and any documentation/status updates. Separate unverified work from supported behavior.
 - Disclose material AI assistance and personally review generated changes. AI output is not an authoritative source, test oracle or substitute for independent review.
 - Never include secrets, personal paths, credentials or private data in patches or logs.

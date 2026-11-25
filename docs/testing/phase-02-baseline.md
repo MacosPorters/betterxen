@@ -1,5 +1,7 @@
 # GPU and guest execution evidence
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../architecture.md) for active priorities.
+
 The resumed checkout started clean on main at
 `4b9a4cecf35c8d4d90d8ecdb9c1510e7bd260102`, tracking origin/main.
 The diff since `5c479005b0e0631a608a369b9e41327da61bb61e` contains three

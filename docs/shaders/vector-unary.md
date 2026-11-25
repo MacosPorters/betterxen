@@ -1,5 +1,7 @@
 # Wave32 vector unary integer operations and swap
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 Xenora translates six gfx1030 VOP1 integer forms for the synthetic Wave32 compute
 ABI. The AMD RDNA 2 ISA Reference Guide defines the operations in section 12.8,
 the encoding in section 13.3.2, and the execution mask (EXEC) in section 3.3.

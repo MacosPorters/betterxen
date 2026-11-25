@@ -4,6 +4,11 @@ BetterXen does not circumvent console security or DRM, does not load encrypted o
 
 ## User-provided game files
 
+This is the input policy, not a claim of implemented game loading or execution.
+The preserved native inspection path and active hybrid workloads have different
+limits; see the [architecture guide](architecture.md). No Xbox title execution
+is demonstrated.
+
 Users obtain and supply their own files. BetterXen evaluates file structure,
 supported features, compatibility and safe execution. Game import does
 not check ownership, request receipts or account verification, investigate

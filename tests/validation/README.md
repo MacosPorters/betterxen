@@ -1,5 +1,7 @@
 # Independent review of the first RDNA2 fixture
 
+**Preserved native research.** This fixture or validation procedure is for the paused independent native path, not CrossOver integration. Retain existing regression checks; proposed expansion is historical unless a specific hybrid need or maintainer decision authorizes it. See the [active architecture](../../docs/architecture.md).
+
 AMD's RDNA2 ISA reference §8.1 defines indexed buffer addressing and the four-SGPR resource operand. Under Xenora's synthetic descriptors, the first instruction reads input word `i` into v1 and the store writes word `i` of the independent output. The vector memory wait permits the read's result to be consumed before the add. Section 12 gives the VOP1 move and carry-free unsigned addition semantics, so v2 receives `0x12345678` and v1 receives the sum reduced modulo `2^32`. The SOPK store wait completes the outstanding store. The SOPP end instruction also implicitly waits on RDNA2. Requiring both explicit waits is a conservative policy of this fixture compiler. These semantics are class B for RDNA2 and do not establish Xbox-specific applicability. [AMD RDNA2 ISA Reference Guide](https://docs.amd.com/v/u/en-US/rdna2-shader-instruction-set-architecture)
 
 LLVM 23.1.6 and the production decoder agreed on all seven fixture instructions, including their bytes, lengths, offsets and printed operands. AMD defines hardware semantics. LLVM is class E evidence for the tool's encoding and decoding behavior.

@@ -1,6 +1,6 @@
 # Hybrid backlog research record (2026-11-25)
 
-Evidence class D: public documentation and repository metadata, plus search summaries; see [primary-source-verification-2026-11-25.md](primary-source-verification-2026-11-25.md) for the re-check. Nothing was installed, built or run. Not legal advice. Candidate registry rows are listed here; merge them into [upstream-registry.md](upstream-registry.md) once that file's pending commit has landed.
+Evidence class D: public documentation and repository metadata, plus search summaries; see [primary-source-verification-2026-11-25.md](primary-source-verification-2026-11-25.md) for the re-check. Nothing was installed, built or run. Not legal advice. The candidate rows are retained as the original research record; consult the [upstream registry](upstream-registry.md) for their recorded disposition rather than treating this page as a pending merge instruction.
 
 ## Findings that created issues
 

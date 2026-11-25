@@ -1,5 +1,7 @@
 # CPU test runtime, shards and coverage map
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 This page records what the CPU test gate costs, describes
 `scripts/cpu-tests.sh`, which splits that gate into deterministic shards, and
 maps which x86-64 and loader behavior the tests verify. The shards are a

@@ -1,5 +1,9 @@
 # Interfaces
 
+## Scope and active integration boundary
+
+Active CrossOver integration is described in [architecture.md](architecture.md). The contracts below govern the preserved native fixture runtime and Metal path. They are not Wine APIs, a CrossOver plugin interface or an Xbox runtime ABI. Native expansion is paused; retain these contracts for regression testing and any explicitly justified hybrid reuse.
+
 ## gfx1030 compute fixtures
 
 The first input is little-endian gfx1030 machine code for a compute fixture with optional statically resolved forward scalar branches. The synthetic ABI starts with full Wave32 EXEC and reserves vector general-purpose register (VGPR) 0 for the grid index used by buffer accesses. Resource operands select documented synthetic bindings. The parser must require explicit target identification and validate all lengths before allocating. Console containers and AMDHSA initialization require separate contracts.

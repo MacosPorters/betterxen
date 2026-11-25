@@ -1,5 +1,7 @@
 # Persistent resources and translated rendering acceptance
 
+**Preserved native research.** This page governs existing synthetic fixtures and their regression checks. It does not define CrossOver compatibility or authorize native expansion; follow the [hybrid architecture](../architecture.md) for active work.
+
 The upstream observations below describe pinned source inspected for this
 milestone. Xenora tests use original fixtures. The upstream tests were not
 run here. PASS records a native ARM64 run with assertions, FAIL a reproduced

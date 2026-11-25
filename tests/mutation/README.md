@@ -1,5 +1,7 @@
 # Native semantic mutation
 
+**Preserved native research.** This fixture or validation procedure is for the paused independent native path, not CrossOver integration. Retain existing regression checks; proposed expansion is historical unless a specific hybrid need or maintainer decision authorizes it. See the [active architecture](../../docs/architecture.md).
+
 Run serially on the native Apple Silicon gate machine.
 
 ```sh

@@ -4,7 +4,7 @@
 
 ## Existing implementation (preserved in the workspace)
 
-Rust crates under `crates/` and `app/`, tests under `tests/`, fixtures, fuzz targets and benchmarks. The last `main` commit before the hybrid transition is tagged `native-first-final`. Contributor history is untouched.
+The native `xenora-*` crates and `betterxen` CLI, Swift code under `app/`, native tests, fixtures, fuzz targets and benchmarks. The separately vendored `victory-shader` is active hybrid integration; not every crate under `crates/` belongs to this paused track. See the [crate guide](../../crates/README.md). The last `main` commit before the hybrid transition is tagged `native-first-final`. Contributor history is untouched.
 
 ## Verified achievements (synthetic evidence only)
 

@@ -1,5 +1,7 @@
 # Phase III compatibility-intelligence checkpoint ledger
 
+**Historical native record.** Plans and results below retain their original candidate scope. Native development is paused under [ADR 0005](../../adr/0005-crossover-hybrid-direction.md); follow the [hybrid architecture](../../architecture.md) for active priorities.
+
 Branch: `feat/infra-phase3-compat`. Issue #277.
 Approved paths only. No push without separate authorization.
 
