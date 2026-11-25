@@ -747,6 +747,78 @@ d3 7c be 10 | sar dword ptr [rsi + 4*rdi + 16], cl
 48 d3 7c be 10 | sar qword ptr [rsi + 4*rdi + 16], cl
 49 c1 fd 3f | sar r13, 63
 49 c1 fd 00 | sar r13, 0
+66 44 0f a4 cb 01 | shld bx, r9w, 1
+66 0f a4 54 be 10 01 | shld word ptr [rsi + 4*rdi + 16], dx, 1
+66 44 0f a4 cb 03 | shld bx, r9w, 3
+66 0f a4 54 be 10 03 | shld word ptr [rsi + 4*rdi + 16], dx, 3
+66 44 0f a4 cb 07 | shld bx, r9w, 7
+66 0f a4 54 be 10 07 | shld word ptr [rsi + 4*rdi + 16], dx, 7
+66 44 0f a5 cb | shld bx, r9w, cl
+66 0f a5 54 be 10 | shld word ptr [rsi + 4*rdi + 16], dx, cl
+66 41 0f a4 c5 0f | shld r13w, ax, 15
+66 41 0f a4 cd 00 | shld r13w, cx, 0
+66 0f a4 db 05 | shld bx, bx, 5
+66 45 0f a4 d4 10 | shld r12w, r10w, 16
+44 0f a4 cb 01 | shld ebx, r9d, 1
+0f a4 54 be 10 01 | shld dword ptr [rsi + 4*rdi + 16], edx, 1
+44 0f a4 cb 03 | shld ebx, r9d, 3
+0f a4 54 be 10 03 | shld dword ptr [rsi + 4*rdi + 16], edx, 3
+44 0f a4 cb 07 | shld ebx, r9d, 7
+0f a4 54 be 10 07 | shld dword ptr [rsi + 4*rdi + 16], edx, 7
+44 0f a5 cb | shld ebx, r9d, cl
+0f a5 54 be 10 | shld dword ptr [rsi + 4*rdi + 16], edx, cl
+41 0f a4 c5 1f | shld r13d, eax, 31
+41 0f a4 cd 00 | shld r13d, ecx, 0
+0f a4 db 05 | shld ebx, ebx, 5
+45 0f a4 d4 20 | shld r12d, r10d, 32
+4c 0f a4 cb 01 | shld rbx, r9, 1
+48 0f a4 54 be 10 01 | shld qword ptr [rsi + 4*rdi + 16], rdx, 1
+4c 0f a4 cb 03 | shld rbx, r9, 3
+48 0f a4 54 be 10 03 | shld qword ptr [rsi + 4*rdi + 16], rdx, 3
+4c 0f a4 cb 07 | shld rbx, r9, 7
+48 0f a4 54 be 10 07 | shld qword ptr [rsi + 4*rdi + 16], rdx, 7
+4c 0f a5 cb | shld rbx, r9, cl
+48 0f a5 54 be 10 | shld qword ptr [rsi + 4*rdi + 16], rdx, cl
+49 0f a4 c5 3f | shld r13, rax, 63
+49 0f a4 cd 00 | shld r13, rcx, 0
+48 0f a4 db 05 | shld rbx, rbx, 5
+4d 0f a4 d4 40 | shld r12, r10, 64
+66 44 0f ac cb 01 | shrd bx, r9w, 1
+66 0f ac 54 be 10 01 | shrd word ptr [rsi + 4*rdi + 16], dx, 1
+66 44 0f ac cb 03 | shrd bx, r9w, 3
+66 0f ac 54 be 10 03 | shrd word ptr [rsi + 4*rdi + 16], dx, 3
+66 44 0f ac cb 07 | shrd bx, r9w, 7
+66 0f ac 54 be 10 07 | shrd word ptr [rsi + 4*rdi + 16], dx, 7
+66 44 0f ad cb | shrd bx, r9w, cl
+66 0f ad 54 be 10 | shrd word ptr [rsi + 4*rdi + 16], dx, cl
+66 41 0f ac c5 0f | shrd r13w, ax, 15
+66 41 0f ac cd 00 | shrd r13w, cx, 0
+66 0f ac db 05 | shrd bx, bx, 5
+66 45 0f ac d4 10 | shrd r12w, r10w, 16
+44 0f ac cb 01 | shrd ebx, r9d, 1
+0f ac 54 be 10 01 | shrd dword ptr [rsi + 4*rdi + 16], edx, 1
+44 0f ac cb 03 | shrd ebx, r9d, 3
+0f ac 54 be 10 03 | shrd dword ptr [rsi + 4*rdi + 16], edx, 3
+44 0f ac cb 07 | shrd ebx, r9d, 7
+0f ac 54 be 10 07 | shrd dword ptr [rsi + 4*rdi + 16], edx, 7
+44 0f ad cb | shrd ebx, r9d, cl
+0f ad 54 be 10 | shrd dword ptr [rsi + 4*rdi + 16], edx, cl
+41 0f ac c5 1f | shrd r13d, eax, 31
+41 0f ac cd 00 | shrd r13d, ecx, 0
+0f ac db 05 | shrd ebx, ebx, 5
+45 0f ac d4 20 | shrd r12d, r10d, 32
+4c 0f ac cb 01 | shrd rbx, r9, 1
+48 0f ac 54 be 10 01 | shrd qword ptr [rsi + 4*rdi + 16], rdx, 1
+4c 0f ac cb 03 | shrd rbx, r9, 3
+48 0f ac 54 be 10 03 | shrd qword ptr [rsi + 4*rdi + 16], rdx, 3
+4c 0f ac cb 07 | shrd rbx, r9, 7
+48 0f ac 54 be 10 07 | shrd qword ptr [rsi + 4*rdi + 16], rdx, 7
+4c 0f ad cb | shrd rbx, r9, cl
+48 0f ad 54 be 10 | shrd qword ptr [rsi + 4*rdi + 16], rdx, cl
+49 0f ac c5 3f | shrd r13, rax, 63
+49 0f ac cd 00 | shrd r13, rcx, 0
+48 0f ac db 05 | shrd rbx, rbx, 5
+4d 0f ac d4 40 | shrd r12, r10, 64
 66 41 0f af d9 | imul bx, r9w
 66 0f af 5c be 10 | imul bx, word ptr [rsi + 4*rdi + 16]
 66 44 6b c1 f9 | imul r8w, cx, -7

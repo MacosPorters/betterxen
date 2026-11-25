@@ -274,7 +274,8 @@ struct Undefined {
     of: bool,
     pf: bool,
     af: bool,
-    /// The destination itself is undefined (BSF/BSR of zero).
+    /// The destination itself is undefined (BSF/BSR of zero, or a 16-bit
+    /// SHLD/SHRD count above 16).
     destination: bool,
 }
 
@@ -446,6 +447,53 @@ fn reference(m: &mut Machine, text: &str) -> Outcome {
                     set_result(&mut m.flags, value, bits);
                     undefined.af = true;
                     undefined.cf = name != "sar" && count >= bits;
+                }
+            }
+            Outcome::Done(undefined)
+        }
+        "shld" | "shrd" => {
+            // Intel SDM Vol. 2B, SHLD and SHRD: the count is masked to 5 bits
+            // (6 for 64-bit operands); a count above the operand size leaves
+            // the destination and the flags undefined.
+            let count = read(m, places[2], 8) as u32 % if bits == 64 { 64 } else { 32 };
+            let start = read(m, places[0], bits);
+            let mut fill = read(m, places[1], bits);
+            if count > bits {
+                return Outcome::Done(Undefined {
+                    cf: true,
+                    zf: true,
+                    sf: true,
+                    of: true,
+                    pf: true,
+                    af: true,
+                    destination: true,
+                });
+            }
+            let mut value = start;
+            let mut carry = m.flags.cf;
+            for _ in 0..count {
+                // One bit at a time: the bit leaving the destination goes to
+                // CF and the next bit of the source enters from the other end.
+                if name == "shld" {
+                    carry = bit(value, bits - 1);
+                    value = truncate(value * 2, bits) + u128::from(bit(fill, bits - 1));
+                    fill = truncate(fill * 2, bits);
+                } else {
+                    carry = bit(value, 0);
+                    value = value / 2 + if bit(fill, 0) { 1u128 << (bits - 1) } else { 0 };
+                    fill /= 2;
+                }
+            }
+            write(m, places[0], value);
+            let mut undefined = none;
+            if count != 0 {
+                m.flags.cf = carry;
+                set_result(&mut m.flags, value, bits);
+                undefined.af = true;
+                if count == 1 {
+                    m.flags.of = bit(value, bits - 1) != bit(start, bits - 1);
+                } else {
+                    undefined.of = true;
                 }
             }
             Outcome::Done(undefined)
@@ -938,12 +986,12 @@ fn every_fixture_instruction_matches_the_reference_in_both_engines() {
             assert_eq!(state.rip, ENTRY + case.code.len() as u64, "{text}");
             if !undefined.destination {
                 assert_eq!(state.gpr, expected.gpr, "{text} from {cpu:x?}");
+                assert_eq!(
+                    memory.read_u64(OPERAND).unwrap(),
+                    expected.operand,
+                    "{text} from {cpu:x?}"
+                );
             }
-            assert_eq!(
-                memory.read_u64(OPERAND).unwrap(),
-                expected.operand,
-                "{text} from {cpu:x?}"
-            );
             assert_eq!(
                 memory.read_u64(STACK_TOP - 8).unwrap(),
                 expected.pushed,

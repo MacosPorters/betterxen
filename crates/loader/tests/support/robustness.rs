@@ -3,13 +3,16 @@
 //! Drives sequences of standard runtime services with adversarial arguments.
 //!
 //! Shared by the `runtime_services` libFuzzer target and the stable-toolchain
-//! regression test. Each call takes its arguments from the input: zero, all
+//! regression test. Writable guest memory is filled from a deterministic
+//! pattern, not from the fuzz input, so short corpora still reach the dispatch
+//! loop. Each call takes its arguments from the remaining input: zero, all
 //! ones, pointers into writable, read-only and unmapped memory, raw values,
 //! small integers or an earlier result (so handles flow between calls). After
 //! every call the driver checks that read-only and code memory are unchanged
 //! and that the Win64 nonvolatile registers are preserved. A panic, a broken
 //! invariant or a hang is a bug.
 
+use std::collections::BTreeSet;
 use std::sync::Arc;
 use xenora_loader::cpu::{CpuState, Register};
 use xenora_loader::imports::{ImportRegistry, Win64Args};
@@ -26,11 +29,25 @@ const STACK_LEN: usize = 0x2000;
 const UNMAPPED: u64 = 0xDEAD_0000;
 const MAX_CALLS: usize = 48;
 
+/// Argument encoding mode that reuses an earlier handler result (handles).
+#[allow(dead_code)] // used by the stable-toolchain regression test
+pub const ARG_REUSE_RESULT: u8 = 8;
+/// Argument encoding mode that supplies zero.
+#[allow(dead_code)] // used by the stable-toolchain regression test
+pub const ARG_ZERO: u8 = 0;
+
 /// Services that wait on real time, run guest code or reach native Metal are
 /// left out, so each input runs quickly and deterministically.
 fn excluded(module: &str, symbol: &str) -> bool {
     module.eq_ignore_ascii_case("xenora_fixture.dll")
         || matches!(symbol, "WSAPoll" | "XTaskQueueDispatch")
+}
+
+/// Outcome of one `Driver::run` against a single corpus input.
+#[derive(Clone, Debug, Default, PartialEq, Eq)]
+pub struct RunStats {
+    pub calls: usize,
+    pub distinct_services: usize,
 }
 
 pub struct Driver {
@@ -59,12 +76,41 @@ impl Driver {
         Self { services }
     }
 
+    #[allow(dead_code)] // used by the stable-toolchain regression test
     pub fn service_count(&self) -> usize {
         self.services.len()
     }
 
+    /// Index of `module!symbol` in the driver's sorted service table.
+    #[allow(dead_code)] // used by the stable-toolchain regression test
+    pub fn service_index(&self, module: &str, symbol: &str) -> Option<usize> {
+        self.services
+            .iter()
+            .position(|(entry_module, entry_symbol)| {
+                entry_module.eq_ignore_ascii_case(module) && entry_symbol == symbol
+            })
+    }
+
+    /// Encode a deterministic multi-call corpus.
+    ///
+    /// Each entry is `(service_index, [arg_mode; 7])`. Argument offsets are
+    /// zero; a trailing byte per call supplies the GS-base choice.
+    #[allow(dead_code)] // used by the stable-toolchain regression test
+    pub fn encode_sequence(&self, calls: &[(usize, [u8; 7])]) -> Vec<u8> {
+        let mut bytes = Vec::with_capacity(calls.len() * (2 + 7 * 3 + 1));
+        for &(index, modes) in calls {
+            bytes.extend_from_slice(&(index as u16).to_le_bytes());
+            for mode in modes {
+                bytes.extend_from_slice(&0u16.to_le_bytes());
+                bytes.push(mode);
+            }
+            bytes.push(0); // gs_base selector
+        }
+        bytes
+    }
+
     /// Run one input against fresh service state and fresh guest memory.
-    pub fn run(&self, data: &[u8]) {
+    pub fn run(&self, data: &[u8]) -> RunStats {
         let mut registry = ImportRegistry::new();
         let clock = Arc::new(MockClock::new(0x01DA_0000_0000_0000));
         register_standard_services(&mut registry, Arc::new(ServicesState::new(clock)));
@@ -77,7 +123,11 @@ impl Driver {
         memory
             .map_region(STACK, STACK_LEN, MemoryPermissions::READ_WRITE)
             .unwrap();
-        let fill: Vec<u8> = (0..WRITABLE_LEN).map(|i| input.byte_or(i as u8)).collect();
+        // Deterministic fill: do not consume fuzz/corpus bytes here, or short
+        // inputs never reach the dispatch loop (WRITABLE_LEN is 65,536).
+        let fill: Vec<u8> = (0..WRITABLE_LEN)
+            .map(|i| (i.wrapping_mul(131).wrapping_add(17)) as u8)
+            .collect();
         memory.write_bytes(WRITABLE, &fill).unwrap();
         let read_only: Vec<u8> = (0..REGION_LEN).map(|i| (i * 7) as u8).collect();
         memory
@@ -98,9 +148,12 @@ impl Driver {
             .unwrap();
 
         let mut results = vec![0u64];
+        let mut seen = BTreeSet::new();
+        let mut calls = 0usize;
         for _ in 0..MAX_CALLS {
             let Some(selector) = input.u16() else { break };
-            let (module, symbol) = &self.services[selector as usize % self.services.len()];
+            let index = selector as usize % self.services.len();
+            let (module, symbol) = &self.services[index];
             let mut args = [0u64; 7];
             for arg in &mut args {
                 *arg = input.argument(&results);
@@ -141,9 +194,15 @@ impl Driver {
                 check.iter().all(|&byte| byte == 0xC3),
                 "{module}!{symbol} wrote code memory"
             );
+            calls += 1;
+            seen.insert((module.clone(), symbol.clone()));
             if let Ok(value) = outcome {
                 results.push(value);
             }
+        }
+        RunStats {
+            calls,
+            distinct_services: seen.len(),
         }
     }
 }

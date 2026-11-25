@@ -167,7 +167,7 @@ pub enum ExitReason {
     StackUnderflow,
     /// Division by zero or a quotient too large for its destination (#DE).
     DivideError,
-    /// A misaligned 16-byte operand or a reserved MXCSR bit (#GP).
+    /// A non-canonical data address, misaligned 16-byte operand or reserved MXCSR bit (#GP).
     GeneralProtection,
     /// An unmasked SSE floating-point exception (#XM); MXCSR holds its flags.
     SimdException,

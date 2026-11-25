@@ -1261,9 +1261,20 @@ struct BlockContext {
 const BLOCK_CTX_FAULTED_OFFSET: u32 = 8;
 const _: () = assert!(std::mem::offset_of!(BlockContext, faulted) == 8);
 
+fn check_guest_address(ctx: *mut BlockContext, address: u64, size: u8) -> bool {
+    if x86_exec::canonical_access(address, size) {
+        return true;
+    }
+    fault(ctx, ExitReason::GeneralProtection);
+    false
+}
+
 extern "C" fn write_u64_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
     unsafe {
         if (*ctx).exit_reason.is_some() {
+            return;
+        }
+        if !check_guest_address(ctx, addr, 8) {
             return;
         }
         let mem = &mut *(*ctx).memory_ptr;
@@ -1277,6 +1288,9 @@ extern "C" fn write_u64_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
 extern "C" fn read_u64_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
     unsafe {
         if (*ctx).exit_reason.is_some() {
+            return 0;
+        }
+        if !check_guest_address(ctx, addr, 8) {
             return 0;
         }
         let mem = &*(*ctx).memory_ptr;
@@ -1322,6 +1336,9 @@ fn fault(ctx: *mut BlockContext, reason: ExitReason) {
 
 /// Read 16 bytes at any alignment; returned in X0 (low) and X1 (high).
 extern "C" fn read_u128_helper(ctx: *mut BlockContext, addr: u64) -> u128 {
+    if !check_guest_address(ctx, addr, 16) {
+        return 0;
+    }
     let memory = unsafe { &*(*ctx).memory_ptr };
     let mut bytes = [0; 16];
     if let Err(error) = memory.read_bytes(addr, &mut bytes) {
@@ -1340,6 +1357,9 @@ extern "C" fn read_aligned_u128_helper(ctx: *mut BlockContext, addr: u64) -> u12
 
 /// Write 16 bytes at any alignment; `value` arrives in X2 (low) and X3 (high).
 extern "C" fn write_u128_helper(ctx: *mut BlockContext, addr: u64, value: u128) {
+    if !check_guest_address(ctx, addr, 16) {
+        return;
+    }
     let memory = unsafe { &mut *(*ctx).memory_ptr };
     if let Err(error) = memory.write_bytes(addr, &value.to_le_bytes()) {
         fault(ctx, ExitReason::MemoryFault(error));
@@ -1387,6 +1407,9 @@ extern "C" fn write_u16_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
         if (*ctx).exit_reason.is_some() {
             return;
         }
+        if !check_guest_address(ctx, addr, 2) {
+            return;
+        }
         let mem = &mut *(*ctx).memory_ptr;
         if let Err(e) = mem.write_u16(addr, val as u16) {
             (*ctx).faulted = 1;
@@ -1400,6 +1423,9 @@ extern "C" fn write_u32_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
         if (*ctx).exit_reason.is_some() {
             return;
         }
+        if !check_guest_address(ctx, addr, 4) {
+            return;
+        }
         let mem = &mut *(*ctx).memory_ptr;
         if let Err(e) = mem.write_u32(addr, val as u32) {
             (*ctx).faulted = 1;
@@ -1411,6 +1437,9 @@ extern "C" fn write_u32_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
 extern "C" fn read_u32_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
     unsafe {
         if (*ctx).exit_reason.is_some() {
+            return 0;
+        }
+        if !check_guest_address(ctx, addr, 4) {
             return 0;
         }
         let mem = &*(*ctx).memory_ptr;
@@ -1430,6 +1459,9 @@ extern "C" fn write_u8_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
         if (*ctx).exit_reason.is_some() {
             return;
         }
+        if !check_guest_address(ctx, addr, 1) {
+            return;
+        }
         let mem = &mut *(*ctx).memory_ptr;
         if let Err(e) = mem.write_u8(addr, val as u8) {
             (*ctx).faulted = 1;
@@ -1441,6 +1473,9 @@ extern "C" fn write_u8_helper(ctx: *mut BlockContext, addr: u64, val: u64) {
 extern "C" fn read_u8_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
     unsafe {
         if (*ctx).exit_reason.is_some() {
+            return 0;
+        }
+        if !check_guest_address(ctx, addr, 1) {
             return 0;
         }
         let mem = &*(*ctx).memory_ptr;
@@ -1458,6 +1493,9 @@ extern "C" fn read_u8_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
 extern "C" fn read_u16_helper(ctx: *mut BlockContext, addr: u64) -> u64 {
     unsafe {
         if (*ctx).exit_reason.is_some() {
+            return 0;
+        }
+        if !check_guest_address(ctx, addr, 2) {
             return 0;
         }
         let mem = &*(*ctx).memory_ptr;

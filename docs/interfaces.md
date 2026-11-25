@@ -69,6 +69,28 @@ storage, invokes its callbacks and runs the entry point. The fixture entry point
 uses a Win64-aligned stack and terminates with HLT. The result includes the loaded
 guest memory and the entry execution outcome.
 
+Loading an image maps its headers as well as its sections. The first
+`SizeOfHeaders` bytes of the file are mapped read-only at the image base, in
+whole 4 KiB pages. Everything in those pages past `SizeOfHeaders` is zero, even
+where the file holds more bytes there. A guest can read its own DOS header,
+section table and data directories; it cannot write or execute them.
+
+When startup loads an image away from its preferred base, it writes the load
+base into the mapped optional header's `ImageBase` field after the relocations
+have been applied, so an entry aimed at that field cannot leave any other value
+there. This is Xenora's policy: the PE specification defines `ImageBase` as the
+preferred base, and the behaviour has not been compared with Windows.
+
+The load is refused with `PeError::InvalidHeaderSize` when `SizeOfHeaders` is
+zero, ends before the section table does, runs past the end of the file, or its
+pages would reach into a section, and when the bytes given to the loader are not
+the PE32+ headers that were parsed. The page rule is stricter than the loader
+was before: an image whose section alignment is below 4 KiB, with a section
+that starts inside the header page, used to load and is now refused. The header
+pages count toward the 256 MiB mapping budget of one image, which is checked
+before anything is mapped. `ParsedPe::parse` does not make these checks, so
+static inspection of a file is unchanged.
+
 `xenora probe --mode static` inventories ordinary and delay-loaded PE imports
 without guest execution. Without `--report` it writes to `diagnostics/probe`,
 where `xenora imports sync` also looks. `missing_imports.csv` lists unresolved ordinary keys

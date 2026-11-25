@@ -95,6 +95,7 @@ pub fn run_synthetic_startup_with_observer(
         entry_rva: pe.entry_point_rva,
     });
     let mut image = pe.load_at_base(bytes, layout.image_base)?;
+    let image_base_field = image.image_base_field;
     let memory = &mut image.memory;
     memory
         .fetch_instruction_byte(image.entry_point)
@@ -104,6 +105,12 @@ pub fn run_synthetic_startup_with_observer(
     });
 
     let relocations = apply_relocations(&pe, bytes, layout.image_base, memory)?;
+    // The mapped optional header names the base the image is loaded at. This
+    // is written after the relocations so that an entry aimed at the field
+    // itself cannot leave it holding anything else.
+    memory
+        .write_u64_bypass(image_base_field, layout.image_base)
+        .map_err(PeError::SectionMappingError)?;
     observe(StartupEvent::Relocated {
         applied_dir64: relocations.applied_dir64,
     });

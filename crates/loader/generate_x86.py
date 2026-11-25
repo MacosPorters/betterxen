@@ -50,6 +50,8 @@ ENCS = {
     "rm_imm": ("RmImm", True, {"ib", "iz"}),
     "rm_one": ("RmOne", True, {""}),
     "rm_cl": ("RmCl", True, {""}),
+    "rm_reg_imm": ("RmRegImm", True, {"ub"}),
+    "rm_reg_cl": ("RmRegCl", True, {""}),
     "acc_imm": ("AccImm", False, {"ib", "iz"}),
     "op_reg": ("OpReg", False, {""}),
     "op_reg_imm": ("OpRegImm", False, {"ib", "iv"}),
@@ -66,7 +68,7 @@ ENCS = {
     "reg_xmm_imm": ("RegXmmImm", True, {"ub"}),
 }
 # Encodings whose ModRM operand is the destination, so LOCK can apply to it.
-RM_DESTINATIONS = {"rm_reg", "rm", "rm_imm", "rm_one", "rm_cl"}
+RM_DESTINATIONS = {"rm_reg", "rm", "rm_imm", "rm_one", "rm_cl", "rm_reg_imm", "rm_reg_cl"}
 # Encodings whose ModRM operand is an XMM register or memory of the source width.
 XMM_RM = {"xmm_rm", "rm_xmm", "xmm_rm_imm", "rm_imm_xmm", "reg_xmm", "reg_xmm_imm"}
 # One-byte opcodes that are prefixes or the two-byte escape, never instructions.

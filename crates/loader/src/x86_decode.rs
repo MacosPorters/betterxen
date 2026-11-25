@@ -76,6 +76,10 @@ pub enum Encoding {
     RmImm,
     RmOne,
     RmCl,
+    /// `rm` from `rm` and `reg`, with an 8-bit count (SHLD, SHRD).
+    RmRegImm,
+    /// `rm` from `rm` and `reg`, with the count in CL (SHLD, SHRD).
+    RmRegCl,
     AccImm,
     OpReg,
     OpRegImm,
