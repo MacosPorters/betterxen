@@ -24,23 +24,24 @@ Left out on purpose: the upstream repository's loader, HLE, GPU runtime and game
 | BetterXen fixtures run on the GPU: D3D12 under CrossOver 26.3 (D3DMetal) | **6 of 6 output words match the manifest** | via `betterxen-hybrid run`, 2.3 to 2.6 s including bottle start; the GPU is a D3D12 device with shader model 6.6 as upstream's host layer requires |
 | Negative control | a flipped expected word is rejected; the output is not the zeroed buffer | `a_wrong_expectation_is_detected` |
 | Same GPU tests on DXMT, DXVK and wined3d (no D3D12) | fail with "no SM 6.6 D3D12 hardware device: not verified" | confirms they cannot pass by skipping; upstream's own tests print "skipped" instead |
-| Whole suite under CrossOver (default backend), 229 tests including BetterXen's 4 | 224 passed, **2 failed**, 3 ignored | see below |
+| Whole upstream suite, vendored unchanged, under CrossOver (default backend), 229 tests | 224 passed, **2 failed**, 3 ignored | the two failures are explained in `shader-wave-semantics.md` |
+| Whole suite with the fixes in this PR, under CrossOver | **232 tests: 229 passed, 0 failed, 3 ignored** | the 3 additional tests are BetterXen's f64 tests; see below |
 | Upstream suite on a backend without D3D12 (DXMT) | 201 passed, 25 failed, 3 ignored | see the classification below |
 
 The two failures are `whole_wave_f64_sum_and_cvt_f32_f64` (a wave-wide fp64 sum returned 0, expected `0x40a00000`) and `a_sum_of_halves_where_lanes_have_left_is_the_consoles_tree_bit_for_bit` (64 lanes: got 0, expected `0x5914`). Both are cross-lane wave reductions of the console's 64-lane waves. Hypothesis, **not verified**: the host's waves are 32 lanes wide (Apple GPU) and D3DMetal does not honour the required wave size or wave operation semantics. The cause, and whether upstream passes them on a Windows GPU, were not investigated.
 
 ## Which tests actually executed on the GPU
 
-The harness reports a test as passed whether or not it touched the GPU; many return early when no device is available. Each of the 229 tests was therefore run on both the default backend (D3D12 via D3DMetal) and DXMT (no D3D12), with libtest JSON output including each test's own printed output (`--format json --show-output`). A test counts as GPU-dependent if its outcome changes without D3D12 or it prints "no SM 6.6 hardware device; skipped" there.
+The harness reports a test as passed whether or not it touched the GPU; many return early when no device is available. Each test was therefore run on the default backend (D3D12 via D3DMetal) and on DXMT (no D3D12), with libtest JSON output including each test's own printed output (`--format json --show-output`). A test counts as GPU-dependent if its outcome changes without D3D12 or it prints "no SM 6.6 hardware device; skipped" there. Final content of this PR (232 tests: 225 upstream, 7 BetterXen):
 
 | Group | Tests |
 | --- | --- |
-| Executed on the D3D12 hardware device and passed | 30 (25 of them fail without D3D12; 5 pass only by skipping without it) |
-| Executed on the D3D12 hardware device and failed | 2 (they "pass" without D3D12 by skipping, which hides the failure) |
-| Not GPU-dependent: CPU-side (decode, structurize, lower, emit, container) or ignored | 197, including 3 ignored |
-| Total | 229 (225 upstream + 4 BetterXen; BetterXen's 2 GPU tests are among the 32 GPU-dependent) |
+| Executed on the D3D12 hardware device and passed | **31** (26 of them fail without D3D12; 5 pass only by skipping there) |
+| Executed on the D3D12 hardware device and failed | **0** |
+| Not GPU-dependent: CPU-side (decode, structurize, lower, emit, container) or ignored | 201, including 3 ignored |
+| Total | 232 |
 
-Counts are by name from the JSON events and are exact for this binary and machine. "WARP" skips (the software adapter, which Wine does not provide) and "no `dxil.dll`" skips are not GPU runs and are not counted as such.
+For the vendored upstream code before the fixes in this PR the same method gave 229 tests: 32 GPU-dependent, 30 passed on the device and 2 failed (they "passed" without D3D12 by skipping, which hid the failures), see `shader-wave-semantics.md`. Three of the 31 are BetterXen's GPU tests (fixtures, negative control, bit-exact f64 sums). Counts are by name from the JSON events and are exact for this binary and machine. "WARP" skips (the software adapter, which Wine does not provide) and "no `dxil.dll`" skips are not GPU runs and are not counted as such.
 
 ## Limits
 

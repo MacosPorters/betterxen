@@ -14,6 +14,7 @@ The workspace is GPL-3.0-or-later. The following is the lead's preliminary compa
 | LLVM AMDGPU tools | 23.1.6 | Apache-2.0 WITH LLVM-exception | External fixture tool, not linked |
 | victory-shader (vendored) | victory-mac `22b3f8e45a59`, directory snapshot | GPL-3.0 (same as BetterXen's GPL-3.0-or-later); Mesa-derived opcode table MIT | GFX10-to-DXIL shader recompiler; see its UPSTREAM.md |
 | thiserror, zlib-rs, windows, windows-sys | 2.0.21, 0.6.8, 0.62.2, 0.61.2 | MIT OR Apache-2.0; Zlib; MIT OR Apache-2.0 | Dependencies of victory-shader; licences from each crate's metadata, not independently audited |
+| DirectX Shader Compiler | v1.9.2609, `dxc_2026_09_29.zip` (sha256 `ad31b1fc…a7e7f1`) | University of Illinois/NCSA plus MIT components (per its licence files) | External tool for compiling HLSL probes under CrossOver; not vendored, not distributed |
 | Xcode and Metal tools | Xcode 27.2 | Apple proprietary terms | External host tools, not distributed |
 
 ## Runtime redistribution review

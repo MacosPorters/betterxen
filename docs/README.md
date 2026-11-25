@@ -69,6 +69,7 @@ checkpoints retain their original evidence scope.
 - [Public sources](research/sources.md), [RDNA 2 notes](research/rdna2.md), and [Xbox GPU evidence](research/xbox-gpu.md) — Specifications, evidence scope, and unknown console behavior.
 - [Shader inputs](research/shader-containers.md) and [risk register](risk-register.md) — Input provenance and unresolved engineering risks.
 - [victory-shader integration](research/victory-shader-integration.md) — The vendored GFX10-to-DXIL recompiler, how BetterXen's fixtures run through it on the GPU under CrossOver, and what is not verified.
+- [Shader wave-semantics investigation](research/shader-wave-semantics.md) — Why two upstream wave tests failed under D3DMetal: device capabilities, independent probes, the fix and its limits.
 - [Texture format inventory](research/texture-formats.md) — Formats and layouts by stage (decode, layout, native upload, sampling, guest), their public specifications, unknowns and ranked follow-ups.
 - [PortWatch native macOS research](research/portwatch-native-macos.md) — Screening of public Xbox-on-Windows port projects for native macOS planning; discovery only.
 - [Synthetic integration and upstream evidence](research/synthetic-integration.md) — Audited source snapshots and remaining commercial startup prerequisites.

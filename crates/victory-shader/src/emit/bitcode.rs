@@ -30,6 +30,7 @@ enum TypeDef {
     Void,
     Int(u32),
     Float,
+    #[allow(dead_code)] // BetterXen: no native double is emitted any more (see lower.rs active_f64_sum)
     Double,
     /// Pointee and address space.
     Ptr(Ty, u32),
@@ -248,6 +249,7 @@ impl Module {
     pub fn float(&mut self) -> Ty {
         self.ty(TypeDef::Float)
     }
+    #[allow(dead_code)] // BetterXen: see TypeDef::Double
     pub fn double(&mut self) -> Ty {
         self.ty(TypeDef::Double)
     }
