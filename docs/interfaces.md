@@ -318,6 +318,19 @@ next datagram; `WSAEINVAL` on a listening socket) and `FIONBIO` with a nonzero
 argument. Every socket is already non-blocking, so asking for blocking mode
 returns `WSAEOPNOTSUPP` instead of being ignored.
 
+### Bounds-checked string copies
+
+`strcpy_s`, `strcat_s`, `strncpy_s`, `strncat_s`, `wcscpy_s`, `wcscat_s`,
+`wcsncpy_s` and `wcsncat_s` are registered on `ucrtbase.dll` and
+`api-ms-win-crt-string-l1-1-0.dll`. Sizes and counts are in characters. A null
+or zero-sized destination returns `EINVAL` and leaves it untouched. A null
+source (with a nonzero count), an unterminated append destination, or a result
+that does not fit returns `EINVAL` or `ERANGE` and leaves the destination
+empty. A count of `_TRUNCATE` copies what fits and returns `STRUNCATE`, which
+is not stored in `errno`; a count of zero writes only the terminator. Every
+other error is also stored in `errno`. The invalid-parameter handler is not
+modelled.
+
 ### CRT block sizes and aligned allocation
 
 `_msize`, `_recalloc`, `_aligned_malloc`, `_aligned_realloc`, `_aligned_msize`

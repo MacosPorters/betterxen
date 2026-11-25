@@ -26,6 +26,7 @@ remains unsupported.
 - Extended the read-only RDNA2 planning CLI (`python3 -m qa rdna2`) with family/status filters, compact summaries, Codex-ready manifests under `artifacts/`, active-claim exclusion (family claims exclude those families; path-only claims block overlapping permitted files), coverage reconcile against `semantic_coverage` without inflating counts, and inventory diffs. Covered by `tests/qa/test_rdna2_plan.py`; planning only, no GPU production edits.
 
 ### Fixed
+- The import metadata mapped `strcpy_s`, `strcat_s`, `strncpy_s`, `strncat_s`, `wcscpy_s` and `wcscat_s` to the unchecked libc functions, ignoring the buffer size; generated code would have lost the bounds check. They are now runtime services.
 - The import metadata classified `GetCurrentProcess`, `GetCurrentProcessId`, `GetCurrentThread`, `GetCurrentThreadId`, `GetThreadPriority` and `SetThreadPriority` on `kernel32.dll` and `api-ms-win-core-processthreads-l1-1-0.dll` as stubs although the runtime provides them, so the import generator would have emitted stubs for working services.
 - Removed the unused Linux `AT_EMPTY_PATH` unlink path from host-backed drives and corrected docs/changelog claims: removal is name-based on every host, with the in-mount check-then-unlink race against trusted host writers stated plainly.
 - Made the native semantic-review timeout in `scripts/test-gpu.sh` configurable with `XENORA_SEMANTIC_TIMEOUT` and raised its default from 120 to 300 seconds, so cold Apple Silicon runs do not fail while the expanded Metal known-answer suite is still progressing.
@@ -37,6 +38,7 @@ remains unsupported.
 - C++ `type_info` helpers on `vcruntime140.dll`: equality, ordering and hashing by decorated name, and readable names for plain class, struct, union and enum types. Unsupported decorations such as templates stop the guest rather than return a wrong name.
 - `__std_exception_copy` and `__std_exception_destroy` on `vcruntime140.dll`, so copied `std::exception` objects keep their own message after the original is destroyed. Throwing and catching exceptions remain unsupported.
 - UCRT `_msize`, `_recalloc` and the `_aligned_malloc` family on the CRT heap, with overflow checks, zeroed growth and detection of double or mismatched aligned frees. Alignments above 64 KiB fail rather than return a misaligned block.
+- Bounds-checked `strcpy_s`, `strcat_s`, `strncpy_s`, `strncat_s` and their `wcs` forms, with the documented `EINVAL`, `ERANGE` and `_TRUNCATE` behaviour.
 - `IsProcessorFeaturePresent`, answered from the guest CPUID table so startup code never selects instruction sets the translator does not report. It currently reports no optional features.
 - `GetTimeZoneInformation` (the guest zone is UTC) and `GetLogicalProcessorInformation` (cores and package from the guest profile; no simulated caches are reported).
 - `xenora imports coverage` writes a deterministic report of every standard runtime service by module and status, and lists where the import metadata disagrees with the registry.

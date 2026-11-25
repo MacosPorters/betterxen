@@ -15,6 +15,7 @@ mod crt_ctype;
 mod crt_env;
 mod crt_heap;
 mod crt_locale;
+mod crt_safe_string;
 mod crt_stdio;
 mod crt_time;
 mod cxx;
@@ -432,6 +433,7 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
     crt::register(registry);
     crt::register_heap(registry);
     crt_heap::register(registry, &state);
+    crt_safe_string::register(registry, &state);
     crt::register_errno(registry);
     crt::register_conversions(registry);
     crt::register_rand(registry, &state);

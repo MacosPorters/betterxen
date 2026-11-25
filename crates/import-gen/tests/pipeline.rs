@@ -23,11 +23,17 @@ fn test_builtin_db_classifies_crt_string() {
         Some(Classification::StandardService)
     ));
 
-    let strcat_s_cls = db.get("api-ms-win-crt-string-l1-1-0.dll", "strcat_s");
-    assert!(matches!(
-        strcat_s_cls,
-        Some(Classification::CrtWrapper { .. })
-    ));
+    // Bounds-checked copies must reach the runtime service, never an
+    // unchecked libc wrapper that ignores the destination size.
+    for symbol in ["strcat_s", "strcpy_s", "strncpy_s", "wcscpy_s"] {
+        assert!(
+            matches!(
+                db.get("api-ms-win-crt-string-l1-1-0.dll", symbol),
+                Some(Classification::StandardService)
+            ),
+            "{symbol}"
+        );
+    }
 }
 
 #[test]

@@ -232,19 +232,21 @@ impl SymbolDb {
             "wcscasecmp",
             "Legacy wide comparison candidate",
         );
-        // Safe-CRT variants — wrappers that ignore the buffer size (safe on our sandbox)
-        for sym in &[
-            "strcat_s",
-            "strcpy_s",
-            "strncpy_s",
-            "strncat_s",
-            "wcscpy_s",
-            "wcscat_s",
-        ] {
-            self.ins(m, sym, Classification::CrtWrapper {
-                libc_sym: &sym[..sym.len() - 2], // drop _s
-                wrapper_note: "Safe-CRT: delegates to libc equivalent, ignoring buffer-size arg",
-            });
+        // Bounds-checked copies are runtime services: mapping them to the
+        // unchecked libc functions would drop the size check they exist for.
+        for module in [m, "ucrtbase.dll"] {
+            for symbol in [
+                "strcat_s",
+                "strcpy_s",
+                "strncpy_s",
+                "strncat_s",
+                "wcscpy_s",
+                "wcscat_s",
+                "wcsncpy_s",
+                "wcsncat_s",
+            ] {
+                self.ins(module, symbol, Classification::StandardService);
+            }
         }
         self.win32_stub(
             m,
