@@ -30,6 +30,7 @@ mod platform_fixture;
 mod synch;
 pub mod sysinfo;
 mod task_fixture;
+pub(crate) mod threads;
 mod winsock;
 pub mod xinput;
 
@@ -207,6 +208,8 @@ pub struct ServicesState {
     objects: Mutex<ObjectState>,
     last_errors: Mutex<BTreeMap<u64, u32>>,
     synch: Mutex<synch::Synch>,
+    pub(crate) threads: Mutex<threads::ThreadTable>,
+    pub(crate) hooks: Arc<threads::SchedulerHooks>,
     /// Functions registered with `atexit`, run in reverse order by `_cexit`.
     atexit: Mutex<Vec<u64>>,
     winsock: Mutex<winsock::Winsock>,
@@ -243,6 +246,8 @@ impl ServicesState {
             objects: Mutex::new(ObjectState::default()),
             last_errors: Mutex::default(),
             synch: Mutex::default(),
+            threads: Mutex::default(),
+            hooks: Arc::default(),
             atexit: Mutex::default(),
             winsock: Mutex::default(),
             controllers: Arc::new(xinput::NoControllers),
@@ -349,11 +354,26 @@ impl ServicesState {
 /// hand-written fixture services.
 pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<ServicesState>) {
     crate::runtime_table::register(registry, &state);
+    registry.hooks = Some(Arc::clone(&state.hooks));
+    threads::register(registry, &state);
 
     let s = state.clone();
     registry.register(KERNEL32, "GetThreadId", move |args, cpu, mem| {
         let handle = args.get(0, mem).map_err(ExitReason::MemoryFault)?;
+        if handle == CURRENT_THREAD {
+            return Ok(u64::from(s.thread_id_of(cpu.gs_base)));
+        }
         let thread = s.objects.lock().expect("guest object state");
+        if let Some(GuestObject::Waitable { state, access }) = thread.handles.get(&handle)
+            && let events::Waitable::Thread { id, .. } =
+                &*state.lock().expect("guest waitable state")
+        {
+            return if access & THREAD_QUERY_RIGHTS == 0 {
+                s.fail(cpu.gs_base, ERROR_ACCESS_DENIED, 0)
+            } else {
+                Ok(u64::from(*id))
+            };
+        }
         if let Err(error) = thread.check_access(handle, THREAD_QUERY_RIGHTS) {
             return s.fail(cpu.gs_base, error, 0);
         }
@@ -379,8 +399,12 @@ pub fn register_standard_services(registry: &mut ImportRegistry, state: Arc<Serv
         if inherit != 0 || options & !DUPLICATE_SAME_ACCESS != 0 || source == CURRENT_PROCESS {
             return s.fail(cpu.gs_base, ERROR_NOT_SUPPORTED, 0);
         }
+        let worker = s.current_worker(cpu.gs_base);
         let mut thread = s.objects.lock().expect("guest object state");
-        let (granted, mut object) = if source == CURRENT_THREAD {
+        let (granted, mut object) = if let (CURRENT_THREAD, Some(state)) = (source, worker) {
+            let access = threads::THREAD_ALL_ACCESS;
+            (access, GuestObject::Waitable { state, access })
+        } else if source == CURRENT_THREAD {
             (
                 THREAD_SUPPORTED_RIGHTS,
                 GuestObject::Thread(THREAD_SUPPORTED_RIGHTS),
@@ -730,7 +754,7 @@ pub(crate) mod handlers {
     }
 
     pub fn get_current_thread_id(context: &mut ServiceContext<'_>) -> Outcome<u32> {
-        Ok(context.state.thread_id)
+        Ok(context.state.thread_id_of(context.teb))
     }
 
     pub fn open_thread(
@@ -740,21 +764,41 @@ pub(crate) mod handlers {
         id: u32,
     ) -> Outcome<u64> {
         let state = context.state;
-        if id != state.thread_id {
+        let worker = state.worker_object(id);
+        let main = id == state.thread_id && state.main_thread_alive();
+        if !main && worker.is_none() {
             return state.fail(context.teb, ERROR_INVALID_PARAMETER, 0);
         }
-        if inherit || access & !THREAD_SUPPORTED_RIGHTS != 0 {
+        let supported = THREAD_SUPPORTED_RIGHTS
+            | if worker.is_some() {
+                threads::WORKER_RIGHTS
+            } else {
+                0
+            };
+        if inherit || access & !supported != 0 {
             return state.fail(context.teb, ERROR_NOT_SUPPORTED, 0);
         }
         let mut thread = state.objects.lock().expect("guest object state");
         let Some(handle) = thread.next_handle() else {
             return state.fail(context.teb, ERROR_NOT_ENOUGH_MEMORY, 0);
         };
-        thread.insert_handle(handle, GuestObject::Thread(access));
+        let object = match worker {
+            Some(state) => GuestObject::Waitable { state, access },
+            None => GuestObject::Thread(access),
+        };
+        thread.insert_handle(handle, object);
         Ok(handle)
     }
 
     pub fn get_thread_priority(context: &mut ServiceContext<'_>, handle: u64) -> Outcome<i32> {
+        // Only the main thread has a priority; a worker must not change it.
+        if handle == CURRENT_THREAD && context.state.current_worker(context.teb).is_some() {
+            return context.state.fail(
+                context.teb,
+                ERROR_NOT_SUPPORTED,
+                THREAD_PRIORITY_ERROR_RETURN as i32,
+            );
+        }
         let thread = context.state.objects.lock().expect("guest object state");
         if let Err(error) = thread.check_access(handle, THREAD_QUERY_RIGHTS) {
             return context
@@ -769,6 +813,10 @@ pub(crate) mod handlers {
         handle: u64,
         priority: i32,
     ) -> Outcome<bool> {
+        // Only the main thread has a priority; a worker must not change it.
+        if handle == CURRENT_THREAD && context.state.current_worker(context.teb).is_some() {
+            return context.state.fail(context.teb, ERROR_NOT_SUPPORTED, false);
+        }
         let state = context.state;
         let mut thread = state.objects.lock().expect("guest object state");
         if let Err(error) = thread.check_access(handle, THREAD_SET_RIGHTS) {

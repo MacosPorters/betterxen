@@ -95,6 +95,8 @@ enum AllocationKind {
     ImageOrStatic,
     Virtual,
     Heap(u64),
+    /// Stack, guard or TEB of a guest thread; only the scheduler frees it.
+    Thread,
 }
 
 #[derive(Clone)]
@@ -381,6 +383,19 @@ impl GuestMemory {
             self.regions.sort_by_key(|region| region.base);
         }
         Ok(destination)
+    }
+
+    pub(crate) fn map_thread_region(
+        &mut self,
+        base: u64,
+        size: usize,
+        permissions: MemoryPermissions,
+    ) -> Result<u64, MemoryError> {
+        self.map_dynamic_allocation(base, size, permissions, AllocationKind::Thread)
+    }
+
+    pub(crate) fn release_thread_region(&mut self, base: u64) -> bool {
+        self.release_dynamic_allocation(base, AllocationKind::Thread)
     }
 
     pub(crate) fn release_virtual_allocation(&mut self, base: u64) -> bool {

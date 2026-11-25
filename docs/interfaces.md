@@ -597,7 +597,7 @@ created with default security attributes. `SetEvent` signals an event,
 `ResetEvent` clears it, and `CloseHandle` invalidates the handle.
 `WaitForSingleObject` consumes an auto-reset signal once, leaves a manual-reset
 signal set, and reports `WAIT_TIMEOUT` when a zero-timeout poll finds no signal.
-A wait that would block returns `WAIT_FAILED` with `ERROR_NOT_SUPPORTED`.
+Without an attached thread scheduler, a wait that would block returns `WAIT_FAILED` with `ERROR_NOT_SUPPORTED`; with one it blocks the calling guest thread ([guest threads](runtime/threads.md)).
 Thread and event handles are distinct types in the same bounded table.
 Event duplicates share signal state and keep the event alive independently.
 A duplicate can retain or reduce its rights. Waiting requires synchronize
@@ -623,15 +623,15 @@ thread, identified by its TEB. The owner can acquire the mutex again, and
 each acquisition needs a matching `ReleaseMutex`. Another thread sees the
 mutex as unsignaled. A release by a thread that is not the owner fails with
 `ERROR_NOT_OWNER`. Waits, duplicates and wait-all treat mutexes like the
-other waitable objects. Abandonment on thread exit is not modeled, because
-guest threads do not exit yet.
+other waitable objects. A mutex whose owner thread ended
+is reported once as abandoned.
 
 See Microsoft's [event object documentation](https://learn.microsoft.com/windows/win32/sync/event-objects).
 
 ### Locks, one-time initialization and thread-local storage
 
 These services keep their state in the runtime and key ownership by guest
-TEB. There is no guest scheduler, so any call that would block stops the
+TEB. These objects do not block through the guest scheduler yet, so any call that would block stops the
 guest with the runtime-limit fault (`IllegalInstruction(0xFE)`) rather than
 reporting success. Guest code reaches that fault by entering a critical
 section owned by another thread, acquiring a held SRW lock, or beginning a
