@@ -73,6 +73,7 @@ checkpoints retain their original evidence scope.
 - [Synthetic integration and upstream evidence](research/synthetic-integration.md) — Audited source snapshots and remaining commercial startup prerequisites.
 - [Hybrid backlog research record](research/hybrid-backlog-research-2026-11-25.md) — Findings, registry candidates and the issues they produced (2026-11-25); not verified on hardware.
 - [Primary-source verification](research/primary-source-verification-2026-11-25.md) — Which hybrid-research claims were confirmed, contradicted or left unverified against vendor documentation.
+- [CrossOver evaluation](research/crossover-evaluation.md) — Versions and platform support, Wine relationship, Rosetta 2 and FEX translation, graphics backends and Direct3D coverage, with the unknowns named.
 
 ## Security, licensing, and contributions
 
