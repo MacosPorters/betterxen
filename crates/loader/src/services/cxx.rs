@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-//! C++ `type_info` helpers exported by `vcruntime140.dll`.
+//! C++ `type_info` and `std::exception` helpers exported by `vcruntime140.dll`.
 //!
 //! Compiled `typeid`, `type_info::operator==`, `type_info::before`,
 //! `type_info::hash_code` and `type_info::name` call these helpers with a
@@ -17,6 +17,14 @@
 //!   names, including namespaces and nesting. Other decorations (templates,
 //!   back-references, anonymous namespaces, pointer and function types) stop
 //!   the guest rather than return a wrong name.
+//!
+//! `std::exception` keeps its message in an `__std_exception_data` record: the
+//! message pointer, then a one-byte flag saying whether the exception owns
+//! (and must free) that text. `__std_exception_copy` gives a copy its own
+//! duplicate of an owned message so `what()` stays equal after the original is
+//! destroyed, and shares a borrowed one. `__std_exception_destroy` frees an
+//! owned message and clears the record. Owned text lives on the CRT heap, so
+//! guest `malloc` and `free` interoperate with it.
 
 use super::ServicesState;
 use crate::cpu::ExitReason;
@@ -27,6 +35,8 @@ use std::sync::{Arc, Mutex};
 const MODULE: &str = "vcruntime140.dll";
 /// Longest decorated name read from the guest.
 const MAX_NAME: usize = 4096;
+/// Longest exception message duplicated, in bytes.
+const MAX_MESSAGE: usize = 1 << 20;
 
 fn fault(error: MemoryError) -> ExitReason {
     ExitReason::MemoryFault(error)
@@ -159,6 +169,62 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             for address in destroy.lock().expect("type names").allocations.drain(..) {
                 memory.release_heap_allocation(PROCESS_HEAP, address);
             }
+            Ok(0)
+        },
+    );
+
+    registry.register_with_status(
+        MODULE,
+        "__std_exception_copy",
+        ServiceStatus::Partial,
+        |args, _, memory| {
+            let (from, to) = (args.rcx, args.rdx);
+            let text = memory.read_u64(from).map_err(fault)?;
+            let owned = memory.read_u8(from + 8).map_err(fault)? != 0;
+            if !owned || text == 0 {
+                memory.write_u64(to, text).map_err(fault)?;
+                memory.write_u8(to + 8, 0).map_err(fault)?;
+                return Ok(0);
+            }
+            let mut bytes = Vec::new();
+            loop {
+                let byte = memory.read_u8(text + bytes.len() as u64).map_err(fault)?;
+                bytes.push(byte);
+                if byte == 0 {
+                    break;
+                }
+                if bytes.len() > MAX_MESSAGE {
+                    return unsupported();
+                }
+            }
+            // An allocation failure leaves an empty record, so the copy
+            // reports the runtime's generic message rather than share text it
+            // does not own.
+            let Ok(copy) = memory.map_heap_allocation(PROCESS_HEAP, bytes.len()) else {
+                memory.write_u64(to, 0).map_err(fault)?;
+                memory.write_u8(to + 8, 0).map_err(fault)?;
+                return Ok(0);
+            };
+            memory.write_bytes(copy, &bytes).map_err(fault)?;
+            memory.write_u64(to, copy).map_err(fault)?;
+            memory.write_u8(to + 8, 1).map_err(fault)?;
+            Ok(0)
+        },
+    );
+
+    registry.register_with_status(
+        MODULE,
+        "__std_exception_destroy",
+        ServiceStatus::Partial,
+        |args, _, memory| {
+            let text = memory.read_u64(args.rcx).map_err(fault)?;
+            let owned = memory.read_u8(args.rcx + 8).map_err(fault)? != 0;
+            if owned && text != 0 && !memory.release_heap_allocation(PROCESS_HEAP, text) {
+                // Freeing memory the CRT heap never handed out is a guest bug.
+                return Err(fault(MemoryError::UnmappedAddress(text)));
+            }
+            memory.write_u64(args.rcx, 0).map_err(fault)?;
+            memory.write_u8(args.rcx + 8, 0).map_err(fault)?;
             Ok(0)
         },
     );

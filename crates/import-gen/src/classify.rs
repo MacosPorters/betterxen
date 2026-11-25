@@ -756,12 +756,6 @@ impl SymbolDb {
                 "__current_exception_context",
                 "current exception context — stub",
             );
-            self.runtime_helper(m, "__std_exception_copy", "std::exception copy — stub");
-            self.runtime_helper(
-                m,
-                "__std_exception_destroy",
-                "std::exception destroy — stub",
-            );
             self.runtime_helper(m, "__std_terminate", "std::terminate — calls abort");
             if *m == "vcruntime140.dll" {
                 for symbol in [
@@ -769,6 +763,8 @@ impl SymbolDb {
                     "__std_type_info_hash",
                     "__std_type_info_name",
                     "__std_type_info_destroy_list",
+                    "__std_exception_copy",
+                    "__std_exception_destroy",
                 ] {
                     self.ins(m, symbol, Classification::StandardService);
                 }
@@ -777,6 +773,12 @@ impl SymbolDb {
                     m,
                     "__std_type_info_compare",
                     "type_info comparison — stub returning -1",
+                );
+                self.runtime_helper(m, "__std_exception_copy", "std::exception copy — stub");
+                self.runtime_helper(
+                    m,
+                    "__std_exception_destroy",
+                    "std::exception destroy — stub",
                 );
             }
             self.runtime_helper(m, "memcpy", "CRT memcpy delegate — same as libc");

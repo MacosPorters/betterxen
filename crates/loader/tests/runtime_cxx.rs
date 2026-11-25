@@ -15,6 +15,10 @@ const IMPORTS: &[(&str, &str)] = &[
     ("vcruntime140.dll", "__std_type_info_hash"),
     ("vcruntime140.dll", "__std_type_info_name"),
     ("vcruntime140.dll", "__std_type_info_destroy_list"),
+    ("vcruntime140.dll", "__std_exception_copy"),
+    ("vcruntime140.dll", "__std_exception_destroy"),
+    ("ucrtbase.dll", "malloc"),
+    ("ucrtbase.dll", "free"),
 ];
 
 const WIDGET: u64 = SCRATCH;
@@ -23,6 +27,9 @@ const POINT: u64 = SCRATCH + 0x80;
 const COLOR: u64 = SCRATCH + 0xC0;
 const TEMPLATE: u64 = SCRATCH + 0x100;
 const LIST: u64 = SCRATCH + 0x200;
+const ORIGINAL: u64 = SCRATCH + 0x300;
+const COPY: u64 = SCRATCH + 0x320;
+const MESSAGE: u64 = SCRATCH + 0x340;
 
 fn descriptor(guest: &mut Guest, at: u64, name: &str) {
     guest.memory.write_u64(at, 0).unwrap();
@@ -113,6 +120,67 @@ fn unmodelled_names_and_bad_pointers_stop_the_guest() {
     ));
     assert!(matches!(
         guest.fails("__std_type_info_hash", &[0]),
+        ExitReason::MemoryFault(_)
+    ));
+}
+
+fn record(guest: &mut Guest, at: u64, text: u64, owned: bool) {
+    guest.memory.write_u64(at, text).unwrap();
+    guest.memory.write_u8(at + 8, u8::from(owned)).unwrap();
+}
+
+fn owned_flag(guest: &Guest, at: u64) -> u8 {
+    guest.memory.read_u8(at + 8).unwrap()
+}
+
+#[test]
+fn exception_copies_duplicate_owned_messages_and_share_borrowed_ones() {
+    let mut guest = guest();
+    // A borrowed literal is shared, never freed.
+    guest.memory.write_bytes(MESSAGE, b"literal\0").unwrap();
+    record(&mut guest, ORIGINAL, MESSAGE, false);
+    record(&mut guest, COPY, 0xDEAD, true);
+    guest.call("__std_exception_copy", &[ORIGINAL, COPY]);
+    assert_eq!(guest.u64_at(COPY), MESSAGE);
+    assert_eq!(owned_flag(&guest, COPY), 0);
+    guest.call("__std_exception_destroy", &[COPY]);
+    assert_eq!(text(&guest, MESSAGE), "literal");
+    assert_eq!((guest.u64_at(COPY), owned_flag(&guest, COPY)), (0, 0));
+
+    // An owned message from guest malloc gets its own copy, so destroying
+    // the original leaves the copy's what() intact.
+    let owned = guest.call("malloc", &[16]);
+    guest.memory.write_bytes(owned, b"bad_alloc\0").unwrap();
+    record(&mut guest, ORIGINAL, owned, true);
+    guest.call("__std_exception_copy", &[ORIGINAL, COPY]);
+    let duplicate = guest.u64_at(COPY);
+    assert_ne!(duplicate, owned);
+    assert_eq!(owned_flag(&guest, COPY), 1);
+    guest.call("__std_exception_destroy", &[ORIGINAL]);
+    assert!(guest.memory.read_u8(owned).is_err(), "original text freed");
+    assert_eq!(text(&guest, duplicate), "bad_alloc");
+    // The duplicate came from the CRT heap, so guest free releases it.
+    guest.call("free", &[duplicate]);
+    assert!(guest.memory.read_u8(duplicate).is_err());
+}
+
+#[test]
+fn exception_records_with_no_message_or_bad_pointers() {
+    let mut guest = guest();
+    record(&mut guest, ORIGINAL, 0, true);
+    record(&mut guest, COPY, 0xDEAD, true);
+    guest.call("__std_exception_copy", &[ORIGINAL, COPY]);
+    assert_eq!((guest.u64_at(COPY), owned_flag(&guest, COPY)), (0, 0));
+    guest.call("__std_exception_destroy", &[COPY]);
+
+    // An owned pointer the heap never allocated is a guest bug, not a no-op.
+    record(&mut guest, ORIGINAL, MESSAGE, true);
+    assert!(matches!(
+        guest.fails("__std_exception_destroy", &[ORIGINAL]),
+        ExitReason::MemoryFault(_)
+    ));
+    assert!(matches!(
+        guest.fails("__std_exception_copy", &[0x10, COPY]),
         ExitReason::MemoryFault(_)
     ));
 }

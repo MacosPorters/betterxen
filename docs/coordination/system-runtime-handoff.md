@@ -1,6 +1,6 @@
 # System-runtime agent handoff
 
-**PR review checkpoint:** 2026-11-25T00:30Z (UTC) — no new human feedback on #312 or #316 since 20:01Z
+**PR review checkpoint:** 2026-11-25T01:30Z (UTC) — no new human feedback on #312 or #316 since 20:01Z on 2026-11-24
 **Owner identity on commits:** Adeeb Rahman `<therealabeeb@icloud.com>` (GitHub: `soggyramennoodle`)  
 **Do not add** `Co-authored-by: Cursor` or any AI attribution trailers (`AGENTS.md`).
 

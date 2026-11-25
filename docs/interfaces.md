@@ -333,8 +333,20 @@ undecorates plain class, struct, union and int-based enum names with their
 namespaces (`.?AVWidget@ui@@` becomes `class ui::Widget`), allocates the text
 on the guest heap and caches it in the descriptor; `destroy_list` frees those
 names. Templates, back-references, anonymous namespaces and non-class types
-stop the guest instead of returning a wrong name. Exception handling,
-`dynamic_cast` and thread-safe static initialization are not implemented.
+stop the guest instead of returning a wrong name.
+
+`__std_exception_copy` and `__std_exception_destroy` manage the message record
+inside `std::exception`: the message pointer, then a one-byte flag that says
+whether the exception owns the text. A copy duplicates an owned message on the
+CRT heap, so `what()` stays the same after the original is destroyed, and
+shares a borrowed one. If the duplicate cannot be allocated, the copy gets an
+empty record. Destroy frees an owned message (guest `free` and these helpers
+use the same heap) and clears the record. Destroying an owned pointer the heap
+never allocated stops the guest with a memory fault.
+
+Throwing and catching exceptions, `dynamic_cast`, `std::terminate`,
+`_purecall` and thread-safe static initialization are not implemented. The
+runtime has no guest process exit yet, so `terminate` cannot end the program.
 
 ### XInput controllers
 
