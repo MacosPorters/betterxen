@@ -485,6 +485,11 @@ runtime-owned environment block (defaults include `OS=Windows_NT`).
 `_putenv` (`NAME=value`) and `SetEnvironmentVariableA` /
 `SetEnvironmentVariableW` update or delete entries in that block. The host
 process environment is not visible unless an entry is installed here.
+Changing or deleting an entry invalidates the `getenv` pointer for that entry.
+BetterXen caps the block at 256 entries, including its defaults. At capacity,
+new entries fail with `ERROR_NOT_ENOUGH_MEMORY` for the Win32 setters or
+`-1` and `ENOMEM` for `_putenv`. Replacement and deletion still succeed.
+The shared block, cap, and error mapping are BetterXen's choices.
 
 ### CRT calendar time
 

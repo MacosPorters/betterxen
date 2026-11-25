@@ -95,6 +95,8 @@ enum AllocationKind {
     ImageOrStatic,
     Virtual,
     Heap(u64),
+    /// CRT environment strings, released only when their entry changes.
+    Environment,
     /// Stack, guard or TEB of a guest thread; only the scheduler frees it.
     Thread,
 }
@@ -444,6 +446,24 @@ impl GuestMemory {
 
     pub(crate) fn release_virtual_allocation(&mut self, base: u64) -> bool {
         self.release_dynamic_allocation(base, AllocationKind::Virtual)
+    }
+
+    pub(crate) fn map_environment_string(&mut self, bytes: &[u8]) -> Result<u64, MemoryError> {
+        let address = self.map_dynamic_allocation(
+            0,
+            bytes.len(),
+            MemoryPermissions::READ_WRITE,
+            AllocationKind::Environment,
+        )?;
+        if let Err(error) = self.write_bytes(address, bytes) {
+            self.release_environment_string(address);
+            return Err(error);
+        }
+        Ok(address)
+    }
+
+    pub(crate) fn release_environment_string(&mut self, address: u64) {
+        self.release_dynamic_allocation(address, AllocationKind::Environment);
     }
 
     pub(crate) fn release_heap_allocation(&mut self, heap: u64, base: u64) -> bool {

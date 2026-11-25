@@ -9,7 +9,7 @@
 use super::ServicesState;
 use crate::cpu::ExitReason;
 use crate::imports::{ImportRegistry, ServiceStatus};
-use crate::memory::{GuestMemory, MemoryError, PROCESS_HEAP};
+use crate::memory::{GuestMemory, MemoryError};
 use std::collections::BTreeMap;
 use std::sync::Arc;
 
@@ -18,6 +18,9 @@ const CRT_RUNTIME_API: &str = "api-ms-win-crt-runtime-l1-1-0.dll";
 const KERNEL32: &str = "kernel32.dll";
 const PROCESS_ENV_API: &str = "api-ms-win-core-processenvironment-l1-1-0.dll";
 const EINVAL: u32 = 22;
+const ENOMEM: u32 = 12;
+const ERROR_NOT_ENOUGH_MEMORY: u32 = 8;
+const MAX_VARIABLES: usize = 256;
 const MAX_NAME: usize = 256;
 const MAX_VALUE: usize = 32 * 1024;
 
@@ -31,6 +34,38 @@ pub(super) struct EnvState {
 impl EnvState {
     pub(super) fn get(&self, key: &str) -> Option<&str> {
         self.values.get(key).map(String::as_str)
+    }
+
+    /// Return false if adding a new entry would exceed the environment bound.
+    fn update(&mut self, memory: &mut GuestMemory, key: String, value: Option<String>) -> bool {
+        if let Some(value) = value {
+            if self.values.len() >= MAX_VARIABLES && !self.values.contains_key(&key) {
+                return false;
+            }
+            self.values.insert(key.clone(), value);
+        } else {
+            self.values.remove(&key);
+        }
+        if let Some(address) = self.buffers.remove(&key) {
+            memory.release_environment_string(address);
+        }
+        true
+    }
+
+    fn getenv(&mut self, memory: &mut GuestMemory, key: String) -> Result<u64, ExitReason> {
+        let Some(value) = self.values.get(&key) else {
+            return Ok(0);
+        };
+        let mut bytes = Vec::with_capacity(value.len() + 1);
+        bytes.extend_from_slice(value.as_bytes());
+        bytes.push(0);
+        if let Some(&address) = self.buffers.get(&key) {
+            memory.write_bytes(address, &bytes).map_err(fault)?;
+            return Ok(address);
+        }
+        let address = memory.map_environment_string(&bytes).map_err(fault)?;
+        self.buffers.insert(key, address);
+        Ok(address)
     }
 
     fn with_defaults() -> Self {
@@ -87,39 +122,6 @@ fn read_wide_string(
     Err(ExitReason::IllegalInstruction(0xFE))
 }
 
-fn store_ascii(
-    memory: &mut GuestMemory,
-    env: &mut EnvState,
-    key: &str,
-    value: &str,
-) -> Result<u64, ExitReason> {
-    if value.len() > MAX_VALUE {
-        return Err(ExitReason::IllegalInstruction(0xFE));
-    }
-    let needed = value.len() + 1;
-    let buffer = if let Some(&existing) = env.buffers.get(key) {
-        existing
-    } else {
-        let address = memory
-            .map_heap_allocation(PROCESS_HEAP, needed.max(1))
-            .map_err(fault)?;
-        env.buffers.insert(key.to_owned(), address);
-        address
-    };
-    // Grow by allocating a replacement if the old buffer is too small.
-    let mut bytes = value.as_bytes().to_vec();
-    bytes.push(0);
-    if memory.write_bytes(buffer, &bytes).is_err() {
-        let address = memory
-            .map_heap_allocation(PROCESS_HEAP, bytes.len())
-            .map_err(fault)?;
-        memory.write_bytes(address, &bytes).map_err(fault)?;
-        env.buffers.insert(key.to_owned(), address);
-        return Ok(address);
-    }
-    Ok(buffer)
-}
-
 pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>) {
     {
         let mut env = state.env.lock().expect("env state");
@@ -137,10 +139,7 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         let name = read_c_string(memory, args.rcx, MAX_NAME)?;
         let key = name.to_ascii_uppercase();
         let mut env = getenv.env.lock().expect("env state");
-        let Some(value) = env.values.get(&key).cloned() else {
-            return Ok(0);
-        };
-        store_ascii(memory, &mut env, &key, &value)
+        env.getenv(memory, key)
     });
 
     let get_a = Arc::clone(state);
@@ -229,12 +228,10 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
         }
         let key = name.to_ascii_uppercase();
         let mut env = putenv.env.lock().expect("env state");
-        if value.is_empty() {
-            env.values.remove(&key);
-            env.buffers.remove(&key);
-        } else {
-            env.values.insert(key.clone(), value.to_owned());
-            env.buffers.remove(&key);
+        let value = (!value.is_empty()).then(|| value.to_owned());
+        if !env.update(memory, key, value) {
+            set_errno(memory, cpu.gs_base, ENOMEM)?;
+            return Ok(u64::from(u32::MAX));
         }
         Ok(0)
     });
@@ -252,18 +249,19 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if key.is_empty() {
                 return set_a.fail(cpu.gs_base, 87, 0);
             }
+            let text = if value == 0 {
+                None
+            } else {
+                let text = read_c_string(memory, value, MAX_VALUE)?;
+                if text.len() > MAX_VALUE {
+                    return set_a.fail(cpu.gs_base, 206, 0); // ERROR_FILENAME_EXCED_RANGE
+                }
+                Some(text)
+            };
             let mut env = set_a.env.lock().expect("env state");
-            if value == 0 {
-                env.values.remove(&key);
-                env.buffers.remove(&key);
-                return Ok(1);
+            if !env.update(memory, key, text) {
+                return set_a.fail(cpu.gs_base, ERROR_NOT_ENOUGH_MEMORY, 0);
             }
-            let text = read_c_string(memory, value, MAX_VALUE)?;
-            if text.len() > MAX_VALUE {
-                return set_a.fail(cpu.gs_base, 206, 0); // ERROR_FILENAME_EXCED_RANGE
-            }
-            env.values.insert(key.clone(), text);
-            env.buffers.remove(&key);
             Ok(1)
         },
     );
@@ -281,18 +279,19 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if key.is_empty() {
                 return set_w.fail(cpu.gs_base, 87, 0);
             }
+            let text = if value == 0 {
+                None
+            } else {
+                let text = read_wide_string(memory, value, MAX_VALUE)?;
+                if text.len() > MAX_VALUE {
+                    return set_w.fail(cpu.gs_base, 206, 0); // ERROR_FILENAME_EXCED_RANGE
+                }
+                Some(text)
+            };
             let mut env = set_w.env.lock().expect("env state");
-            if value == 0 {
-                env.values.remove(&key);
-                env.buffers.remove(&key);
-                return Ok(1);
+            if !env.update(memory, key, text) {
+                return set_w.fail(cpu.gs_base, ERROR_NOT_ENOUGH_MEMORY, 0);
             }
-            let text = read_wide_string(memory, value, MAX_VALUE)?;
-            if text.len() > MAX_VALUE {
-                return set_w.fail(cpu.gs_base, 206, 0);
-            }
-            env.values.insert(key.clone(), text);
-            env.buffers.remove(&key);
             Ok(1)
         },
     );
@@ -318,6 +317,7 @@ mod tests {
     use crate::cpu::{CpuState, Register};
     use crate::import_table::ImportName;
     use crate::imports::Win64Args;
+    use crate::memory::PROCESS_HEAP;
     use crate::services::MockClock;
 
     fn call(
@@ -447,5 +447,149 @@ mod tests {
             ),
             0
         );
+    }
+    #[test]
+    fn each_environment_setter_releases_the_previous_getenv_buffer() {
+        let state = Arc::new(ServicesState::new(Arc::new(MockClock::new(0))));
+        let mut registry = ImportRegistry::new();
+        register(&mut registry, &state);
+        let mut memory = GuestMemory::new();
+        let mut cpu = CpuState::default();
+        let name = memory.map_heap_allocation(PROCESS_HEAP, 32).unwrap();
+        let wide_name = name + 8;
+        let wide_value = name + 16;
+        let entry = name + 24;
+        memory.write_bytes(name, b"OS\0").unwrap();
+        memory.write_bytes(wide_name, b"O\0S\0\0\0").unwrap();
+        memory.write_bytes(wide_value, b"w\0\0\0").unwrap();
+        memory.write_bytes(entry, b"os=p\0").unwrap();
+
+        for (module, symbol, args, status) in [
+            (
+                KERNEL32,
+                "SetEnvironmentVariableA",
+                [name, entry + 3, 0, 0],
+                1,
+            ),
+            (
+                KERNEL32,
+                "SetEnvironmentVariableW",
+                [wide_name, wide_value, 0, 0],
+                1,
+            ),
+            (UCRT, "_putenv", [entry, 0, 0, 0], 0),
+            (KERNEL32, "SetEnvironmentVariableW", [wide_name, 0, 0, 0], 1),
+        ] {
+            let buffer = call(
+                &registry,
+                UCRT,
+                "getenv",
+                [name, 0, 0, 0],
+                &mut cpu,
+                &mut memory,
+            );
+            assert_ne!(buffer, 0);
+            assert!(!memory.release_heap_allocation(PROCESS_HEAP, buffer));
+            assert_eq!(
+                call(&registry, module, symbol, args, &mut cpu, &mut memory),
+                status
+            );
+            assert!(
+                memory.read_u8(buffer).is_err(),
+                "{symbol} left the old buffer mapped"
+            );
+        }
+        assert_eq!(
+            call(
+                &registry,
+                UCRT,
+                "getenv",
+                [name, 0, 0, 0],
+                &mut cpu,
+                &mut memory
+            ),
+            0
+        );
+    }
+
+    #[test]
+    fn environment_capacity_applies_to_all_setters_and_allows_replacement_and_deletion() {
+        let state = Arc::new(ServicesState::new(Arc::new(MockClock::new(0))));
+        let mut registry = ImportRegistry::new();
+        register(&mut registry, &state);
+        let mut memory = GuestMemory::new();
+        let mut cpu = CpuState::default();
+        let name = memory.map_heap_allocation(PROCESS_HEAP, 64).unwrap();
+        let value = name + 16;
+        let wide_name = name + 24;
+        let wide_value = name + 48;
+        memory.write_bytes(value, b"x\0").unwrap();
+        memory.write_bytes(wide_name, b"N\0E\0W\0\0\0").unwrap();
+        memory.write_bytes(wide_value, b"y\0\0\0").unwrap();
+
+        let mut invoke = |module, symbol, args, text: Option<&[u8]>| {
+            if let Some(text) = text {
+                memory.write_bytes(name, text).unwrap();
+            }
+            call(&registry, module, symbol, args, &mut cpu, &mut memory)
+        };
+        for index in 0..254 {
+            assert_eq!(
+                invoke(
+                    KERNEL32,
+                    "SetEnvironmentVariableA",
+                    [name, value, 0, 0],
+                    Some(format!("KEY{index}\0").as_bytes())
+                ),
+                1
+            );
+        }
+        assert_eq!(
+            invoke(
+                KERNEL32,
+                "SetEnvironmentVariableA",
+                [name, value, 0, 0],
+                Some(b"NEW\0")
+            ),
+            0
+        );
+        assert_eq!(state.last_error(0), 8);
+        assert_eq!(
+            invoke(
+                KERNEL32,
+                "SetEnvironmentVariableW",
+                [wide_name, wide_value, 0, 0],
+                None
+            ),
+            0
+        );
+        assert_eq!(
+            invoke(UCRT, "_putenv", [name, 0, 0, 0], Some(b"NEW=x\0")),
+            u64::from(u32::MAX)
+        );
+        assert_eq!(invoke(UCRT, "getenv", [name, 0, 0, 0], Some(b"NEW\0")), 0);
+        assert_eq!(invoke(UCRT, "_putenv", [name, 0, 0, 0], Some(b"os=x\0")), 0);
+        assert_eq!(
+            invoke(
+                KERNEL32,
+                "SetEnvironmentVariableA",
+                [name, 0, 0, 0],
+                Some(b"KEY0\0")
+            ),
+            1
+        );
+        assert_eq!(
+            invoke(
+                KERNEL32,
+                "SetEnvironmentVariableW",
+                [wide_name, wide_value, 0, 0],
+                None
+            ),
+            1
+        );
+        let errno = memory.crt_errno_address(0).unwrap();
+        assert_eq!(memory.read_u32(errno).unwrap(), 12);
+        assert_eq!(state.env.lock().unwrap().get("NEW"), Some("y"));
+        assert_eq!(state.env.lock().unwrap().get("OS"), Some("x"));
     }
 }
