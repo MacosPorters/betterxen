@@ -203,42 +203,58 @@
     {
       "name": "no_metal",
       "change": "no Metal device or no BC/compute capability needed by the fixture",
-      "expected": "capability unavailable, reported separately from implementation failure; no frame"
+      "expected": "capability unavailable, reported separately from implementation failure; no frame",
+      "classification": "capability_unavailable",
+      "realized_by": "not planned yet: a runner option that reports no usable Metal device"
     },
     {
       "name": "no_frame",
       "change": "guest loops without calling frame submit",
-      "expected": "bounded stop by the worker deadline (#318); classified as no frame"
+      "expected": "bounded stop by the worker deadline (#318); classified as no frame",
+      "classification": "no_frame",
+      "realized_by": "not planned yet: a fixture variant that loops before its first frame submit, stopped by the #318 deadline"
     },
     {
       "name": "unsupported_instruction",
       "change": "an instruction the decoder refuses, placed before the first frame",
-      "expected": "IllegalInstruction exit at that instruction; no frame"
+      "expected": "IllegalInstruction exit at that instruction; no frame",
+      "classification": "illegal_instruction",
+      "realized_by": "not planned yet: a fixture variant with a refused instruction before the first frame"
     },
     {
       "name": "unresolved_import",
       "change": "an import no service provides",
-      "expected": "refused before guest entry"
+      "expected": "refused before guest entry",
+      "classification": "refused_before_entry",
+      "realized_by": "#330 build variant missing-import"
     },
     {
       "name": "bad_shader_or_binding",
       "change": "an unsupported shader form or an empty binding slot",
-      "expected": "rejected when the object is created or bound; that draw never reaches Metal"
+      "expected": "rejected when the object is created or bound; that draw never reaches Metal",
+      "classification": "rejected_at_creation_or_binding",
+      "realized_by": "not planned yet: fixture variants with an unsupported shader form and with an empty binding slot (#314, #315)"
     },
     {
       "name": "wrong_expected_pixel",
       "change": "one channel of one expected pixel changed in a copy of this file",
-      "expected": "mismatch reported with session, frame, x, y and channel"
+      "expected": "mismatch reported with session, frame, x, y and channel",
+      "classification": "pixel_mismatch",
+      "realized_by": "this script, comparing captured frames with a copy of expected.json that has one channel changed; --self-test already covers the static check"
     },
     {
       "name": "low_step_budget",
       "change": "a budget that ends before the guest's exit",
-      "expected": "StepLimitExceeded, not a clean exit"
+      "expected": "StepLimitExceeded, not a clean exit",
+      "classification": "step_limit_exceeded",
+      "realized_by": "#330 build variant exhaust, or the normal fixture with a budget below its run"
     },
     {
       "name": "worker_timeout",
       "change": "a wall deadline shorter than the run",
-      "expected": "timeout classification with the last completed stage"
+      "expected": "timeout classification with the last completed stage",
+      "classification": "timeout",
+      "realized_by": "not planned yet: the normal fixture with a wall deadline shorter than the run (#318)"
     }
   ]
 }

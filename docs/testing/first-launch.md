@@ -9,17 +9,21 @@ It defines launchability for one original fixture. It is not a claim about playa
 ## Running the gate
 
 ```sh
-scripts/test-launchable.sh              # check the expectations, then report each checkpoint
-scripts/test-launchable.sh --self-test  # also prove a changed expected pixel is rejected
+scripts/test-launchable.sh              # check the expectations, then report each checkpoint and control
+scripts/test-launchable.sh --self-test  # also prove mutated expectations and incomplete gates are rejected
 ```
 
 | Exit status | Meaning |
 | --- | --- |
-| 0 | Every checkpoint ran and passed |
-| 1 | A checkpoint failed, or [`expected.json`](../../tests/launchable/expected.json) is inconsistent |
-| 2 | Nothing failed, but at least one checkpoint could not run (`PENDING`) |
+| 0 | Every checkpoint and every negative control ran and passed |
+| 1 | A checkpoint failed, a control is missing or ended in the wrong classification, or [`expected.json`](../../tests/launchable/expected.json) is inconsistent |
+| 2 | Nothing failed, but at least one checkpoint or control could not run (`PENDING`) |
 
-A pending checkpoint is never a pass. Each run writes `record.json` under `artifacts/launchable/`, which Git ignores. The record holds the revision and whether the tree was dirty, the host (machine, macOS version, chip), the command and every checkpoint's status and reason. When a prerequisite lands, its PR replaces that checkpoint's `PENDING` entry in the script with the real check. Nothing may report `PASS` without executing.
+A pending checkpoint is never a pass.
+
+**Expectation check.** Before anything runs, the script checks that `expected.json` states exactly the agreed contract below: the frame size from the C interface, 60 frames per session, frames 0–29 in state A and 30–59 in state B, two sessions, exit status `0x4C4E4348`, every pixel recomputed from its rule, and the eight negative controls with their classifications. `--self-test` changes one of these at a time (a pixel, A and B swapped, two frames, exit status 1, one session, a missing control, a wrong classification) and requires each to be rejected for that reason. It also checks that the gate does not pass with a control missing or misclassified.
+
+**Records.** Each run creates its own directory under `artifacts/launchable/`, which Git ignores, so two runs in the same second keep both records. It writes `record.json` there even when it fails, including an unreadable or inconsistent `expected.json`. The record holds the revision and whether the tree was dirty, the host (machine, macOS version, chip), the command, any expectation problems, the self-test outcomes, every checkpoint's and control's status and reason, and the overall result. When a prerequisite lands, its PR replaces that checkpoint's `PENDING` entry in the script with the real check. Nothing may report `PASS` without executing.
 
 ## Fixture contract (proposed)
 
@@ -62,18 +66,20 @@ The checkpoints are separate: a later one never stands in for an earlier one.
 
 ## Negative controls
 
-Each control must end in its own classification, and none may count as a launch pass. They are listed under `negative_controls` in `expected.json`.
+Each control must end in its own classification, and none may count as a launch pass. They are listed under `negative_controls` in `expected.json`, with the classification and what realizes each one. The gate passes only when every control has run and ended in its classification. A control with no outcome, or with a different classification, fails the gate.
 
-| Control | Change | Required outcome |
-| --- | --- | --- |
-| No Metal | No usable Metal device or capability | Capability unavailable, reported separately from an implementation failure; no frame |
-| No frame | The guest loops without submitting a frame | Bounded stop at the worker deadline (#318), classified as no frame |
-| Unsupported instruction | A refused instruction before the first frame | Illegal-instruction exit at that instruction; no frame |
-| Unresolved import | An import that no service provides | Refused before guest entry |
-| Bad shader or binding | An unsupported shader form or an empty binding slot | Rejected at creation or binding; the draw never reaches Metal |
-| Wrong expected pixel | One channel of one expected pixel changed in a copy of `expected.json` | Mismatch reported with session, frame, x, y and channel. `--self-test` already checks the static part of this. |
-| Low step budget | A budget that ends before the guest exits | Step limit exceeded, not a clean exit |
-| Worker timeout | A wall deadline shorter than the run | Timeout, with the last completed stage |
+| Control | Change | Required outcome (classification) | Realized by |
+| --- | --- | --- | --- |
+| No Metal | No usable Metal device or capability | Capability unavailable, reported separately from an implementation failure; no frame (`capability_unavailable`) | Not planned yet: a runner option that reports no usable Metal device |
+| No frame | The guest loops without submitting a frame | Bounded stop at the worker deadline (#318), classified as no frame (`no_frame`) | Not planned yet: a fixture variant that loops before its first submit |
+| Unsupported instruction | A refused instruction before the first frame | Illegal-instruction exit at that instruction; no frame (`illegal_instruction`) | Not planned yet: a fixture variant with that instruction |
+| Unresolved import | An import that no service provides | Refused before guest entry (`refused_before_entry`) | [#330](https://github.com/MacosPorters/betterxen/pull/330)'s `missing-import` build variant |
+| Bad shader or binding | An unsupported shader form or an empty binding slot | Rejected at creation or binding; the draw never reaches Metal (`rejected_at_creation_or_binding`) | Not planned yet: two fixture variants, once #314 and #315 define the objects |
+| Wrong expected pixel | One channel of one expected pixel changed in a copy of `expected.json` | Mismatch reported with session, frame, x, y and channel (`pixel_mismatch`) | This script, comparing captured frames against the changed copy. `--self-test` already checks the static part |
+| Low step budget | A budget that ends before the guest exits | Step limit exceeded, not a clean exit (`step_limit_exceeded`) | #330's `exhaust` build variant, or the normal fixture with a budget below its run |
+| Worker timeout | A wall deadline shorter than the run | Timeout, with the last completed stage (`timeout`) | Not planned yet: the normal fixture with a short wall deadline (#318) |
+
+#330 also builds a `wrong-expectation` variant, whose in-guest check exits with status 1. That is not the wrong-expected-pixel control, which never changes the guest. It shows that any exit status other than `0x4C4E4348` fails the gate.
 
 ## Records
 
