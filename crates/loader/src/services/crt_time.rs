@@ -20,6 +20,14 @@ use std::sync::Arc;
 const UCRT: &str = "ucrtbase.dll";
 const CRT_TIME_API: &str = "api-ms-win-crt-time-l1-1-0.dll";
 const EINVAL: u32 = 22;
+/// 3000-12-31 23:59:59 UTC, the last time Microsoft Learn says
+/// `_gmtime64_s` can express ("gmtime_s, _gmtime32_s, _gmtime64_s").
+///
+/// The `localtime_s` page rejects values "greater than `_MAX__TIME64_T`"
+/// without giving the number, and its prose names 23:59:59 January 18, 3001
+/// instead. The two pages disagree. Guest local time is UTC here, so both
+/// conversions use the one bound the `gmtime_s` page states explicitly.
+const MAX_TIME64: i64 = 32_535_215_999;
 const FILETIME_TICKS_PER_SEC: u64 = 10_000_000;
 /// Seconds from 1601-01-01 to 1970-01-01.
 const SECS_1601_TO_1970: u64 = 11_644_473_600;
@@ -116,15 +124,36 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
     for symbol in ["gmtime_s", "localtime_s", "_gmtime64_s", "_localtime64_s"] {
         let clock = Arc::clone(state);
         registry.register(UCRT, symbol, move |args, cpu, memory| {
+            // Error rows from Microsoft Learn: a null `tm` is left alone; a
+            // null time pointer or a time outside 1970-01-01 to MAX_TIME64
+            // sets every `tm` field to -1. All return EINVAL. The pages
+            // document errno only for the null rows; it is set for the range
+            // row too, which is this project's choice. The UCRT
+            // invalid-parameter handler is not modelled.
             let (tm, time_ptr) = (args.rcx, args.rdx);
-            if tm == 0 || time_ptr == 0 {
+            if tm == 0 {
                 set_errno(memory, cpu.gs_base, EINVAL)?;
                 return Ok(u64::from(EINVAL));
             }
-            let unix = memory.read_u64(time_ptr).map_err(fault)? as i64;
+            let unix = if time_ptr == 0 {
+                None
+            } else {
+                Some(memory.read_u64(time_ptr).map_err(fault)? as i64)
+            };
             let _ = clock; // timezone-free: local == UTC
-            write_tm(memory, tm, unix)?;
-            Ok(0)
+            match unix {
+                Some(unix) if (0..=MAX_TIME64).contains(&unix) => {
+                    write_tm(memory, tm, unix)?;
+                    Ok(0)
+                }
+                _ => {
+                    for index in 0..9 {
+                        memory.write_u32(tm + index * 4, u32::MAX).map_err(fault)?;
+                    }
+                    set_errno(memory, cpu.gs_base, EINVAL)?;
+                    Ok(u64::from(EINVAL))
+                }
+            }
         });
     }
 
@@ -201,6 +230,82 @@ mod tests {
         assert_eq!(memory.read_u32(tm + 16).unwrap(), 0); // mon
         assert_eq!(memory.read_u32(tm + 20).unwrap(), 70); // year
         assert_eq!(memory.read_u32(tm + 24).unwrap(), 4); // Thursday
+    }
+
+    #[test]
+    fn gmtime_s_and_localtime_s_reject_times_outside_the_documented_range() {
+        // Microsoft Learn, "gmtime_s, _gmtime32_s, _gmtime64_s": dates from
+        // midnight 1970-01-01 up through 23:59:59, December 31, 3000, UTC;
+        // a negative time, or a null time pointer, returns EINVAL with every
+        // `tm` field set to -1, and a null `tm` is not modified. The bound,
+        // 32535215999, was checked with `date -u -r` (Wed Dec 31 23:59:59
+        // UTC 3000) and `cal 12 3000`, not with this module.
+        let state = Arc::new(ServicesState::new(Arc::new(MockClock::new(0))));
+        let mut registry = ImportRegistry::new();
+        register(&mut registry, &state);
+        let mut memory = GuestMemory::new();
+        let mut cpu = CpuState {
+            gs_base: 0x10000,
+            ..CpuState::default()
+        };
+        let errno = memory.crt_errno_address(cpu.gs_base).unwrap();
+        let slot = memory.map_heap_allocation(PROCESS_HEAP, 8).unwrap();
+        let tm = memory.map_heap_allocation(PROCESS_HEAP, 36).unwrap();
+        let fields = |memory: &GuestMemory| -> Vec<i32> {
+            (0..9)
+                .map(|i| memory.read_u32(tm + i * 4).unwrap() as i32)
+                .collect()
+        };
+        for symbol in ["gmtime_s", "localtime_s", "_gmtime64_s", "_localtime64_s"] {
+            // The last representable second.
+            memory.write_u64(slot, 32_535_215_999).unwrap();
+            assert_eq!(
+                call(&registry, symbol, [tm, slot, 0, 0], &mut cpu, &mut memory),
+                0,
+                "{symbol}"
+            );
+            // sec, min, hour, mday, mon (December), year - 1900, wday
+            // (Wednesday), yday (3000 is not a leap year), isdst.
+            assert_eq!(
+                fields(&memory),
+                [59, 59, 23, 31, 11, 1100, 3, 364, 0],
+                "{symbol}"
+            );
+
+            // One second later, a negative time, and i64::MAX are rejected.
+            for bad in [32_535_216_000_i64, -1, i64::MIN, i64::MAX] {
+                memory.write_u32(errno, 0).unwrap();
+                memory.write_u64(slot, bad as u64).unwrap();
+                assert_eq!(
+                    call(&registry, symbol, [tm, slot, 0, 0], &mut cpu, &mut memory),
+                    u64::from(EINVAL),
+                    "{symbol} {bad}"
+                );
+                assert_eq!(fields(&memory), [-1; 9], "{symbol} {bad}");
+                assert_eq!(memory.read_u32(errno).unwrap(), EINVAL, "{symbol} {bad}");
+            }
+
+            // A null time pointer also fills `tm` with -1.
+            memory.write_u64(slot, 0).unwrap();
+            call(&registry, symbol, [tm, slot, 0, 0], &mut cpu, &mut memory);
+            assert_eq!(
+                call(&registry, symbol, [tm, 0, 0, 0], &mut cpu, &mut memory),
+                u64::from(EINVAL),
+                "{symbol}"
+            );
+            assert_eq!(fields(&memory), [-1; 9], "{symbol}");
+
+            // A null `tm` returns EINVAL and writes nothing.
+            memory.write_u64(slot, 0).unwrap();
+            call(&registry, symbol, [tm, slot, 0, 0], &mut cpu, &mut memory);
+            let before = fields(&memory);
+            assert_eq!(
+                call(&registry, symbol, [0, slot, 0, 0], &mut cpu, &mut memory),
+                u64::from(EINVAL),
+                "{symbol}"
+            );
+            assert_eq!(fields(&memory), before, "{symbol}");
+        }
     }
 
     #[test]

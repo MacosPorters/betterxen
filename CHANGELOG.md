@@ -35,7 +35,8 @@ remains unsupported.
 ### Fixed
 - CRT `time`, `gmtime_s` and `localtime_s` now use a 64-bit `time_t`, as 64-bit Windows does by default. Before, `time(&t)` wrote only the low half of `t`, so dates came out wrong.
 - CRT `rand_s` no longer shares the `rand`/`srand` state and now fills all 32 bits. It is deterministic, not a cryptographic generator.
-- Winsock `recvfrom` checks the `from`, `fromlen` and buffer pointers before taking a datagram, so a bad pointer returns `WSAEFAULT` and the datagram stays queued.
+- Winsock `recvfrom` checks the `from`, `fromlen` and buffer pointers before taking a datagram, so a bad pointer returns `WSAEFAULT` and the datagram stays queued. Keeping it queued is this runtime's choice; Winsock does not document what happens to the datagram.
+- CRT `gmtime_s`, `localtime_s` and their `64` forms now reject times before 1970 or after 3000-12-31 23:59:59 UTC (the range Microsoft documents for `_gmtime64_s`) with `EINVAL`, and a null time pointer now also sets every `tm` field to -1. Before, an out-of-range time returned success with a wrapped year.
 - The import metadata classified `strtod`, `strtof` and `wcstod` as native libc calls with an identical ABI and `atof`/`_wtof` as stubs; they are now runtime services.
 - The import metadata mapped `labs` and `ldiv` to the host libc as identical-ABI calls, but Windows `long` is 32 bits and macOS `long` is 64 bits; the integer functions are now runtime services. The generated `abs`/`labs` adapter no longer panics on the minimum integer. `crates/import-gen/tests/pipeline.rs` now exercises the adapter path through a test-only native entry, because no built-in symbol uses it any more.
 - The import metadata still classified `ExitProcess` on `kernel32.dll` and `api-ms-win-core-processthreads-l1-1-0.dll` as a stub that "calls exit(0)" after guest process exit landed (#331). It is now a runtime service; the coverage report shows no disagreements.

@@ -1214,8 +1214,9 @@ fn loopback_datagrams_preserve_boundaries_and_reject_external_addresses() {
         4
     );
     memory.write_u64(0x1900, 0x1a00).unwrap(); // from buffer ptr slot unused; pass from/fromlen
-    // A `fromlen` too small for a sockaddr_in fails with WSAEFAULT and leaves
-    // the datagram queued for the next call.
+    // A `fromlen` too small for a sockaddr_in fails with WSAEFAULT. Leaving
+    // the datagram queued for the next call is this runtime's choice;
+    // Winsock does not document what happens to it.
     memory.write_u32(0x1b00, 8).unwrap();
     cpu.set(Register::Rcx, server);
     cpu.set(Register::Rdx, 0x1400);

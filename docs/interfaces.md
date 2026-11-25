@@ -494,7 +494,13 @@ process environment is not visible unless an entry is installed here.
 matches UTC and `tm_isdst` is always zero. Every one of these reads and
 writes a 64-bit `time_t`: on 64-bit Windows the unsuffixed names are 64-bit
 unless a program defines `_USE_32BIT_TIME_T` (Microsoft Learn, "time, _time32,
-_time64").
+_time64"). The `tm` conversions accept 1970-01-01 00:00:00 through 3000-12-31
+23:59:59 UTC, the range the `gmtime_s` page documents. A time outside it, or a
+null time pointer, returns `EINVAL` and sets every `tm` field to -1; a null
+`tm` is left alone. The `localtime_s` page gives January 18, 3001 instead, so
+the two pages disagree; this runtime uses the `gmtime_s` bound for both.
+`errno` is set to `EINVAL` in every error case, and the UCRT invalid-parameter
+handler is not modelled.
 
 ### CRT `rand`
 
@@ -514,7 +520,10 @@ deterministic and not a CSPRNG.
 Datagrams stay in the runtime; nothing reaches the host network stack. Bound
 addresses report `127.0.0.1`. At most 64 sockets, 16 pending datagrams per
 socket and 65,507 bytes per datagram. `recv` / `recvfrom` are non-blocking
-(`WSAEWOULDBLOCK` when empty). `sendto` may auto-bind an ephemeral port.
+(`WSAEWOULDBLOCK` when empty). When `recvfrom` fails with `WSAEFAULT`
+because of a bad buffer, `from` or `fromlen` pointer, the datagram stays
+queued for the next call. Winsock does not document this; it is this
+runtime's choice. `sendto` may auto-bind an ephemeral port.
 `WSAPoll` timeouts are capped at 1 second.
 
 TCP streams (`socket` with SOCK_STREAM and protocol 0 or IPPROTO_TCP) connect

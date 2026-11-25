@@ -1,5 +1,7 @@
 # System-runtime agent handoff
 
+> **Out of date:** this brief predates the move to [MacosPorters/betterxen](https://github.com/MacosPorters/betterxen). The system-runtime PR is now betterxen #290; links to ranveersoni98/Xenora #312 and #316 below are historical.
+
 **PR review checkpoint:** 2026-11-25T01:16Z (UTC) — ranveersoni98's "Please fix merge conflicts" on #312 (2026-11-25T01:02Z) addressed at `5c6fcb2` and answered on the PR; #316 is merged. No other new human feedback.
 **Owner identity on commits:** Adeeb Rahman `<therealabeeb@icloud.com>` (GitHub: `soggyramennoodle`)  
 **Do not add** `Co-authored-by: Cursor` or any AI attribution trailers (`AGENTS.md`).
@@ -178,7 +180,7 @@ GitHub PR subscribe MCP returned 403 earlier; the local loop is the reliable pat
    - `strtok_s` and `wcstok_s` are implemented and exercised through translated guest imports. Both are partial because they return `EINVAL` without invoking the UCRT invalid-parameter handler.
    - Keep docs/`CHANGELOG` honest; no Xbox claims.
 4. Sync `main` when new upstream commits appear; resolve changelog conflicts by **keeping both** sides.
-5. Prefer updating **#312** for work that depends on host mounts; a cherry-pick onto bare `main` fails (stdio/host_files not on `main` alone).
+5. Host-mount work continues on BetterXen PR #290. The CRT stdio module left that PR; `main` has its own stream code, and the remaining stdio extras return as a separate PR built on it.
 6. DCO on every commit: `Signed-off-by: Adeeb Rahman <therealabeeb@icloud.com>`.
 7. Do **not** force-push again unless a review requires another history rewrite; prefer normal commits.
 
