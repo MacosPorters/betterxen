@@ -1,0 +1,54 @@
+[package]
+name = "victory-shader"
+description = "Xbox shader containers (DXBC/DXIL + precompiled GFX10) to host shaders. Vendored from skakwy/victory-mac; see UPSTREAM.md."
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+publish = false
+
+[dependencies]
+thiserror = "2.0.21"
+zlib-rs = { version = "0.6.8", default-features = false, features = ["std"] }
+
+[features]
+# Host D3D12 pipeline checks (`emit::host`); Windows targets only.
+host = ["dep:windows"]
+# Debugging switches (emitted-module dumps and the like).
+diagnostics = []
+
+[target.'cfg(windows)'.dependencies]
+windows-sys = { version = "0.61.2", features = ["Win32_System_LibraryLoader"] }
+windows = { version = "0.62.2", optional = true, features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D12",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+] }
+
+[target.'cfg(windows)'.dev-dependencies]
+windows = { version = "0.62.2", features = [
+    "Win32_Foundation",
+    "Win32_Graphics_Direct3D",
+    "Win32_Graphics_Direct3D12",
+    "Win32_Graphics_Dxgi",
+    "Win32_Graphics_Dxgi_Common",
+] }
+
+[lints.rust]
+unsafe_op_in_unsafe_fn = "deny"
+unused_must_use = "deny"
+
+[lints.clippy]
+all = { level = "warn", priority = -1 }
+# Same allowances as the upstream workspace (victory-mac Cargo.toml [workspace.lints.clippy]).
+type_complexity = "allow"
+needless_range_loop = "allow"
+chunks_exact_to_as_chunks = "allow"
+sliced_string_as_bytes = "allow"
+collapsible_match = "allow"
+manual_clamp = "allow"
+implicit_saturating_sub = "allow"
+min_max = "allow"
+undocumented_unsafe_blocks = "allow"
