@@ -213,10 +213,12 @@ pub(super) fn register(registry: &mut ImportRegistry, state: &Arc<ServicesState>
             if index >= XUSER_MAX_COUNT || args.rdx == 0 {
                 return Ok(ERROR_BAD_ARGUMENTS);
             }
-            let (Ok(left), Ok(right)) = (memory.read_u16(args.rdx), memory.read_u16(args.rdx + 2))
-            else {
+            // XINPUT_VIBRATION is two consecutive WORDs, read as one DWORD so
+            // a guest pointer at the top of the address space cannot overflow.
+            let Ok(motors) = memory.read_u32(args.rdx) else {
                 return Ok(ERROR_NOACCESS);
             };
+            let (left, right) = (motors as u16, (motors >> 16) as u16);
             if set.controllers.read(index).is_none() {
                 return Ok(ERROR_DEVICE_NOT_CONNECTED);
             }

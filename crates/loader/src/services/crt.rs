@@ -391,17 +391,41 @@ fn copy_wide(
     if always_terminate && words.last().copied() != Some(0) {
         return Err(ExitReason::IllegalInstruction(0xFE));
     }
-    if !always_terminate && (words.len() as u64) < limit {
-        words.resize(limit as usize, 0);
-    }
     let mut bytes = Vec::with_capacity(words.len() * 2);
-    for word in words {
+    for word in &words {
         bytes.extend_from_slice(&word.to_le_bytes());
     }
     memory
         .write_bytes(dest, &bytes)
         .map_err(ExitReason::MemoryFault)?;
+    if !always_terminate {
+        let total = limit
+            .checked_mul(2)
+            .ok_or(ExitReason::MemoryFault(MemoryError::UnmappedAddress(dest)))?;
+        pad_zeros(memory, dest, bytes.len() as u64, total)?;
+    }
     Ok(dest)
+}
+
+/// Zero `dest[from..to]` for the strncpy family, which pads to the count.
+/// The count is guest controlled, so the padding is written in bounded
+/// chunks and the first unmapped or read-only byte faults; the whole count
+/// is never allocated on the host.
+fn pad_zeros(memory: &mut GuestMemory, dest: u64, from: u64, to: u64) -> Result<(), ExitReason> {
+    const CHUNK: u64 = 4096;
+    let zeros = [0u8; CHUNK as usize];
+    let mut written = from;
+    while written < to {
+        let length = (to - written).min(CHUNK);
+        let at = dest
+            .checked_add(written)
+            .ok_or(ExitReason::MemoryFault(MemoryError::UnmappedAddress(dest)))?;
+        memory
+            .write_bytes(at, &zeros[..length as usize])
+            .map_err(ExitReason::MemoryFault)?;
+        written += length;
+    }
+    Ok(())
 }
 
 fn append_wide(memory: &mut GuestMemory, dest: u64, source: u64) -> Result<u64, ExitReason> {
@@ -712,12 +736,12 @@ fn copy_string(
     if always_terminate && copied.last().copied() != Some(0) {
         return Err(ExitReason::IllegalInstruction(0xFE));
     }
-    if !always_terminate && (copied.len() as u64) < limit {
-        copied.resize(limit as usize, 0);
-    }
     memory
         .write_bytes(dest, &copied)
         .map_err(ExitReason::MemoryFault)?;
+    if !always_terminate {
+        pad_zeros(memory, dest, copied.len() as u64, limit)?;
+    }
     Ok(dest)
 }
 

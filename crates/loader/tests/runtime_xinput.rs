@@ -103,6 +103,8 @@ fn bad_arguments_and_unmapped_buffers_return_codes_without_last_error() {
     assert_eq!(guest.call("XInputGetState", &[0, UNMAPPED]), ERROR_NOACCESS);
     assert_eq!(guest.call("XInputSetState", &[0, 0]), ERROR_BAD_ARGUMENTS);
     assert_eq!(guest.call("XInputSetState", &[0, UNMAPPED]), ERROR_NOACCESS);
+    // The last address must not overflow while reading the second motor.
+    assert_eq!(guest.call("XInputSetState", &[0, u64::MAX]), ERROR_NOACCESS);
     assert_eq!(
         guest.call("XInputGetCapabilities", &[0, 2, CAPS]),
         ERROR_BAD_ARGUMENTS
