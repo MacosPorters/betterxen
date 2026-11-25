@@ -2052,6 +2052,19 @@ impl<'a> Lower<'a> {
 
     /// `WaveActiveSum` of 64-bit floats (`f64(lo, hi)` in active lanes, `+0.0` elsewhere),
     /// returning the low (`!high`) or high (`high`) 32-bit word.
+    ///
+    /// BetterXen change (research/shader-wave-semantics): upstream emitted a native `double`
+    /// wave operation here (`makeDouble`, `waveActiveOp.f64`, `splitDouble`). The host this is
+    /// run on (D3DMetal over Metal) has no fp64: it reports no double-precision shader operations
+    /// and, observed with shaders from Microsoft's DXC, a shader that uses a `double` runs without
+    /// writing anything. Every other fp64 instruction here is done with 64-bit integer
+    /// operations ([`super::f64::add_f64`], checked against the CPU's doubles); this does the
+    /// same. The console's sum is the balanced tree over the lanes in their order (lanes 2k and
+    /// 2k+1, then pairs, ...; [`super::wave::buddies`]), which is how it is built here: each
+    /// lane adds its partner run's partial sum, read from the first lane of that run that is
+    /// present, and `+0.0` where none is (a lane outside EXEC adds `+0` on the console, and a
+    /// lane the host never launched is the same). The addition is commutative, so every lane
+    /// holds the same sum.
     fn active_f64_sum(
         &mut self,
         lo: Value,
@@ -2075,25 +2088,48 @@ impl<'a> Lower<'a> {
         let z = self.s.m.i32(0);
         let lo = self.s.m.select(c, on, lo, z);
         let hi = self.s.m.select(c, on, hi, z);
-        self.s.flags |= flags::WAVE_OPS | flags::DOUBLES;
-        let f64t = self.s.m.double();
+        self.s.flags |= flags::WAVE_OPS;
         let i32t = self.s.t.i32;
-        let split_ty = self
-            .s
-            .m
-            .named_struct("dx.types.splitdouble", vec![i32t, i32t]);
-        let arg = self
-            .s
-            .op(c, "makeDouble.f64", Attr::ReadNone, f64t, 101, &[lo, hi]);
-        let (k0, k0b) = (self.s.m.i8(0), self.s.m.i8(0));
-        let sum = self
-            .s
-            .op(c, "waveActiveOp.f64", Attr::NoUnwind, f64t, 119, &[arg, k0, k0b]);
-        let split = self
-            .s
-            .op(c, "splitDouble.f64", Attr::ReadNone, split_ty, 102, &[sum]);
-        let mut r_lo = self.s.m.extract(c, split, 0);
-        let mut r_hi = self.s.m.extract(c, split, 1);
+        let four = self.s.m.named_struct("dx.types.fouri32", vec![i32t; 4]);
+        let here = self.s.m.bool(true);
+        let ballot = self.s.op(c, "waveActiveBallot", Attr::NoUnwind, four, 116, &[here]);
+        let (blo, bhi) = (self.s.m.extract(c, ballot, 0), self.s.m.extract(c, ballot, 1));
+        let lane = self.s.op(c, "waveGetLaneIndex", Attr::ReadOnly, i32t, 111, &[]);
+        let [zero, k31, k32] = [0, 31, 32].map(|k| self.s.m.i32(k));
+        // Steps within one host wave: the console wave's lanes, or 32 of them when two host
+        // waves of 32 exchange their halves for the last addition.
+        let steps = if self.exchange.is_some() || !self.x.native.wave64 { 5 } else { 6 };
+        let mut sum = self.join64(lo, hi);
+        for step in 0..steps {
+            let size = 1u32 << step;
+            let (bit, run) = (self.s.m.i32(size), self.s.m.i32(!(size - 1)));
+            let other = self.s.m.bin(c, Bin::Xor, lane, bit);
+            let base = self.s.m.bin(c, Bin::And, other, run);
+            // The lanes of the partner run that are here, from bit 0.
+            let upper = self.s.m.cmp(c, pred::IUGE, base, k32);
+            let word = self.s.m.select(c, upper, bhi, blo);
+            let at = self.s.m.bin(c, Bin::And, base, k31);
+            let shifted = self.s.m.bin(c, Bin::LShr, word, at);
+            let bits = if size >= 32 {
+                shifted
+            } else {
+                let mk = self.s.m.i32((1u32 << size) - 1);
+                self.s.m.bin(c, Bin::And, shifted, mk)
+            };
+            // FirstbitLo (dx.op 32): the run's first lane that is here
+            let first = self.s.op(c, "unaryBits.i32", Attr::ReadNone, i32t, 32, &[bits]);
+            let any = self.s.m.cmp(c, pred::NE, bits, zero);
+            let first = self.s.m.select(c, any, first, zero);
+            let from = self.s.m.bin(c, Bin::Add, base, first);
+            let (slo, shi) = self.split64(sum);
+            let tlo = self.read_lane(slo, from);
+            let thi = self.read_lane(shi, from);
+            let tlo = self.s.m.select(c, any, tlo, zero);
+            let thi = self.s.m.select(c, any, thi, zero);
+            let theirs = self.join64(tlo, thi);
+            sum = super::f64::add_f64(&mut Gen { l: self }, sum, theirs);
+        }
+        let (mut r_lo, mut r_hi) = self.split64(sum);
         if self.exchange.is_some() {
             if !self.all_lanes(self.cur_ir) {
                 need(self.cur_ir);
@@ -2101,19 +2137,10 @@ impl<'a> Lower<'a> {
             }
             let (lo0, lo1) = self.exchange_halves(self.cur, r_lo);
             let (hi0, hi1) = self.exchange_halves(self.cur, r_hi);
-            let c = self.cur;
-            let d0 = self
-                .s
-                .op(c, "makeDouble.f64", Attr::ReadNone, f64t, 101, &[lo0, hi0]);
-            let d1 = self
-                .s
-                .op(c, "makeDouble.f64", Attr::ReadNone, f64t, 101, &[lo1, hi1]);
-            let total = self.s.m.bin(c, Bin::Add, d0, d1);
-            let split = self
-                .s
-                .op(c, "splitDouble.f64", Attr::ReadNone, split_ty, 102, &[total]);
-            r_lo = self.s.m.extract(c, split, 0);
-            r_hi = self.s.m.extract(c, split, 1);
+            let d0 = self.join64(lo0, hi0);
+            let d1 = self.join64(lo1, hi1);
+            let total = super::f64::add_f64(&mut Gen { l: self }, d0, d1);
+            (r_lo, r_hi) = self.split64(total);
         }
         Ok(if high { r_hi } else { r_lo })
     }

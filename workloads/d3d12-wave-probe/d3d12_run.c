@@ -10,8 +10,7 @@
 //       and prints every dword read back as `out <index> 0x<hex>`. A dword that stays
 //       0xDEADBEEF was never written.
 //
-// Status: `caps` has been compiled and run under CrossOver 26.3 on the M4. `run` has been
-// compiled only; it has not been executed yet.
+// Status: `caps` and `run` have both been compiled and run under CrossOver 26.3 on the M4.
 // Exit codes: 0 ran, 2 no device, 3 pipeline creation failed, 4 other D3D12 failure.
 #define COBJMACROS
 #include <d3d12.h>

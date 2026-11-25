@@ -21,6 +21,13 @@ Changes to upstream files (19 lines, nothing functional) and files BetterXen add
 - `src/lib.rs`: `#[rustfmt::skip]` on each `mod` so the vendored files stay byte-comparable with upstream.
 - `src/emit/mod.rs`, `src/emit/f64.rs`, `src/emit/lower.rs`: `#[allow(...)]` attributes only, so the crate passes `clippy -D warnings` here. They silence imports and variables used only by Windows-only tests, an unused trait method, a test constant that looks like pi, and two dead duplicate match arms in `lower.rs` that exist upstream (an earlier arm already handles `v_cvt_f32_f64` and `v_permlanex16_b32`).
 
+### Functional edits to upstream files (research/shader-wave-semantics, PR #392)
+
+- `src/emit/lower.rs` (`active_f64_sum`, about 90 lines): the whole-wave f64 sum no longer emits a native `double` wave operation (`makeDouble`, `waveActiveOp.f64`, `splitDouble`); it builds the console's balanced tree over the lanes with the crate's own integer `add_f64`, reading partner runs through `waveReadLaneAt` and a ballot for lanes that are not present, and no longer sets the doubles feature flag. Why: D3DMetal reports no double-precision shader operations and a shader that uses a `double` ran without writing anything (docs/research/shader-wave-semantics.md).
+- `src/emit/bitcode.rs`: two `#[allow(dead_code)]` for the double type, now never constructed.
+- `src/emit/host.rs`: `Host::wave_lane_count_max()` (test host only).
+- `src/emit/wave64_tests.rs`: `a_sum_of_halves_where_lanes_have_left_is_the_consoles_tree_bit_for_bit` checks the device's wave width and, on a device narrower than 64 lanes, asserts the recompiler's refusal instead of running a 64-lane lowering.
+
 ## Not carried
 
 The upstream repository's other crates (`victory-gpu`, `victory-loader`, `victory-hle`, ...), which are tied to one console title and its runtime, and `mac/`, `tools/`. The shader inputs the upstream project was built for are not included; BetterXen validates this crate only with its own synthetic fixtures (see `docs/research/` for the validation record).

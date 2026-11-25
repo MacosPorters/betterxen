@@ -1,6 +1,6 @@
 # Shader wave-operation failures under D3DMetal: investigation
 
-Branch `research/shader-wave-semantics`, based on PR #391. Evidence class B (runs on one machine: Apple M4, 24 GiB, macOS 27.0, CrossOver 26.3.0.39832, default backend), not independently reproduced. The two failures are the ones recorded in `victory-shader-integration.md`. This note separates what is **established** from what is **a hypothesis**.
+Branch `research/shader-wave-semantics` (PR #392), based on the shader integration branch. Evidence class B (runs on one machine: Apple M4, 24 GiB, macOS 27.0, CrossOver 26.3.0.39832, default backend), not independently reproduced. The two failures are the ones recorded in `victory-shader-integration.md`. This note separates what is **established** from what is **a hypothesis**.
 
 ## Device capabilities (measured with BetterXen's own host, `workloads/d3d12-wave-probe/d3d12_run.c caps`)
 
@@ -27,22 +27,34 @@ Branch `research/shader-wave-semantics`, based on PR #391. Evidence class B (run
 
 **Correction made (test, not recompiler):** `Host::wave_lane_count_max()` (new, from `D3D12_OPTIONS1`), and the test now checks the device first. On a device narrower than 64 lanes it asserts the refusal above and returns, printing why; on a 64-lane device it runs the original hardware comparison unchanged. After the change the test passes on this device, and what it verifies there is "the recompiler refuses a 64-lane-only program for a 32-lane host", not "the sum is correct on the GPU". The correct-sum claim stays **unverified on 32-lane hardware** and has not been run on a 64-lane device.
 
-## Failure 1: `whole_wave_f64_sum_and_cvt_f32_f64` (hypothesis, not yet proven)
+## Failure 1: `whole_wave_f64_sum_and_cvt_f32_f64` (established: unsupported double-precision operations in D3DMetal; fixed in the recompiler)
 
-Observed: a Wave32 program with 4 launched threads, each contributing 1.25, should store 5.0 (`0x40a00000` as f32); it stores `0x00000000`. The program is Wave32 on a 32-lane device, so **the wave-width hypothesis from the PR does not apply to this test**.
+Observed: a Wave32 program with 4 launched threads, each contributing 1.25, should store 5.0; it stored `0x00000000`. It is a Wave32 program on a 32-lane device, so wave width was never the cause.
 
-What is established from the source and the capability record:
-- The recompiler emits native `double` DXIL in exactly one place: `active_f64_sum` (`makeDouble`, `waveActiveOp.f64` with opcode 119, `splitDouble`; sets the shader's "doubles" flag). Every other fp64 instruction uses upstream's integer emulation (`emit/f64.rs`), which upstream states exists because "the host (D3DMetal, Metal) has no fp64"; those tests pass here.
-- The device reports `DoublePrecisionFloatShaderOps = 0`.
-- D3DMetal nevertheless created the pipeline and ran it, returning zero rather than failing.
+**Independent evidence** (Microsoft's DXC compiled original HLSL, BetterXen's own host dispatched it; expected values derived by hand before running; DXC v1.9.2609 digest-verified and run under CrossOver 26.3):
 
-Hypothesis consistent with all of that: native double operations in DXIL are not honoured by D3DMetal on this hardware, and the one native-double site in the recompiler is therefore wrong for this backend; the recompiler should use its own integer f64 add for the cross-lane reduction as it does everywhere else. **Not yet established**, because every run so far went through the recompiler itself. Independent evidence needs a native-double shader from a different compiler (`hlsl/sum_f64_4.hlsl`, `hlsl/add_f64_4.hlsl`: a double sum across lanes and a plain double add, to separate "doubles" from "wave operations on doubles"), plus `hlsl/sum_f32_4.hlsl` and `hlsl/lanes4.hlsl` as controls. These need Microsoft's DXC (open source, GitHub release v1.9.2609, `dxc_2026_09_29.zip`, SHA-256 `ad31b1fc…a7e7f1`, matching the release digest) run under CrossOver to compile them. That step has not been done: the permission system blocked running the downloaded compiler and it was not retried. The sources are committed and marked not compiled or run.
+| Probe (`workloads/d3d12-wave-probe/hlsl/`) | Expected | Observed |
+| --- | --- | --- |
+| `lanes4`: wave size and lane index, 4 threads | `0x2000`..`0x2003` (wave of 32) | exactly that |
+| `sum_f32_4`: `WaveActiveSum(1.25f)`, 4 threads | `0x40a00000` in every lane | exactly that |
+| `add_f64_4`: a plain `double` add (no wave operation) | low `0x00000000`, high `0x40000000` | **every dword still `0xDEADBEEF`: the shader wrote nothing** |
+| `sum_f64_4`: `WaveActiveSum` over a `double` | low `0x00000000`, high `0x40140000` | **every dword still `0xDEADBEEF`: the shader wrote nothing** |
 
-No recompiler change is proposed for failure 1 until that evidence exists.
+So wave operations, wave width and partial waves are fine on this device. Any shader that uses a `double` runs without effect: pipeline creation succeeds, the dispatch completes, and nothing is stored. That matches the capability record (`DoublePrecisionFloatShaderOps = 0`; Metal has no fp64). Upstream's test harness zero-fills its output buffer, which is why it saw `0` instead of the sentinel. **Conclusion:** the failure comes from unsupported double-precision operations in the backend, combined with the recompiler emitting a native `double` in one place (`active_f64_sum`) while using integer emulation everywhere else. It is not a mistranslation of the wave operation and not a wave-semantics problem.
+
+**Fix (recompiler, `active_f64_sum`):** the existing integer fp64 add (`add_f64`, checked upstream against the CPU's doubles) is reused to build the console's sum, which is the balanced tree over the lanes in their order. Each lane adds its partner run's partial sum, read through `waveReadLaneAt` from the first lane of that run that is present (found with a ballot, as `half_sum_present` already does for 16-bit sums), `+0.0` where none is, which is what a lane outside EXEC adds on the console. No `double` type is emitted and the doubles feature flag is no longer set. The same code covers the console wave64 on two host waves of 32 (an integer add for the last step).
+
+**Validation** (M4, CrossOver 26.3, default backend; one machine, not independently reproduced):
+- Whole suite under CrossOver: **229 passed, 0 failed, 3 ignored** (was 224 passed, 2 failed). macOS: 179 + new tests pass (`cargo test -p victory-shader`).
+- New test `f64_wave_sums_match_the_cpu_tree_bit_for_bit`: 24 cases (1, 4, 20 and 32 launched threads; six values including ones that round: 0.1, 123456.789, a value one ulp above 1.0, -3.75e10, 1e-300), comparing all 64 bits with a CPU model of the balanced tree using the CPU's own f64 additions and `+0.0` for lanes that are not launched. All 24 match. The model is independent of the recompiler.
+- Negative controls: against the **original** lowering this GPU test fails (`got 0x0000000000000000, want 0x3ff4000000000000`) and the new `the_f64_wave_sum_is_lowered_without_native_doubles` test (the container's feature word must declare wave operations but not doubles) fails too; both pass with the fix.
+
+**Limits:** (1) the tree order is what the recompiler's recognizer claims the console program computes (`wave::buddies`); this was not independently simulated from the DPP instructions, so bit-for-bit fidelity to the console for rounding values is only as good as that recognition. (2) The cost of the integer version was not measured and no performance claim is made. (3) Other fp64 wave operations (products, min/max) were not examined; only this one site emitted native doubles. (4) On a device with real fp64 the old native operation would work and is no longer used. (5) DXC is an external tool (University of Illinois/NCSA licence plus MIT components per its licence files), used only to compile probes; nothing from it is in the repository.
 
 ## Reproduce
 ```sh
-scripts/hybrid/run-shader-gpu-tests.sh <llvm-mingw-dir> betterxen-test all   # expect: 1 failure (whole_wave_f64_sum_and_cvt_f32_f64)
+scripts/hybrid/run-shader-gpu-tests.sh <llvm-mingw-dir> betterxen-test all   # expect: 0 failures with the fix in this branch (the vendored original has 2)
+# probes: compile hlsl/*.hlsl with DXC under CrossOver, then d3d12_run.exe run <file>.dxil 1 <dwords>
 # capabilities (needs the d3d12_run.exe built from workloads/d3d12-wave-probe/d3d12_run.c with llvm-mingw):
 #   x86_64-w64-mingw32-clang -O2 -o d3d12_run.exe d3d12_run.c -ld3d12 -ldxgi -ldxguid
 #   CrossOver bin/wine --bottle <bottle> ./d3d12_run.exe caps
