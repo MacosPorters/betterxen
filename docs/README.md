@@ -18,6 +18,8 @@
 
 ## Research, Testing & Licensing
 
+- [D3DMetal Unified-Memory and Zero-Copy Research](research/d3dmetal-zero-copy/README.md) — Shared six-check synthetic probe, per-host raw logs and evidence limits for #473 / #464.
+
 - [Hybrid Workloads & Measurement Protocol](testing/hybrid-workloads.md) — Original Windows workloads, receipt fields, timing conventions, and negative controls.
 - [CrossOver Licensing & Redistribution Boundaries](research/crossover-licensing.md) — Per-component license review for CrossOver, Wine, DXMT, DXVK, VKD3D-Proton, MoltenVK, D3DMetal, and Rosetta 2.
 - [Upstream Research Registry](research/upstream-registry.md) & [Component Reuse Matrix](research/component-reuse-matrix.md) — Public upstream evaluation and provenance screening.

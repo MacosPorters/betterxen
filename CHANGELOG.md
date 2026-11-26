@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Added
+- Added the collaborative D3DMetal memory research workspace for #473, with an original six-check standalone probe, an isolated CrossOver runner and two raw Apple M4 run records. This host returned E_NOTIMPL for both existing-memory heap opens, while custom L0 heaps and fence-synchronized persistent-map buffer readback matched. Physical zero-copy, memory overhead, other Apple Silicon generations and independent acceptance remain unverified; #464 production implementation is unchanged.
 - Added `docs/research/d3dmetal-gpu-limits.md` and `tests/conformance/test_d3dmetal_gpu_limits/` (#453). The fixture is an original D3D12 compute test that loads the host `d3d12.dll` directly, with four original HLSL kernels and committed DXC 1.9.2609 output (`shaders/compile.sh` regenerates them). It skips with exit 77 below shader model 6.6. Required checks:
   - a kernel without `WaveSize` runs, and its lane indices form a permutation within each wave;
   - a per-texel spin lock with acquire and release fences and a 1024-try cap emulates 64-bit add and max with no dropped update and exact values.

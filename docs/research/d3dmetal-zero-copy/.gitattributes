@@ -1,0 +1,3 @@
+# Preserve Windows stdout/stderr bytes as recorded, including CRLF line endings.
+results/**/stdout.txt -text whitespace=cr-at-eol
+results/**/stderr.txt -text whitespace=cr-at-eol

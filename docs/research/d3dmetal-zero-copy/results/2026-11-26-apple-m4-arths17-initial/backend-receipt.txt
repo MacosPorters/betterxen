@@ -1,0 +1,21 @@
+Separate untimed backend diagnostic, same copied bottle and backend selection.
+This is a path/trace excerpt, not a complete raw lsof log: user/PID columns and unrelated paths omitted.
+Loaded-file paths observed by lsof:
+/usr/libexec/rosetta/runtime
+/Library/Apple/usr/libexec/oah/libRosettaRuntime
+/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal
+/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/dxgi.dll
+/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll
+
+Loader trace excerpt:
+00d4:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\d3d12.dll" at 00006FFFFE7C0000: builtin
+00d4:trace:loaddll:build_module Loaded L"C:\\windows\\system32\\dxgi.dll" at 00006FFFFD460000: builtin
+
+No method-specific D3DMetal messages observed. Both opens returned 0x80004001.
+
+Initial launch preparation: two launches exited 2 before guest stdout, reporting:
+LibClamAV Error: cli_loaddbdir: No supported database files found in /opt/homebrew/var/lib/clamav
+ERROR: Can't open file or directory
+Temporary clone only: AntiVirusScan=untrusted and AllowUntrusted=1 for this original locally compiled executable.
+
+A supplemental diagnostic helper later failed its pgrep -x probe.exe lookup after lsof took long enough for the paused process to exit. It did not invalidate the already captured lsof paths or either completed baseline run. No vmmap evidence is claimed.

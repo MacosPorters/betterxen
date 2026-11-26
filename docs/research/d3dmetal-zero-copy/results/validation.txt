@@ -1,0 +1,344 @@
+Validation of research branch based on origin/main f7fb52bc56f671f9da7109f8aef8d3f04de59aee.
+No production source changes; these are local checks, not independent acceptance.
+
+COMMAND: cargo fmt --all -- --check
+EXIT: 0
+
+COMMAND: CARGO_BUILD_JOBS=2 cargo clippy --locked --workspace --all-targets -- -D warnings
+EXIT: 0
+    Checking dxbc-accc v0.2.0 (/private/tmp/bx-uma-verify/research-repo/shader-transpiler/crates/dxbc-accc)
+   Compiling libc v0.2.191
+    Checking d3dmetal-harness v0.2.0 (/private/tmp/bx-uma-verify/research-repo/shader-transpiler/crates/d3dmetal-harness)
+    Checking bx-probe v0.2.0 (/private/tmp/bx-uma-verify/research-repo/launcher/crates/bx-probe)
+    Checking bx-telemetry v0.2.0 (/private/tmp/bx-uma-verify/research-repo/launcher/crates/bx-telemetry)
+    Checking bx-cli v0.2.0 (/private/tmp/bx-uma-verify/research-repo/launcher/crates/bx-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.42s
+
+COMMAND: CARGO_BUILD_JOBS=2 cargo test --locked --workspace
+EXIT: 0
+   Compiling dxbc-accc v0.2.0 (/private/tmp/bx-uma-verify/research-repo/shader-transpiler/crates/dxbc-accc)
+   Compiling d3dmetal-harness v0.2.0 (/private/tmp/bx-uma-verify/research-repo/shader-transpiler/crates/d3dmetal-harness)
+   Compiling bx-telemetry v0.2.0 (/private/tmp/bx-uma-verify/research-repo/launcher/crates/bx-telemetry)
+   Compiling bx-probe v0.2.0 (/private/tmp/bx-uma-verify/research-repo/launcher/crates/bx-probe)
+   Compiling libc v0.2.191
+   Compiling bx-cli v0.2.0 (/private/tmp/bx-uma-verify/research-repo/launcher/crates/bx-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.71s
+     Running unittests src/main.rs (/tmp/bx-uma-verify/cargo-target/debug/deps/bx_cli-2151914d755a0d54)
+
+running 18 tests
+test stage::tests::closure_follows_shim_imports_only ... ok
+test stage::tests::system32_is_under_drive_c ... ok
+test stage::tests::uninitialized_prefix_is_an_error_not_a_skip ... ok
+test stage::tests::writes_only_inside_system32 ... ok
+test tests::bottle_mode_passes_overrides_and_backend_as_launcher_options ... ok
+test tests::converts_unix_path_to_wine_z_drive ... ok
+test tests::formats_clwb_summary_lines ... ok
+test stage::tests::missing_shim_is_reported_and_nothing_is_staged ... ok
+test tests::isolated_env_strips_secrets_and_pins_path ... ok
+test tests::parses_run_arguments ... ok
+test stage::tests::copies_then_leaves_identical_copy_alone ... ok
+test stage::tests::replaces_an_older_copy ... ok
+test stage::tests::stages_the_runtime_and_its_shim_dependency ... ok
+test supervise::tests::classifies_exit_timeout_and_signal ... ok
+test tests::a_timeout_cleans_up_a_bottle_outside_the_default_directory ... ok
+test supervise::tests::an_idle_server_is_accepted_only_when_the_wait_succeeds ... ok
+test supervise::tests::a_timeout_stops_children_that_ignore_sigterm ... ok
+test tests::a_timeout_cleans_up_a_managed_bottle_private_stub_created_on_first_launch ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.67s
+
+     Running unittests src/lib.rs (/tmp/bx-uma-verify/cargo-target/debug/deps/bx_probe-395eaa3c3f91592a)
+
+running 1 test
+test tests::classifies_tracks_accurately ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/tmp/bx-uma-verify/cargo-target/debug/deps/bx_telemetry-314c6b3d802f702b)
+
+running 4 tests
+test tests::preserves_clwb_record_count_without_valid_counters ... ok
+test tests::aggregates_stub_and_veh_events ... ok
+test tests::collects_unhandled_exceptions_in_log_order ... ok
+test tests::uses_highest_counter_from_sampled_clwb_records ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/tmp/bx-uma-verify/cargo-target/debug/deps/d3dmetal_harness-be2050e4ff5342c1)
+
+running 22 tests
+test kernel::tests::matches_independently_computed_values ... ok
+test kernel::tests::no_expected_word_equals_the_sentinel ... ok
+test framework::tests::resolves_directory_or_binary ... ok
+test framework::tests::environment_wins_over_crossover ... ok
+test macho::tests::rejects_unknown_truncated_and_oversized_headers ... ok
+test framework::tests::explicit_path_wins_over_environment_and_crossover ... ok
+test framework::tests::unresolved_request_does_not_fall_back ... ok
+test macho::tests::thin_x86_64_and_arm64 ... ok
+test macho::tests::universal_32_and_64_bit_entries ... ok
+test framework::tests::crossover_default_then_absent ... ok
+test report::tests::device_removal_is_reported_with_its_reason ... ok
+test report::tests::init_failure_and_failed_steps_take_precedence ... ok
+test report::tests::rejects_malformed_and_unversioned_output ... ok
+test report::tests::parses_a_complete_report ... ok
+test report::tests::reports_every_mismatch_and_the_first_one ... ok
+test report::tests::untouched_sentinel_means_the_kernel_did_not_run ... ok
+test report::tests::unfinished_or_foreign_dispatch_is_incomplete ... ok
+test tests::rejects_a_framework_without_an_x86_64_slice ... ok
+test tests::embedded_kernel_is_an_sm_6_6_compute_dxil_container ... ok
+test runner::tests::passes_the_framework_and_only_allowlisted_environment ... ok
+test runner::tests::kills_a_probe_that_exceeds_the_timeout ... ok
+test runner::tests::a_descendant_holding_the_pipes_cannot_outlast_the_deadline ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+
+     Running unittests src/main.rs (/tmp/bx-uma-verify/cargo-target/debug/deps/bx_d3dmetal_harness-11f25afb9b566af7)
+
+running 2 tests
+test tests::parses_run_options ... ok
+test tests::rejects_bad_options ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/live_d3dmetal.rs (/tmp/bx-uma-verify/cargo-target/debug/deps/live_d3dmetal-6d63df8591429451)
+
+running 1 test
+test sm_6_6_compute_readback_matches_host_values ... ignored, needs a user-supplied D3DMetal.framework and BX_D3DMETAL_PROBE
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (/tmp/bx-uma-verify/cargo-target/debug/deps/dxbc_accc-919debdd3ca67e95)
+
+running 19 tests
+bx-shader event=prepare status=unsupported detail=no_dxil_passthrough kind=accc_only(3) stage=compute(6) sm_major=6 sm_minor=0 container_size=148 dxil_chunk_size=0 accc_chunk_size=104 has_root_signature=0 digest=abababababababababababababababab fspx=1 fspx_version=1 sections=0@64+8,1@72+12,6@84+16,7@100+4 rdna_off=84 rdna_size=16
+test tests::c_abi_empty_dxil_chunk_returns_invalid ... ok
+test tests::classifies_synthetic_legacy_shdr ... ok
+test tests::c_abi_zero_bitcode_dxil_returns_invalid ... ok
+test tests::c_abi_inspect_and_passthrough_round_trip ... ok
+test tests::classifies_synthetic_accc_fspx_magic_only ... okbx-shader event=prepare status=unsupported detail=no_dxil_passthrough kind=accc_only(3) stage=compute(6) sm_major=6 sm_minor=0 container_size=112 dxil_chunk_size=0 accc_chunk_size=40 has_root_signature=0 digest=abababababababababababababababab fspx=1 fspx_version=1 sections=none rdna_off=none rdna_size=none
+
+test tests::c_abi_legacy_is_unsupported_and_invalid_inputs_allocate_nothing ... ok
+test tests::classifies_synthetic_dxil_cs_6_6 ... ok
+test tests::dxil_bitcode_offset_is_relative_to_bitcode_header ... ok
+test tests::dxil_stage_wins_over_fspx_stage_in_dual_container ... ok
+test tests::c_abi_accc_only_is_unsupported_and_logged ... ok
+test tests::extracts_synthetic_fspx_sections_stage_and_rdna_bounds ... ok
+test tests::prepare_copies_container_size_not_trailing_bytes ... ok
+test tests::later_fspx_stage_is_used_when_earlier_table_has_none ... ok
+test tests::prepare_passes_dxil_through_when_fspx_is_malformed ... ok
+test tests::rejects_invalid_magic_and_short_headers ... ok
+test tests::rejects_malformed_fspx_sections ... ok
+test tests::rejects_truncated_tables_and_chunk_bounds ... ok
+test tests::truncated_prefixes_do_not_panic ... ok
+test tests::fspx_section_count_is_bounded ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bx_probe
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bx_telemetry
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests d3dmetal_harness
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests dxbc_accc
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+
+COMMAND: CARGO_BUILD_JOBS=2 cargo build --locked -p bx-cli
+EXIT: 0
+   Compiling bx-cli v0.2.0 (/private/tmp/bx-uma-verify/research-repo/launcher/crates/bx-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.40s
+
+COMMAND: BX_BUILD_JOBS=2 scripts/build-shims.sh
+EXIT: 0
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /opt/homebrew/bin/x86_64-w64-mingw32-gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/homebrew/bin/x86_64-w64-mingw32-g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.7s)
+-- Generating done (0.1s)
+-- Build files have been written to: /tmp/bx-uma-verify/build-shims
+[  1%] Building CXX object win32_bridge/CMakeFiles/ntuser_msg_1_0.dir/empty_forwarder.cpp.obj
+[  2%] Building CXX object runtime_veh/CMakeFiles/bx_runtime_veh.dir/runtime_veh.cpp.obj
+[  4%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-message-l1-1-0.dll
+[  4%] Built target ntuser_msg_1_0
+[  5%] Building CXX object win32_bridge/CMakeFiles/ntuser_msg_ansi_1_0.dir/empty_forwarder.cpp.obj
+[  7%] Linking CXX shared library ../bin/bx_runtime_veh.dll
+[  7%] Built target bx_runtime_veh
+[  8%] Building CXX object win32_bridge/CMakeFiles/ntuser_win_1_0.dir/empty_forwarder.cpp.obj
+[ 10%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-message-ansi-l1-1-0.dll
+[ 10%] Built target ntuser_msg_ansi_1_0
+[ 11%] Building CXX object win32_bridge/CMakeFiles/ntuser_win_ansi_1_0.dir/empty_forwarder.cpp.obj
+[ 13%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-window-l1-1-0.dll
+[ 13%] Built target ntuser_win_1_0
+[ 14%] Building CXX object xmem/CMakeFiles/xmem.dir/xmem.cpp.obj
+[ 15%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-window-ansi-l1-1-0.dll
+[ 15%] Built target ntuser_win_ansi_1_0
+[ 17%] Building CXX object xcrdapi/CMakeFiles/xcrdapi.dir/xcrdapi.cpp.obj
+[ 18%] Building CXX object xmem/CMakeFiles/xmem.dir/physical_pages.cpp.obj
+[ 20%] Linking CXX shared library ../bin/XCRDAPI.dll
+[ 20%] Built target xcrdapi
+[ 21%] Building CXX object xg_xs/CMakeFiles/xg_xs.dir/xg_xs.cpp.obj
+[ 23%] Linking CXX shared library ../bin/xmem.dll
+[ 23%] Built target xmem
+[ 24%] Building CXX object xgameruntime/CMakeFiles/xgameruntime.dir/xgameruntime.cpp.obj
+[ 26%] Linking CXX shared library ../bin/xg_xs.dll
+[ 26%] Built target xg_xs
+[ 27%] Building CXX object xgameruntime/CMakeFiles/xgameruntime.dir/task_queue.cpp.obj
+[ 28%] Building CXX object xgameruntime/CMakeFiles/xgameruntime.dir/com_dispatch.cpp.obj
+[ 30%] Building CXX object gameinput/CMakeFiles/gameinput.dir/gameinput.cpp.obj
+[ 31%] Linking CXX shared library ../bin/xgameruntime.dll
+[ 31%] Built target xgameruntime
+[ 33%] Building CXX object audio/CMakeFiles/acphal.dir/acphal.cpp.obj
+[ 34%] Linking CXX shared library ../bin/GameInput.dll
+[ 34%] Built target gameinput
+[ 36%] Building CXX object audio/CMakeFiles/xapu.dir/xapu.cpp.obj
+[ 37%] Linking CXX shared library ../bin/AcpHal.dll
+[ 39%] Linking CXX shared library ../bin/xapu.dll
+[ 39%] Built target acphal
+[ 40%] Building CXX object audio/CMakeFiles/chad.dir/chad.cpp.obj
+[ 40%] Built target xapu
+[ 42%] Building CXX object conformance/test_d3dmetal_gpu_limits/CMakeFiles/test_d3dmetal_gpu_limits.dir/main.cpp.obj
+[ 43%] Linking CXX shared library ../bin/chad.dll
+[ 43%] Built target chad
+[ 44%] Building CXX object conformance/test_shim_exports/CMakeFiles/test_shim_exports.dir/main.cpp.obj
+[ 46%] Linking CXX executable ../../bin/test_shim_exports.exe
+[ 47%] Linking CXX executable ../../bin/test_d3dmetal_gpu_limits.exe
+[ 47%] Built target test_shim_exports
+[ 49%] Building CXX object conformance/test_system32_staging/CMakeFiles/test_system32_staging.dir/main.cpp.obj
+[ 49%] Built target test_d3dmetal_gpu_limits
+[ 50%] Building CXX object conformance/test_veh_clwb/CMakeFiles/test_veh_clwb.dir/main.cpp.obj
+[ 52%] Linking CXX executable ../../bin/test_system32_staging.exe
+[ 53%] Linking CXX executable ../../bin/test_veh_clwb.exe
+[ 53%] Built target test_system32_staging
+[ 53%] Built target test_veh_clwb
+[ 55%] Building CXX object conformance/test_veh_clwb/CMakeFiles/test_veh_unhandled.dir/main_unhandled.cpp.obj
+[ 56%] Building CXX object conformance/test_xcrdapi/CMakeFiles/test_xcrdapi.dir/main.cpp.obj
+[ 57%] Linking CXX executable ../../bin/test_veh_unhandled.exe
+[ 57%] Built target test_veh_unhandled
+[ 59%] Building CXX object conformance/test_xg_xs/CMakeFiles/test_xg_xs.dir/main.cpp.obj
+[ 60%] Linking CXX executable ../../bin/test_xcrdapi.exe
+[ 60%] Built target test_xcrdapi
+[ 62%] Building CXX object conformance/test_xgameruntime/CMakeFiles/test_xgameruntime.dir/main.cpp.obj
+[ 63%] Linking CXX executable ../../bin/test_xg_xs.exe
+[ 63%] Built target test_xg_xs
+[ 65%] Building CXX object conformance/test_xgameruntime/CMakeFiles/test_xgameruntime_unentitled.dir/main.cpp.obj
+[ 66%] Linking CXX executable ../../bin/test_xgameruntime.exe
+[ 66%] Built target test_xgameruntime
+[ 68%] Building CXX object conformance/test_xmem/CMakeFiles/test_xmem.dir/main.cpp.obj
+[ 69%] Linking CXX executable ../../bin/unentitled/test_xgameruntime.exe
+[ 69%] Built target test_xgameruntime_unentitled
+[ 71%] Building CXX object conformance/test_xmem_physical/CMakeFiles/test_xmem_physical.dir/main.cpp.obj
+[ 72%] Linking CXX executable ../../bin/test_xmem.exe
+[ 72%] Built target test_xmem
+[ 73%] Building CXX object win32_bridge/CMakeFiles/psm_appnotify_1_0.dir/psm_appnotify.cpp.obj
+[ 75%] Linking CXX shared library ../bin/api-ms-win-core-psm-appnotify-l1-1-0.dll
+[ 76%] Linking CXX executable ../../bin/test_xmem_physical.exe
+[ 76%] Built target psm_appnotify_1_0
+[ 78%] Building CXX object win32_bridge/CMakeFiles/psm_appnotify_1_1.dir/psm_appnotify.cpp.obj
+[ 78%] Built target test_xmem_physical
+[ 79%] Building CXX object d3d12_xs/CMakeFiles/d3d12_xs.dir/d3d12_xs.cpp.obj
+[ 81%] Linking CXX shared library ../bin/api-ms-win-core-psm-appnotify-l1-1-1.dll
+[ 81%] Built target psm_appnotify_1_1
+[ 82%] Building CXX object d3d12_xs/CMakeFiles/d3d12_xs.dir/proxy.cpp.obj
+[ 84%] Building CXX object d3d12_xs/CMakeFiles/d3d12_xs.dir/proxy_generated.cpp.obj
+[ 85%] Building CXX object conformance/test_audio_input/CMakeFiles/test_audio_input.dir/main.cpp.obj
+[ 86%] Linking CXX shared library ../bin/d3d12_xs.dll
+[ 86%] Built target d3d12_xs
+[ 88%] Building CXX object conformance/test_win32_bridge/CMakeFiles/test_win32_bridge.dir/main.cpp.obj
+[ 89%] Linking CXX executable ../../bin/test_audio_input.exe
+[ 89%] Built target test_audio_input
+[ 91%] Building CXX object conformance/test_apiset_resolution/CMakeFiles/test_apiset_resolution.dir/main.cpp.obj
+[ 92%] Linking CXX executable ../../bin/test_apiset_resolution.exe
+[ 94%] Linking CXX executable ../../bin/test_win32_bridge.exe
+[ 94%] Built target test_apiset_resolution
+[ 95%] Building CXX object conformance/test_d3d12_xs/CMakeFiles/test_d3d12_xs.dir/main.cpp.obj
+[ 95%] Built target test_win32_bridge
+[ 97%] Building CXX object conformance/test_integration_boot/CMakeFiles/test_integration_boot.dir/main.cpp.obj
+[ 98%] Linking CXX executable ../../bin/test_d3d12_xs.exe
+[ 98%] Built target test_d3d12_xs
+[100%] Linking CXX executable ../../bin/test_integration_boot.exe
+[100%] Built target test_integration_boot
+=== Verifying built PE32+ DLL Export Directories against abi/defs/*.def ===
+  OK AcpHal.dll (9 exact exports verified)
+  OK GameInput.dll (1 exact exports verified)
+  OK XCRDAPI.dll (1 exact exports verified)
+  OK api-ms-win-core-psm-appnotify-l1-1-0.dll (2 exact exports verified)
+  OK api-ms-win-core-psm-appnotify-l1-1-1.dll (2 exact exports verified)
+  OK bx_runtime_veh.dll (6 exact exports verified)
+  OK chad.dll (5 exact exports verified)
+  OK d3d12_xs.dll (4 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-message-ansi-l1-1-0.dll (2 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-message-l1-1-0.dll (1 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-window-ansi-l1-1-0.dll (3 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-window-l1-1-0.dll (1 exact exports verified)
+  OK xapu.dll (5 exact exports verified)
+  OK xg_xs.dll (2 exact exports verified)
+  OK xgameruntime.dll (49 exact exports verified)
+  OK xmem.dll (15 exact exports verified)
+Verified 16 PE32+ shim DLLs (108 exact exports, 0 extra, 0 forbidden MinGW imports) in /tmp/bx-uma-verify/build-shims/bin
+
+Native bx-cli architecture: file = Mach-O 64-bit executable arm64; lipo -archs = arm64.
+
+COMMAND: /tmp/bx-uma-verify/cargo-target/debug/bx-cli run --prefix /tmp/bx-uma-verify/smoke-prefix --shims /tmp/bx-uma-verify/build-shims/bin --log /tmp/bx-uma-verify/veh-clwb.jsonl --exe /tmp/bx-uma-verify/build-shims/bin/test_veh_clwb.exe
+EXIT: 0
+bx-cli: replaced /tmp/bx-uma-verify/smoke-prefix/drive_c/windows/system32/bx_runtime_veh.dll
+bx-cli: replaced /tmp/bx-uma-verify/smoke-prefix/drive_c/windows/system32/xgameruntime.dll
+CLWB traps observed: 6
+xmem stats: limit=8192 MB committed=8192 bytes
+PASS: test_veh_clwb
+
+Trace summary of /tmp/bx-uma-verify/veh-clwb.jsonl:
+Trace events     : 4
+clwb VEH traps   : at least 4 (sampled)
+ADX illegal ops  : 0
+
+COMMAND: /tmp/bx-uma-verify/cargo-target/debug/bx-cli run --prefix /tmp/bx-uma-verify/smoke-prefix --shims /tmp/bx-uma-verify/build-shims/bin --log /tmp/bx-uma-verify/shim-exports.jsonl --exe /tmp/bx-uma-verify/build-shims/bin/test_shim_exports.exe
+EXIT: 0
+bx-cli: already current /tmp/bx-uma-verify/smoke-prefix/drive_c/windows/system32/bx_runtime_veh.dll
+bx-cli: already current /tmp/bx-uma-verify/smoke-prefix/drive_c/windows/system32/xgameruntime.dll
+PASS: test_shim_exports (25 checks verified)
+
+Trace summary of /tmp/bx-uma-verify/shim-exports.jsonl:
+Trace events     : 1
+clwb VEH traps   : 0
+ADX illegal ops  : 0
+
+COMMAND: /tmp/bx-uma-verify/cargo-target/debug/bx-cli trace /tmp/bx-uma-verify/veh-clwb.jsonl
+EXIT: 0
+Trace events     : 4
+clwb VEH traps   : at least 4 (sampled)
+ADX illegal ops  : 0
+
+Python runner source parsed with ast.parse; both receipt JSON documents parsed.
+Published probe source SHA-256 matches the shared-runner execution receipt.
+Runner compilation used -Wall -Wextra -Werror and exited 0; benchmark exited 0 with timeout false.
+Git diff --cached --check accepts preserved CRLF raw logs through the research-local .gitattributes.
+The original user checkout had no tracked-file content changes between preflight and the recorded checksum check.
+
+COMMAND: python3 scripts/audit/docs_hygiene.py
+EXIT: 0
+docs hygiene: 190 tracked files checked, 0 problem(s)

@@ -1,0 +1,129 @@
+{
+  "chip": {
+    "command": [
+      "sysctl",
+      "-n",
+      "machdep.cpu.brand_string"
+    ],
+    "exit_code": 0,
+    "stdout": "Apple M4\n",
+    "stderr": ""
+  },
+  "ram_bytes": {
+    "command": [
+      "sysctl",
+      "-n",
+      "hw.memsize"
+    ],
+    "exit_code": 0,
+    "stdout": "25769803776\n",
+    "stderr": ""
+  },
+  "macos": {
+    "command": [
+      "sw_vers"
+    ],
+    "exit_code": 0,
+    "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+    "stderr": ""
+  },
+  "host_arch": {
+    "command": [
+      "uname",
+      "-m"
+    ],
+    "exit_code": 0,
+    "stdout": "arm64\n",
+    "stderr": ""
+  },
+  "compiler": {
+    "command": [
+      "x86_64-w64-mingw32-g++",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "x86_64-w64-mingw32-g++ (GCC) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "stderr": ""
+  },
+  "crossover": {
+    "command": [
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+      "--version"
+    ],
+    "exit_code": 0,
+    "stdout": "Product Name: CrossOver\nPublic Version: 26.3.0\nProduct Version: 26.3.0.39832\nBuild Tag: cxoffice-26.3.0rc2\nBuild Timestamp: 20260715T103801Z\n",
+    "stderr": ""
+  },
+  "rosetta": {
+    "command": [
+      "pkgutil",
+      "--pkg-info",
+      "com.apple.pkg.RosettaUpdateAuto"
+    ],
+    "exit_code": 0,
+    "stdout": "package-id: com.apple.pkg.RosettaUpdateAuto\nversion: 1.0.0.0.1788432274\nvolume: /\nlocation: /\ninstall-time: 1791147684\n",
+    "stderr": ""
+  },
+  "d3dmetal_Info.plist": {
+    "DTPlatformVersion": "15.4",
+    "CFBundleIdentifier": "com.apple.D3DMetal",
+    "DTCompiler": "com.apple.compilers.llvm.clang.1_0",
+    "DTPlatformBuild": "24E241",
+    "CFBundleInfoDictionaryVersion": "6.0",
+    "CFBundleVersion": "3.0",
+    "CFBundleExecutable": "D3DMetal",
+    "DTXcodeBuild": "16E140",
+    "DTSDKName": "macosx15.4.internal",
+    "CFBundleShortVersionString": "3.0",
+    "DTXcode": "1630",
+    "CFBundleSupportedPlatforms": [
+      "MacOSX"
+    ],
+    "CFBundlePackageType": "FMWK",
+    "BuildMachineOSBuild": "23A344013",
+    "LSMinimumSystemVersion": "14.0",
+    "DTPlatformName": "macosx",
+    "DTSDKBuild": "24E241",
+    "CFBundleDevelopmentRegion": "English",
+    "CFBundleName": "D3DMetal"
+  },
+  "d3dmetal_version.plist": {
+    "BuildVersion": "1",
+    "CFBundleShortVersionString": "3.0",
+    "CFBundleVersion": "3.0",
+    "ProjectName": "D3DRendererMetal",
+    "SourceVersion": "32047000000000"
+  },
+  "installed_backend_dll": {
+    "path": "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll",
+    "sha256": "bbda1c4e94ee70255c528c5689b28333ca9bece2d755ede7c4197977a534704f"
+  },
+  "bottle": {
+    "template": "win11_64",
+    "architecture": "win64",
+    "mode": "temporary private clone; --no-update",
+    "runtime_backend_setting": "CX_GRAPHICS_BACKEND=d3dmetal"
+  },
+  "environment": {
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "CX_GRAPHICS_BACKEND": "d3dmetal",
+    "WINEDEBUG": "-all"
+  },
+  "timeout_seconds": 30,
+  "run_exit_code": 0,
+  "timed_out": false,
+  "process_elapsed_seconds": 6.482681,
+  "source_sha256": null,
+  "executable_sha256": null,
+  "receipt_limitations": "Host/software re-queried unchanged for the shared-runner run. Initial source/executable hashes were not captured before diagnostic additions; not independently reviewed.",
+  "launch": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/tmp/bx-uma-verify/bottle",
+    "--no-update",
+    "--no-gui",
+    "--workdir",
+    "/tmp/bx-uma-verify",
+    "/tmp/bx-uma-verify/probe.exe"
+  ]
+}
