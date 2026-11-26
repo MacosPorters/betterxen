@@ -4,15 +4,23 @@ Original Windows program. It draws a textured triangle with a point sampler into
 
 Two synthetic patterns are checked, `lattice` and `diagonal`. Neither is taken from a game, a capture, or a shader dump. The clear color is magenta, which is not a texel in either pattern, so a pixel the triangle misses cannot pass.
 
-A run that matches prints `d3d11-texture: PASS` and exits 0. `--negative-control` adds one texel to U in the pixel shader and leaves the reference unbiased. The CPU model predicts that this matches only the last column (8 of 64 pixels) and therefore fails. That run prints `d3d11-texture: FAIL` and exits 1. If the bias is ignored and every pixel still matches, the program also prints FAIL. One CrossOver run of both commands is recorded under Run.
+A normal run that matches every pixel prints `d3d11-texture: PASS` and exits 0. `--negative-control` adds one texel to U in the pixel shader and leaves the reference unbiased. The CPU model predicts that this matches only the last column (8 of 64 pixels). That mismatch prints `d3d11-texture: FAIL` and exits 1, which is the expected negative-control result when the bias takes effect. If the bias is ignored and every pixel still matches, the program prints `d3d11-texture: negative-control did not take effect` and exits 4.
 
 The result digest is FNV-1a 64 over the two readbacks in pattern order, printed as 16 hex digits on the `digest=` line. Each pattern line also has its own digest.
 
-Exit 2 is a bad argument. Exit 3 means the device, shader, or readback could not be set up. Device creation tries a hardware driver, then WARP. There is no window.
+| Exit | Meaning |
+| --- | --- |
+| 0 | Every pixel matched the unbiased reference on a normal run. The last line is `PASS`. |
+| 1 | At least one pixel differed. The last line is `FAIL`. On `--negative-control` this is the expected result when the one-texel bias takes effect. |
+| 2 | Unrecognized argument. Usage is written to stderr. |
+| 3 | The device, shader, or readback could not be set up. The last line is `FAIL`. Device creation uses `D3D_DRIVER_TYPE_HARDWARE` only. If that call fails, the program prints `no hardware device` and exits 3. |
+| 4 | `--negative-control` was set and every pixel still matched the unbiased reference. The one-texel bias did not take effect. The last line is `negative-control did not take effect`. |
+
+There is no window.
 
 ## Build
 
-The program targets 64-bit Windows. The link line passes `-ld3d11 -ldxgi -ld3dcompiler -lole32`. The linked PE32+ console binary imports `d3d11.dll` (`D3D11CreateDevice`) and `D3DCOMPILER_47.dll` (`D3DCompile`). `sample.hlsl` is embedded and compiled at runtime with `D3DCompile`, so an HLSL compiler is not required on the build machine. `D3DCOMPILER_47.dll` is required where the program runs.
+The program targets 64-bit Windows. The link line passes `-ld3d11 -ldxgi -ld3dcompiler -lole32`. The linked PE32+ console binary imports `d3d11.dll` (`D3D11CreateDevice`) and `D3DCOMPILER_47.dll` (`D3DCompile`). `sample.hlsl` is embedded and compiled at runtime with `D3DCompile`, so an HLSL compiler is not required on the build machine. `D3DCOMPILER_47.dll` is required where the program runs. Compiling the HLSL at runtime with `D3DCompile` is a deviation from the build-time HLSL criterion in #365.
 
 From this directory, with mingw-w64:
 
@@ -50,7 +58,29 @@ d3d11-texture.exe
 d3d11-texture.exe --negative-control
 ```
 
+### Previous binary
+
+The CrossOver results below are from the previous binary, the one before the negative-control exit change and the hardware-only device requirement. They are a record of that binary on that bottle. They are not results of the current program.
+
 devil8blade ran both commands on one Apple Silicon Mac. The directory was built there with x86_64-w64-mingw32-gcc 16.2.0 (`make` exited 0, `-Werror` clean) and `make check-reference` with the macOS `cc` printed `texture-ref: PASS`. The bottle was a fresh win10_64 bottle in CrossOver 26.2.0, using CrossOver's built-in `d3d11.dll` and `d3dcompiler_47.dll` (wined3d, not DXVK or DXMT).
+
+The plain run of that previous binary exited 0:
+
+```
+d3d11-texture: device=hardware feature_level=11_0
+d3d11-texture: pattern=lattice matched=64/64 digest=0fc3b125a4713125
+d3d11-texture: pattern=diagonal matched=64/64 digest=3e1da1d5054c4a65
+d3d11-texture: digest=68e7d02e7fd35865
+d3d11-texture: PASS
+```
+
+`--negative-control` on that previous binary exited 1. Lattice matched 8/64 (`digest=3c453f6c404f8a25`), diagonal matched 8/64 (`digest=b5e1b11c383e3f85`), the combined digest was `d8fe45ff1907a685`, and the last line was `FAIL`. Each actual pixel was the next texel to the right.
+
+That is this bottle on this Mac only, and only for that previous binary.
+
+### Re-run (current binary)
+
+devil8blade reran the current binary (same main.c as this commit) on the same Apple Silicon Mac. The directory was built there with x86_64-w64-mingw32-gcc 16.2.0 (`make` exited 0, `-Werror` clean) and `make check-reference` with the macOS `cc` printed `texture-ref: PASS`. The bottle was the same fresh win10_64 bottle in CrossOver 26.2.0, using CrossOver's built-in `d3d11.dll` and `d3dcompiler_47.dll` (wined3d, not DXVK or DXMT).
 
 The plain run exited 0:
 
@@ -63,5 +93,7 @@ d3d11-texture: PASS
 ```
 
 `--negative-control` exited 1. Lattice matched 8/64 (`digest=3c453f6c404f8a25`), diagonal matched 8/64 (`digest=b5e1b11c383e3f85`), the combined digest was `d8fe45ff1907a685`, and the last line was `FAIL`. Each actual pixel was the next texel to the right.
+
+These results are identical to the previous binary on this bottle. Exit 3 and exit 4 were not exercised.
 
 That is this bottle on this Mac only.

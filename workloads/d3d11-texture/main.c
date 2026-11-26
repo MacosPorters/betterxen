@@ -107,30 +107,20 @@ static int create_device(struct Gpu *gpu, const char **driver_name, const char *
         D3D_FEATURE_LEVEL_10_1,
         D3D_FEATURE_LEVEL_10_0,
     };
-    static const D3D_DRIVER_TYPE drivers[] = {
-        D3D_DRIVER_TYPE_HARDWARE,
-        D3D_DRIVER_TYPE_WARP,
-    };
-    static const char *names[] = {"hardware", "warp"};
-    HRESULT hrs[2];
-
-    for (int i = 0; i < 2; i++) {
-        D3D_FEATURE_LEVEL got = D3D_FEATURE_LEVEL_10_0;
-        gpu->device = NULL;
-        gpu->context = NULL;
-        hrs[i] = D3D11CreateDevice(NULL, drivers[i], NULL, 0, levels, 3, D3D11_SDK_VERSION, &gpu->device, &got,
-                                   &gpu->context);
-        if (SUCCEEDED(hrs[i])) {
-            *driver_name = names[i];
-            *feature_name = level_name(got);
-            return 1;
-        }
+    D3D_FEATURE_LEVEL got = D3D_FEATURE_LEVEL_10_0;
+    gpu->device = NULL;
+    gpu->context = NULL;
+    HRESULT hr = D3D11CreateDevice(NULL, D3D_DRIVER_TYPE_HARDWARE, NULL, 0, levels, 3, D3D11_SDK_VERSION, &gpu->device,
+                                   &got, &gpu->context);
+    if (FAILED(hr)) {
+        printf("d3d11-texture: ERROR no hardware device hr=0x%08lx\n", (unsigned long)hr);
+        printf("d3d11-texture: FAIL\n");
+        fflush(stdout);
+        return 0;
     }
-    printf("d3d11-texture: ERROR device hardware hr=0x%08lx warp hr=0x%08lx\n", (unsigned long)hrs[0],
-           (unsigned long)hrs[1]);
-    printf("d3d11-texture: FAIL\n");
-    fflush(stdout);
-    return 0;
+    *driver_name = "hardware";
+    *feature_name = level_name(got);
+    return 1;
 }
 
 static ID3DBlob *compile_stage(const char *entry, const char *profile)
@@ -397,12 +387,13 @@ int main(int argc, char **argv)
         memcpy(combined + pattern * TEX_BYTES, readback, TEX_BYTES);
     }
 
-    if (negative && !failed) {
-        printf("d3d11-texture: negative-control matched the unbiased reference\n");
-        failed = 1;
-    }
-
     printf("d3d11-texture: digest=%016llx\n", (unsigned long long)texture_digest(combined, sizeof combined));
+    if (negative && !failed) {
+        printf("d3d11-texture: negative-control did not take effect\n");
+        fflush(stdout);
+        release_gpu(&gpu);
+        return 4;
+    }
     printf("d3d11-texture: %s\n", failed ? "FAIL" : "PASS");
     fflush(stdout);
     release_gpu(&gpu);
