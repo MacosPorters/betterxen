@@ -100,6 +100,8 @@ bool WINAPI is_packaged_process(void* self);
 HRESULT WINAPI get_current_process_package_identifier(void* self, size_t size, char* buffer);
 HRESULT WINAPI get_package_kind(void* self, const char* identifier, uint32_t* kind);
 HRESULT WINAPI mount(void* self, const char* identifier, void** out);
+HRESULT WINAPI mount_with_ui_async(void* self, const char* identifier, void* async);
+HRESULT WINAPI mount_with_ui_result(void* self, void* async, void** out);
 HRESULT WINAPI get_mount_path_size(void* self, void* handle, size_t* size);
 HRESULT WINAPI get_mount_path(void* self, void* handle, size_t size, char* path);
 void WINAPI close_mount_handle(void* self, void* handle);

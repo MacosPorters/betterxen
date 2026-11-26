@@ -297,8 +297,25 @@ ComSingleton kSystemObj{kSystemVtbl.data(), &kSystemIid, "IXSystem"};
 void WINAPI err_set_callback(void*, void*, void*) {}
 void WINAPI err_set_options(void*, uint32_t, uint32_t) {}
 
+/*
+ * IXError slot 3. xodus-gaming/xgameruntime-docs (commit 7090008) lists this slot as unknown.
+ * Its behaviour here comes from the #492 review's interop observation (atesahmet0,
+ * 2026-11-26): the GDK's static library calls it before some subsystem calls, for example
+ * XPackageMount, and continues only when it returns false. The default stub returned E_NOTIMPL,
+ * whose low byte reads as true and stopped those calls. The parameters are not known, so none
+ * are read. It is logged once so the call stays visible in `bx-cli trace`.
+ */
+bool WINAPI err_slot3(void*) {
+    static std::atomic<bool> logged{false};
+    if (!logged.exchange(true)) {
+        bx_log_emit(BX_LOG_INFO, "xgameruntime", "IXError_slot3", "returning false (continue); arguments not read");
+    }
+    return false;
+}
+
 const std::array<const void*, 8> kErrorVtbl = [] {
     auto v = make_default_vtbl<8>();
+    v[3] = reinterpret_cast<const void*>(&err_slot3);
     v[4] = reinterpret_cast<const void*>(&err_set_callback);
     v[5] = reinterpret_cast<const void*>(&err_set_options);
     return v;
@@ -681,8 +698,6 @@ BX_HR(pk_enum_features, "IXPackageImpl", 33, "XPackageEnumerateFeatures")
 BX_HR(pk_uninstall, "IXPackageImpl", 34, "XPackageUninstallPackage")
 BX_HR(pk_enum_packages_2, "IXPackageImpl2", 35, "XPackageEnumeratePackages")
 BX_HR(pk_reg_installed_2, "IXPackageImpl2", 36, "XPackageRegisterPackageInstalled")
-BX_HR(pk_mount_ui_async, "IXPackageImpl2", 37, "XPackageMountWithUiAsync")
-BX_HR(pk_mount_ui_result, "IXPackageImpl2", 38, "XPackageMountWithUiResult")
 BX_HR(pk_enum_packages_3, "IXPackageImpl3", 39, "XPackageEnumeratePackages")
 BX_HR(pk_reg_installed_3, "IXPackageImpl3", 40, "XPackageRegisterPackageInstalled")
 #undef BX_HR
@@ -763,8 +778,8 @@ const std::array<const void*, 42> kPackageVtbl = [] {
     v[34] = reinterpret_cast<const void*>(&pk_uninstall);
     v[35] = reinterpret_cast<const void*>(&pk_enum_packages_2);
     v[36] = reinterpret_cast<const void*>(&pk_reg_installed_2);
-    v[37] = reinterpret_cast<const void*>(&pk_mount_ui_async);
-    v[38] = reinterpret_cast<const void*>(&pk_mount_ui_result);
+    v[37] = reinterpret_cast<const void*>(&mount_with_ui_async);
+    v[38] = reinterpret_cast<const void*>(&mount_with_ui_result);
     v[39] = reinterpret_cast<const void*>(&pk_enum_packages_3);
     v[40] = reinterpret_cast<const void*>(&pk_reg_installed_3);
     v[41] = reinterpret_cast<const void*>(&get_package_kind);

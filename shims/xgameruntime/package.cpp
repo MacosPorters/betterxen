@@ -16,9 +16,12 @@
  *    (lowercased), so it is stable for a directory and differs between directories.
  *    XPACKAGE_IDENTIFIER_MAX_LENGTH has no published value; this identifier needs 22 bytes.
  *  - GetPackageKind reports Game for that identifier and ERROR_NOT_FOUND for any other.
- *  - Mount (the documented, deprecated XPackageMount) accepts only that identifier, and the
+ *  - Mount (the documented, deprecated XPackageMount) and its replacement
+ *    XPackageMountWithUiAsync / XPackageMountWithUiResult accept only that identifier, and the
  *    mount path is the executable's directory. On Windows only content packages can be
- *    mounted; BetterXen allows the game's own package so titles can locate their files.
+ *    mounted; BetterXen allows the game's own package so titles can locate their files. Offline
+ *    there is no license or parental-consent prompt, so the asynchronous form shows no UI; an
+ *    identifier mismatch is reported as the operation's status (ERROR_NOT_FOUND).
  *  - The last XGameRuntimeUninitialize closes every mount handle.
  *  - An executable path of MAX_PATH or more fails with ERROR_FILENAME_EXCED_RANGE.
  */
@@ -29,6 +32,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <memory>
 #include <mutex>
 #include <new>
 #include <string>
@@ -98,6 +102,55 @@ HRESULT stale_handle_error(uint32_t generation) {
     return generation ? kRuntimeInvalidHandle : kRuntimeNotInitialized;
 }
 
+// Checks that identifier names this process's package and returns its mount path in UTF-8.
+HRESULT resolve_mount(const char* identifier, std::string& path) {
+    bool match = false;
+    auto hr = is_current_package(identifier, match);
+    if (FAILED(hr)) return hr;
+    if (!match) return kNotFound;
+    std::wstring dir;
+    hr = executable_directory(dir);
+    if (FAILED(hr)) return hr;
+    const int bytes = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, dir.c_str(), -1, nullptr, 0, nullptr, nullptr);
+    if (bytes <= 0) return HRESULT_FROM_WIN32(GetLastError());
+    try {
+        path.assign(static_cast<size_t>(bytes), '\0');
+        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, dir.c_str(), -1, path.data(), bytes, nullptr, nullptr);
+        path.pop_back();  // The terminator is added back on copy-out.
+    } catch (const std::bad_alloc&) {
+        return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
+HRESULT insert_mount(uint32_t generation, std::string path, void** out) {
+    try {
+        std::lock_guard lock(mount_mutex);
+        ++handle_counter;
+        void* handle = reinterpret_cast<void*>(kMountTag << 40 | (handle_counter & 0xFFFFFFFFFu) << 4);
+        mounts.emplace(handle, Mount{generation, std::move(path)});
+        *out = handle;
+    } catch (const std::bad_alloc&) {
+        return E_OUTOFMEMORY;
+    }
+    return S_OK;
+}
+
+constexpr uint32_t kMountWithUiOp = 0x58504B01;
+
+// XPackageMountWithUiAsync: the identity check runs on the work port; the Result call then
+// creates the mount handle, as XPackageMount does synchronously.
+class MountWithUiOp final : public AsyncOp {
+public:
+    uint32_t generation = 0;
+    std::string identifier;
+    std::string path;
+
+    uint32_t kind() const override { return kMountWithUiOp; }
+    HRESULT execute() override { return resolve_mount(identifier.c_str(), path); }
+    size_t result_size() const override { return sizeof(void*); }
+};
+
 }  // anonymous helpers
 
 // Slot functions declared in runtime_internal.h. The const public vtable takes their addresses
@@ -138,29 +191,34 @@ HRESULT WINAPI mount(void*, const char* identifier, void** out) {
     if (!identifier) return E_INVALIDARG;
     const auto generation = active_runtime_generation();
     if (!generation) return kRuntimeNotInitialized;
-    bool match = false;
-    auto hr = is_current_package(identifier, match);
-    if (FAILED(hr)) return hr;
-    if (!match) return kNotFound;
+    std::string path;
+    const auto hr = resolve_mount(identifier, path);
+    return FAILED(hr) ? hr : insert_mount(generation, std::move(path), out);
+}
 
-    std::wstring dir;
-    hr = executable_directory(dir);
-    if (FAILED(hr)) return hr;
-    const int bytes = WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, dir.c_str(), -1, nullptr, 0, nullptr, nullptr);
-    if (bytes <= 0) return HRESULT_FROM_WIN32(GetLastError());
+HRESULT WINAPI mount_with_ui_async(void*, const char* identifier, void* async) {
+    if (!async) return E_POINTER;
+    if (!identifier) return E_INVALIDARG;
+    const auto generation = active_runtime_generation();
+    if (!generation) return kRuntimeNotInitialized;
+    std::unique_ptr<MountWithUiOp> op(new (std::nothrow) MountWithUiOp);
+    if (!op) return E_OUTOFMEMORY;
     try {
-        std::string path(static_cast<size_t>(bytes), '\0');
-        WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, dir.c_str(), -1, path.data(), bytes, nullptr, nullptr);
-        path.pop_back();  // The terminator is added back on copy-out.
-        std::lock_guard lock(mount_mutex);
-        ++handle_counter;
-        void* handle = reinterpret_cast<void*>(kMountTag << 40 | (handle_counter & 0xFFFFFFFFFu) << 4);
-        mounts.emplace(handle, Mount{generation, std::move(path)});
-        *out = handle;
+        op->identifier = identifier;
     } catch (const std::bad_alloc&) {
         return E_OUTOFMEMORY;
     }
-    return S_OK;
+    op->generation = generation;
+    return begin_async_op(async, std::move(op));
+}
+
+HRESULT WINAPI mount_with_ui_result(void*, void* async, void** out) {
+    if (!out) return E_POINTER;
+    *out = nullptr;
+    return consume_async_op(async, kMountWithUiOp, [&](AsyncOp& base) {
+        auto& op = static_cast<MountWithUiOp&>(base);
+        return insert_mount(op.generation, op.path, out);
+    });
 }
 
 HRESULT WINAPI get_mount_path_size(void*, void* handle, size_t* size) {

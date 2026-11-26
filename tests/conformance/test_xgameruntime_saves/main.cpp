@@ -606,6 +606,48 @@ void check_public_dispatch(void* user, void* synthetic_save, void* synthetic_pac
     CHECK(exe_dir == path.data());
     slot<CloseFn>(package, kPkCloseMount)(package, mount);
     CHECK(slot<PathSizeFn>(package, kPkPathSize)(package, mount, &path_size) == kInvalidHandle);
+
+    // XPackageMountWithUiAsync / Result (IXPackageImpl2 slots 37-38): the same mount, as an XAsync
+    // operation on the process task queue. A foreign identifier is the operation's status.
+    using MountAsyncFn = HRESULT(WINAPI*)(void*, const char*, Async*);
+    using MountResultFn = HRESULT(WINAPI*)(void*, Async*, void**);
+    const auto mount_async = slot<MountAsyncFn>(package, kPkMountUiAsync);
+    const auto mount_result = slot<MountResultFn>(package, kPkMountUiResult);
+    CHECK(mount_async(package, id, nullptr) == E_POINTER);
+    Async probe{nullptr, nullptr, nullptr, {}};
+    CHECK(mount_async(package, nullptr, &probe) == E_INVALIDARG);
+    CHECK(mount_result(package, &probe, nullptr) == E_POINTER);
+    {
+        Async async{nullptr, nullptr, nullptr, {}};
+        CHECK(mount_async(package, id, &async) == S_OK);
+        CHECK(XAsyncGetStatus(&async, true) == S_OK);
+        size_t size = 0;
+        CHECK(XAsyncGetResultSize(&async, &size) == S_OK && size == sizeof(void*));
+        void* ui_mount = nullptr;
+        CHECK(mount_result(package, &async, &ui_mount) == S_OK && ui_mount);
+        void* twice = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
+        CHECK(mount_result(package, &async, &twice) == kIllegalCall && !twice);
+        CHECK(slot<PathSizeFn>(package, kPkPathSize)(package, ui_mount, &path_size) == S_OK &&
+              path_size == exe_dir.size() + 1);
+        std::vector<char> ui_path(path_size);
+        CHECK(slot<PathFn>(package, kPkPath)(package, ui_mount, path_size, ui_path.data()) == S_OK);
+        CHECK(exe_dir == ui_path.data());
+        slot<CloseFn>(package, kPkCloseMount)(package, ui_mount);
+        CHECK(slot<PathSizeFn>(package, kPkPathSize)(package, ui_mount, &path_size) == kInvalidHandle);
+    }
+    {
+        Async async{nullptr, nullptr, nullptr, {}};
+        CHECK(mount_async(package, "BXPKG0000000000000000", &async) == S_OK);
+        CHECK(XAsyncGetStatus(&async, true) == kNotFound);
+        void* none = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
+        CHECK(mount_result(package, &async, &none) == kNotFound && !none);
+    }
+
+    // IXError slot 3 answers false ("continue"); a true answer stops GDK calls such as XPackageMount.
+    const GUID error_class = guid_bytes(0x8CA467F7, 0x22E8, 0x4096, 0x84, 0x56, 0xBB, 0x8A, 0xA1, 0x3F, 0x79, 0xD8);
+    void* error = nullptr;
+    CHECK(QueryApiImpl(&error_class, &error_class, &error) == S_OK && error);
+    CHECK(slot<Bool1>(error, 3)(error) == false);
 }
 
 void check_blobs(const Blobs& blobs, char prefix, int writers, int count) {
