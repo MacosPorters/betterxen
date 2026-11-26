@@ -23,3 +23,9 @@ Companion to the [upstream registry](upstream-registry.md); same evidence limits
 | Process groups and signals for `bx-cli run` | rust-lang/libc 0.2.191 (MIT) | **Reuse** | Unmodified crates.io dependency (#408). |
 
 Open items: license text for every selected component must be read from the exact release used; DXMT, DXVK and Wine contributor and file-level notices are not reviewed.
+
+## #473 external allocator evaluation
+
+| Need | Candidate | Decision | Conditions |
+| --- | --- | --- | --- |
+| Bounded CUSTOM heap pools, allocation statistics and resource ownership | AMD D3D12 Memory Allocator 3.3.0 at `600949266be004553f74c9ef809384380a9d44cf` | Evaluate externally in isolated A research; not adopted in production | Exact header/CPP/LICENSE notices reviewed and recorded in the registry; retain unchanged MIT notices. Public general-purpose provenance; GPL-3.0-or-later-compatible under notice obligations. Source/build artifacts remain ignored. Build, CrossOver behavior, overhead, retirement and independent review are separate evidence gates, not inferred from source features. |

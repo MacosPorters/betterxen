@@ -1,0 +1,45 @@
+{
+  "scope": "A source/raw-data review; no M4 hardware reproduction or physical-mechanism acceptance",
+  "source_snapshots": 98,
+  "watch_phases": 33,
+  "sweep_measured": 5040,
+  "compute_measured": 576,
+  "compute_endpoint_pairs": 1080,
+  "traces": [
+    {
+      "path": "results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/gpu-samples.json",
+      "intervals": 15,
+      "measured_groups": 1
+    },
+    {
+      "path": "results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/gpu-samples.json",
+      "intervals": 15,
+      "measured_groups": 1
+    },
+    {
+      "path": "results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/gpu-samples.json",
+      "intervals": 15,
+      "measured_groups": 1
+    },
+    {
+      "path": "results/2026-11-27-apple-m5-atesahmet0-b-metal-default/gpu-samples.json",
+      "intervals": 75,
+      "measured_groups": 5
+    },
+    {
+      "path": "results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/gpu-samples.json",
+      "intervals": 75,
+      "measured_groups": 5
+    },
+    {
+      "path": "results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/gpu-samples.json",
+      "intervals": 75,
+      "measured_groups": 5
+    },
+    {
+      "path": "results/2026-11-27-apple-m5-atesahmet0-b-trace-02/gpu-samples.json",
+      "intervals": 75,
+      "measured_groups": 5
+    }
+  ]
+}

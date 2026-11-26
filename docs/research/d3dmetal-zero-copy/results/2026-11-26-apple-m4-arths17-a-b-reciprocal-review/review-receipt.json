@@ -1,0 +1,19 @@
+{
+  "b_commit": "a40228747470f0d184375e451b0173769c90aef5",
+  "reviewer": "Arths17 Codex agent",
+  "gpu_executions": 0,
+  "data_review_command": [
+    "python3",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/review-b-data.py",
+    "artifacts/workstream-a/review-b-a402/docs/research/d3dmetal-zero-copy",
+    "--output",
+    "artifacts/workstream-a/resume-verification/b-data-review.json"
+  ],
+  "script_sha256": "0b3ffba374aa85d63506b7ed7a5fd542d5ede1a6a544d421ea01473fa9eb33a8",
+  "limitations": [
+    "M4 hardware reproduction blocked by urgent pressure",
+    "trace extraction input provenance requires target-only XML",
+    "one stopped-run stderr hash mismatch; see output audit"
+  ],
+  "output_hash_audit_procedure": "For every B receipt case.run.output_hashes, recompute SHA256 on published stdout.txt, stderr.txt, access.hlsl and access.dxbc; verify each successful graphics case backend paths contain GPTK D3D12, D3DMetal and Rosetta."
+}

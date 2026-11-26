@@ -1,0 +1,48 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "receipt.json",
+      "bytes": 9220,
+      "original_sha256": "d8f67c400ca08c7ba0bd1dcae54c4f6d289d01068fb4367bce18fa02afdc673e",
+      "archived_sha256": "193b8cc57b03c98652ba71a35d24d1ee157a220c827df80c7bf14c07be26fd78",
+      "redacted": true
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11092,
+      "original_sha256": "0fabd293b82f9bac6117cc8a90ec3b7f4cabf7cd365f9078c767675f20051e64",
+      "archived_sha256": "0fabd293b82f9bac6117cc8a90ec3b7f4cabf7cd365f9078c767675f20051e64",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 12924,
+      "original_sha256": "223a88facf609d71d3de94bfa8b622097c89576896bdfb3044f8964719fd3508",
+      "archived_sha256": "223a88facf609d71d3de94bfa8b622097c89576896bdfb3044f8964719fd3508",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "original_sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5",
+      "archived_sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "original_sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458",
+      "archived_sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 13969,
+      "original_sha256": "0323046cca6482e54b571e0bb2069b99331ac8c8ee385afc4a33e7818804f848",
+      "archived_sha256": "0323046cca6482e54b571e0bb2069b99331ac8c8ee385afc4a33e7818804f848",
+      "redacted": false
+    }
+  ]
+}

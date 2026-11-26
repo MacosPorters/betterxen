@@ -1,0 +1,2406 @@
+{
+  "commit": "a40228747470f0d184375e451b0173769c90aef5",
+  "parent": "8cc2f8ffbc4368e38950c2e037fee4ce12fa88b8",
+  "files": [
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/README.md",
+      "bytes": 7563,
+      "sha256": "61cfc58a6bb5b6299663ed9b99409f56cfb8887262d9d21c1e7ec3568ad2c914"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/findings.md",
+      "bytes": 14923,
+      "sha256": "60bc1ec4ce69e35ba2d3cf7f7f3609f32c7e17ba1085e7b26cfaf7a7201ce87b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
+      "bytes": 9462,
+      "sha256": "675d152b768c092b28ed5094016835bf866f27e20171142f21ee6f2456e39e6c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/summarize-trace.py",
+      "bytes": 5437,
+      "sha256": "8f0cf4863b19e7cee1aaabce6a2f4f475c0388a30f30ebc90b69944d552b2a52"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/summarize.py",
+      "bytes": 3743,
+      "sha256": "fd84cf59b40c2ecc078d07881d332f676ea8129e7904880f2cbdc1a90ef34ae0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10025,
+      "sha256": "c7a194ebb0c9afcb9cc8222cb1e3273dad9aa7963a6edb43bf689d3150a1a6b4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/copy-detection/trace.py",
+      "bytes": 2719,
+      "sha256": "b9ff1e4acd3cb26ce4951ad17d2a2c3ed612d67a529b5c87530aacecb18b7985"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/README.md",
+      "bytes": 3061,
+      "sha256": "bb28686a6d806cf67c7e734a5b247f38ab1e7a79a03bc5e49a6a5316f8809f2d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/contracts/synchronization-mapping-tracking.md",
+      "bytes": 7536,
+      "sha256": "b28d611fc94e4787dae8643d2dbfdf55efcab92f8553098b5ceb67c82a604b1c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/baseline-footprint.json",
+      "bytes": 3881,
+      "sha256": "0d1ae2352f5ac9032a0a9f2d40d30bc143919488a4b2e4b53ae7d5c77e9f1202"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/baseline-kernel_pressure.json",
+      "bytes": 172,
+      "sha256": "b527b7f2f44f52676d276c4df70258e6a65a1eae17ccedd475826c80f2269f62"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/baseline-pressure.json",
+      "bytes": 246,
+      "sha256": "e58d3543527d05fc545c885deec0665ff8abbb22be178fec216d51e08cb8b665"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/baseline-swap.json",
+      "bytes": 214,
+      "sha256": "dfbd7b57dcef3263ec0baaf7dccb780fcb2e054ac39f13c04c3b677427eb8ff3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/baseline-vmmap.json",
+      "bytes": 7875,
+      "sha256": "2233b025741745f02da8426d48348d6fb8d6e5e95d0548d650e0a2c259138434"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/baseline-vmstat.json",
+      "bytes": 1994,
+      "sha256": "1ecc4e9f33ae583d1affd45dc31d6b3180d09436d6c644464db8ba562379d73d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/case.json",
+      "bytes": 16320,
+      "sha256": "4d4622e5571c48039bb7ecbc6a9094d8bdd39706ca84a290c0b526209b6d7db0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/gpu_complete-footprint.json",
+      "bytes": 4000,
+      "sha256": "ac80c9f8eba78b7936ddcde5069d4a4f95ddb40181dd0bf82292b0c8cc88f33a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "8184047d83a8e5dbf9c9f2ababb92307cf33cd1be0028f776c8f5ae707472aa4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/gpu_complete-pressure.json",
+      "bytes": 248,
+      "sha256": "a861eb734f1a31e356aed3a2ce54b7108acd2d82768a2b90d5689b17d3223b02"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/gpu_complete-swap.json",
+      "bytes": 216,
+      "sha256": "27dba5c960a601b841372fb87a14ea32f2fa38b1098b85621aac43b5a162cfda"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/gpu_complete-vmmap.json",
+      "bytes": 7876,
+      "sha256": "b2a3ba3d23fcd5ea67a14d3ddc0bd14633f4e50f5e5c67f13caa75b3fec5ce93"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/gpu_complete-vmstat.json",
+      "bytes": 1994,
+      "sha256": "4feb21e974a6fb125dee944b0683be4646627835a185c92d0785f594ad591f50"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s0/stdout.txt",
+      "bytes": 990,
+      "sha256": "2d2538bfac5cb5db546bed38aea8255c6b19972b3805f89299656b07481efa9e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/baseline-footprint.json",
+      "bytes": 3881,
+      "sha256": "a45d77fff58b6cd73ed2c858bd9711c8cc8189f86c8d32d4c58d3bf9879330b4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "ba773ddcd8c67d52aa75098c7bdaca49f4a99824d55dcd6d414d1f7a4e98e9a4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/baseline-pressure.json",
+      "bytes": 248,
+      "sha256": "92beb58921a86f0b7bacaab5fa8f26d8b6f9c641fed655e2d489b7eedc051fd7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/baseline-swap.json",
+      "bytes": 216,
+      "sha256": "653715395a1dbd748ef3331338b6d3722ecfe73e4316c9f5eb8a7d9915c7b508"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/baseline-vmmap.json",
+      "bytes": 7872,
+      "sha256": "3556c074bc8ea7b7796aac5e61d41b3c06c465819092147b87ab12e91f348601"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/baseline-vmstat.json",
+      "bytes": 1994,
+      "sha256": "02e7136f9d4026057570af9433d0feb069cc810b98a8cfe529fa5118563b5dd1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/case.json",
+      "bytes": 16308,
+      "sha256": "7050d456795a7188144bbdb7024331f69fc3614880ef511ec6dfc3b0d9a8ab3e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/gpu_complete-footprint.json",
+      "bytes": 4001,
+      "sha256": "514aa2792582c55b31b5097feafbcae1f43add742339d5e259391f3ff6681829"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "1176679030b906a800b1aa0d17819a4de0c31c5d3e8e1fcd0ce0a37d2c96defb"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/gpu_complete-pressure.json",
+      "bytes": 248,
+      "sha256": "2c7fa55144e502981da8a504de53324dfbf2794ef5423d3b69dd69556f0fa609"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/gpu_complete-swap.json",
+      "bytes": 216,
+      "sha256": "4d86d4fd5ab88495f1db2a1b5c69ad420633df25615f0aef697dd603812be349"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/gpu_complete-vmmap.json",
+      "bytes": 7876,
+      "sha256": "574aac222623a5385aa1ac18c0bc72ad8ccddbcdf85aa86333fcc65095fc3a12"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/gpu_complete-vmstat.json",
+      "bytes": 1994,
+      "sha256": "7af337a9d6012f558d3ad2351f26916915b8d47ee9aac5d2dff0ca10868fc59b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/alias-s1/stdout.txt",
+      "bytes": 990,
+      "sha256": "b1c8f66aad78e6592f2325275dfb0c1c981025b9854c70659d935bb044832953"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/archive.json",
+      "bytes": 516,
+      "sha256": "e2cb62cb6220d927dd19e1254a76dbea0c96633fea5e105d02633cc9da9bf114"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/receipt.json",
+      "bytes": 119487,
+      "sha256": "6f7b346c3d1139c0b07e46071cb4ea59e03bf0fc760f9dc0936162bc534b9532"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16050,
+      "sha256": "8c7ea0b1ed5046ad25a5830d2c2c0982fa24a09ddb34dfae5edc5ce1a117878a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/alias.cpp",
+      "bytes": 5486,
+      "sha256": "4034866cc66761076ab0ea87c7928b9d4f17bcb244adfae79c95078e4dfb614e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/archive.json",
+      "bytes": 518,
+      "sha256": "d0dd9a26f33d93798b71e74f34ab6b68124f7f1c6161a6c2886b44e96627d4da"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/receipt.json",
+      "bytes": 119596,
+      "sha256": "96877af5bb06d5c2f8d9ff70a2c8847e60f2af9e54c0e3062f13694cb951b44c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16050,
+      "sha256": "8c7ea0b1ed5046ad25a5830d2c2c0982fa24a09ddb34dfae5edc5ce1a117878a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/probe.cpp",
+      "bytes": 17275,
+      "sha256": "e9658020c77523916999f870ec595686fb1fe52d8271a8738dffe1dade07073a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/baseline-footprint.json",
+      "bytes": 3880,
+      "sha256": "bcf72b9d951ef134f266cbda2517ed3ee47cfb4f1c7040eb41a11f218ae11cf2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/baseline-kernel_pressure.json",
+      "bytes": 172,
+      "sha256": "82a4293db9eda616c054cf5d16177d42468e5c4e07906f2b4ce3daa26d11f7d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/baseline-pressure.json",
+      "bytes": 248,
+      "sha256": "d088570bc700def11ec73ec3ac39fda57415f04fd3285334c99666a7f4f6575c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/baseline-swap.json",
+      "bytes": 216,
+      "sha256": "f3d3ada4c7a882585cdba5752f37d84d23d258c8067d6b0a7e5a1a31c973317f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/baseline-vmmap.json",
+      "bytes": 7874,
+      "sha256": "9c4e838ac44a259332bb7d27b1b5aa5dc141de98daac934c7b9b87df4459091d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/baseline-vmstat.json",
+      "bytes": 1995,
+      "sha256": "bd1c2b641967b3f4825c76e638f4a583939cc9136c33127ee269f4225956f681"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/case.json",
+      "bytes": 16406,
+      "sha256": "13a7fde6ca6ef9af97e5f82f5ce50542c09e9a07f1819141722b44e789640d17"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/resources_released-footprint.json",
+      "bytes": 4001,
+      "sha256": "13de916a4ec8104809e9e24dadf318d575b5313df383e16453d39c65fe1cf726"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/resources_released-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "ead41c2cc5a5f04b5e05af54f02de27eb038fe8130aeaab76b4944efda46d175"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/resources_released-pressure.json",
+      "bytes": 247,
+      "sha256": "d6025cf08bee37b6acacd03731e2029280ccd42c3748715759f9577b1d8ed113"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/resources_released-swap.json",
+      "bytes": 216,
+      "sha256": "67444026d20fdf445067a01ebb0f14e481c6264e0116cef3d0583e3f4e78adec"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/resources_released-vmmap.json",
+      "bytes": 7987,
+      "sha256": "d276b0a9f4376c4211803fc026a3dadb2a91c3c6c13786b1589853af161cf86a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/resources_released-vmstat.json",
+      "bytes": 1993,
+      "sha256": "2cfe1f155f86a6b43a2214315d2e60c4730e750e443e5106e7e5a6d482cc3098"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s0/stdout.txt",
+      "bytes": 10422,
+      "sha256": "fab27cdb75a7e10d9bd9af4772b3135d96ff1ce322533dfeb3052fd80360a4ed"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/baseline-footprint.json",
+      "bytes": 3881,
+      "sha256": "ab89b0319cfbad531c53fd98aa4bf7e4806630d9a21c49c7efe45bbabdccec72"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/baseline-kernel_pressure.json",
+      "bytes": 172,
+      "sha256": "16c7300ae314a5ffb5d5caa36928672b0f3c2feac96328dcd1aaa605441f4408"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/baseline-pressure.json",
+      "bytes": 248,
+      "sha256": "ab142b1a14977c00a20842b02293eed762e5da11c3f8c45f5210e6528549a852"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/baseline-swap.json",
+      "bytes": 216,
+      "sha256": "4e1fa7be456a034a7cfddfa48cc671117ee9864cff0ce4a0a9dd29164c342670"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/baseline-vmmap.json",
+      "bytes": 8014,
+      "sha256": "eead044cc126f4877c4829201457d9d3feeb0e589a85dc7c9b388008b3d8bf29"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/baseline-vmstat.json",
+      "bytes": 1995,
+      "sha256": "d292838702c5a017344dd644372b84bb07102e5678927e53f80395f368f61df5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/case.json",
+      "bytes": 16409,
+      "sha256": "2b981c89ad4eb0a4c4c1c7e4f9e032a9f7baa97ecf64f67c121aed1bf3dc862a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/resources_released-footprint.json",
+      "bytes": 4000,
+      "sha256": "599d91e355476451d3a50378e057a70cfbde89557dc8f19a134fd245cc8e91c6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/resources_released-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "fe01de4de621cb0b9fe85dcbd52ed6ce2c607ca5a7c05bdd7bd3075f55f5dacb"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/resources_released-pressure.json",
+      "bytes": 248,
+      "sha256": "248d392dc6d26615d0500e000ae5af34c9fe37c9e93cba8089410be0adfd0d34"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/resources_released-swap.json",
+      "bytes": 214,
+      "sha256": "625c599133e64a074135759d67a7e75b967b85703255038d5a26ead7c1dd419d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/resources_released-vmmap.json",
+      "bytes": 8136,
+      "sha256": "8bf59f3f3351e30047211aace89df55e25ef5c8e5c2ca8b484bd8793c6ca5eea"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/resources_released-vmstat.json",
+      "bytes": 1995,
+      "sha256": "69bd26fc24170e69888c9d5c2372bc70c1c2770e29a9aeb3441b4ab6d488ea83"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/texture-s1/stdout.txt",
+      "bytes": 10422,
+      "sha256": "fab27cdb75a7e10d9bd9af4772b3135d96ff1ce322533dfeb3052fd80360a4ed"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/00-default/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/00-default/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/00-default/case.json",
+      "bytes": 1131,
+      "sha256": "52768da678a464bf008dff0960b3505c2ce4632ff7f0294bb96677cc05375eb9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/00-default/stderr.txt",
+      "bytes": 57,
+      "sha256": "443284e82a7e0abc2c0dea9bf933dfab65a196f84da7f9ee894f02da741d6c55"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/00-default/stdout.txt",
+      "bytes": 23928,
+      "sha256": "464b99347ec484e5ebbb6c78845e85a127c59e26dd7db765ea469d78657328e3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/01-wb/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/01-wb/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/01-wb/case.json",
+      "bytes": 1121,
+      "sha256": "7773387d1e3119dacb891973182e907d07ad4fda25dd35364fa6737ba6807317"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/01-wb/stderr.txt",
+      "bytes": 57,
+      "sha256": "6d2a6b4f0079704e3f9d31329f05a64103c5d4545c1790d25cc6fcb7cc1aef39"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/01-wb/stdout.txt",
+      "bytes": 23911,
+      "sha256": "cbb09ed671286a0d76033683bf8688b53e3240210ddb23f829078ee8776dcc42"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/02-wc/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/02-wc/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/02-wc/case.json",
+      "bytes": 1121,
+      "sha256": "36690fe6f154de1073e3b5aaf9baf5a6ad238beb4a160cfc0a4e00d28e8b0804"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/02-wc/stderr.txt",
+      "bytes": 57,
+      "sha256": "fbbf6d0bc8c651e8fdda9484b3d93833ea04f9b4060d2a6fd93bb47c36da7eaf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/02-wc/stdout.txt",
+      "bytes": 23896,
+      "sha256": "7db57a3fbab31b79f5180e72f69501d375a3ea2a83a1dfca325503979176a43c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/03-upload-wb/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/03-upload-wb/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/03-upload-wb/case.json",
+      "bytes": 1135,
+      "sha256": "103aed762cab8ee56de2974d7c046be45cebdfc57c0745dae19e338fae628998"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/03-upload-wb/stderr.txt",
+      "bytes": 57,
+      "sha256": "36e40620843f9c688b8911384f7e308955adef8be76c248e85ef83bca19c6930"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/03-upload-wb/stdout.txt",
+      "bytes": 23905,
+      "sha256": "75421fdeb3668d48247587f256c37e04eac515eec50be964abb70f4a7a4db1ab"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/archive.json",
+      "bytes": 306,
+      "sha256": "41e748704553b33d3290b28c8e71ce56fb1eecfde8f2921824623783c7e2b1db"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/receipt.json",
+      "bytes": 41973,
+      "sha256": "d49b73a13afb12445cd2fe3b75e1d1638401fc4c8562a7be703f90d1343cfeb4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11092,
+      "sha256": "0fabd293b82f9bac6117cc8a90ec3b7f4cabf7cd365f9078c767675f20051e64"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 12924,
+      "sha256": "223a88facf609d71d3de94bfa8b622097c89576896bdfb3044f8964719fd3508"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 13969,
+      "sha256": "0323046cca6482e54b571e0bb2069b99331ac8c8ee385afc4a33e7818804f848"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-01/summary.json",
+      "bytes": 41408,
+      "sha256": "5930596d913c1d080ac533136ded3883ac1dfb64fafc314dd1a58b05ff9472fe"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/00-wb/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/00-wb/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/00-wb/case.json",
+      "bytes": 3862,
+      "sha256": "5d3dc2f9b2f9ce37680bbbdcaa83f76c58069e64e3deb9cf2d43407fc5e36384"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/00-wb/stderr.txt",
+      "bytes": 57,
+      "sha256": "d607320a743828d2deed293a8366460b270a76e71cdadcba0026de48baf0c37c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/00-wb/stdout.txt",
+      "bytes": 26778,
+      "sha256": "3c4d3040c865189a02e9359984b763756ce74f5958149e983b5248fa1699c1b2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/01-default/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/01-default/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/01-default/case.json",
+      "bytes": 3872,
+      "sha256": "0c9ec2718072cbc2e22ae06d94d88f950a2fb259347b49039c24a6d031c0d3a0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/01-default/stderr.txt",
+      "bytes": 57,
+      "sha256": "49eea209d7b3f3810f34d2ea8ef4c79ec9c883c6079a4771da6a4bbb47f4bae4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/01-default/stdout.txt",
+      "bytes": 26810,
+      "sha256": "1b220464bfba5a888356f5ee6bf1980d53b7ffa7cedb1b6a535f77b1170c7477"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/02-upload-wb/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/02-upload-wb/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/02-upload-wb/case.json",
+      "bytes": 3876,
+      "sha256": "608891507205f16863a1a08d42e55999982f6aa4571d81105b091d23fbc3dd1a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/02-upload-wb/stderr.txt",
+      "bytes": 57,
+      "sha256": "79cd76157ff5930433aad09b441d5a465ae39060d6813457d43b8650125a9875"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/02-upload-wb/stdout.txt",
+      "bytes": 26782,
+      "sha256": "b005c2b2f83ad0b7b972c0f99699327303a0663930e95f590df581e2e8998b95"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/03-wc/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/03-wc/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/03-wc/case.json",
+      "bytes": 3862,
+      "sha256": "b11c705ae790984c69028122ba098b37cee4c21258c3605af410d1c3a778844b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/03-wc/stderr.txt",
+      "bytes": 57,
+      "sha256": "88629597cb9741c4ad8866080d2f70cf3136b98b67b89841363090478a0b1da3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/03-wc/stdout.txt",
+      "bytes": 26779,
+      "sha256": "6c94a7b46ce2e601b7733f575e76168367e3d542064bf848f7807a1d3ce79622"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/archive.json",
+      "bytes": 306,
+      "sha256": "71c99ac9bf5fcc895852ed828424d0c4ed95263d5efb94fb3703d3ca52d2deb4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/receipt.json",
+      "bytes": 53888,
+      "sha256": "dfcd11b34e399077ea05ff8acbba7e3aca20173d151f8c61cd04d5ffb9f13d11"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11226,
+      "sha256": "ac0c384287b84c966b05f6815360f4199e1bcb9952cbaf47a72ad4499bd5f19c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13169,
+      "sha256": "9989ab9ca67ec7df9677f018f5b968e62344ae78d45ed82d7d310bc299ca6558"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-compute-02/summary.json",
+      "bytes": 54087,
+      "sha256": "b5bea792bc203be0cacc24e1dfbd4564c997531e1da5d93fc230f794d3d87369"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/00-trace-copy-upload/case.json",
+      "bytes": 3854,
+      "sha256": "3a51da052dcda0919d8cdc1201af772f4bde3652933f9379fbc2f2b45e44c8b6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/00-trace-copy-upload/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/00-trace-copy-upload/stdout.txt",
+      "bytes": 2256,
+      "sha256": "1f1a1ff5e217c9a7ed79e935add71eda1d9a0fade168ab401dc57872dc52f5b4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/00-trace-copy-upload/xctrace-output.txt",
+      "bytes": 252,
+      "sha256": "359c5b2cfaa92b7f1051a7b0c80a9b17e6197336d6d8648cf25babf10ad8985e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/00-trace-copy-upload/xctrace.json",
+      "bytes": 421,
+      "sha256": "f3532c9ec25f4306adcdbfb0cf4f1eef67719ab8c95eefca80a360f395fc1736"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/archive.json",
+      "bytes": 319,
+      "sha256": "c2b45a2cb10b74100a236866ad79ea6514710c2d526128b90973537aef5aa965"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/gpu-samples.json",
+      "bytes": 7496,
+      "sha256": "e2001a24ac10864d03fa3f1c6f8bc801a970ddf1c38926e31acbbe13658dd903"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/instrumentation.json",
+      "bytes": 2193,
+      "sha256": "7dc770540abf6dbe27447262cf25428cdaf1c38cbacc70ecf3a291bdb427b400"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/receipt.json",
+      "bytes": 23375,
+      "sha256": "286ea10787bfd5941574501f5c0987a54fc58698196e8caba051ca7fe0e81b1b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/source/trace-launch.py",
+      "bytes": 2719,
+      "sha256": "b9ff1e4acd3cb26ce4951ad17d2a2c3ed612d67a529b5c87530aacecb18b7985"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/00-trace-copy-upload/case.json",
+      "bytes": 3836,
+      "sha256": "7f721dfa16ec8c37285cdaef3cd988a0e9550cb0ddaeccdb0ab2ca148addce29"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/00-trace-copy-upload/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/00-trace-copy-upload/stdout.txt",
+      "bytes": 2256,
+      "sha256": "8bc574c57e791895bcc5564ffac2af2f89387053e06ff6ff9a89881ff22723a0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/00-trace-copy-upload/xctrace-output.txt",
+      "bytes": 177,
+      "sha256": "3e955ab19250170c69accd12c821b2600150850790b05b741cc3f84d68e3f070"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/00-trace-copy-upload/xctrace.json",
+      "bytes": 415,
+      "sha256": "944082d0e96e5c68859878a36d1bdb482257504fabec9e31f1e78ed65663a433"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/archive.json",
+      "bytes": 313,
+      "sha256": "2bee4ebbaf2f93aac3342c3aeb8a1fc9eb17f326c22f3f147228c6dfa84d07bc"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/instrumentation.json",
+      "bytes": 447,
+      "sha256": "887542038e5e0cb66914065ed0f308d0b56a4ccbd0ce90774ef8f48bc8f6bdc3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/receipt.json",
+      "bytes": 23309,
+      "sha256": "9e7171ceb2ebf229e5aff5947270866c93f317c25699155fb98496bb70c1117c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload/source/trace-launch.py",
+      "bytes": 2544,
+      "sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/00-trace-copy-wb/case.json",
+      "bytes": 3816,
+      "sha256": "b716dd538b33890ecca5ee46f88473c9d8cb030cd77f10905c6fdfca68d3cc33"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/00-trace-copy-wb/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/00-trace-copy-wb/stdout.txt",
+      "bytes": 2256,
+      "sha256": "ad162c213751febd978c20b11f20dfa82d9c5ff0d9fd53e17bb29ec5c727328f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/00-trace-copy-wb/xctrace-output.txt",
+      "bytes": 252,
+      "sha256": "539d0325d892a196dd4dbb8d4314f7802d8a475ba78c3becd5a15438ded554ee"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/00-trace-copy-wb/xctrace.json",
+      "bytes": 407,
+      "sha256": "e4b05a784a38f130648e53eac1163444473b0a1cafeae1c03a421b83a7c0fbf3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/archive.json",
+      "bytes": 309,
+      "sha256": "882fe6dbe31a2c204c3a78c1ab26140cff62a0672d6244cd34da080220bd40b0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/gpu-samples.json",
+      "bytes": 7483,
+      "sha256": "a13d713f9980c3145ad8536b980396a12efee3141e1a452231b233230d51b0ab"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/instrumentation.json",
+      "bytes": 2097,
+      "sha256": "05e4bb76124c53d8770218d5c1e0e2f9d2cb805c37d5d7ec6992c1981f7fd559"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/receipt.json",
+      "bytes": 23249,
+      "sha256": "2107ed276a54746018605653274c356d0b087ca17e00ba728b4331fd0a7f6de1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/source/trace-launch.py",
+      "bytes": 2544,
+      "sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/00-trace-copy-wc/case.json",
+      "bytes": 3816,
+      "sha256": "af746f94e4303c8b28f38e8213b95fdc22e33319a0cd6639cd72791f74b206d8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/00-trace-copy-wc/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/00-trace-copy-wc/stdout.txt",
+      "bytes": 2255,
+      "sha256": "1ac333d1c155e99c7340fe797e57e816945c36e32b983ae43914fef1e549401c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/00-trace-copy-wc/xctrace-output.txt",
+      "bytes": 252,
+      "sha256": "51fda4158f053fd4a122c0d4051db240f96ae6f1aadf19cf8dec26d73b74c671"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/00-trace-copy-wc/xctrace.json",
+      "bytes": 407,
+      "sha256": "1fde4454967a8bab2fa73e948f7b82f3cd1e54aae429e983cefbb4c2f60df22b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/archive.json",
+      "bytes": 309,
+      "sha256": "3359ba681fd7df1fc898063baf908245ffbf621b980154ef22a502bc2b8d4e51"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/gpu-samples.json",
+      "bytes": 7480,
+      "sha256": "96db4e1c86a853824987694cd3bf8a85ab48aa7cad67e414eb7c0cfdecce1c8b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/instrumentation.json",
+      "bytes": 2097,
+      "sha256": "7a8b666bc20714a7e839ed2e56020b832d7f12979837c299b6da5f50dce116c0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/receipt.json",
+      "bytes": 23249,
+      "sha256": "4dc9730530239e3332ab9744f6840bee501350f9caa208660fb5444136c31dc1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/source/trace-launch.py",
+      "bytes": 2544,
+      "sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/00-default/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/00-default/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/00-default/case.json",
+      "bytes": 3976,
+      "sha256": "9d5fd6e988f1e5c66013df5c076744f85bf6377402a68c78e5140d41cb5ea6d8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/00-default/stderr.txt",
+      "bytes": 57,
+      "sha256": "443284e82a7e0abc2c0dea9bf933dfab65a196f84da7f9ee894f02da741d6c55"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/00-default/stdout.txt",
+      "bytes": 26807,
+      "sha256": "0816894bcf881f8bb4751de0eadcc51421ba92d7b1d7266d307860bed01f8c04"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/00-default/xctrace-output.txt",
+      "bytes": 257,
+      "sha256": "35a134798a0dc0f3b7eb7613e86f7fbb6023acc0aff3388a30b98c6460abba16"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/00-default/xctrace.json",
+      "bytes": 401,
+      "sha256": "069875619fde005ad1048f052ad6eea676e3c4a550d3b8ad920396a14ca2aa8c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/archive.json",
+      "bytes": 309,
+      "sha256": "75488e982bb062771151169f8da7423f59f3b752e2e6c2e1e3b0e57e8c5e498e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/gpu-samples.json",
+      "bytes": 36946,
+      "sha256": "3a0cba954a0c8e36a0a66ce6da98fba6908b909676a9e7083292649cbd64a4fd"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/instrumentation.json",
+      "bytes": 2073,
+      "sha256": "48cdb8ec976b1dfcdd954017f724820b3bdab2428eb34ad82eadd3b7e64fa89d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/receipt.json",
+      "bytes": 23397,
+      "sha256": "d2164af12c1101a499dcb83a691c4692bbcc0b54461b827bdcb42fd1edea578c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/source/trace-launch.py",
+      "bytes": 2544,
+      "sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/00-upload-wb/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/00-upload-wb/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/00-upload-wb/case.json",
+      "bytes": 3986,
+      "sha256": "d4ab3d65283adba400ea2838bdaf0c708f53047f3531c2aa12dade11ee9b96e7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/00-upload-wb/stderr.txt",
+      "bytes": 57,
+      "sha256": "443284e82a7e0abc2c0dea9bf933dfab65a196f84da7f9ee894f02da741d6c55"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/00-upload-wb/stdout.txt",
+      "bytes": 26816,
+      "sha256": "77c54455f19374cf9dbf0d1e682a550acc75e693783160fac8de313b967fc5d4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/00-upload-wb/xctrace-output.txt",
+      "bytes": 257,
+      "sha256": "dd989674cb86daff46191cdfee6f980d3c22ce0b8e9fe8d0e5e9b7096c8b935d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/00-upload-wb/xctrace.json",
+      "bytes": 405,
+      "sha256": "a2fd7c64f6f9b3deff52ad60b2f3870b0e04b1da316c5912bd38d4c48250d50d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/archive.json",
+      "bytes": 311,
+      "sha256": "103039651fa51c3a152ad1ae8d9882da05854413cf46f6960438c5f0b4daeaaf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/gpu-samples.json",
+      "bytes": 37009,
+      "sha256": "d530d47489156ef7baa7b4aac261e0f3f8ea509d157b402f9bf63748c9140140"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/instrumentation.json",
+      "bytes": 2097,
+      "sha256": "378f6ab999d3d60055260a4273f617410650999c005cc69d2115a105037e5d41"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/receipt.json",
+      "bytes": 23427,
+      "sha256": "74b4c8bd1cd84c72e9b855587cdeb2003c5a23fa8a3eba0eeb312db516b76105"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb/source/trace-launch.py",
+      "bytes": 2544,
+      "sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/00-wc/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/00-wc/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/00-wc/case.json",
+      "bytes": 3951,
+      "sha256": "2c89044d28233a0d5c3925a0f6ccb368ed383a80505d598e9c1b3b589223e9ac"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/00-wc/stderr.txt",
+      "bytes": 57,
+      "sha256": "d607320a743828d2deed293a8366460b270a76e71cdadcba0026de48baf0c37c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/00-wc/stdout.txt",
+      "bytes": 26804,
+      "sha256": "8900fadb30055e12282eabd7026b378b7c5ae915df31538c2998ce9187947728"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/00-wc/xctrace-output.txt",
+      "bytes": 257,
+      "sha256": "98fd3711a8c033dbe326600187732fd5547dddeeebf2863004cfdf8a2f04741e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/00-wc/xctrace.json",
+      "bytes": 391,
+      "sha256": "86f4be550c5fbab1f0d5935ce57fb8af98f05ce71e1515e4144e86b947c8e211"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/archive.json",
+      "bytes": 304,
+      "sha256": "4cf73cee3c5057724408de8be821431b303334262c1f6f49a8c37b2d7eb2c87c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/gpu-samples.json",
+      "bytes": 36992,
+      "sha256": "1a1e83876bb7c07d38d9737bdb1991186299876a308c72c3ba6e9a505b8eb9f5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/instrumentation.json",
+      "bytes": 2013,
+      "sha256": "c58ae416c601c2013e562011ed0b7ee79bff84e10aa02dc9486fe28fdde87fce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/receipt.json",
+      "bytes": 23322,
+      "sha256": "a6a6591f40565133bfcd89b421b17f33544a411be690552f597907a9108cef32"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 15036,
+      "sha256": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/source/trace-launch.py",
+      "bytes": 2544,
+      "sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-01/archive.json",
+      "bytes": 304,
+      "sha256": "655a4cb418b79e3d02dc58fa76b7c6be1d0bd53675c673e21a75e04f0e58fdcc"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-01/receipt.json",
+      "bytes": 12472,
+      "sha256": "0fcaae7f71d55a536d639beb1f223aed3bbe4753f1ac0036fe44a583b9e1320a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-01/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11092,
+      "sha256": "0fabd293b82f9bac6117cc8a90ec3b7f4cabf7cd365f9078c767675f20051e64"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-01/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 12924,
+      "sha256": "223a88facf609d71d3de94bfa8b622097c89576896bdfb3044f8964719fd3508"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-01/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 13969,
+      "sha256": "0323046cca6482e54b571e0bb2069b99331ac8c8ee385afc4a33e7818804f848"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/00-placement/case.json",
+      "bytes": 950,
+      "sha256": "bb57605f34b93e0801a8a02f6513509d9645115fa21044a8c5133d2ae9c21b8e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/00-placement/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/00-placement/stdout.txt",
+      "bytes": 734,
+      "sha256": "03ebfc2e2f7a38b00ca3caabeb38834c0a8d149341f874c51d60a59e4fcfc858"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/01-watch/case.json",
+      "bytes": 549,
+      "sha256": "f98c4897490b33ad14f99c5bddb4db85328fb734f5fb8866eb66861585a47d24"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/01-watch/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/01-watch/stdout.txt",
+      "bytes": 1083,
+      "sha256": "2e0841402a5b6fcff303b6530f8aaa62c2ba35c0c7efefa9b381ee270760a1a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/02-wrap-watch/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/02-wrap-watch/case.json",
+      "bytes": 1044,
+      "sha256": "c0603683ba5619bbe9891c2d5fe539f6b98e8d0f2c754053773fc6e84cbb4a04"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/02-wrap-watch/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/02-wrap-watch/stdout.txt",
+      "bytes": 187,
+      "sha256": "e670bb4426e0004e898cd61b4eea1b5d64b3aeba00702e96ee001e885ef71253"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/archive.json",
+      "bytes": 304,
+      "sha256": "998133c99428ed5f388cad823de62348bd701bb9ba05880eb21a62d72afddc99"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/receipt.json",
+      "bytes": 33799,
+      "sha256": "8ca804dc99c40bfd2d93e920e75d343f72dcf8fcb9e12e3ebfb466b704f89e85"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11092,
+      "sha256": "0fabd293b82f9bac6117cc8a90ec3b7f4cabf7cd365f9078c767675f20051e64"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 12924,
+      "sha256": "223a88facf609d71d3de94bfa8b622097c89576896bdfb3044f8964719fd3508"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 13969,
+      "sha256": "0323046cca6482e54b571e0bb2069b99331ac8c8ee385afc4a33e7818804f848"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/00-placement/case.json",
+      "bytes": 3692,
+      "sha256": "fdd3b1340e0ed8bdf8f4e0e338a22a24988cdfc941712ef27a93d9b785b3ee70"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/00-placement/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/00-placement/stdout.txt",
+      "bytes": 897,
+      "sha256": "680bfc1db8115f405167625a72e6e7915599e58ed55db6c602a69e4458eb512a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/01-watch/case.json",
+      "bytes": 549,
+      "sha256": "2e351154ea71cb504eb4bd33f3fa251cc7c927f84f07f96a0a211e8e12d56a8a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/01-watch/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/01-watch/stdout.txt",
+      "bytes": 1083,
+      "sha256": "2e0841402a5b6fcff303b6530f8aaa62c2ba35c0c7efefa9b381ee270760a1a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/02-wrap-watch/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/02-wrap-watch/case.json",
+      "bytes": 3786,
+      "sha256": "42e0ba014f2a33b91f7e98255ca79dce30c8faa268aa4f0d0cbc3349e2ec10c9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/02-wrap-watch/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/02-wrap-watch/stdout.txt",
+      "bytes": 187,
+      "sha256": "e670bb4426e0004e898cd61b4eea1b5d64b3aeba00702e96ee001e885ef71253"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/03-clock/case.json",
+      "bytes": 3684,
+      "sha256": "135fdbb72fda719abaaf98c7f90d92e5f3ea4b13b62036391889112819ee6b0b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/03-clock/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/03-clock/stdout.txt",
+      "bytes": 423,
+      "sha256": "68a68adb0765b290c2eaba359c4c0a957825a3bfac118f7a8ddccae5ace363a6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/archive.json",
+      "bytes": 304,
+      "sha256": "c304ab76d7468c49bc5a7a5121457808c18840cad8168b65317f0de3c03ef33c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/receipt.json",
+      "bytes": 49784,
+      "sha256": "351c59e1fbd03922ad9637f32aa1e779894a47dae1f5cc6bd8af4e9845af8c1e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 13169,
+      "sha256": "792a242a9969e81385ccfde3d0f3fecefcbdab51e32319d967dea99db0c73ecb"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-04/archive.json",
+      "bytes": 304,
+      "sha256": "a2921c286a18cc9ea9cfce760d01b4e43acf1972ec78f388cd8e37d3f1083194"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-04/receipt.json",
+      "bytes": 12474,
+      "sha256": "01f30a1b7fbfa3f8ac8a45128b4e48aa1c8f078e29c5b98796e967082a598342"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-04/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 13478,
+      "sha256": "234f20c8ed5b9ca6638b2ff798bf2d2221e0c53b1dde5133f30358fba567cfe7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-04/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-04/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-04/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-04/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/00-placement/case.json",
+      "bytes": 3692,
+      "sha256": "10bbe56f97ad1b91500d3d0d69f0137b7ac03a9a9a23db1ba186755e920cc512"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/00-placement/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/00-placement/stdout.txt",
+      "bytes": 897,
+      "sha256": "680bfc1db8115f405167625a72e6e7915599e58ed55db6c602a69e4458eb512a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/01-watch/case.json",
+      "bytes": 549,
+      "sha256": "1ac43733e3618fdbbb65583000f97c8e7c1d9ccafb7a27ca253daf4dd64f7474"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/01-watch/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/01-watch/stdout.txt",
+      "bytes": 1083,
+      "sha256": "2e0841402a5b6fcff303b6530f8aaa62c2ba35c0c7efefa9b381ee270760a1a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/02-wrap-watch/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/02-wrap-watch/case.json",
+      "bytes": 3786,
+      "sha256": "7364a01cce86e5c79e19239de53bce3a7aea798da131d74809ddc11d4e0c99a6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/02-wrap-watch/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/02-wrap-watch/stdout.txt",
+      "bytes": 187,
+      "sha256": "e670bb4426e0004e898cd61b4eea1b5d64b3aeba00702e96ee001e885ef71253"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/03-clock/case.json",
+      "bytes": 3684,
+      "sha256": "12242cf5ac109a5b4b80df1bd698c8089051c67806ff892bda4ef6bd08792898"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/03-clock/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/03-clock/stdout.txt",
+      "bytes": 498,
+      "sha256": "59744488a7c14c9be52dc387f641333b68fbd9613fd8ba4719af671fe490e9d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/archive.json",
+      "bytes": 304,
+      "sha256": "d57ef6a2f428908b48fe5f751426979bea00ede44c0b7fb41f21c770213e5b20"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/receipt.json",
+      "bytes": 49784,
+      "sha256": "88f517cfab26f17fb53635fa92af63ffa7976d1857095a5238be0b677ad90b6a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 13478,
+      "sha256": "234f20c8ed5b9ca6638b2ff798bf2d2221e0c53b1dde5133f30358fba567cfe7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-05/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/00-sweep-wc-1-4096-473/case.json",
+      "bytes": 3740,
+      "sha256": "213189d4edf5b80ce0d91781a95d407f894a4eb946ba457e2b5f18b0010babff"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/00-sweep-wc-1-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/00-sweep-wc-1-4096-473/stdout.txt",
+      "bytes": 69214,
+      "sha256": "4a0f5afa871bc2593fd29165b0015b7676dac4756208a196d88b4bf57bc84815"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/01-sweep-wc-16-16384-473/case.json",
+      "bytes": 3744,
+      "sha256": "89b196686f7bfac00e902c768cf45a74fd17bfc740c245abf432d1ad5fa23a68"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/01-sweep-wc-16-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/01-sweep-wc-16-16384-473/stdout.txt",
+      "bytes": 70325,
+      "sha256": "809900806bb05c6078cf77c0ca78d0296c32da2a7ae04fdc03c75c8087434f47"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/02-sweep-upload-1-16384-473/case.json",
+      "bytes": 3750,
+      "sha256": "676d75ce064fd647141595aab85e7f825a2ec7a1fefcc393c8e9d9b2a47c3716"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/02-sweep-upload-1-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/02-sweep-upload-1-16384-473/stdout.txt",
+      "bytes": 58268,
+      "sha256": "83f4580fc81f8ea4fdba1fcadff443437347db778ca15abad7d45bcff41808cf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/03-sweep-wb-16-16384-473/case.json",
+      "bytes": 3744,
+      "sha256": "e87b6f356229133a563cb276d58c3c1d043cdff634dd39b6bbc278ecb4291c50"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/03-sweep-wb-16-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/03-sweep-wb-16-16384-473/stdout.txt",
+      "bytes": 70290,
+      "sha256": "2282eea4cc316265342a26f612560475be25d2c8df942aa7989763b16fef6efd"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/04-sweep-wc-16-4096-473/case.json",
+      "bytes": 3742,
+      "sha256": "8492a5372860c97ee82f58acbb435180b7ba50874e8870f79821dfc95abe813f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/04-sweep-wc-16-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/04-sweep-wc-16-4096-473/stdout.txt",
+      "bytes": 70234,
+      "sha256": "60ff3cb58152acaa8a3b404fd67ee3f7829fab3b63068fb0659503330b71cec6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/05-sweep-upload-1-4096-473/case.json",
+      "bytes": 3748,
+      "sha256": "ec114735caba220175e87e4a00286c6c07c9aa9b9dab861ccf608045f837a392"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/05-sweep-upload-1-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/05-sweep-upload-1-4096-473/stdout.txt",
+      "bytes": 69226,
+      "sha256": "20da5d2f895d34c5983f32e9b34a9b9e9aad1ed75289e2bd9207788262fdc7ff"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/06-sweep-upload-16-4096-473/case.json",
+      "bytes": 3750,
+      "sha256": "5474277b72dffe2edbd71e3d4552113fb8c47b6ef39d1a19f590b26a9d213226"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/06-sweep-upload-16-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/06-sweep-upload-16-4096-473/stdout.txt",
+      "bytes": 70226,
+      "sha256": "ddb55767799725f6769b69ace6ae27c7515443de9ef5b4817090825505fb5c9f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/07-sweep-wc-1-16384-473/case.json",
+      "bytes": 3742,
+      "sha256": "3e74bc5e76732174cfab972fffa1191746e9dd6a2f03191f8ef875c4e73bdf13"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/07-sweep-wc-1-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/07-sweep-wc-1-16384-473/stdout.txt",
+      "bytes": 58263,
+      "sha256": "f76a95e1183e8e77ae6262267cec2d596e4b5725a64ff487ffb630139edf458a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/08-sweep-wb-16-4096-473/case.json",
+      "bytes": 3742,
+      "sha256": "12082051a75bd883d7f78a40004b0d10529e8192cc6a7df10c34dd00ec92d6de"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/08-sweep-wb-16-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/08-sweep-wb-16-4096-473/stdout.txt",
+      "bytes": 70217,
+      "sha256": "dbedc539b9fc92531405dcf6f07f31523777ae8911cc85e1b1594c7b5887c29d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/09-sweep-upload-64-4096-473/case.json",
+      "bytes": 3750,
+      "sha256": "9aa2b77289058a67f651446bd9d80e8b55b5bca028f9d9ec9955ba5d552d5b43"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/09-sweep-upload-64-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/09-sweep-upload-64-4096-473/stdout.txt",
+      "bytes": 70817,
+      "sha256": "a8e81a1cbb241121fab403aca198abfab280d72eefe8b11534d841317afba4f7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/10-sweep-wb-64-4096-473/case.json",
+      "bytes": 3742,
+      "sha256": "7c5246155a16e8846651a630a745f15a02285b0c22c630a048da55df0d3f5da1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/10-sweep-wb-64-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/10-sweep-wb-64-4096-473/stdout.txt",
+      "bytes": 70818,
+      "sha256": "312fe8c4b546bdf6a42c4a1b3cc45882ef22eecde71d56819dbef98c94cc464a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/11-sweep-upload-16-16384-473/case.json",
+      "bytes": 3752,
+      "sha256": "2013565b5de00e53626c96310f43b34484f558963e1109ce8da6bf3109e6aa70"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/11-sweep-upload-16-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/11-sweep-upload-16-16384-473/stdout.txt",
+      "bytes": 70321,
+      "sha256": "19158d508613b7e0b62fed6cf414f7d12f08c91d458256d569240ce0220f639d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/12-sweep-wc-64-16384-473/case.json",
+      "bytes": 3744,
+      "sha256": "94858ad6482f59a8cd640a9f220a1003d3a6a19b64108191adafcbbe24e48ff8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/12-sweep-wc-64-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/12-sweep-wc-64-16384-473/stdout.txt",
+      "bytes": 70895,
+      "sha256": "0a1839b79c96771f4cb2e98c9228ca7a2b578f709fc96e8be4ae4bc570214d28"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/13-sweep-wb-64-16384-473/case.json",
+      "bytes": 3744,
+      "sha256": "605767e4ad619e87da767ed476900a7799e3b62137a147efbe690782688bea10"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/13-sweep-wb-64-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/13-sweep-wb-64-16384-473/stdout.txt",
+      "bytes": 70920,
+      "sha256": "f9ffad79ee40498ae5fd184af39dbc82427c50bcdfb3b8d89e7e122b844f432b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/14-sweep-wb-1-4096-473/case.json",
+      "bytes": 3740,
+      "sha256": "93582ccf9e65658891880fd8594830da9dde96153d1dc3059498c5956ab8a8a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/14-sweep-wb-1-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/14-sweep-wb-1-4096-473/stdout.txt",
+      "bytes": 69207,
+      "sha256": "77358f98b28f9b7f3354cb3ebc87c259f8e14f8dc538a477a6c302fa7ea82a91"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/15-sweep-wb-1-16384-473/case.json",
+      "bytes": 3742,
+      "sha256": "446bb74ba20472050a824ae6b3ec4b20d66714274df9e8a602f12f33ecfc8c33"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/15-sweep-wb-1-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/15-sweep-wb-1-16384-473/stdout.txt",
+      "bytes": 58274,
+      "sha256": "a4a281e7eed03a71cd478d27d8b944ade5e00d8b56fb227d3c11d0b012c47030"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/16-sweep-upload-64-16384-473/case.json",
+      "bytes": 3752,
+      "sha256": "5f503fff920180de9a5b98845c4b741116bc7676eb1e315499ab0f370dbdfa0c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/16-sweep-upload-64-16384-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/16-sweep-upload-64-16384-473/stdout.txt",
+      "bytes": 70894,
+      "sha256": "03b35981c1859250ec68e1a9044bfa3dd6018693fb76567758231539075df1f3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/17-sweep-wc-64-4096-473/case.json",
+      "bytes": 3742,
+      "sha256": "0689fe45c9fd7f889a94ec8ea5ee7f36f16baeaa5ec3fc4d742ede963b026b1a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/17-sweep-wc-64-4096-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/17-sweep-wc-64-4096-473/stdout.txt",
+      "bytes": 70881,
+      "sha256": "bbc66cc0735b66a4d16211397ed2270b5005bd9a6c9aa392b01511e48fea03eb"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/archive.json",
+      "bytes": 304,
+      "sha256": "77866f90929c64523c56aa3719fc7bc4395a5565589ea3caa475f55198f1b9d3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/receipt.json",
+      "bytes": 196173,
+      "sha256": "3da3b617fefb69b77d70dc492282007e5275a781859271fea4b8527893babfba"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11226,
+      "sha256": "ac0c384287b84c966b05f6815360f4199e1bcb9952cbaf47a72ad4499bd5f19c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13169,
+      "sha256": "9989ab9ca67ec7df9677f018f5b968e62344ae78d45ed82d7d310bc299ca6558"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/summary.json",
+      "bytes": 614331,
+      "sha256": "08b4077e00078666c577e4020b900415a97cf25cc0eeb609334bcef8b29c6730"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/00-sweep-upload-16-16384-947/case.json",
+      "bytes": 3751,
+      "sha256": "a1988f422ea50be1f666bfac3af2573b46217871427d94c0fbc560658e0a14bf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/00-sweep-upload-16-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/00-sweep-upload-16-16384-947/stdout.txt",
+      "bytes": 70362,
+      "sha256": "50c890873abcd6d7475479340bc1a86c93a31591663c50a3f7c5f24b302ea901"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/01-sweep-wb-16-16384-947/case.json",
+      "bytes": 3743,
+      "sha256": "ba8fa4dcc80a4c2aabfe8a3ce814b3830309e16f6e7aafbb8a36adc9fb42cf84"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/01-sweep-wb-16-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/01-sweep-wb-16-16384-947/stdout.txt",
+      "bytes": 70318,
+      "sha256": "c0760b1e051b117869a4efefd0dc8bb35374058eb91502cca383d9d4a67b3108"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/02-sweep-upload-16-4096-947/case.json",
+      "bytes": 3749,
+      "sha256": "fc0b11b630b0239d01ea8480051a279ac783dfbf614fa3161930e0b599f156c4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/02-sweep-upload-16-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/02-sweep-upload-16-4096-947/stdout.txt",
+      "bytes": 70187,
+      "sha256": "dabdf34708f144dd18102f5743a49168b2b1d02dd30dd0d1fbda40b7f156c82d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/03-sweep-wc-16-16384-947/case.json",
+      "bytes": 3743,
+      "sha256": "eadde77e844c5c4198d3eda0afc2275f1565db8104d91444ac7309fbe56fc4b2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/03-sweep-wc-16-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/03-sweep-wc-16-16384-947/stdout.txt",
+      "bytes": 70328,
+      "sha256": "0ac2e981ed1147db81a039f19a892db97bcd1f7b27a1054be9287ee221927876"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/04-sweep-upload-64-16384-947/case.json",
+      "bytes": 3751,
+      "sha256": "41896da5a82896ff5c55882bed8b6da09cf9bcd4cc8779b61b438af8f01e54c7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/04-sweep-upload-64-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/04-sweep-upload-64-16384-947/stdout.txt",
+      "bytes": 70845,
+      "sha256": "8a02e5cebfbcc5916c4d8ab24ac07e612bc8940fb92c1df81a5734bb43bb725d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/05-sweep-upload-1-16384-947/case.json",
+      "bytes": 3749,
+      "sha256": "cdd7b3e46bd5ca4cbc4d60c6bac5dc014d1c01c7a5c7c5d24bbffb6f276132a6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/05-sweep-upload-1-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/05-sweep-upload-1-16384-947/stdout.txt",
+      "bytes": 58310,
+      "sha256": "0af22bc599098ed561a2d65922b83f71966a3fdb7dfa0c4b615708d8f0dfe8da"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/06-sweep-upload-1-4096-947/case.json",
+      "bytes": 3747,
+      "sha256": "ab02c0d3b73bc49d5e2bbf198c01f1f323266fefc646b80ed0b36e56ccbe6e98"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/06-sweep-upload-1-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/06-sweep-upload-1-4096-947/stdout.txt",
+      "bytes": 69219,
+      "sha256": "d83888db43b88ebd549651dbea370838d757653f2e9d86d6ce43a12905d8f360"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/07-sweep-wb-64-4096-947/case.json",
+      "bytes": 3741,
+      "sha256": "48080711675600b7f9b29c67ba893fedbf2b673c0ca2a3c2b5dc0b243abf871b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/07-sweep-wb-64-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/07-sweep-wb-64-4096-947/stdout.txt",
+      "bytes": 70825,
+      "sha256": "2af9545c5095d69a9c08b677b47a70cf6e1024d9b76146ed80095953b7b21bc6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/08-sweep-wb-1-4096-947/case.json",
+      "bytes": 3739,
+      "sha256": "11c8f8978ad04b206e35eb5a6a2239ac079541470a9aeaa8696c8c426d3d8fd2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/08-sweep-wb-1-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/08-sweep-wb-1-4096-947/stdout.txt",
+      "bytes": 69204,
+      "sha256": "ccae346aaadb031469bc6eebefffd47aa2f9e5c2b6f1331195b06fbeb58ade76"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/09-sweep-wb-64-16384-947/case.json",
+      "bytes": 3743,
+      "sha256": "8c2ab8c00818ae922ccbc52d3537cf4e16d4546551b3ad30a2a5db79c48283ec"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/09-sweep-wb-64-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/09-sweep-wb-64-16384-947/stdout.txt",
+      "bytes": 70838,
+      "sha256": "36ef65ba7b2cd186628f225b3c749d11ad7c2a7a15bc9180ba436b56d93862d1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/10-sweep-wc-64-4096-947/case.json",
+      "bytes": 3741,
+      "sha256": "105aab60f6d7d60a428420b4b6746c3ba22bb9da7906b130b5ed8f09f304d886"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/10-sweep-wc-64-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/10-sweep-wc-64-4096-947/stdout.txt",
+      "bytes": 70783,
+      "sha256": "deed53ccc3920ee7f85fce53ecc64ff72d4842310be39083b0f29c4fc1a55ecc"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/11-sweep-wc-1-16384-947/case.json",
+      "bytes": 3741,
+      "sha256": "57036fea8acd4b533ba7092de495f6bc8a342a596d98df32c2fcb909e3261731"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/11-sweep-wc-1-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/11-sweep-wc-1-16384-947/stdout.txt",
+      "bytes": 58264,
+      "sha256": "79968df411f410125bde78b33976ccbdb05b2d0f833c917b75c658d0e91e6497"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/12-sweep-wb-16-4096-947/case.json",
+      "bytes": 3741,
+      "sha256": "ea7e6c2fcbbd25397b3350c487ee69ffd9b0812e97c3e4ff58f8bce545e4145f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/12-sweep-wb-16-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/12-sweep-wb-16-4096-947/stdout.txt",
+      "bytes": 70201,
+      "sha256": "ca2ccb76bf2d4d4a920636178433b1d9bfdcd96983d1854df17cedcaf1ce47a2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/13-sweep-wb-1-16384-947/case.json",
+      "bytes": 3741,
+      "sha256": "fa3e309deb895234dcc2ab30fe62710c2c07201353e9017ae1c42cba4c837c36"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/13-sweep-wb-1-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/13-sweep-wb-1-16384-947/stdout.txt",
+      "bytes": 58265,
+      "sha256": "cfdd9ffed74d5beee1b31c2d5d72fe50faa2be83511f45f85644fe088987b5a5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/14-sweep-upload-64-4096-947/case.json",
+      "bytes": 3749,
+      "sha256": "7e988953df0e5fbd4a23da3bb9f6ca0416b486d69be4d88e3533dd8bfaf09974"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/14-sweep-upload-64-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/14-sweep-upload-64-4096-947/stdout.txt",
+      "bytes": 70803,
+      "sha256": "4ea6c41366ee3a65b2c546351bb2ad6a5fcc8c4a2b33bbaa6e59a3b00b5211f1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/15-sweep-wc-64-16384-947/case.json",
+      "bytes": 3743,
+      "sha256": "acf81f2209d7eca57c1783f90186959e31d2da6f5e13af42cb9b01d461c49627"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/15-sweep-wc-64-16384-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/15-sweep-wc-64-16384-947/stdout.txt",
+      "bytes": 70808,
+      "sha256": "3f8b14496036dc6b486219c2279644904ca095b7bbe3fd9ccabefe8c32464fc3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/16-sweep-wc-16-4096-947/case.json",
+      "bytes": 3741,
+      "sha256": "49b18b8ecf19bc0a05a3ce80f9833f44101ba1819e21590c76adaf16464950fc"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/16-sweep-wc-16-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/16-sweep-wc-16-4096-947/stdout.txt",
+      "bytes": 70228,
+      "sha256": "dccf526ee7b9cd563743129f4d56576c60db11bfd7b234c0410dc4b223696845"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/17-sweep-wc-1-4096-947/case.json",
+      "bytes": 3739,
+      "sha256": "f903f4f82fac4a6cb034615c7ac559c9b90e2280abcd4e77bb022b43172ef6da"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/17-sweep-wc-1-4096-947/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/17-sweep-wc-1-4096-947/stdout.txt",
+      "bytes": 69225,
+      "sha256": "7617f57bd945c5c9c8ffef84adfe7285ec455cb074ed876135cfd2a559ad4f6f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/archive.json",
+      "bytes": 304,
+      "sha256": "b4adc20ad1b673f05af7c8be548bda3be6c114c8cd03ee98607a0a4c963e38cd"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/receipt.json",
+      "bytes": 196118,
+      "sha256": "6f19d2981943a17bf7d8bee647f933d208d3169c71e6eb2c6511235fc53b14c7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11226,
+      "sha256": "ac0c384287b84c966b05f6815360f4199e1bcb9952cbaf47a72ad4499bd5f19c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13169,
+      "sha256": "9989ab9ca67ec7df9677f018f5b968e62344ae78d45ed82d7d310bc299ca6558"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/summary.json",
+      "bytes": 614288,
+      "sha256": "0ea81246eaaab200e2d488ab4ca781289a8be6dae1751a8ddcda5e479cedcb8f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/case.json",
+      "bytes": 3943,
+      "sha256": "2380bf2e49963014394c31492167085bb2b34527268d2d9a038cdec0d39c5aa7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/stderr.txt",
+      "bytes": 40,
+      "sha256": "b7eab1251cc975b771929b1c6dfe6cb8511bb1ec75b3241336abe9651a151f83"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/stdout.txt",
+      "bytes": 121,
+      "sha256": "dca5ad5caa4f0940d193ea3ef60d56b9b98adde3a47470c1f28338ccbd072307"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/xctrace-output.txt",
+      "bytes": 257,
+      "sha256": "b5769eac9dd93b50f0bfbac3ae33b3a0e30f066f6005c96e6bc40bc5ec184f7e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/xctrace.json",
+      "bytes": 391,
+      "sha256": "27a6e0d0500fd5a91d334a1cbf77449d1fa06cf918e00792af8a899a408fbb86"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/archive.json",
+      "bytes": 304,
+      "sha256": "a7018896debbb59c4ff3e5eb8a89e83f39035c712313cbfec4e27e33123dd7e5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/late-output-hashes.json",
+      "bytes": 743,
+      "sha256": "9c6c2902d872169c1cb4ce6d5d88285ce92eb52033f048727c7fba892fa1a98e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/receipt.json",
+      "bytes": 23377,
+      "sha256": "2e537107cb1ae7e95a0462489df7705cc7187d82c5aab7184e1bb47a1236c57e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11226,
+      "sha256": "ac0c384287b84c966b05f6815360f4199e1bcb9952cbaf47a72ad4499bd5f19c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13169,
+      "sha256": "9989ab9ca67ec7df9677f018f5b968e62344ae78d45ed82d7d310bc299ca6558"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/source/trace-launch.py",
+      "bytes": 2246,
+      "sha256": "ccae38a96c04d30133dcf1f6cb23b6e9166d925a449e6a0b7151d341c6134591"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/00-wb/access.dxbc",
+      "bytes": 1612,
+      "sha256": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/00-wb/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/00-wb/case.json",
+      "bytes": 3951,
+      "sha256": "937a84a9afac7fe53f6fdcb9766b3d39465d9a0219af5bace1a00fd85ade4cb7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/00-wb/stderr.txt",
+      "bytes": 57,
+      "sha256": "443284e82a7e0abc2c0dea9bf933dfab65a196f84da7f9ee894f02da741d6c55"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/00-wb/stdout.txt",
+      "bytes": 26781,
+      "sha256": "d7e357852618510fbc2767b68234499335e1e856c027ed9e13e533be3b58cb44"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/00-wb/xctrace-output.txt",
+      "bytes": 257,
+      "sha256": "e32d21bcab5159cc438db669346129c8f5e8913201de80d8f678ef18741127af"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/00-wb/xctrace.json",
+      "bytes": 391,
+      "sha256": "f4e02e53513a49842850542d24af05cbb7445cf1338221b5f1912a94f73eb409"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/archive.json",
+      "bytes": 304,
+      "sha256": "70782e68e66147825079a1c6d16cc2a19cca3dc2186190747f1d57f124be4586"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/gpu-samples.json",
+      "bytes": 36997,
+      "sha256": "53cffcb7a3cff54b8174a3cb2bd1801cc77788a2696a54856ca9e6f68cc1a30c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/instrumentation.json",
+      "bytes": 2013,
+      "sha256": "f3e3b8b927af10c269833237857db2e1d211e9d22f6d40e0d5cd4dd31f5ab31f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/receipt.json",
+      "bytes": 23322,
+      "sha256": "d11739623bdfdc7be3e1e3c4927fe8f1e38e5196610d3e8d90058985007d80ee"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 13478,
+      "sha256": "234f20c8ed5b9ca6638b2ff798bf2d2221e0c53b1dde5133f30358fba567cfe7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 13259,
+      "sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 14039,
+      "sha256": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/source/trace-launch.py",
+      "bytes": 2246,
+      "sha256": "ccae38a96c04d30133dcf1f6cb23b6e9166d925a449e6a0b7151d341c6134591"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/xctrace-export-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/xctrace-export-stdout.txt",
+      "bytes": 70,
+      "sha256": "47ad139403e80b2230e36a9e8a48f3c93aa057b5c2fa80d3592d565aa2615857"
+    }
+  ]
+}

@@ -1,0 +1,1476 @@
+{
+  "utc": "2026-11-26T22:42:47.702440+00:00",
+  "candidate_files": 283,
+  "candidate_bytes": 8015824,
+  "safety_findings": [],
+  "archive_files": 2081,
+  "source_references": 109,
+  "source_matches": 104,
+  "missing_source_references": [
+    {
+      "receipt": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-historical-p2-memory/receipt.json",
+      "source": "run.py",
+      "sha256": "769cf0a8ed04b18dc7235f79ec2ecb829e457f4f709b33f2cea4c3425547ca7d"
+    },
+    {
+      "receipt": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-historical-p2-memory/receipt.json",
+      "source": "probe.cpp",
+      "sha256": "0ee8949c8b32204245cb0ea37776b553e1a89e02649bd1c254d0204e94a701c7"
+    },
+    {
+      "receipt": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a2-setup-failure/receipt.json",
+      "source": "docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "sha256": "6641ea468083b8bc5908edff41dcf9c5cf51c8aeda035e2f56c9649fb179505c"
+    },
+    {
+      "receipt": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-historical-p2-acceptance/receipt.json",
+      "source": "run.py",
+      "sha256": "769cf0a8ed04b18dc7235f79ec2ecb829e457f4f709b33f2cea4c3425547ca7d"
+    },
+    {
+      "receipt": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-historical-p2-acceptance/receipt.json",
+      "source": "probe.cpp",
+      "sha256": "0ee8949c8b32204245cb0ea37776b553e1a89e02649bd1c254d0204e94a701c7"
+    }
+  ],
+  "candidate_manifest": [
+    {
+      "path": "CHANGELOG.md",
+      "bytes": 151506,
+      "sha256": "1dd25573c7a3b08257ef712b89f7543a994a13f6de52ff2e39c67fd5daef9406"
+    },
+    {
+      "path": "docs/README.md",
+      "bytes": 4211,
+      "sha256": "b79707c38646b3a06a8db8cd28a0fa2ed1b4a60bda1a5a6cb1dffa02af73504f"
+    },
+    {
+      "path": "docs/research/component-reuse-matrix.md",
+      "bytes": 4827,
+      "sha256": "3281ae2b3c66ddd113ca3326a8f66eb8ee50e1ddfcb30d7d4dd7fde08f14eae9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/README.md",
+      "bytes": 12247,
+      "sha256": "13baf5be4a6dd9eef9e5360430fe84a483663ecfc11fc5e02ac8b03f20fb644c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-assessment.md",
+      "bytes": 7651,
+      "sha256": "586633bb5c42f6881c8ee521eda27d031abbe3ace2ebb56f6643516e5a759a52"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/README.md",
+      "bytes": 3781,
+      "sha256": "39fdaee0737a49e9d83631550bcd2ab4aec7b68bf531cef6aa0255f3eaa834c4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py",
+      "bytes": 5410,
+      "sha256": "3cb3d709393723d7cdec49b54a834eb394a36ce04d34f58650764eadf0f94d70"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/probe.cpp",
+      "bytes": 9149,
+      "sha256": "1aa1a4f3bf3d62d084bd50baac34bf066cb59816c3d6abc5d0c48c25a7073223"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/run.py",
+      "bytes": 9808,
+      "sha256": "4ee950a58cde456011bbfe7c72c69ca491cc61295933498c22b9dfac321668b9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/archive.py",
+      "bytes": 1787,
+      "sha256": "62aa899fabca636b068c56bcb5ecf445913f13fc4bfe4b362ebb1d7e71b2b202"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/b-review-expectations.md",
+      "bytes": 4758,
+      "sha256": "3f945e69cdd058b7e1f4eaaf1e9f564bd13807b99351e6851448731749ec9efe"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/fragmentation/README.md",
+      "bytes": 2439,
+      "sha256": "b02412d22739ce9e8248e12e198d8664b8a0a8fb93245a8aed00c54ce06dd008"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/fragmentation/oracle.py",
+      "bytes": 4212,
+      "sha256": "ef5193fc04246ee79370a161d8aa9b2d16eb064dd04110392e34224b20340d78"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/fragmentation/run.py",
+      "bytes": 3723,
+      "sha256": "9d92a8c3cd83ea5dcd52b0cef748ef9837d764d13ba26369152a09d59094549c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/fragmentation/trace.cpp",
+      "bytes": 6443,
+      "sha256": "8be2dbdec35b332d4e20db84450199cc66ae285ed58342bd0a08cfd3b9c779c3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/handoff-asufte.md",
+      "bytes": 22020,
+      "sha256": "d0cdeddcb35b9c3dba1f33cdc270f405eb0d9235ecc49d1cfe2a718809f10b74"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/inverted-ownership.md",
+      "bytes": 8913,
+      "sha256": "3e607fa966fe78082632108bd91e0764d0cd4fbf4d2b2caf0081069b0adc5b02"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/pool.cpp",
+      "bytes": 13426,
+      "sha256": "55fbc7fec1a7665ba2c711d923c030f01e47f6fbb91cebe6d9b63c82a6822ac8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/publication-audit.md",
+      "bytes": 3145,
+      "sha256": "c9981353330acc7e18effdf65534cf9f86865454a93f72908261c3ad5ed500e7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/report.md",
+      "bytes": 10462,
+      "sha256": "c81412a33d8b2f7e3b6fbf4727293bfa2f41dce3faf873f4d753d848ee30a2db"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/resume-status.md",
+      "bytes": 11138,
+      "sha256": "a316ebf24745983f8c7228b2887c18adfd96a198cff83fe402eb107b07231278"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/review-b-data.py",
+      "bytes": 5759,
+      "sha256": "0b3ffba374aa85d63506b7ed7a5fd542d5ede1a6a544d421ea01473fa9eb33a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+      "bytes": 7127,
+      "sha256": "71cd4338b3c8bbe5dc5139efea99df30954bd742c67c3a2b24d43900099e891d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/review-handoff.md",
+      "bytes": 5296,
+      "sha256": "4d38692d6f0ee798c060d3565ec42fbdcf3222067f626a10c5099c0bd21e422e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 18394,
+      "sha256": "3e281b5ff7f0ea2ddc8c0af5949dbb31cdd317b05bfe53889939e68ef3b3943e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 15688,
+      "sha256": "b9dfbddb6e326fc0d2e531994ec6fb49abf0e37ea90b06cdaeef76fb36bd73b7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/contracts/resource-placement-lifetime.md",
+      "bytes": 7935,
+      "sha256": "17fe396bfb642cb7259fcfbf2dca3f967bc005e248c889635f69638b73a17366"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/README.md",
+      "bytes": 6134,
+      "sha256": "fdeb92bf9ea310fcd76a600a554e3412ae22714a1a0d9110bb4fe9d53a19a906"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/check-render.py",
+      "bytes": 2274,
+      "sha256": "1b6427056193a98cb184133a8468100e0712b9433782b84f772f4aa26ca36b19"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/findings.md",
+      "bytes": 7638,
+      "sha256": "7acbca7d78e8c20a13b3dd336c596043edf763fb46217a77ca647bba4454cc3e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+      "bytes": 17911,
+      "sha256": "c74339350bd536f0e57938a2fa7f4bb7afea31e2be9e013d70ba0a929f45c2e1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-reciprocal-review/archive-manifest.json",
+      "bytes": 1564,
+      "sha256": "d9deaaa8a499931f1b6fb648b6fc8c929ec7111891a20c0db4e18883bd43ce81"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-reciprocal-review/b-data-review.json",
+      "bytes": 1323,
+      "sha256": "331efd1407708d7390e8b4294b21d128a090e92b3dd06591848cae5b4c3115a3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-reciprocal-review/b-output-audit.json",
+      "bytes": 251,
+      "sha256": "2a7888ca83a3c37c58600673a26deda9259164834260d16e63ccad613def6d08"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-reciprocal-review/input-manifest.json",
+      "bytes": 122287,
+      "sha256": "29042e73d7942c75b27ccd6b098f9de78d029f9c583ccbc66c8a47570322c371"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-reciprocal-review/review-b-data.py",
+      "bytes": 5759,
+      "sha256": "0b3ffba374aa85d63506b7ed7a5fd542d5ede1a6a544d421ea01473fa9eb33a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-reciprocal-review/review-receipt.json",
+      "bytes": 960,
+      "sha256": "7b7510e5672b02cfeb7c0b9d1b2c10c79675a412c7298178d9dd563451020725"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-source-build/archive-manifest.json",
+      "bytes": 2116,
+      "sha256": "192160cdbb9194edb83180e19f915b5555ba3d036fdd02d87f41de53deb90a08"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-source-build/receipt.json",
+      "bytes": 9220,
+      "sha256": "193b8cc57b03c98652ba71a35d24d1ee157a220c827df80c7bf14c07be26fd78"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-source-build/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+      "bytes": 11092,
+      "sha256": "0fabd293b82f9bac6117cc8a90ec3b7f4cabf7cd365f9078c767675f20051e64"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-source-build/source/docs/research/d3dmetal-zero-copy/copy-detection/run.py",
+      "bytes": 12924,
+      "sha256": "223a88facf609d71d3de94bfa8b622097c89576896bdfb3044f8964719fd3508"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-source-build/source/docs/research/d3dmetal-zero-copy/copy-detection/support.h",
+      "bytes": 10026,
+      "sha256": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-source-build/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl",
+      "bytes": 642,
+      "sha256": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a-b-source-build/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+      "bytes": 13969,
+      "sha256": "0323046cca6482e54b571e0bb2069b99331ac8c8ee385afc4a33e7818804f848"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/allocator-analyze.py",
+      "bytes": 5410,
+      "sha256": "3cb3d709393723d7cdec49b54a834eb394a36ce04d34f58650764eadf0f94d70"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/allocator-bounded-analysis.json",
+      "bytes": 3510,
+      "sha256": "b1ae29b9bff598b813c858b98c8e1f90e4ddf1da4af51b19021a1cdd459727b2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/archive-manifest.json",
+      "bytes": 1558,
+      "sha256": "e71f2ef0327e1a8a053b98dec2a4eefb3817d03d7c8fd10e8660351309b486d9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/check-render.py",
+      "bytes": 2274,
+      "sha256": "1b6427056193a98cb184133a8468100e0712b9433782b84f772f4aa26ca36b19"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/receipt.json",
+      "bytes": 10846,
+      "sha256": "72305e8e1c448123f900c0b5512c54adb44818d4b9c18baa23c93cf5cdf2bb3a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/run.py",
+      "bytes": 18394,
+      "sha256": "480228cf7fcdd0c673ee2ae2b32fc41dabb48b4e1265e6c9be3b48c5a4ed09aa"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/archive-manifest.json",
+      "bytes": 16014,
+      "sha256": "ea1615e197db3308b716055923757134face1e296f653600210a1807cb4b8d41"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/receipt.json",
+      "bytes": 114849,
+      "sha256": "dfce30eff2204824fd969685061347e6901b9365dbbda561fd806fb5690f97f1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/baseline-footprint.json",
+      "bytes": 3872,
+      "sha256": "f9a1eb3f6827954255c90b28cf5029f3380293c17e2dc995c54be6231b035391"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "62015cec5c51ebb0a8e3e60a79102302c52d7a381c03ded1533fd78b611039ce"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/baseline-pressure.json",
+      "bytes": 247,
+      "sha256": "8febf7b151feafd195b527c85372741a617044825d13d1e6e14d201fea2f2bd9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/baseline-swap.json",
+      "bytes": 214,
+      "sha256": "13478fe8cd733438ddf2d96dcb77021d5d0bf1fe0e0212290a4975f0f6f8d6af"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/baseline-vmmap.json",
+      "bytes": 8190,
+      "sha256": "a76c718cf1c7326725c7c6f2ad6c258e310406c12dcc7d54b385857e9a301f77"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/baseline-vmstat.json",
+      "bytes": 1390,
+      "sha256": "9f42182da756097030dd20d914f376a67dc984badc11f69a83fc0cdc55a90e66"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/case.json",
+      "bytes": 42195,
+      "sha256": "e0d114542bf0090b811dbb7933c89120c474d9d00c33e942d6c539b6829e3b61"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/default-footprint.json",
+      "bytes": 3991,
+      "sha256": "173ecdc388263115407d4af3ff2fc59e685d4dae7c3630d061042f61d85fb82e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/default-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "45521d92f18e599fa596ba1d695b88b9b657c583f4007849f90af643dd4cf6dd"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/default-pressure.json",
+      "bytes": 248,
+      "sha256": "5fa887bb864a93fbf091515c66a15edc3553ca23e76757550b1d896a543ca4b3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/default-swap.json",
+      "bytes": 214,
+      "sha256": "820c38ca52e18187852b7c3948fd66c1b19a0d51a186d7d3970df958e868a70b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/default-vmmap.json",
+      "bytes": 8301,
+      "sha256": "9ab6100e373b2bdea4cf106b304c83f4fcb99693b0cfddaba9e4770b41f4a047"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/default-vmstat.json",
+      "bytes": 1390,
+      "sha256": "735e8d0a3eafb320db06f99c58660a3efa8082c024a2d3d81f48a3ad8194993f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/depth-footprint.json",
+      "bytes": 3992,
+      "sha256": "96b98e6d2f29190533b380ca5adb66762da3e6a819693fe0695f63136d1c079f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/depth-kernel_pressure.json",
+      "bytes": 172,
+      "sha256": "2d9a13a4d83b6248305fe9121c172e1c81e18e598bf1ef1508c80f8b9c8ac87c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/depth-pressure.json",
+      "bytes": 248,
+      "sha256": "8d9d3b9074cfc60a47a36de816bcef61cef8742376b33bdba3be34095c33db32"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/depth-swap.json",
+      "bytes": 214,
+      "sha256": "efe1705c0444cf1f165a5104a2d18948ade0ae01841bd8d132ab2393cc08478c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/depth-vmmap.json",
+      "bytes": 8301,
+      "sha256": "d506ac46e0046195fb84ab7fffdcb213107391e234b824879d9f85d0f26c10c0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/depth-vmstat.json",
+      "bytes": 1389,
+      "sha256": "33ffdc20d41498167a98c6d54827f01793b75b042ee14c96b7a5ad71e296fa79"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/gpu_complete-footprint.json",
+      "bytes": 3990,
+      "sha256": "acf984b8de6693e5bc6e93f4385757f21e21a2f9c62f6f2ca42383b14b4d2581"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "4d5eecaee6b15aa094562b0d1d82063987446d8f096fcbf4a775e342284fb9a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/gpu_complete-pressure.json",
+      "bytes": 248,
+      "sha256": "f2136de673a408c31f3d6dd085ed5b254d75e607d0109cb32f267faec0c864a3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/gpu_complete-swap.json",
+      "bytes": 213,
+      "sha256": "7bf5c2f477f760fd7c5ab14b0a4b85a588d0a47c02b3656be0ada49c7de4f221"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/gpu_complete-vmmap.json",
+      "bytes": 8302,
+      "sha256": "853ad2fec1899e0e0bd00af42d11edc2597a118b41b481785563a4ef05699d45"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/gpu_complete-vmstat.json",
+      "bytes": 1389,
+      "sha256": "105777c4ca8d73ea488f3991d04874f71f14fd60745fa2704f4a158dd627246e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/sample_ps.dxbc",
+      "bytes": 680,
+      "sha256": "c122074d7341267d562299c5fda2ba019b1db538c0f3c1fa104418c718311e04"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/sample_ps.hlsl",
+      "bytes": 204,
+      "sha256": "ad3ed8a46a0c22fabf30d2dcb22ca203e49da7252232f53a9fdea5d3c45118f8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/sample_vs.dxbc",
+      "bytes": 1108,
+      "sha256": "80069783ff7e7abca339b07b23e067ab5c8c00b75e00d81ccdef1ce21bf402b9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/sample_vs.hlsl",
+      "bytes": 252,
+      "sha256": "c0c4827b77e77228e676a7f3f8569b90d4fef410dab94f881f225c5901613d54"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stderr.txt",
+      "bytes": 114,
+      "sha256": "3da96b8332cf0270e03228b2cc642db1f6d03bb5005f962ce9f42341a3974e3e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stdout.txt",
+      "bytes": 1833,
+      "sha256": "7f5bc099b42fd8dcd386c29375950869d5b4a71bb9d41b689db6d031964dfea3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stencil-footprint.json",
+      "bytes": 3990,
+      "sha256": "b16027a9e56f5bf0f371487394951388f11720629a70fdac2fd19f211745ae80"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stencil-kernel_pressure.json",
+      "bytes": 172,
+      "sha256": "bfed90225fc1c45a60f596b10aa26e6519563671ca8efc51470e2d526ac63485"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stencil-pressure.json",
+      "bytes": 248,
+      "sha256": "a9e5e77afd91b6256e2f334fcc340a705f7e6c506cb66792ddce04cb342ee05a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stencil-swap.json",
+      "bytes": 214,
+      "sha256": "6bbca757f2be51680c2c01f2e49cc5d4f14858ae18af27c8d1971d53b4c3b17d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stencil-vmmap.json",
+      "bytes": 8302,
+      "sha256": "ab9fb121e717f7c66210648424a2986bb08bb0ec4ac816db728572087107e171"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/stencil-vmstat.json",
+      "bytes": 1390,
+      "sha256": "f666f8953fb43598da77a6c1ccba40e52b40abcebda010f321d341375d17b2f9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wb-footprint.json",
+      "bytes": 3873,
+      "sha256": "7cd65061c18ad8a69dfcc8e9de0e22d7cc788294f2ae5f24c56e379d63637d7e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wb-kernel_pressure.json",
+      "bytes": 172,
+      "sha256": "5908a41a985c50bc98693a4c4b2dd81ed043568c5d4ec36a8500a2c23b0ef676"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wb-pressure.json",
+      "bytes": 247,
+      "sha256": "6f17aab7c9c8043fe25ee719b709338889daa34b73f0af6dc9217fca963b5f28"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wb-swap.json",
+      "bytes": 215,
+      "sha256": "536242a4f5a0247e04f64fb9da443ca1e76c1bbf87cfecd5c61cbf986da0e38f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wb-vmmap.json",
+      "bytes": 8190,
+      "sha256": "e0033c8b4fb6eff398fda1d9fac3c517c349aa145035d9146be6e17b0ea169c0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wb-vmstat.json",
+      "bytes": 1389,
+      "sha256": "f23c8821660d10f24effa8888b70c1bb1e098bb1ffabb8cbd07f8c9404b88253"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wc-footprint.json",
+      "bytes": 3990,
+      "sha256": "f9d1162162cbeb8349a6826623e08ec159f4e97e0241ca3600a76254e6fb50b5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wc-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "0d6be7ea3ce39ce929fcddca55981a8a64388849aa009f1e50210db6f2a4561c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wc-pressure.json",
+      "bytes": 248,
+      "sha256": "b08205f66d81f793b737d349adf8f5ca29274269e3304c2dd2b1f3b2bbfaa6e7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wc-swap.json",
+      "bytes": 214,
+      "sha256": "33678f829f9ac9fb2afc8d79b8edeb5ae93e5dac86d80e0f432822f42a4fbc8c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wc-vmmap.json",
+      "bytes": 8302,
+      "sha256": "0f2b5ad8ce4763741f9502c55505c85c7ba4cfa8cab153ca4a6a3066033f772d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/render-s0/wc-vmstat.json",
+      "bytes": 1389,
+      "sha256": "b31f4d793ced18ff4af6fd20bc6fa343ac1157b6c7851846c8b2aae24a09dcf0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16309,
+      "sha256": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+      "bytes": 17350,
+      "sha256": "a3bc97cb3164ad826e2f87f6b46719fd43af0cfab2135b2115b52d97079b84a8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/archive-manifest.json",
+      "bytes": 7254,
+      "sha256": "81d60d5bbef7a72591d1e1ee76b4c0a6759c7863470f6487aa0af974ef10d11d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/receipt.json",
+      "bytes": 84558,
+      "sha256": "19ee6059537ca66b93042bb49b330bd155996e8044597f20315d9b60def4f89b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/baseline-footprint.json",
+      "bytes": 3872,
+      "sha256": "d56d86588da0c81a099087aa561f7714567ebfeb86db5a14dd2735f9caf6cd06"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "sha256": "701bff642470c68cac5e99bf1992921158192598d79e9471bf9dffcd39fa969c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/baseline-pressure.json",
+      "bytes": 248,
+      "sha256": "5e918c0fa9f299700926eb374997de14adae913ba12ad52814218e3f80d0e1f6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/baseline-swap.json",
+      "bytes": 215,
+      "sha256": "c5541426a11ab82301b4d5e675157b1d8ea2eb65c8f619e2b8774faa4c54de2b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/baseline-vmmap.json",
+      "bytes": 8048,
+      "sha256": "5f1201aabaea5a7145044b22b0e71e73f20ae4d1c8e18538cd590c1ae5ced6d5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/baseline-vmstat.json",
+      "bytes": 1389,
+      "sha256": "92d1c3f26b928d946e084713aa49eeff36cd812c15674c31f0e78337e43ff6db"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/case.json",
+      "bytes": 14701,
+      "sha256": "450fc91b74a4ebd3d1c5c73689d7e7846f905c51b8d298650e52047b23aaad42"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/sample_ps.dxbc",
+      "bytes": 680,
+      "sha256": "c122074d7341267d562299c5fda2ba019b1db538c0f3c1fa104418c718311e04"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/sample_ps.hlsl",
+      "bytes": 204,
+      "sha256": "ad3ed8a46a0c22fabf30d2dcb22ca203e49da7252232f53a9fdea5d3c45118f8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/sample_vs.dxbc",
+      "bytes": 1108,
+      "sha256": "80069783ff7e7abca339b07b23e067ab5c8c00b75e00d81ccdef1ce21bf402b9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/sample_vs.hlsl",
+      "bytes": 252,
+      "sha256": "c0c4827b77e77228e676a7f3f8569b90d4fef410dab94f881f225c5901613d54"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/stderr.txt",
+      "bytes": 240,
+      "sha256": "663a15374bd7dbd7f8c0ddaefd1f0dceb4f863aaffe9f453439a57b46cfeee81"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/stdout.txt",
+      "bytes": 989,
+      "sha256": "76d5fbe1bfbd544f4d56068b3d1c2c9493174ec22bbfab2aa5e4fd6661f5a42f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/wb-footprint.json",
+      "bytes": 3872,
+      "sha256": "63a3744b3fbb4e15511e3955a243d311b9ecbc7b36355c4999c054a56132d0e4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/wb-kernel_pressure.json",
+      "bytes": 172,
+      "sha256": "3e88dc833fe5ace1f7933c9cbaf5e071a8584460679788f9eb6efe6c1a62d9c1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/wb-pressure.json",
+      "bytes": 247,
+      "sha256": "b14bb269d35d096f5a66d01c1719dc9dfd4ca0a838b840adb05209b5632c96b9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/wb-swap.json",
+      "bytes": 215,
+      "sha256": "0bf0f5d897555bb3f924366da9a89ba762fd607cd13d7abacc1df63d0648b1c5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/wb-vmmap.json",
+      "bytes": 8049,
+      "sha256": "efee1b8cd2a22cf1cc8cb2862b0481eedc3aeb0bae1d0054466c93e02e6067a6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/render-s0/wb-vmstat.json",
+      "bytes": 1390,
+      "sha256": "a394cf80d014157fea869ff25f017cd392a96345c35a810fc78b1dae434a97e0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16309,
+      "sha256": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+      "bytes": 17211,
+      "sha256": "7ed4124f515a53d28dd78b12a5d531a0c8692bdb123b721b10763c8cafce1e17"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/archive-manifest.json",
+      "bytes": 1785,
+      "sha256": "088d5ce8b6a14c0803082bf3951b4e015467b354330e0c9743dfe407466f3125"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/receipt.json",
+      "bytes": 70594,
+      "sha256": "151c33be5f63a5d909eadbe5ab541f4a1baba9db66f97b765f68386748b17f98"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16309,
+      "sha256": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+      "bytes": 17911,
+      "sha256": "c74339350bd536f0e57938a2fa7f4bb7afea31e2be9e013d70ba0a929f45c2e1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/archive-manifest.json",
+      "bytes": 1878,
+      "sha256": "39c7a99ceb4c37b54147c6e1803d740f4d11235fb427d4c945df3a652af2ebd4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/receipt.json",
+      "bytes": 461390,
+      "sha256": "68dad753676df19dfba1455d7577dbc2366f515d9254f6a26f5ce39abe7cbbfb"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/source/allocator-evaluation/probe.cpp",
+      "bytes": 9149,
+      "sha256": "1aa1a4f3bf3d62d084bd50baac34bf066cb59816c3d6abc5d0c48c25a7073223"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/source/allocator-evaluation/run.py",
+      "bytes": 9808,
+      "sha256": "4ee950a58cde456011bbfe7c72c69ca491cc61295933498c22b9dfac321668b9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/source/capture-helper.py",
+      "bytes": 18394,
+      "sha256": "3e281b5ff7f0ea2ddc8c0af5949dbb31cdd317b05bfe53889939e68ef3b3943e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/source/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/source/support.h",
+      "bytes": 15688,
+      "sha256": "b9dfbddb6e326fc0d2e531994ec6fb49abf0e37ea90b06cdaeef76fb36bd73b7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/archive-manifest.json",
+      "bytes": 2818,
+      "sha256": "6592b801f794e677594805c7f72e0f793a9090167a7f08e78a4ac211f914051b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/receipt.json",
+      "bytes": 3514,
+      "sha256": "9b48ad5c392985c52409e1bea4c3d6bd1e8afe0a6de1f6f25b14766f43e72bd5"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/source/docs/research/d3dmetal-zero-copy/allocation-profiling/memory.cpp",
+      "bytes": 3797,
+      "sha256": "d3747cdefb77bdaa0a570871895dc5cdf9683c4e807eff383d7444425184cf74"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/source/docs/research/d3dmetal-zero-copy/allocation-profiling/pool.cpp",
+      "bytes": 13426,
+      "sha256": "55fbc7fec1a7665ba2c711d923c030f01e47f6fbb91cebe6d9b63c82a6822ac8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 18394,
+      "sha256": "3e281b5ff7f0ea2ddc8c0af5949dbb31cdd317b05bfe53889939e68ef3b3943e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 15688,
+      "sha256": "b9dfbddb6e326fc0d2e531994ec6fb49abf0e37ea90b06cdaeef76fb36bd73b7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/alias.cpp",
+      "bytes": 5486,
+      "sha256": "4034866cc66761076ab0ea87c7928b9d4f17bcb244adfae79c95078e4dfb614e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/probe.cpp",
+      "bytes": 17275,
+      "sha256": "e9658020c77523916999f870ec595686fb1fe52d8271a8738dffe1dade07073a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+      "bytes": 17911,
+      "sha256": "c74339350bd536f0e57938a2fa7f4bb7afea31e2be9e013d70ba0a929f45c2e1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/archive-manifest.json",
+      "bytes": 23166,
+      "sha256": "eac2256951568b8152f0f5753c464db00a20a00701db76fecc02066bc839a9a3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/receipt.json",
+      "bytes": 588326,
+      "sha256": "b611d82ca95df6dfaa59ebdd63f8972ee48cd383aff3cdfb666c85f54fccc7d7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/source/allocator-evaluation/probe.cpp",
+      "bytes": 9149,
+      "sha256": "1aa1a4f3bf3d62d084bd50baac34bf066cb59816c3d6abc5d0c48c25a7073223"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/source/allocator-evaluation/run.py",
+      "bytes": 9808,
+      "sha256": "4ee950a58cde456011bbfe7c72c69ca491cc61295933498c22b9dfac321668b9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/source/capture-helper.py",
+      "bytes": 16050,
+      "sha256": "8c7ea0b1ed5046ad25a5830d2c2c0982fa24a09ddb34dfae5edc5ce1a117878a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/source/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/source/support.h",
+      "bytes": 14678,
+      "sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "0caf689416f2a8a5386b1ce9d0490e32e535369975c2658d838408e1c52dd6c9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/baseline-vmmap.json",
+      "bytes": 8053,
+      "sha256": "b65c4b19acf4a4d87215bb60c183a7b7243407918b527b7d17da7da69eb7230c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/commands_retired-footprint.json",
+      "bytes": 3877,
+      "sha256": "3cc02d82fe627404539a9fe46c7e12f838723b26b0729cee266a48900ba0492e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/commands_retired-vmmap.json",
+      "bytes": 8194,
+      "sha256": "7a3fc9ca87544f4c9f3961d36d9a8f9087788fc7fb32382e73e11e40812c16ea"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/heap_ready-footprint.json",
+      "bytes": 3875,
+      "sha256": "8e7f748d9dd775bcc49322be15cd2193f3d93f8507a1623a3548fd1c52ce125a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/heap_ready-vmmap.json",
+      "bytes": 8052,
+      "sha256": "6644f712dfbc91aaae2ae049faa88a8ef765b2b73548cb90e3ac0d24e8caaa9a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/live-footprint.json",
+      "bytes": 3993,
+      "sha256": "95cae9716095c103ae74d9173c9070928b93453290f9911a1c588f723b13efbb"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/live-vmmap.json",
+      "bytes": 8055,
+      "sha256": "3f885b73698ce971a5f5d962baf03958db8c056f35da1f9134f06b5c0c59dd06"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/resources_released-footprint.json",
+      "bytes": 3992,
+      "sha256": "dbaec6fc6445d5302f793faeb63cd9b0a7f51feb3670c589238f3261417f3ae8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/resources_released-vmmap.json",
+      "bytes": 8195,
+      "sha256": "ef4668b9dba30c029a8a874426b9cae81d615b2e8937e8d54f2fe3bcc9b1cac4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-473/stdout.txt",
+      "bytes": 99696,
+      "sha256": "b81911855eb9e2524410db2e3aa686fd593de7969324d78d56b426bc5362a187"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "7bff5d1358bb2e022969ef87e9774c04b361a661c9802e2389ae202dc4f14f7b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/baseline-vmmap.json",
+      "bytes": 8191,
+      "sha256": "c03594cf7b0a7aa338e37338c720410302b73cd9ff735d293847c71b04ef585b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/commands_retired-footprint.json",
+      "bytes": 3877,
+      "sha256": "d4b82142637d9433bcb114d406717a0386f4dc198edd1e49e8bb933f9b6544ac"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/commands_retired-vmmap.json",
+      "bytes": 8192,
+      "sha256": "a6cd785ae217a088ef72d9532a27026841551be63b12436654705dcd0daec0a1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/heap_ready-footprint.json",
+      "bytes": 3874,
+      "sha256": "4f99e449d090d56c3273e97b01b71da183f6eb511e92170b194a33c8c4518896"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/heap_ready-vmmap.json",
+      "bytes": 8190,
+      "sha256": "8da9bc4b6d283def95d1a3d5d4c6628773fca75a5b364bd917d1135750147f50"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/live-footprint.json",
+      "bytes": 3993,
+      "sha256": "50fce9b62856a165c5da7cd1759a8573833544c91e53c24794f1d87c70a826c6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/live-vmmap.json",
+      "bytes": 8192,
+      "sha256": "66fe206f5e23f53ee86d89f963435121afe43e0dd8efc087a764470a707d0cb3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/resources_released-footprint.json",
+      "bytes": 3993,
+      "sha256": "d9d0c49c046a456fd6cce834837c2224f3fe92adada91cbbc4791e7f142ea24b"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/resources_released-vmmap.json",
+      "bytes": 8192,
+      "sha256": "935b899dc426d289a1bba36f9365580a42ba3f8434c6cff243b43448ca170a1d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-474/stdout.txt",
+      "bytes": 99714,
+      "sha256": "588d07c86d2f292cc5fa8b8c2c42f4d03299ab2b6631142a6477819af50e0873"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "42f76a314f482b6e8357fcda74a59f94592d385d5a69bc4e053cb48c49deba29"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/baseline-vmmap.json",
+      "bytes": 8190,
+      "sha256": "ef7bc9fa52bab20f8da8600af994b054548e1fa2ff60ea1bcb568c94b82f36aa"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/commands_retired-footprint.json",
+      "bytes": 3877,
+      "sha256": "1e0046ee423d75497f2fecff0830c006dce716707469f966446a3459ec8638c4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/commands_retired-vmmap.json",
+      "bytes": 8193,
+      "sha256": "262205b401a5cbbc4a94521a3de86b48ccfbba7a27c0335175bd1607c434e980"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/heap_ready-footprint.json",
+      "bytes": 3874,
+      "sha256": "63cc1f7dcc4e4913a6f31531dccb66e5c717a79a65b4066d6430a3f2823e5281"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/heap_ready-vmmap.json",
+      "bytes": 8190,
+      "sha256": "9813e4f2619dd56d6bd3269f91746bcecf73bb0035b8eb6395f5732e1b880505"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/live-footprint.json",
+      "bytes": 3993,
+      "sha256": "53b1707098b6433c99df5dabc1bd79bf86b21ad425da0183ba1abffeeb1ad03e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/live-vmmap.json",
+      "bytes": 8193,
+      "sha256": "38b30b9acecb35bbe6af23220710edbdd8003395385af7ac1c0b68576b116a53"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/resources_released-footprint.json",
+      "bytes": 3994,
+      "sha256": "8e3c7581b9dfc2d536516fca5b3d22ff64ad03e5fba64368460711b736d5a0a3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/resources_released-vmmap.json",
+      "bytes": 8192,
+      "sha256": "3b81b68fca7bd930e21d49bfbadde2ce12af7111310c96db16fa435c9197d096"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wb-seed-475/stdout.txt",
+      "bytes": 99740,
+      "sha256": "acebb6e839c651fd336e7c3af7ee55180f13bf84cb68bfc587a48761fa12a4a0"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "0593c64ffcf16ebd4aa0c4031b9ca4c821340f80f067d33aa56d87d2a4c1534e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/baseline-vmmap.json",
+      "bytes": 8202,
+      "sha256": "c7ddc3fd2bfe3e642e99d16df1825b2d5854541da5c8d06b1fa6e7483bd3e79c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/commands_retired-footprint.json",
+      "bytes": 3878,
+      "sha256": "e6ab7acbb089b43bc5c1fbbdbb21402058a5eeb3acedfc48c8907577d7258d76"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/commands_retired-vmmap.json",
+      "bytes": 8192,
+      "sha256": "a09d15e6b95e29006f6bd4e64e7df68b930343f25af14b16670945eeeb042b5f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/heap_ready-footprint.json",
+      "bytes": 3874,
+      "sha256": "9fa00d8567926394e32107c9081ca3cd38c86c600fb100bcf0ab181bc7535488"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/heap_ready-vmmap.json",
+      "bytes": 8202,
+      "sha256": "d4a7c4ac02a0f0f0893b949dae40e91020bed55c8f24aecb6b604980533a08e4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/live-footprint.json",
+      "bytes": 3994,
+      "sha256": "c32f3f340f5d6f2c537ab5548fe0f162d9179df88c602548ffdaae1ac3f5a07c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/live-vmmap.json",
+      "bytes": 8191,
+      "sha256": "0a35580e67aea9ea0434afb21fad8f9a723ee68a47ff573bd33b90599e37e763"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/resources_released-footprint.json",
+      "bytes": 3992,
+      "sha256": "612f9244732bac98b76d360cf374790f4b8b0acd90992d78898b7729d0e5d568"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/resources_released-vmmap.json",
+      "bytes": 8193,
+      "sha256": "632d5d2a5383face38db0083ad390b9d94dc2cd949dcd08f30602df7265d2f98"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-473/stdout.txt",
+      "bytes": 99697,
+      "sha256": "57f3e4a00ded4cb27c21fc954d6c4a1b041362356123803a412690c261d0d0a3"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "585dfe7a441fefeb5e596f581a6511324adecceda234e3b3d5492e6a24bec39d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/baseline-vmmap.json",
+      "bytes": 8191,
+      "sha256": "c1c30de941b6f92a32ba08157f4f096651ae7b54f866df1aefccd73baaec11b8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/commands_retired-footprint.json",
+      "bytes": 3877,
+      "sha256": "1f0c225f0c7b6674b49b5dd3d7e555fd34bf0214863dba9131513bd89a7c9895"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/commands_retired-vmmap.json",
+      "bytes": 8192,
+      "sha256": "c53c8b8cd61d3e97f8fd9da40d381e2488db3d9deb7bde2bc03c54037051d92e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/heap_ready-footprint.json",
+      "bytes": 3874,
+      "sha256": "9b0e5422cfc86814e4a0e487ac79c2d6e387097627d6a21a100bbb844457eb1c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/heap_ready-vmmap.json",
+      "bytes": 8191,
+      "sha256": "8eacc919085e2b8c7bc9b0a0e02a9e9591959cacabfd74409d08dfd4d4bd4508"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/live-footprint.json",
+      "bytes": 3993,
+      "sha256": "ed5b60518a6337110bf70fe195361a1ceea08c4e31b44f679e8ae28228eaca95"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/live-vmmap.json",
+      "bytes": 8193,
+      "sha256": "ca1d8dca1c7ab5b9a1832198165c53efad5a3e05149ad3ffe157f4611e831069"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/resources_released-footprint.json",
+      "bytes": 3993,
+      "sha256": "56b1ee676b733bf0d95059f8a5bc97c4434cfa318ad8e39d8a947ad8d5729ad1"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/resources_released-vmmap.json",
+      "bytes": 8193,
+      "sha256": "afd362298b6fda9e8f2312c3976c901384a1167a8b27db5b4fdc01dca90a40e4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-474/stdout.txt",
+      "bytes": 99713,
+      "sha256": "2fbb69c2ffbf6a20fc8f7527bababc3affa58152e44be3d9f497a8a35fc888ec"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "0a3a921ef9445ea039c0d318845c0f3c641b47af263478380ef26116756b05a9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/baseline-vmmap.json",
+      "bytes": 8051,
+      "sha256": "d329d38dbba7ba611dc64a672d3e868205b7c015c9f2a8f91d0b6aa4b461eeab"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/commands_retired-footprint.json",
+      "bytes": 3878,
+      "sha256": "a2581ff56615ad70c69d33e17f231fc0f4976895e0daae100f88ce16b2fad20c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/commands_retired-vmmap.json",
+      "bytes": 8193,
+      "sha256": "14dc62db398d7ca212322416f132822a8d6caf68ae8eaede1bfb297cecc0245a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/heap_ready-footprint.json",
+      "bytes": 3874,
+      "sha256": "3fb064f83ff3604891f3b98fd7f376c292c4276e68a844f5f4d1377accf793b2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/heap_ready-vmmap.json",
+      "bytes": 8050,
+      "sha256": "6ad14196c4ecd39a2234620b5ff3c5e722277cc382e28336e90fe6cc7f020d2e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/live-footprint.json",
+      "bytes": 3994,
+      "sha256": "4879ccb4995d57ca1151ccd6f2c83c913983646425bdd6433f0e08faa930fec4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/live-vmmap.json",
+      "bytes": 8192,
+      "sha256": "c1c89520ac8b38c0b98152e9a57b9afaf6d829ce8f080e9c90ed1a2a34c35e8d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/resources_released-footprint.json",
+      "bytes": 3994,
+      "sha256": "4aafd225c849ac1f8d2c502bf2857dc4a6443851780b6a03ac3911bb831f2c52"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/resources_released-vmmap.json",
+      "bytes": 8193,
+      "sha256": "e5c73765264dfc8294b518585a0778fa5af69f061ff4da854b0dd932cdef570e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/wc-seed-475/stdout.txt",
+      "bytes": 99741,
+      "sha256": "8144c7f6fab46e94601038d8909dfa82e64a7c52b19275c6ee86de477800eb39"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/archive-manifest.json",
+      "bytes": 8974,
+      "sha256": "4811c41fb720eb644c77850903ff0c70107831560b8552d6a2c70fe347606681"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/receipt.json",
+      "bytes": 505301,
+      "sha256": "a10a14de58519bd6f8da677329bb7fbca6d7550c55784985821c6cb5ad9e1b92"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/source/allocator-evaluation/probe.cpp",
+      "bytes": 8374,
+      "sha256": "8c20a7b254499034bc9883ee62490de45c6f00fd0cbcf66f5f4b250ef17ebaf6"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/source/allocator-evaluation/run.py",
+      "bytes": 9607,
+      "sha256": "70869ecb660ab7c39a0630fe1aeb811c522251e59ed087773f1dbc4c2745f028"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/source/capture-helper.py",
+      "bytes": 16050,
+      "sha256": "8c7ea0b1ed5046ad25a5830d2c2c0982fa24a09ddb34dfae5edc5ce1a117878a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/source/observe.cpp",
+      "bytes": 906,
+      "sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/source/support.h",
+      "bytes": 14678,
+      "sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "40d4b511f6ded2c0227fd9fc2fb6eb53078c44aa98d12a06317cf9c93944775c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/baseline-vmmap.json",
+      "bytes": 8052,
+      "sha256": "72d758af691b94114d9a45cc222b5c95ce55681f6fdc3e5fe6dcd7d107b7b82a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/commands_retired-footprint.json",
+      "bytes": 3878,
+      "sha256": "7e0d592232afc349e08ef418f6a1a34b3d13ba1e9a014016bd7509897ad5bfc2"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/commands_retired-vmmap.json",
+      "bytes": 8194,
+      "sha256": "31c17bdbebe3b116a2fc6ec906b92b265f243a147719dfcd80bdf22178cbc0ac"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/heap_ready-footprint.json",
+      "bytes": 3873,
+      "sha256": "298709227685e9a18962ca919c5c8b59fe589602a648d91e9ed2aa09238d3dcd"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/heap_ready-vmmap.json",
+      "bytes": 8052,
+      "sha256": "cfd2ff2f080eb379dda90c285392defb3d647654c96441f5b52aaa22696bb455"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/live-footprint.json",
+      "bytes": 3993,
+      "sha256": "24469564902be48bfcff0061f9cb32c90893f9c247b29f79749b0802dbb9ef16"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/live-vmmap.json",
+      "bytes": 8195,
+      "sha256": "92d88cac1011ba2d4e1e52b5281dfd1027afa6eb5445658a48552cbc6ccd2d63"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/resources_released-footprint.json",
+      "bytes": 3993,
+      "sha256": "82a071eebc65961dba1768324f2502c0591fb3264485d1225874a59cf4e8d845"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/resources_released-vmmap.json",
+      "bytes": 8195,
+      "sha256": "5e4514eefd73d0de1e933f1b37483321a2374fb269eaa3c29101d2164842a29e"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wb-seed-473/stdout.txt",
+      "bytes": 99626,
+      "sha256": "2f4ba4e2c7be33fc3e4b8002ecb5dcee2163191319ef42da3dff0137df0459e8"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/baseline-footprint.json",
+      "bytes": 3874,
+      "sha256": "3a496d0ab9ceb209a3cd70df9e00d2957781ab3ee1c53dc2710ff1ce11fff358"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/baseline-vmmap.json",
+      "bytes": 8190,
+      "sha256": "a7ead6a4cf5be753c21ba2a460623f2ac82d6cd7d9f6d882eabb026d11effcd4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/commands_retired-footprint.json",
+      "bytes": 3878,
+      "sha256": "2a8401d67b3af9fb0f07d980e384dc3a3bd7302f742a8ec5167e98a78d3c50fe"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/commands_retired-vmmap.json",
+      "bytes": 8193,
+      "sha256": "67284fd057c889348704a56ccaa1f7afaded48b3d0e99160f757a5c596f18961"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/heap_ready-footprint.json",
+      "bytes": 3873,
+      "sha256": "7d51e008313fd2e097a49340ba8a8138c152c2ced1923d0e823e5f8a959ad6c9"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/heap_ready-vmmap.json",
+      "bytes": 8190,
+      "sha256": "b6d7e189eeecec9b3fcc93b008b5a829f02cb6811086928fce18b4a7a9aeb262"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/live-footprint.json",
+      "bytes": 3994,
+      "sha256": "15bc2efbe09fc0cece79c12ea0afbd2bc2dd7de76b1c8825f27a406377badd91"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/live-vmmap.json",
+      "bytes": 8192,
+      "sha256": "170060546a9c509f7d3d5d466d8f84bd059b6eca2a6366d07d86a48e5e00434d"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/resources_released-footprint.json",
+      "bytes": 3993,
+      "sha256": "474d6bd37541925876e3a2678ff706fc0bb3f1debc2d51ef1ae2bc7cca4645e4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/resources_released-vmmap.json",
+      "bytes": 8193,
+      "sha256": "ea0235505413374f61e70b204541075fafc54a911679fbabb2063652d950cb3a"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-pilot/wc-seed-473/stdout.txt",
+      "bytes": 99626,
+      "sha256": "26eeec8842874ae92f652a74bdbc05d062dd34a77539470500c9b4f5c7981bbf"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/archive-manifest.json",
+      "bytes": 2972,
+      "sha256": "847a236f1b9afb0ce03707b541d3cf42c2cae5e443d948a3364b87fd0a3b11e4"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/receipt.json",
+      "bytes": 3442,
+      "sha256": "9a50d2ad7074b1f8b942d38ccbd953597d84c003b8b705b2851c4bf08a8854e7"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-473-oracle.json",
+      "bytes": 1650,
+      "sha256": "edd01be597919371d061659ed1ecc2350953fdc471a3eaa3a4d2b1bef5240e16"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-473-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-473-stdout.jsonl",
+      "bytes": 716542,
+      "sha256": "a258bff1718720872dc6871bc9c0f3367c4c8f55331155a75ebd9009ee073347"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-474-oracle.json",
+      "bytes": 1649,
+      "sha256": "c3aaeef6820daa0072f2559f2ab7fb40db0fa5befb2014a02887111a6530908c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-474-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-474-stdout.jsonl",
+      "bytes": 715266,
+      "sha256": "b5d385a6a54d638002fc4bac8bdf6358646de905dc5b3425c1b83863c5b8137f"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-475-oracle.json",
+      "bytes": 1650,
+      "sha256": "9d24988659027b4debdab07ba1e15965ee0bb038007283bd1e3ea27f0c15e358"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-475-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/seed-475-stdout.jsonl",
+      "bytes": 716919,
+      "sha256": "c566f80a044842b27cf82648c8c2af8e253410391afc86a2a96c79af49421c7c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/archive-manifest.json",
+      "bytes": 2399,
+      "sha256": "f98a220a1ba28f1fc71be6474b21a542966451d3c0af3b94851a712da89ec0ac"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/corrupted-control.jsonl",
+      "bytes": 716563,
+      "sha256": "6efe003ad132f406355ce295442eaa4e6b11ad1356b858312941c3cc45338848"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/receipt.json",
+      "bytes": 4814,
+      "sha256": "aa08fb98508091ffbd7134bb465a6d4d071557440426e5106770247f13eca249"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/seed-473-oracle.json",
+      "bytes": 1650,
+      "sha256": "edd01be597919371d061659ed1ecc2350953fdc471a3eaa3a4d2b1bef5240e16"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/seed-473-stderr.txt",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/seed-473-stdout.jsonl",
+      "bytes": 716542,
+      "sha256": "a258bff1718720872dc6871bc9c0f3367c4c8f55331155a75ebd9009ee073347"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/source/oracle.py",
+      "bytes": 4212,
+      "sha256": "ef5193fc04246ee79370a161d8aa9b2d16eb064dd04110392e34224b20340d78"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/source/run.py",
+      "bytes": 3723,
+      "sha256": "9d92a8c3cd83ea5dcd52b0cef748ef9837d764d13ba26369152a09d59094549c"
+    },
+    {
+      "path": "docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/source/trace.cpp",
+      "bytes": 6443,
+      "sha256": "8be2dbdec35b332d4e20db84450199cc66ae285ed58342bd0a08cfd3b9c779c3"
+    },
+    {
+      "path": "docs/research/upstream-registry.md",
+      "bytes": 11973,
+      "sha256": "2df321dcf1d270f2d3a007b594670abe633757109c24afa1eeafcd36ca135641"
+    }
+  ],
+  "baseline_sha256": "33e90bfee89e812f48990613cd74ced56473e5c3fc5d973f2ba1116090646a0c",
+  "external_files": [
+    {
+      "file": "LICENSE.txt",
+      "git_blob": "3d5a69a6f5695507ecc9c412c783ca60572bf878",
+      "sha256": "5478a2f36b736e13dd3250b9c71a4ab521bc327fb9d112a92c647bf3e69ddb68",
+      "public_payload": false
+    },
+    {
+      "file": "D3D12MemAlloc.h",
+      "git_blob": "b685a5cd6188519606efaf039cd88c2faffa261a",
+      "sha256": "1c00495b250be4a3cfcaec0e33c23f418fed2cbd96f51ca975b738238a851603",
+      "public_payload": false
+    },
+    {
+      "file": "D3D12MemAlloc.cpp",
+      "git_blob": "b7ba60a3a4deb0ed466b235b7c5298f91ba5c976",
+      "sha256": "dd0e4b85e1a321694e9560f36de55a42e1ad4b08853a0a86245e8302db9df268",
+      "public_payload": false
+    }
+  ],
+  "kernel_pressure": "2",
+  "memory_heavy_checks": "blocked by urgent pressure / 23 GB reserve; earlier exact-source compile receipts retained"
+}

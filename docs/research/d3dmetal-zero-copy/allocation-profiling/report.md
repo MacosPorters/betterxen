@@ -50,8 +50,12 @@ Hardware observations are local class A within their workloads; public API contr
 
 ## Review and publication dependency
 
-Exact executed sources, hashes, commands, raw data and review questions are in the append-only bundles and [handoff](review-handoff.md). B must independently review and reproduce A's critical findings; A must inspect and reproduce B's actual pinned implementation. Those steps remain open. New source publication also requires the requester's separate authorization to commit/push. No commit or push has occurred, and this report does not certify #464 or recommend adoption on the strength of synthetic success alone.
+Exact executed sources, hashes, commands, raw data and review questions are in the append-only bundles and [handoff](review-handoff.md). B must independently review and reproduce A's critical findings; A has now inspected B's published implementation and recalculated raw data; critical M4 reproduction and trace-input validation remain open. The requester manually published initial A work at `8cc2f8ffbc4368e38950c2e037fee4ce12fa88b8`. Publication on the dedicated A research branch is now explicitly authorized, and this report does not certify #464 or recommend adoption on the strength of synthetic success alone.
 
 ## Local validation
 
 [Validation logs and receipts](../results/2026-11-26-apple-m4-arths17-a-verification/verification.json) record formatting, Clippy, 66 passed Rust tests with one existing ignored test, all 16 strict PE32+ shim/export checks, ARM64 CLI format/linkage and the two unchanged baseline CPU conformance programs (test_veh_clwb and test_shim_exports). Documentation hygiene passed with a temporary index containing candidate files, without changing the real index. Archive/source hash checks and Python/C++ formatting/compilation checks are retained. These engineering checks do not independently accept the new research or turn the texture negative failures into passes.
+
+## Resume after the initial publication
+
+The [continuation status](resume-status.md) records new bounded logical fragmentation, six pinned external-allocator WB/WC buffer cases, refined ownership/budget decisions and the graphics supplement's one passing smoke, initial fixture failure and pressure-stopped repeat. The initial studies above remain separate protocols with their original raw records. No new result establishes physical backing identity, an application speedup, a blanket xmem provider or independently accepted texture/allocator support. M4 reproduction, trace-input validation and remaining reciprocal acceptance are dependencies; urgent host pressure blocks further controlled graphics/large footprint runs.

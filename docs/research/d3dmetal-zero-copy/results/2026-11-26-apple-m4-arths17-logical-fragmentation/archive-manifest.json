@@ -1,0 +1,76 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "receipt.json",
+      "bytes": 3442,
+      "original_sha256": "9a50d2ad7074b1f8b942d38ccbd953597d84c003b8b705b2851c4bf08a8854e7",
+      "archived_sha256": "9a50d2ad7074b1f8b942d38ccbd953597d84c003b8b705b2851c4bf08a8854e7",
+      "redacted": false
+    },
+    {
+      "path": "seed-473-oracle.json",
+      "bytes": 1650,
+      "original_sha256": "edd01be597919371d061659ed1ecc2350953fdc471a3eaa3a4d2b1bef5240e16",
+      "archived_sha256": "edd01be597919371d061659ed1ecc2350953fdc471a3eaa3a4d2b1bef5240e16",
+      "redacted": false
+    },
+    {
+      "path": "seed-473-stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "seed-473-stdout.jsonl",
+      "bytes": 716542,
+      "original_sha256": "a258bff1718720872dc6871bc9c0f3367c4c8f55331155a75ebd9009ee073347",
+      "archived_sha256": "a258bff1718720872dc6871bc9c0f3367c4c8f55331155a75ebd9009ee073347",
+      "redacted": false
+    },
+    {
+      "path": "seed-474-oracle.json",
+      "bytes": 1649,
+      "original_sha256": "c3aaeef6820daa0072f2559f2ab7fb40db0fa5befb2014a02887111a6530908c",
+      "archived_sha256": "c3aaeef6820daa0072f2559f2ab7fb40db0fa5befb2014a02887111a6530908c",
+      "redacted": false
+    },
+    {
+      "path": "seed-474-stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "seed-474-stdout.jsonl",
+      "bytes": 715266,
+      "original_sha256": "b5d385a6a54d638002fc4bac8bdf6358646de905dc5b3425c1b83863c5b8137f",
+      "archived_sha256": "b5d385a6a54d638002fc4bac8bdf6358646de905dc5b3425c1b83863c5b8137f",
+      "redacted": false
+    },
+    {
+      "path": "seed-475-oracle.json",
+      "bytes": 1650,
+      "original_sha256": "9d24988659027b4debdab07ba1e15965ee0bb038007283bd1e3ea27f0c15e358",
+      "archived_sha256": "9d24988659027b4debdab07ba1e15965ee0bb038007283bd1e3ea27f0c15e358",
+      "redacted": false
+    },
+    {
+      "path": "seed-475-stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "seed-475-stdout.jsonl",
+      "bytes": 716919,
+      "original_sha256": "c566f80a044842b27cf82648c8c2af8e253410391afc86a2a96c79af49421c7c",
+      "archived_sha256": "c566f80a044842b27cf82648c8c2af8e253410391afc86a2a96c79af49421c7c",
+      "redacted": false
+    }
+  ]
+}

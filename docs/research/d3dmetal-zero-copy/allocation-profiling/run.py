@@ -41,15 +41,30 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('--bottle', required=True, type=Path)
     ap.add_argument('--scratch', required=True, type=Path)
-    ap.add_argument('--suite', choices=['memory', 'pool', 'texture', 'alias'], required=True)
+    ap.add_argument('--suite', choices=['memory', 'pool', 'texture', 'alias', 'render'], required=True)
     ap.add_argument('--smoke', action='store_true')
+    ap.add_argument('--memory-sizes',default='64,256,1024')
+    ap.add_argument('--memory-types',default='cpu-plain,cpu,wb,upload')
+    ap.add_argument('--memory-repeats',type=int,choices=[1,2],default=2)
+    ap.add_argument('--memory-repeat-start',type=int,choices=[0,1],default=0)
     ap.add_argument('--sessions',type=int,choices=[1,2,3],default=3,help='pool sessions')
     ap.add_argument('--session-start',type=int,choices=[0,1,2],default=0,help='pool trace session offset for nonduplicating continuation')
     ap.add_argument('--allow-warning', action='store_true', help='explicitly permit kernel warning level 1; urgent/critical still stop')
-    ap.add_argument('--negative-control', action='store_true', help='pool omitted-copy control only; expected exit 1')
+    ap.add_argument('--negative-control', action='store_true', help='pool omitted-copy or render omitted-draw control; expected exit 1')
     args = ap.parse_args()
-    if args.negative_control and args.suite != 'pool':
-        ap.error('--negative-control only applies to pool')
+    try:
+        memory_sizes=[int(v) for v in args.memory_sizes.split(',')]
+    except ValueError:
+        ap.error('memory sizes must be comma-separated integer MiB values')
+    memory_types=args.memory_types.split(',')
+    if not memory_sizes or set(memory_sizes)-{64,256,1024} or not memory_types or set(memory_types)-{'cpu-plain','cpu','wb','upload'}:
+        ap.error('memory profile must be an explicit subset of the common sizes/types')
+    if len(set(memory_sizes)) != len(memory_sizes) or len(set(memory_types)) != len(memory_types):
+        ap.error('memory profile must not contain duplicate sizes/types')
+    if args.suite == 'memory' and args.memory_repeat_start + (1 if args.smoke else args.memory_repeats) > 2:
+        ap.error('memory repeat indices must stay within the common two-session profile')
+    if args.negative_control and args.suite not in ['pool','render']:
+        ap.error('--negative-control only applies to pool/render')
     src = Path(__file__).resolve().parent
     repo = src.parents[3]
     base = args.scratch.expanduser().resolve()
@@ -69,10 +84,10 @@ def main():
     env.update(TMPDIR=str(base)+'/', ROSETTA_ADVERTISE_AVX='1', CX_GRAPHICS_BACKEND='d3dmetal', WINEDEBUG='-all')
     cx = Path('/Applications/CrossOver.app/Contents/SharedSupport/CrossOver')
     wine = cx/'bin/wine'
-    source = src/(args.suite+'.cpp') if args.suite in ['memory','pool'] else src.parent/'gpu-correctness/textures-and-resources'/('probe.cpp' if args.suite=='texture' else 'alias.cpp')
+    source = src/(args.suite+'.cpp') if args.suite in ['memory','pool'] else src.parent/'gpu-correctness/textures-and-resources'/{'texture':'probe.cpp','alias':'alias.cpp','render':'render.cpp'}[args.suite]
     exe, observer = base/'a-probe.exe', base/'observe'
-    receipt = dict(protocol='A-local-2.2', suite=args.suite, allow_warning=args.allow_warning, utc=datetime.now(timezone.utc).isoformat(),
-                   ram_ceiling_bytes=23000000000, independent_review='pending', environment={k: env[k] for k in ['ROSETTA_ADVERTISE_AVX', 'CX_GRAPHICS_BACKEND', 'WINEDEBUG']},
+    receipt = dict(protocol='A-local-2.4', suite=args.suite, allow_warning=args.allow_warning, utc=datetime.now(timezone.utc).isoformat(),
+                   ram_ceiling_bytes=23000000000, smoke=args.smoke, selected_memory_profile=(dict(sizes_MiB=[64] if args.smoke else memory_sizes,types=['wb'] if args.smoke else memory_types,repeats=1 if args.smoke else args.memory_repeats,repeat_start=args.memory_repeat_start) if args.suite=='memory' else None), independent_review='pending', environment={k: env[k] for k in ['ROSETTA_ADVERTISE_AVX', 'CX_GRAPHICS_BACKEND', 'WINEDEBUG']},
                    sources={str(p.relative_to(repo)): sha(p) for p in [source, src/'support.h', src/'observe.cpp', Path(__file__)]},
                    baseline_sha256=sha(src.parent/'probe.cpp'), tools={}, cases=[])
     snapshot=base/'source';snapshot.mkdir()
@@ -108,15 +123,6 @@ def main():
     resources=cx/'lib64/apple_gptk/external/D3DMetal.framework/Versions/A/Resources'
     receipt['framework']={p.name:plistlib.loads(p.read_bytes()) for p in resources.glob('*.plist')}
     receipt['runtime_hashes']={str(p):sha(p) for p in [cx/'lib64/apple_gptk/wine/x86_64-windows/d3d12.dll', cx/'lib/wine/x86_64-windows/d3dcompiler_47.dll']}
-    temp=base/'bottle'
-    shutil.copytree(bottle,temp,symlinks=True)
-    conf=re.sub(r'(?m)^\[Bottle\]\s*$', '[Bottle]\n"AllowUntrusted" = "1"', original.decode(), count=1)
-    conf+='\n[EnvironmentVariables]\n"CX_GRAPHICS_BACKEND" = "d3dmetal"\n[CrossOver]\n"AntiVirusScan" = "untrusted"\n'
-    (temp/'cxbottle.conf').write_text(conf)
-    receipt['bottle_original_sha256']=hashlib.sha256(original).hexdigest()
-    receipt['bottle_settings']=[line.strip() for line in conf.splitlines() if re.match(r'"(WineArch|Template|WindowsVersion|Version|CX_GRAPHICS_BACKEND|AllowUntrusted|AntiVirusScan)"',line)]
-    common=[str(wine),'--bottle',str(temp),'--no-update','--no-gui',str(exe)]
-
     def headroom():
         vm=capture(['vm_stat'],env,base)
         ram=capture(['sysctl','-n','hw.memsize'],env,base)
@@ -129,6 +135,25 @@ def main():
         used=max(0,int(ram['stdout'])-(int(free[1])+int(filebacked[1]))*int(page[1]))
         return dict(metric='physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate',
                     occupied_bytes=used,ceiling_bytes=23000000000,available_below_ceiling_bytes=23000000000-used,vm_stat=vm,ram=ram)
+
+    preflight = headroom()
+    kernel = capture(['sysctl','-n','kern.memorystatus_vm_pressure_level'],env,base)
+    receipt['preflight_before_bottle_copy'] = dict(ram=preflight,kernel_pressure=kernel)
+    if (preflight['available_below_ceiling_bytes'] < 512*1024**2 or kernel['exit'] or
+        not kernel['stdout'].strip().isdigit() or
+        int(kernel['stdout'].strip()) > (1 if args.allow_warning else 0)):
+        receipt['stop_reason'] = 'preflight headroom/pressure guard; no bottle copied or guest started'
+        receipt['source_bottle_unchanged'] = (bottle/'cxbottle.conf').read_bytes() == original
+        save()
+        return 2
+    temp=base/'bottle'
+    shutil.copytree(bottle,temp,symlinks=True)
+    conf=re.sub(r'(?m)^\[Bottle\]\s*$', '[Bottle]\n"AllowUntrusted" = "1"', original.decode(), count=1)
+    conf+='\n[EnvironmentVariables]\n"CX_GRAPHICS_BACKEND" = "d3dmetal"\n[CrossOver]\n"AntiVirusScan" = "untrusted"\n'
+    (temp/'cxbottle.conf').write_text(conf)
+    receipt['bottle_original_sha256']=hashlib.sha256(original).hexdigest()
+    receipt['bottle_settings']=[line.strip() for line in conf.splitlines() if re.match(r'"(WineArch|Template|WindowsVersion|Version|CX_GRAPHICS_BACKEND|AllowUntrusted|AntiVirusScan)"',line)]
+    common=[str(wine),'--bottle',str(temp),'--no-update','--no-gui',str(exe)]
 
     def run(name, argv, expected_exit=0):
         memory=headroom()
@@ -206,17 +231,19 @@ def main():
         if metadata['timed_out']:raise RuntimeError('case timed out: '+name)
         if metadata['exit']!=expected_exit:
             receipt.setdefault('failed_cases',[]).append(name);save()
-            if args.suite not in ['texture','alias']:raise RuntimeError('case failed: '+name)
-        if expected_exit and b'END failure reason=trace guard/interior mismatch' not in (case/'stdout.txt').read_bytes():
+            if args.suite not in ['texture','alias','render']:raise RuntimeError('case failed: '+name)
+        if expected_exit and (b'END failure reason=sampled pixels mismatch' if args.suite=='render' else b'END failure reason=trace guard/interior mismatch') not in (case/'stdout.txt').read_bytes():
             raise RuntimeError('negative control failed for an unexpected reason')
     try:
         if args.suite=='memory':
-            for repeat in range(1 if args.smoke else 2):
-                sizes=[64] if args.smoke else [64,256,1024]
-                types=['wb'] if args.smoke else ['cpu-plain','cpu','wb','upload']
+            for repeat in range(args.memory_repeat_start,args.memory_repeat_start+(1 if args.smoke else args.memory_repeats)):
+                sizes=[64] if args.smoke else list(memory_sizes)
+                types=['wb'] if args.smoke else list(memory_types)
                 if repeat%2:types.reverse();sizes.reverse()
                 for size in sizes:
                     for typ in types:run(f'memory-{typ}-{size}MiB-r{repeat}',[typ,str(size*1024**2)])
+        elif args.suite=='render' and args.negative_control:
+            run('render-omitted-draw-control',['omit'],1)
         elif args.suite=='pool' and args.negative_control:
             run('pool-omitted-copy-control',['omit','473'],1)
         elif args.suite=='pool':

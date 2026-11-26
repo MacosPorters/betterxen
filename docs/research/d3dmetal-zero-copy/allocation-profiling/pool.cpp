@@ -256,16 +256,19 @@ struct Trace {
     ID3D12CommandList *lists[] = {q->list.p};
     q->q->ExecuteCommandLists(1, lists);
     UINT64 target = ++q->value;
-    require(q->q->Signal(q->fence.p, target), "retirement signal");
+    HRESULT signalled = q->q->Signal(q->fence.p, target);
+    if (FAILED(signalled))
+      q->stopInFlight("retirement Signal", signalled, target,
+                      q->fence->GetCompletedValue());
     UINT64 completed = q->fence->GetCompletedValue();
     bool withheld = completed < target;
     // No free, overwrite, or second resource activation occurs while this range
     // is pending.
-    require(gate->Signal(1), "open retirement gate");
-    require(q->fence->SetEventOnCompletion(target, q->event),
-            "retirement event");
-    if (WaitForSingleObject(q->event, 10000) != WAIT_OBJECT_0)
-      throw std::runtime_error("retirement wait timeout");
+    HRESULT opened = gate->Signal(1);
+    if (FAILED(opened))
+      q->stopInFlight("open retirement gate", opened, target,
+                      q->fence->GetCompletedValue());
+    q->waitFor(target);
     std::printf(
         "DELAYED_RETIRE target=%llu before=%llu withheld=%d after=%llu\n",
         target, completed, withheld, q->fence->GetCompletedValue());

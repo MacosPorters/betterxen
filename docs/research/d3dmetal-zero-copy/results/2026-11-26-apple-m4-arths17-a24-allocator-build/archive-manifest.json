@@ -1,0 +1,48 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "receipt.json",
+      "bytes": 461390,
+      "original_sha256": "f33f3885a6f1da806a92d56f705d0cc9ecc8653008b9a35bcd0c3ac617261520",
+      "archived_sha256": "68dad753676df19dfba1455d7577dbc2366f515d9254f6a26f5ce39abe7cbbfb",
+      "redacted": true
+    },
+    {
+      "path": "source/allocator-evaluation/probe.cpp",
+      "bytes": 9149,
+      "original_sha256": "1aa1a4f3bf3d62d084bd50baac34bf066cb59816c3d6abc5d0c48c25a7073223",
+      "archived_sha256": "1aa1a4f3bf3d62d084bd50baac34bf066cb59816c3d6abc5d0c48c25a7073223",
+      "redacted": false
+    },
+    {
+      "path": "source/allocator-evaluation/run.py",
+      "bytes": 9808,
+      "original_sha256": "4ee950a58cde456011bbfe7c72c69ca491cc61295933498c22b9dfac321668b9",
+      "archived_sha256": "4ee950a58cde456011bbfe7c72c69ca491cc61295933498c22b9dfac321668b9",
+      "redacted": false
+    },
+    {
+      "path": "source/capture-helper.py",
+      "bytes": 18394,
+      "original_sha256": "3e281b5ff7f0ea2ddc8c0af5949dbb31cdd317b05bfe53889939e68ef3b3943e",
+      "archived_sha256": "3e281b5ff7f0ea2ddc8c0af5949dbb31cdd317b05bfe53889939e68ef3b3943e",
+      "redacted": false
+    },
+    {
+      "path": "source/observe.cpp",
+      "bytes": 906,
+      "original_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "archived_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "redacted": false
+    },
+    {
+      "path": "source/support.h",
+      "bytes": 15688,
+      "original_sha256": "b9dfbddb6e326fc0d2e531994ec6fb49abf0e37ea90b06cdaeef76fb36bd73b7",
+      "archived_sha256": "b9dfbddb6e326fc0d2e531994ec6fb49abf0e37ea90b06cdaeef76fb36bd73b7",
+      "redacted": false
+    }
+  ]
+}

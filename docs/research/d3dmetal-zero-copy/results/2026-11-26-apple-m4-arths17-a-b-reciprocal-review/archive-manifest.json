@@ -1,0 +1,41 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "b-data-review.json",
+      "bytes": 1323,
+      "original_sha256": "331efd1407708d7390e8b4294b21d128a090e92b3dd06591848cae5b4c3115a3",
+      "archived_sha256": "331efd1407708d7390e8b4294b21d128a090e92b3dd06591848cae5b4c3115a3",
+      "redacted": false
+    },
+    {
+      "path": "b-output-audit.json",
+      "bytes": 251,
+      "original_sha256": "2a7888ca83a3c37c58600673a26deda9259164834260d16e63ccad613def6d08",
+      "archived_sha256": "2a7888ca83a3c37c58600673a26deda9259164834260d16e63ccad613def6d08",
+      "redacted": false
+    },
+    {
+      "path": "input-manifest.json",
+      "bytes": 122287,
+      "original_sha256": "29042e73d7942c75b27ccd6b098f9de78d029f9c583ccbc66c8a47570322c371",
+      "archived_sha256": "29042e73d7942c75b27ccd6b098f9de78d029f9c583ccbc66c8a47570322c371",
+      "redacted": false
+    },
+    {
+      "path": "review-b-data.py",
+      "bytes": 5759,
+      "original_sha256": "0b3ffba374aa85d63506b7ed7a5fd542d5ede1a6a544d421ea01473fa9eb33a8",
+      "archived_sha256": "0b3ffba374aa85d63506b7ed7a5fd542d5ede1a6a544d421ea01473fa9eb33a8",
+      "redacted": false
+    },
+    {
+      "path": "review-receipt.json",
+      "bytes": 960,
+      "original_sha256": "7b7510e5672b02cfeb7c0b9d1b2c10c79675a412c7298178d9dd563451020725",
+      "archived_sha256": "7b7510e5672b02cfeb7c0b9d1b2c10c79675a412c7298178d9dd563451020725",
+      "redacted": false
+    }
+  ]
+}

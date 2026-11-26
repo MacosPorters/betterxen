@@ -1,0 +1,174 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "receipt.json",
+      "bytes": 84558,
+      "original_sha256": "710f8a93c577dab8301d6d117f886b2e5cfb8ac9f1fbb11398b91ff6aa906c86",
+      "archived_sha256": "19ee6059537ca66b93042bb49b330bd155996e8044597f20315d9b60def4f89b",
+      "redacted": true
+    },
+    {
+      "path": "render-s0/baseline-footprint.json",
+      "bytes": 3872,
+      "original_sha256": "d56d86588da0c81a099087aa561f7714567ebfeb86db5a14dd2735f9caf6cd06",
+      "archived_sha256": "d56d86588da0c81a099087aa561f7714567ebfeb86db5a14dd2735f9caf6cd06",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "701bff642470c68cac5e99bf1992921158192598d79e9471bf9dffcd39fa969c",
+      "archived_sha256": "701bff642470c68cac5e99bf1992921158192598d79e9471bf9dffcd39fa969c",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "5e918c0fa9f299700926eb374997de14adae913ba12ad52814218e3f80d0e1f6",
+      "archived_sha256": "5e918c0fa9f299700926eb374997de14adae913ba12ad52814218e3f80d0e1f6",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/baseline-swap.json",
+      "bytes": 215,
+      "original_sha256": "c5541426a11ab82301b4d5e675157b1d8ea2eb65c8f619e2b8774faa4c54de2b",
+      "archived_sha256": "c5541426a11ab82301b4d5e675157b1d8ea2eb65c8f619e2b8774faa4c54de2b",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/baseline-vmmap.json",
+      "bytes": 8048,
+      "original_sha256": "5f1201aabaea5a7145044b22b0e71e73f20ae4d1c8e18538cd590c1ae5ced6d5",
+      "archived_sha256": "5f1201aabaea5a7145044b22b0e71e73f20ae4d1c8e18538cd590c1ae5ced6d5",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "92d1c3f26b928d946e084713aa49eeff36cd812c15674c31f0e78337e43ff6db",
+      "archived_sha256": "92d1c3f26b928d946e084713aa49eeff36cd812c15674c31f0e78337e43ff6db",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/case.json",
+      "bytes": 14701,
+      "original_sha256": "450fc91b74a4ebd3d1c5c73689d7e7846f905c51b8d298650e52047b23aaad42",
+      "archived_sha256": "450fc91b74a4ebd3d1c5c73689d7e7846f905c51b8d298650e52047b23aaad42",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/sample_ps.dxbc",
+      "bytes": 680,
+      "original_sha256": "c122074d7341267d562299c5fda2ba019b1db538c0f3c1fa104418c718311e04",
+      "archived_sha256": "c122074d7341267d562299c5fda2ba019b1db538c0f3c1fa104418c718311e04",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/sample_ps.hlsl",
+      "bytes": 204,
+      "original_sha256": "ad3ed8a46a0c22fabf30d2dcb22ca203e49da7252232f53a9fdea5d3c45118f8",
+      "archived_sha256": "ad3ed8a46a0c22fabf30d2dcb22ca203e49da7252232f53a9fdea5d3c45118f8",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/sample_vs.dxbc",
+      "bytes": 1108,
+      "original_sha256": "80069783ff7e7abca339b07b23e067ab5c8c00b75e00d81ccdef1ce21bf402b9",
+      "archived_sha256": "80069783ff7e7abca339b07b23e067ab5c8c00b75e00d81ccdef1ce21bf402b9",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/sample_vs.hlsl",
+      "bytes": 252,
+      "original_sha256": "c0c4827b77e77228e676a7f3f8569b90d4fef410dab94f881f225c5901613d54",
+      "archived_sha256": "c0c4827b77e77228e676a7f3f8569b90d4fef410dab94f881f225c5901613d54",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/stderr.txt",
+      "bytes": 240,
+      "original_sha256": "663a15374bd7dbd7f8c0ddaefd1f0dceb4f863aaffe9f453439a57b46cfeee81",
+      "archived_sha256": "663a15374bd7dbd7f8c0ddaefd1f0dceb4f863aaffe9f453439a57b46cfeee81",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/stdout.txt",
+      "bytes": 989,
+      "original_sha256": "76d5fbe1bfbd544f4d56068b3d1c2c9493174ec22bbfab2aa5e4fd6661f5a42f",
+      "archived_sha256": "76d5fbe1bfbd544f4d56068b3d1c2c9493174ec22bbfab2aa5e4fd6661f5a42f",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/wb-footprint.json",
+      "bytes": 3872,
+      "original_sha256": "63a3744b3fbb4e15511e3955a243d311b9ecbc7b36355c4999c054a56132d0e4",
+      "archived_sha256": "63a3744b3fbb4e15511e3955a243d311b9ecbc7b36355c4999c054a56132d0e4",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/wb-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "3e88dc833fe5ace1f7933c9cbaf5e071a8584460679788f9eb6efe6c1a62d9c1",
+      "archived_sha256": "3e88dc833fe5ace1f7933c9cbaf5e071a8584460679788f9eb6efe6c1a62d9c1",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/wb-pressure.json",
+      "bytes": 247,
+      "original_sha256": "b14bb269d35d096f5a66d01c1719dc9dfd4ca0a838b840adb05209b5632c96b9",
+      "archived_sha256": "b14bb269d35d096f5a66d01c1719dc9dfd4ca0a838b840adb05209b5632c96b9",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/wb-swap.json",
+      "bytes": 215,
+      "original_sha256": "0bf0f5d897555bb3f924366da9a89ba762fd607cd13d7abacc1df63d0648b1c5",
+      "archived_sha256": "0bf0f5d897555bb3f924366da9a89ba762fd607cd13d7abacc1df63d0648b1c5",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/wb-vmmap.json",
+      "bytes": 8049,
+      "original_sha256": "efee1b8cd2a22cf1cc8cb2862b0481eedc3aeb0bae1d0054466c93e02e6067a6",
+      "archived_sha256": "efee1b8cd2a22cf1cc8cb2862b0481eedc3aeb0bae1d0054466c93e02e6067a6",
+      "redacted": false
+    },
+    {
+      "path": "render-s0/wb-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "a394cf80d014157fea869ff25f017cd392a96345c35a810fc78b1dae434a97e0",
+      "archived_sha256": "a394cf80d014157fea869ff25f017cd392a96345c35a810fc78b1dae434a97e0",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "original_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "archived_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16309,
+      "original_sha256": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da",
+      "archived_sha256": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "original_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "archived_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+      "bytes": 17211,
+      "original_sha256": "7ed4124f515a53d28dd78b12a5d531a0c8692bdb123b721b10763c8cafce1e17",
+      "archived_sha256": "7ed4124f515a53d28dd78b12a5d531a0c8692bdb123b721b10763c8cafce1e17",
+      "redacted": false
+    }
+  ]
+}

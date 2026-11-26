@@ -1,0 +1,113 @@
+{
+  "utc": "2026-11-26T22:22:01.823979+00:00",
+  "scope": "author data checks and rejection controls; no GPU launches",
+  "checks": [
+    {
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded",
+        "--raw-pool-results",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-pool-corrected",
+        "--output",
+        "/tmp/bx473-resume-data-analysis/allocator-bounded-analysis.json"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "{\n  \"scope\": \"author-written data re-derivation, independent acceptance pending\",\n  \"cases\": [\n    {\n      \"name\": \"wb-seed-473\",\n      \"stdout_sha256\": \"b81911855eb9e2524410db2e3aa686fd593de7969324d78d56b426bc5362a187\",\n      \"peak_live_payload_bytes\": 13566048,\n      \"peak_reserved_suballocation_bytes\": 15138816,\n      \"peak_internal_rounding_bytes\": 1572768,\n      \"matched_raw_requests\": 432,\n      \"statistics_checked\": 36,\n      \"readbacks_checked\": 24,\n      \"oversized_request_rejected\": true,\n      \"measured_allocations\": 360,\n      \"create_resource_median_ms\": 0.0011,\n      \"release_median_ms\": 0.0007,\n      \"cycle_median_ms\": 9.9693\n    },\n    {\n      \"name\": \"wc-seed-473\",\n      \"stdout_sha256\": \"57f3e4a00ded4cb27c21fc954d6c4a1b041362356123803a412690c261d0d0a3\",\n      \"peak_live_payload_bytes\": 13566048,\n      \"peak_reserved_suballocation_bytes\": 15138816,\n      \"peak_internal_rounding_bytes\": 1572768,\n      \"matched_raw_requests\": 432,\n      \"statistics_checked\": 36,\n      \"readbacks_checked\": 24,\n      \"oversized_request_rejected\": true,\n      \"measured_allocations\": 360,\n      \"create_resource_median_ms\": 0.0010500000000000002,\n      \"release_median_ms\": 0.0008,\n      \"cycle_median_ms\": 9.96795\n    },\n    {\n      \"name\": \"wc-seed-474\",\n      \"stdout_sha256\": \"2fbb69c2ffbf6a20fc8f7527bababc3affa58152e44be3d9f497a8a35fc888ec\",\n      \"peak_live_payload_bytes\": 13893728,\n      \"peak_reserved_suballocation_bytes\": 15466496,\n      \"peak_internal_rounding_bytes\": 1572768,\n      \"matched_raw_requests\": 432,\n      \"statistics_checked\": 36,\n      \"readbacks_checked\": 24,\n      \"oversized_request_rejected\": true,\n      \"measured_allocations\": 360,\n      \"create_resource_median_ms\": 0.0010500000000000002,\n      \"release_median_ms\": 0.0008,\n      \"cycle_median_ms\": 9.729849999999999\n    },\n    {\n      \"name\": \"wb-seed-474\",\n      \"stdout_sha256\": \"588d07c86d2f292cc5fa8b8c2c42f4d03299ab2b6631142a6477819af50e0873\",\n      \"peak_live_payload_bytes\": 13893728,\n      \"peak_reserved_suballocation_bytes\": 15466496,\n      \"peak_internal_rounding_bytes\": 1572768,\n      \"matched_raw_requests\": 432,\n      \"statistics_checked\": 36,\n      \"readbacks_checked\": 24,\n      \"oversized_request_rejected\": true,\n      \"measured_allocations\": 360,\n      \"create_resource_median_ms\": 0.0011,\n      \"release_median_ms\": 0.0008,\n      \"cycle_median_ms\": 9.8169\n    },\n    {\n      \"name\": \"wb-seed-475\",\n      \"stdout_sha256\": \"acebb6e839c651fd336e7c3af7ee55180f13bf84cb68bfc587a48761fa12a4a0\",\n      \"peak_live_payload_bytes\": 15925344,\n      \"peak_reserved_suballocation_bytes\": 17498112,\n      \"peak_internal_rounding_bytes\": 1572768,\n      \"matched_raw_requests\": 432,\n      \"statistics_checked\": 36,\n      \"readbacks_checked\": 24,\n      \"oversized_request_rejected\": true,\n      \"measured_allocations\": 360,\n      \"create_resource_median_ms\": 0.0011,\n      \"release_median_ms\": 0.0008,\n      \"cycle_median_ms\": 9.88735\n    },\n    {\n      \"name\": \"wc-seed-475\",\n      \"stdout_sha256\": \"8144c7f6fab46e94601038d8909dfa82e64a7c52b19275c6ee86de477800eb39\",\n      \"peak_live_payload_bytes\": 15925344,\n      \"peak_reserved_suballocation_bytes\": 17498112,\n      \"peak_internal_rounding_bytes\": 1572768,\n      \"matched_raw_requests\": 432,\n      \"statistics_checked\": 36,\n      \"readbacks_checked\": 24,\n      \"oversized_request_rejected\": true,\n      \"measured_allocations\": 360,\n      \"create_resource_median_ms\": 0.0011,\n      \"release_median_ms\": 0.0008,\n      \"cycle_median_ms\": 10.0047\n    }\n  ]\n}\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py",
+        "/tmp/bx473-resume-data-analysis/corrupt",
+        "--raw-pool-results",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-pool-corrected",
+        "--output",
+        "/tmp/bx473-resume-data-analysis/unexpected-corrupt-result.json"
+      ],
+      "exit": 1,
+      "expected_exit": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py\", line 96, in <module>\n    main()\n    ~~~~^^\n  File \"<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py\", line 90, in main\n    result = analyze(a.results, a.raw_pool_results)\n  File \"<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py\", line 62, in analyze\n    check(all(int(v[k]) == value for k, value in expected.items()), ('statistics', v, expected))\n    ~~~~~^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py\", line 18, in check\n    raise ValueError(detail)\nValueError: ('statistics', {'cycle': '-2', 'phase': 'empty', 'blocks': '1', 'block_bytes': '33554432', 'allocation_count': '0', 'allocation_bytes': '0', 'unused_ranges': '1', 'largest_free': '33554431'}, {'blocks': 1, 'block_bytes': 33554432, 'allocation_count': 0, 'allocation_bytes': 0, 'unused_ranges': 1, 'largest_free': 33554432})\n"
+    },
+    {
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/check-render.py",
+        "/tmp/bx473-a23-render-full",
+        "--output",
+        "/tmp/bx473-resume-data-analysis/unexpected-empty-render.json"
+      ],
+      "exit": 1,
+      "expected_exit": 1,
+      "stdout": "",
+      "stderr": "Traceback (most recent call last):\n  File \"<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/check-render.py\", line 36, in <module>\n    if __name__=='__main__':main()\n                            ~~~~^^\n  File \"<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/check-render.py\", line 15, in main\n    raise ValueError('incomplete or stopped run cannot pass the readback oracle')\nValueError: incomplete or stopped run cannot pass the readback oracle\n"
+    },
+    {
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+        "-m",
+        "compileall",
+        "-q",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+        "--help"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "usage: run.py [-h] --bottle BOTTLE --scratch SCRATCH\n              --suite {memory,pool,texture,alias,render} [--smoke]\n              [--memory-sizes MEMORY_SIZES] [--memory-types MEMORY_TYPES]\n              [--memory-repeats {1,2}] [--memory-repeat-start {0,1}]\n              [--sessions {1,2,3}] [--session-start {0,1,2}] [--allow-warning]\n              [--negative-control]\n\nWorkstream A local harness, version 2. Does not change shared protocols.\n\noptions:\n  -h, --help            show this help message and exit\n  --bottle BOTTLE\n  --scratch SCRATCH\n  --suite {memory,pool,texture,alias,render}\n  --smoke\n  --memory-sizes MEMORY_SIZES\n  --memory-types MEMORY_TYPES\n  --memory-repeats {1,2}\n  --memory-repeat-start {0,1}\n  --sessions {1,2,3}    pool sessions\n  --session-start {0,1,2}\n                        pool trace session offset for nonduplicating\n                        continuation\n  --allow-warning       explicitly permit kernel warning level 1;\n                        urgent/critical still stop\n  --negative-control    pool omitted-copy or render omitted-draw control;\n                        expected exit 1\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+        "-o",
+        "/tmp/bx473-resume-data-analysis/render-build.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "expected_exit": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    }
+  ],
+  "sources": {
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/allocator-evaluation/analyze.py": "3cb3d709393723d7cdec49b54a834eb394a36ce04d34f58650764eadf0f94d70",
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/check-render.py": "1b6427056193a98cb184133a8468100e0712b9433782b84f772f4aa26ca36b19",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/run.py": "480228cf7fcdd0c673ee2ae2b32fc41dabb48b4e1265e6c9be3b48c5a4ed09aa",
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp": "c74339350bd536f0e57938a2fa7f4bb7afea31e2be9e013d70ba0a929f45c2e1"
+  },
+  "baseline_source_sha256": "33e90bfee89e812f48990613cd74ced56473e5c3fc5d973f2ba1116090646a0c"
+}
