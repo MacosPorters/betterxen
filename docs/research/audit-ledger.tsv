@@ -1,0 +1,692 @@
+path	depth
+.editorconfig	not read
+.github/CODEOWNERS	not read
+.github/ISSUE_TEMPLATE/agent-task.yml	not read
+.github/ISSUE_TEMPLATE/bug.yml	not read
+.github/ISSUE_TEMPLATE/config.yml	not read
+.github/ISSUE_TEMPLATE/documentation.yml	not read
+.github/ISSUE_TEMPLATE/hybrid-task.yml	not read
+.github/ISSUE_TEMPLATE/performance.yml	not read
+.github/ISSUE_TEMPLATE/research.yml	not read
+.github/ISSUE_TEMPLATE/validation.yml	not read
+.github/agent-queue.json	not read
+.github/pull_request_template.md	not read
+.github/workflows/agent-claims.yml	not read
+.github/workflows/ci.yml	not read
+.github/workflows/hygiene.yml	not read
+.gitignore	not read
+AGENTS.md	read in part
+CHANGELOG.md	read in part
+CLAUDE.md	not read
+CODE_OF_CONDUCT.md	not read
+CONTRIBUTING.md	not read
+Cargo.lock	not read
+Cargo.toml	not read
+LICENSE	not read
+README.md	not read
+SECURITY.md	not read
+SUPPORT.md	not read
+THIRD_PARTY_NOTICES.md	not read
+app/Package.swift	header and size only
+app/Sources/CXenora/module.modulemap	not read
+app/Sources/Xenora/AudioMixFixture.swift	header and size only
+app/Sources/Xenora/ControllerInput.swift	header and size only
+app/Sources/Xenora/main.swift	header and size only
+benchmarks/Cargo.toml	not read
+benchmarks/benches/fixtures/gfx1030_mixed.s	not read
+benchmarks/benches/gfx1030_identify.rs	not read
+benchmarks/manifest.toml	not read
+benchmarks/results/apple-m5/run-1795338391/metadata.json	not read
+benchmarks/results/apple-m5/run-1795338391/report.md	not read
+benchmarks/results/apple-m5/run-1795338391/results.json	not read
+benchmarks/results/apple-m5/run-1795352394/metadata.json	not read
+benchmarks/results/apple-m5/run-1795352394/report.md	not read
+benchmarks/results/apple-m5/run-1795352394/results.json	not read
+benchmarks/src/main.rs	header and size only
+benchmarks/src/startup.rs	header and size only
+benchmarks/src/startup_report.rs	header and size only
+benchmarks/tests/gfx1030_identify.rs	not read
+crates/cli/Cargo.toml	not read
+crates/cli/src/demo.rs	header and size only
+crates/cli/src/main.rs	read in part
+crates/cli/src/runner.rs	read in part
+crates/cli/src/shaders.rs	header and size only
+crates/cli/src/startup_report.rs	read in part
+crates/cli/tests/default_report.rs	not read
+crates/cli/tests/imports_sync.rs	not read
+crates/cli/tests/standard_services.rs	not read
+crates/cli/tests/startup_report.rs	not read
+crates/decoder/Cargo.toml	not read
+crates/decoder/src/lib.rs	header and size only
+crates/decoder/tests/gfx1030.rs	not read
+crates/decoder/tests/graphics.rs	not read
+crates/decoder/tests/semantic_forms.rs	not read
+crates/ffi/Cargo.toml	not read
+crates/ffi/include/xenora.h	not read
+crates/ffi/src/frame_loop.rs	header and size only
+crates/ffi/src/lib.rs	read in part
+crates/ffi/tests/audio_vfs.rs	not read
+crates/ffi/tests/frame_loop.rs	not read
+crates/ffi/tests/interactive.rs	not read
+crates/ffi/tests/native_frame.rs	not read
+crates/ffi/tests/resources.rs	not read
+crates/hybrid/Cargo.toml	not read
+crates/hybrid/src/cli.rs	read
+crates/hybrid/src/cmdutil.rs	read
+crates/hybrid/src/crossover.rs	read
+crates/hybrid/src/frames.rs	not read
+crates/hybrid/src/host.rs	not read
+crates/hybrid/src/json.rs	read
+crates/hybrid/src/lib.rs	read
+crates/hybrid/src/main.rs	read
+crates/hybrid/src/memory.rs	read
+crates/hybrid/src/pe.rs	read
+crates/hybrid/src/preflight.rs	read
+crates/hybrid/src/records.rs	read
+crates/hybrid/src/run.rs	read
+crates/hybrid/src/toolchain.rs	not read
+crates/import-gen/Cargo.toml	not read
+crates/import-gen/src/apiset.rs	header and size only
+crates/import-gen/src/bin/xenora-runtime-gen.rs	header and size only
+crates/import-gen/src/classify.rs	header and size only
+crates/import-gen/src/codegen.rs	header and size only
+crates/import-gen/src/demangle.rs	header and size only
+crates/import-gen/src/ingest.rs	header and size only
+crates/import-gen/src/lib.rs	header and size only
+crates/import-gen/src/manifest.rs	header and size only
+crates/import-gen/src/metadata.rs	header and size only
+crates/import-gen/src/parse.rs	header and size only
+crates/import-gen/src/typed.rs	header and size only
+crates/import-gen/src/verify.rs	header and size only
+crates/import-gen/tests/demangle.rs	not read
+crates/import-gen/tests/pipeline.rs	not read
+crates/isa/Cargo.toml	not read
+crates/isa/LICENSE-AMD	not read
+crates/isa/data/rdna2.jsonl	not read
+crates/isa/generate_rdna2.py	not read
+crates/isa/generate_rdna2_meta.py	not read
+crates/isa/generate_semantics.py	not read
+crates/isa/semantics/rdna2.toml	not read
+crates/isa/semantics/rdna2/sop1.toml	not read
+crates/isa/semantics/rdna2/sop2.toml	not read
+crates/isa/semantics/rdna2/sopc.toml	not read
+crates/isa/semantics/rdna2/sopk.toml	not read
+crates/isa/semantics/rdna2/sopp.toml	not read
+crates/isa/semantics/rdna2/vop1.toml	not read
+crates/isa/semantics/rdna2/vop2.toml	not read
+crates/isa/semantics/rdna2/vop3.toml	not read
+crates/isa/semantics/rdna2/vopc.toml	not read
+crates/isa/src/lib.rs	header and size only
+crates/isa/src/meta.rs	header and size only
+crates/isa/src/primitive.rs	header and size only
+crates/isa/src/rdna2.rs	header and size only
+crates/isa/src/rdna2_meta.rs	header and size only
+crates/isa/src/semantics.rs	header and size only
+crates/isa/src/semantics_gen.rs	header and size only
+crates/isa/tests/extension_word_negative.rs	not read
+crates/isa/tests/llvm/corpus.py	not read
+crates/isa/tests/llvm/corpus.s	not read
+crates/isa/tests/llvm/corpus.tsv	not read
+crates/isa/tests/llvm/corpus_disagreements.txt	not read
+crates/isa/tests/llvm/identify.s	not read
+crates/isa/tests/meta.rs	not read
+crates/isa/tests/meta_corpus.rs	not read
+crates/isa/tests/meta_llvm.rs	not read
+crates/isa/tests/semantics.rs	not read
+crates/loader/Cargo.toml	not read
+crates/loader/benches/dbt_bench.rs	not read
+crates/loader/benches/service_dispatch.rs	not read
+crates/loader/generate_x86.py	not read
+crates/loader/runtime/services.txt	not read
+crates/loader/src/arm64.rs	header and size only
+crates/loader/src/cpu.rs	header and size only
+crates/loader/src/dbt.rs	header and size only
+crates/loader/src/graphics.rs	header and size only
+crates/loader/src/import_table.rs	header and size only
+crates/loader/src/imports.rs	header and size only
+crates/loader/src/jit.rs	header and size only
+crates/loader/src/lib.rs	header and size only
+crates/loader/src/memory.rs	header and size only
+crates/loader/src/pe.rs	read in part
+crates/loader/src/probe.rs	header and size only
+crates/loader/src/reloc.rs	header and size only
+crates/loader/src/runtime.rs	header and size only
+crates/loader/src/runtime_table.rs	header and size only
+crates/loader/src/scheduler.rs	header and size only
+crates/loader/src/services.rs	header and size only
+crates/loader/src/services/crt.rs	header and size only
+crates/loader/src/services/crt_arguments.rs	header and size only
+crates/loader/src/services/crt_callbacks.rs	header and size only
+crates/loader/src/services/crt_files.rs	header and size only
+crates/loader/src/services/crt_format.rs	header and size only
+crates/loader/src/services/crt_startup.rs	header and size only
+crates/loader/src/services/crt_streams.rs	header and size only
+crates/loader/src/services/events.rs	header and size only
+crates/loader/src/services/files.rs	header and size only
+crates/loader/src/services/gdk_queue.rs	header and size only
+crates/loader/src/services/heap.rs	header and size only
+crates/loader/src/services/modules.rs	header and size only
+crates/loader/src/services/platform_fixture.rs	header and size only
+crates/loader/src/services/process.rs	header and size only
+crates/loader/src/services/synch.rs	header and size only
+crates/loader/src/services/sysinfo.rs	header and size only
+crates/loader/src/services/task_fixture.rs	header and size only
+crates/loader/src/services/threads.rs	header and size only
+crates/loader/src/services/winsock.rs	header and size only
+crates/loader/src/softfloat.rs	header and size only
+crates/loader/src/startup.rs	header and size only
+crates/loader/src/tasks.rs	header and size only
+crates/loader/src/tls.rs	header and size only
+crates/loader/src/triage.rs	header and size only
+crates/loader/src/x86_decode.rs	header and size only
+crates/loader/src/x86_exec.rs	header and size only
+crates/loader/src/x86_float.rs	header and size only
+crates/loader/src/x86_simd.rs	header and size only
+crates/loader/src/x86_table.rs	header and size only
+crates/loader/tests/arm64_encodings.rs	not read
+crates/loader/tests/bootstrap.rs	not read
+crates/loader/tests/bswap.rs	not read
+crates/loader/tests/cpu_differential.rs	not read
+crates/loader/tests/cpu_features.rs	not read
+crates/loader/tests/cpu_known_answers.rs	not read
+crates/loader/tests/cpu_loop.rs	not read
+crates/loader/tests/cpu_rep.rs	not read
+crates/loader/tests/crt_exit.rs	not read
+crates/loader/tests/crt_files.rs	not read
+crates/loader/tests/dbt_benchmark_report.rs	not read
+crates/loader/tests/dbt_render.rs	not read
+crates/loader/tests/gate_a1.rs	not read
+crates/loader/tests/gate_a2.rs	not read
+crates/loader/tests/generated_conformance.rs	not read
+crates/loader/tests/generated_runtime_integration.rs	not read
+crates/loader/tests/graphics_d3d12.rs	not read
+crates/loader/tests/graphics_textures.rs	not read
+crates/loader/tests/imports_sync.rs	not read
+crates/loader/tests/indirect_control.rs	not read
+crates/loader/tests/memory_page_boundaries.rs	not read
+crates/loader/tests/memory_validation.rs	not read
+crates/loader/tests/movsxd.rs	not read
+crates/loader/tests/pe_headers.rs	not read
+crates/loader/tests/pe_mapping_limits.rs	not read
+crates/loader/tests/pe_validation.rs	not read
+crates/loader/tests/printf/reference.py	not read
+crates/loader/tests/printf/vectors.txt	not read
+crates/loader/tests/probe_cfg.rs	not read
+crates/loader/tests/probe_delay_imports.rs	not read
+crates/loader/tests/probe_static.rs	not read
+crates/loader/tests/probe_truncation.rs	not read
+crates/loader/tests/process_exit.rs	not read
+crates/loader/tests/relocation_validation.rs	not read
+crates/loader/tests/repeated_frames.rs	not read
+crates/loader/tests/runtime_clock.rs	not read
+crates/loader/tests/runtime_handle_lifetime.rs	not read
+crates/loader/tests/runtime_robustness.rs	not read
+crates/loader/tests/runtime_services.rs	not read
+crates/loader/tests/runtime_synch.rs	not read
+crates/loader/tests/runtime_sysinfo.rs	not read
+crates/loader/tests/runtime_threads.rs	not read
+crates/loader/tests/runtime_x15.rs	not read
+crates/loader/tests/support/mod.rs	not read
+crates/loader/tests/support/robustness.rs	not read
+crates/loader/tests/threads/compile.py	not read
+crates/loader/tests/threads/program.c	not read
+crates/loader/tests/threads/program.txt	not read
+crates/loader/tests/tls_layout.rs	not read
+crates/loader/tests/x86/assemble.py	not read
+crates/loader/tests/x86/float.txt	not read
+crates/loader/tests/x86/float_reference.py	not read
+crates/loader/tests/x86/float_vectors.txt	not read
+crates/loader/tests/x86/integer.txt	not read
+crates/loader/tests/x86/vector.txt	not read
+crates/loader/tests/x86_atomic.rs	not read
+crates/loader/tests/x86_carry_chain.rs	not read
+crates/loader/tests/x86_float.rs	not read
+crates/loader/tests/x86_integer.rs	not read
+crates/loader/tests/x86_prefix_length.rs	not read
+crates/loader/tests/x86_vector.rs	not read
+crates/loader/x86/instructions.toml	not read
+crates/metal/Cargo.toml	not read
+crates/metal/src/compute.rs	header and size only
+crates/metal/src/lib.rs	header and size only
+crates/metal/src/render.rs	header and size only
+crates/metal/src/sampler.rs	header and size only
+crates/metal/src/texture_pipeline.rs	header and size only
+crates/metal/tests/blend_reference.rs	not read
+crates/metal/tests/depth_reference.rs	not read
+crates/metal/tests/fixtures/blend_expected.txt	not read
+crates/metal/tests/fixtures/depth_expected.txt	not read
+crates/metal/tests/fixtures/guest-buffer-xor.bin	not read
+crates/metal/tests/fixtures/guest-buffer-xor.s	not read
+crates/metal/tests/fixtures/indexed_expected.txt	not read
+crates/metal/tests/indexed_reference.rs	not read
+crates/metal/tests/native/blend.rs	not read
+crates/metal/tests/native/depth.rs	not read
+crates/metal/tests/native/guest_buffer.rs	not read
+crates/metal/tests/native/indexed.rs	not read
+crates/metal/tests/native/offscreen.rs	not read
+crates/metal/tests/native/submission.rs	not read
+crates/metal/tests/native/texture.rs	not read
+crates/metal/tests/native/texture_bc_alpha.rs	not read
+crates/metal/tests/native/texture_bc_channel.rs	not read
+crates/metal/tests/native/texture_sampling.rs	not read
+crates/metal/tests/native/translated_bc1.rs	not read
+crates/metal/tests/native/translated_render.rs	not read
+crates/metal/tests/native_compute.rs	not read
+crates/metal/tests/packed_bc_upload.rs	not read
+crates/metal/tests/sampler_texture.rs	not read
+crates/metal/tests/support/blend_cases.rs	not read
+crates/metal/tests/support/depth_cases.rs	not read
+crates/metal/tests/support/indexed_cases.rs	not read
+crates/ref/Cargo.toml	not read
+crates/ref/src/blend.rs	header and size only
+crates/ref/src/depth.rs	header and size only
+crates/ref/src/indexed.rs	header and size only
+crates/ref/src/lib.rs	header and size only
+crates/ref/src/texture_sampling.rs	header and size only
+crates/ref/tests/gfx1030.rs	not read
+crates/shader/Cargo.toml	not read
+crates/shader/src/graphics.rs	header and size only
+crates/shader/src/lib.rs	header and size only
+crates/shader/tests/compiler.rs	not read
+crates/shader/tests/graphics.rs	not read
+crates/texture/Cargo.toml	not read
+crates/texture/src/bc.rs	header and size only
+crates/texture/src/bc6h.rs	header and size only
+crates/texture/src/bc7.rs	header and size only
+crates/texture/src/footprint.rs	header and size only
+crates/texture/src/lib.rs	header and size only
+crates/texture/src/sampler.rs	header and size only
+crates/texture/src/upload.rs	header and size only
+crates/texture/tests/bc6h.rs	not read
+crates/texture/tests/bc7.rs	not read
+crates/texture/tests/bc_footprint.rs	not read
+crates/texture/tests/bc_formats.rs	not read
+crates/texture/tests/fixtures/bc6h_vectors.txt	not read
+crates/texture/tests/fixtures/bc7_vectors.txt	not read
+docs/README.md	read in part
+docs/adr/0003-demo-memory-model.md	not read
+docs/adr/0004-cpu-boundary.md	not read
+docs/adr/0005-crossover-hybrid-direction.md	not read
+docs/archive/development-phases-native-first.md	not read
+docs/archive/hybrid-phases-h0-h7.md	not read
+docs/archive/native-first-milestones.json	not read
+docs/archive/readme-native-milestones.md	not read
+docs/assets/xenora-progress.svg	not read
+docs/claims.toml	not read
+docs/coordination/agent-queue-smoke.md	not read
+docs/coordination/agent-tasks.md	not read
+docs/coordination/cpu-campaign-ledger.md	not read
+docs/coordination/infrastructure-qa-ledger.md	not read
+docs/coordination/infrastructure-qa-ownership.md	not read
+docs/cpu/avx-contract.md	not read
+docs/cpu/instruction-registry.md	not read
+docs/hybrid-execution.md	not read
+docs/interfaces.md	not read
+docs/legal.md	not read
+docs/licenses.md	not read
+docs/migration.md	not read
+docs/planning/project-board.md	not read
+docs/progress.md	not read
+docs/research/apple-gpu.md	not read
+docs/research/component-reuse-matrix.md	not read
+docs/research/cpu-boundary.md	not read
+docs/research/crossover-baseline-2026-11-25.md	read in part
+docs/research/crossover-licensing.md	read
+docs/research/d3dmetal-native-evaluation.md	not read
+docs/research/directx12.md	not read
+docs/research/host-lab.md	not read
+docs/research/hybrid-backlog-research-2026-11-25.md	not read
+docs/research/hybrid-runtime-audit-2026-11-25.md	not read
+docs/research/hybrid-toolchain.md	read in part
+docs/research/native-issue-archive.md	not read
+docs/research/native-roadmap.md	not read
+docs/research/phase02-collaboration.md	not read
+docs/research/phase02-cpu-feasibility.md	not read
+docs/research/phase02-ecosystem.md	not read
+docs/research/portwatch-inventory-2026-11-25.json	not read
+docs/research/portwatch-inventory-2026-11-25.md	not read
+docs/research/portwatch-native-macos.md	not read
+docs/research/primary-source-verification-2026-11-25.md	not read
+docs/research/rdna2.md	not read
+docs/research/shader-containers.md	not read
+docs/research/sources.md	not read
+docs/research/synthetic-integration.md	not read
+docs/research/texture-formats.md	not read
+docs/research/upstream-integration-audit.md	read in part
+docs/research/upstream-registry.md	not read
+docs/research/xbox-gdk.md	not read
+docs/research/xbox-gpu.md	not read
+docs/risk-register.md	not read
+docs/roadmap.md	read
+docs/runtime/registry.md	not read
+docs/runtime/services.md	not read
+docs/runtime/threads.md	not read
+docs/shaders/instruction-coverage.md	not read
+docs/shaders/msl.md	not read
+docs/shaders/reference-interpreter.md	not read
+docs/shaders/scalar-alu.md	not read
+docs/shaders/scalar-immediate.md	not read
+docs/shaders/semantic-coverage.md	not read
+docs/shaders/semantic-registry.md	not read
+docs/shaders/vector-compare.md	not read
+docs/shaders/vector-unary.md	not read
+docs/shaders/vector-vcc.md	not read
+docs/status.toml	not read
+docs/testing/README.md	not read
+docs/testing/benchmarks.md	not read
+docs/testing/cpu-coverage.md	not read
+docs/testing/gate-a.md	not read
+docs/testing/hybrid-workloads.md	not read
+docs/testing/infrastructure/README.md	not read
+docs/testing/infrastructure/phase3-compat-ledger.md	not read
+docs/testing/migration-pr-review.md	not read
+docs/testing/mutation.md	not read
+docs/testing/phase-02-baseline.md	not read
+docs/testing/phase01-assurance.md	not read
+docs/testing/phase01-checkpoint.md	not read
+docs/testing/review-log.md	not read
+docs/testing/shader-form-acceptance.md	not read
+docs/testing/test-inventory.md	not read
+docs/testing/x9-acceptance.md	not read
+docs/threat-model.md	not read
+experiments/x1/Cargo.lock	not read
+experiments/x1/Cargo.toml	not read
+experiments/x1/README.md	not read
+experiments/x1/fixtures/check.sh	not read
+experiments/x1/fixtures/nonwrap.bin	not read
+experiments/x1/fixtures/pe_fixture.py	not read
+experiments/x1/fixtures/wrap.bin	not read
+experiments/x1/fixtures/x1.s	not read
+experiments/x1/fixtures/x2.exe	not read
+experiments/x1/fixtures/x2.py	not read
+experiments/x1/fixtures/x3.exe	not read
+experiments/x1/fixtures/x3.py	not read
+experiments/x1/fixtures/x4-17.exe	not read
+experiments/x1/fixtures/x4-93.exe	not read
+experiments/x1/fixtures/x4.py	not read
+experiments/x1/fixtures/x5.exe	not read
+experiments/x1/fixtures/x5.py	not read
+experiments/x1/fixtures/x6.exe	not read
+experiments/x1/fixtures/x6.py	not read
+experiments/x1/src/cpu.rs	header and size only
+experiments/x1/src/cpu/tests.rs	header and size only
+experiments/x1/src/fixture.rs	header and size only
+experiments/x1/src/graphics.rs	header and size only
+experiments/x1/src/interp.rs	header and size only
+experiments/x1/src/loader.rs	header and size only
+experiments/x1/src/main.rs	header and size only
+experiments/x1/src/mem.rs	header and size only
+experiments/x1/src/pe.rs	header and size only
+experiments/x1/src/pe/tests.rs	header and size only
+experiments/x1/src/x3.metal	not read
+experiments/x1/src/x3.rs	header and size only
+experiments/x1/src/x4.rs	header and size only
+experiments/x1/src/x5.rs	header and size only
+experiments/x1/src/x6.rs	header and size only
+experiments/x1/src/x7.rs	header and size only
+experiments/x1/src/x8.rs	header and size only
+experiments/x1/src/x9.rs	header and size only
+experiments/x1/src/x9/draw.rs	header and size only
+experiments/x1/src/x9/tests.rs	header and size only
+experiments/x1/src/x9/texture.rs	header and size only
+fixtures/assets/asset.bin	not read
+fixtures/assets/generate.py	not read
+fixtures/golden/add.ir	not read
+fixtures/golden/add.metal	not read
+fixtures/golden/bitwise-branch.ir	not read
+fixtures/golden/bitwise-branch.metal	not read
+fixtures/golden/float-exact.ir	not read
+fixtures/golden/float-exact.metal	not read
+fixtures/golden/scalar-alu.ir	not read
+fixtures/golden/scalar-alu.metal	not read
+fixtures/golden/scalar-arith.ir	not read
+fixtures/golden/scalar-arith.metal	not read
+fixtures/golden/scalar-compare.ir	not read
+fixtures/golden/scalar-compare.metal	not read
+fixtures/golden/scalar-immediate.ir	not read
+fixtures/golden/scalar-immediate.metal	not read
+fixtures/golden/scalar-logic.ir	not read
+fixtures/golden/scalar-logic.metal	not read
+fixtures/golden/scalar-unary.ir	not read
+fixtures/golden/scalar-unary.metal	not read
+fixtures/golden/vector-compare-ft.ir	not read
+fixtures/golden/vector-compare-ft.metal	not read
+fixtures/golden/vector-compare.ir	not read
+fixtures/golden/vector-compare.metal	not read
+fixtures/golden/vector-integer.ir	not read
+fixtures/golden/vector-integer.metal	not read
+fixtures/golden/vector-unary.ir	not read
+fixtures/golden/vector-unary.metal	not read
+fixtures/golden/vector-vcc.ir	not read
+fixtures/golden/vector-vcc.metal	not read
+fixtures/golden/vop3-compare.ir	not read
+fixtures/golden/vop3-compare.metal	not read
+fixtures/golden/vop3-integer.ir	not read
+fixtures/golden/vop3-integer.metal	not read
+fixtures/manifest.toml	not read
+fixtures/pe/audio_vfs.exe	not read
+fixtures/pe/audio_vfs.py	not read
+fixtures/pe/delay-imports.exe	not read
+fixtures/pe/delay-imports.py	not read
+fixtures/pe/frame-loop.exe	not read
+fixtures/pe/frame-loop.py	not read
+fixtures/pe/interactive.exe	not read
+fixtures/pe/interactive.py	not read
+fixtures/pe/runtime-services.exe	not read
+fixtures/pe/textured.exe	not read
+fixtures/pe/textured.py	not read
+fixtures/pe/trusted-runner.exe	not read
+fixtures/pe/trusted-runner.py	not read
+fixtures/rdna2/add.bin	not read
+fixtures/rdna2/add.s	not read
+fixtures/rdna2/ashr.bin	not read
+fixtures/rdna2/ashr.md	not read
+fixtures/rdna2/ashr.s	not read
+fixtures/rdna2/bitwise-branch.bin	not read
+fixtures/rdna2/bitwise-branch.s	not read
+fixtures/rdna2/float-exact.bin	not read
+fixtures/rdna2/float-exact.s	not read
+fixtures/rdna2/or.bin	not read
+fixtures/rdna2/or.s	not read
+fixtures/rdna2/scalar-alu.bin	not read
+fixtures/rdna2/scalar-alu.s	not read
+fixtures/rdna2/scalar-arith.bin	not read
+fixtures/rdna2/scalar-arith.s	not read
+fixtures/rdna2/scalar-compare.bin	not read
+fixtures/rdna2/scalar-compare.s	not read
+fixtures/rdna2/scalar-immediate.bin	not read
+fixtures/rdna2/scalar-immediate.s	not read
+fixtures/rdna2/scalar-logic.bin	not read
+fixtures/rdna2/scalar-logic.s	not read
+fixtures/rdna2/scalar-unary.bin	not read
+fixtures/rdna2/scalar-unary.s	not read
+fixtures/rdna2/shifts.bin	not read
+fixtures/rdna2/shifts.s	not read
+fixtures/rdna2/vector-compare-16.bin	not read
+fixtures/rdna2/vector-compare-16.s	not read
+fixtures/rdna2/vector-compare-64.bin	not read
+fixtures/rdna2/vector-compare-64.s	not read
+fixtures/rdna2/vector-compare-ft.bin	not read
+fixtures/rdna2/vector-compare-ft.s	not read
+fixtures/rdna2/vector-compare.bin	not read
+fixtures/rdna2/vector-compare.s	not read
+fixtures/rdna2/vector-integer.bin	not read
+fixtures/rdna2/vector-integer.s	not read
+fixtures/rdna2/vector-unary.bin	not read
+fixtures/rdna2/vector-unary.s	not read
+fixtures/rdna2/vector-vcc.bin	not read
+fixtures/rdna2/vector-vcc.s	not read
+fixtures/rdna2/vop3-compare.bin	not read
+fixtures/rdna2/vop3-compare.s	not read
+fixtures/rdna2/vop3-integer.bin	not read
+fixtures/rdna2/vop3-integer.s	not read
+fixtures/rdna2/x9-constant-ps.bin	not read
+fixtures/rdna2/x9-constant-ps.s	not read
+fixtures/rdna2/x9-constant-vs.bin	not read
+fixtures/rdna2/x9-constant-vs.s	not read
+fixtures/rdna2/x9-transform-vs.bin	not read
+fixtures/rdna2/x9-transform-vs.s	not read
+fixtures/rdna2/x9-varying-ps.bin	not read
+fixtures/rdna2/x9-varying-ps.s	not read
+fixtures/rdna2/x9-varying-vs.bin	not read
+fixtures/rdna2/x9-varying-vs.s	not read
+fuzz/Cargo.lock	not read
+fuzz/Cargo.toml	not read
+fuzz/fuzz_targets/cpu_decode.rs	header and size only
+fuzz/fuzz_targets/fixture.rs	header and size only
+fuzz/fuzz_targets/instruction_stream.rs	header and size only
+fuzz/fuzz_targets/pe_parse.rs	header and size only
+fuzz/fuzz_targets/reference.rs	header and size only
+fuzz/fuzz_targets/runtime_services.rs	header and size only
+licenses/bitflags-LICENSE-MIT	not read
+licenses/objc2-LICENSE-MIT.txt	not read
+licenses/objc2-LICENSE.md	not read
+scripts/agent-queue.sh	not read
+scripts/agent-sync.sh	not read
+scripts/agent_queue/__init__.py	not read
+scripts/agent_queue/__main__.py	not read
+scripts/agent_queue/cli.py	not read
+scripts/agent_queue/config.py	not read
+scripts/agent_queue/decide.py	not read
+scripts/agent_queue/ghio.py	not read
+scripts/agent_queue/lease.py	not read
+scripts/agent_queue/patterns.py	not read
+scripts/agent_queue/prcheck.py	not read
+scripts/agent_queue/queue.py	not read
+scripts/agent_queue/replay.py	not read
+scripts/agent_queue/tasks.py	not read
+scripts/assemble-fixture.sh	read
+scripts/audit/claims.sh	not read
+scripts/audit/dependencies.sh	read
+scripts/audit/docs_hygiene.py	not read
+scripts/audit/native.sh	not read
+scripts/audit/semantic_coverage.py	not read
+scripts/audit/status.py	not read
+scripts/audit/test_inventory.py	not read
+scripts/benchmark.sh	not read
+scripts/bootstrap.sh	not read
+scripts/build-app.sh	not read
+scripts/cpu-tests.sh	not read
+scripts/demo.sh	not read
+scripts/fuzz.sh	not read
+scripts/hybrid/accept-integrated.sh	read
+scripts/hybrid/accept-lifecycle.py	read
+scripts/hybrid/build-windows-workloads.sh	read
+scripts/mutation.sh	not read
+scripts/qa/__init__.py	not read
+scripts/qa/__main__.py	not read
+scripts/qa/bench_regress.py	not read
+scripts/qa/bench_stats.py	not read
+scripts/qa/claim_conflict.py	not read
+scripts/qa/compat_gaps.py	not read
+scripts/qa/coverage_history.py	not read
+scripts/qa/cpu_coverage.py	not read
+scripts/qa/cpu_inventory.py	not read
+scripts/qa/env_check.py	not read
+scripts/qa/exit_pipe.py	not read
+scripts/qa/git_scope.py	not read
+scripts/qa/handoff.py	not read
+scripts/qa/orchestrate.py	not read
+scripts/qa/pr_validate.py	not read
+scripts/qa/rdna2_plan.py	not read
+scripts/qa/rdna2_rank.py	not read
+scripts/qa/regression.py	not read
+scripts/qa/repo_health.py	not read
+scripts/qa/runtime_inventory.py	not read
+scripts/qa/stale_branch.py	not read
+scripts/qa/verify.py	not read
+scripts/release/__init__.py	not read
+scripts/release/__main__.py	not read
+scripts/release/bundle.py	not read
+scripts/release/macho.py	not read
+scripts/release/manifest.py	not read
+scripts/release/readiness.py	not read
+scripts/test-gpu.sh	not read
+tests/agent_queue/helpers.py	not read
+tests/agent_queue/test_apply_actions.py	not read
+tests/agent_queue/test_conflict_predict.py	not read
+tests/agent_queue/test_decide.py	not read
+tests/agent_queue/test_lease_accept.py	not read
+tests/agent_queue/test_patterns.py	not read
+tests/agent_queue/test_prcheck_summary.py	not read
+tests/agent_queue/test_replay.py	not read
+tests/agent_queue/test_workflows_cli.py	not read
+tests/audit/test_native_json.py	not read
+tests/compat_fixtures/README.md	not read
+tests/compat_fixtures/avx/README.md	not read
+tests/compat_fixtures/build-gate-a1.sh	not read
+tests/compat_fixtures/build-gate-a2.sh	not read
+tests/compat_fixtures/build.sh	not read
+tests/compat_fixtures/compute_guest.c	not read
+tests/compat_fixtures/gate_a1.c	not read
+tests/compat_fixtures/gate_a2.c	not read
+tests/compat_fixtures/import_guest.c	not read
+tests/compat_fixtures/resource_guest.c	not read
+tests/compat_fixtures/verify-compute.sh	not read
+tests/compat_fixtures/verify-resources.sh	not read
+tests/compat_fixtures/verify.sh	not read
+tests/mutation/README.md	not read
+tests/mutation/semantic.rs	not read
+tests/qa/test_bench_regress.py	not read
+tests/qa/test_bench_stats.py	not read
+tests/qa/test_claim_conflict.py	not read
+tests/qa/test_cli_smoke.py	not read
+tests/qa/test_compat_gaps.py	not read
+tests/qa/test_coverage_history_stale_branch.py	not read
+tests/qa/test_cpu_coverage.py	not read
+tests/qa/test_cpu_inventory.py	not read
+tests/qa/test_env_check.py	not read
+tests/qa/test_exit_pipe.py	not read
+tests/qa/test_git_scope.py	not read
+tests/qa/test_orchestrate.py	not read
+tests/qa/test_pr_validate.py	not read
+tests/qa/test_rdna2_malformed_registry.py	not read
+tests/qa/test_rdna2_plan.py	not read
+tests/qa/test_rdna2_rank.py	not read
+tests/qa/test_regression_handoff_health.py	not read
+tests/qa/test_runtime_inventory.py	not read
+tests/qa/test_verify.py	not read
+tests/release/test_macho_bundle.py	not read
+tests/release/test_manifest.py	not read
+tests/release/test_readiness.py	not read
+tests/semantic_coverage/test_semantic_coverage.py	not read
+tests/semantics_generator/test_generate_semantics.py	not read
+tests/validation/Cargo.toml	not read
+tests/validation/README.md	not read
+tests/validation/independent_ref.rs	not read
+tests/validation/known_answers.rs	not read
+tests/validation/tests/operand_domains.rs	not read
+tests/validation/tests/operand_domains/harness.rs	not read
+tests/validation/tests/operand_domains/oracle.rs	not read
+tests/validation/tests/operand_domains/sop2.rs	not read
+tests/validation/tests/operand_domains/vopc.rs	not read
+tests/validation/tests/sop1_unary.rs	not read
+tests/validation/tests/sop2_arith.rs	not read
+tests/validation/tests/sop2_stage_c.rs	not read
+tests/validation/tests/sopc_stage_d.rs	not read
+tests/validation/tests/sopk.rs	not read
+tests/validation/tests/vop1_integer.rs	not read
+tests/validation/tests/vop2_integer.rs	not read
+tests/validation/tests/vop2_vcc.rs	not read
+tests/validation/tests/vop3_compare.rs	not read
+tests/validation/tests/vop3_integer.rs	not read
+tests/validation/tests/vopc_f_t.rs	not read
+tests/validation/tests/vopc_wide.rs	not read
+tests/validation/tests/wave64_limits.rs	not read
+tests/x86_generator/test_generate_x86.py	not read
+workloads/d3d11-clear/d3d11_clear.c	not read
+workloads/d3d11-compute/README.md	not read
+workloads/d3d11-compute/build.sh	not read
+workloads/d3d11-compute/compute.c	not read
+workloads/d3d11-compute/compute.hlsl	not read
+workloads/d3d11-frameloop/frameloop.c	read
+workloads/d3d11-integrated/build.sh	not read
+workloads/d3d11-integrated/check_window.py	read
+workloads/d3d11-integrated/integrated.c	read
+workloads/d3d12-integrated/build.sh	not read
+workloads/d3d12-integrated/integrated12.c	read
+workloads/d3d12-integrated/send_keys.py	read
+workloads/win-selfcheck-c/selfcheck.c	not read
+workloads/win-selfcheck-rust/Cargo.lock	not read
+workloads/win-selfcheck-rust/Cargo.toml	not read
+workloads/win-selfcheck-rust/src/main.rs	not read

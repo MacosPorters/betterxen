@@ -70,6 +70,11 @@ checkpoints retain their original evidence scope.
 - [Public sources](research/sources.md), [RDNA 2 notes](research/rdna2.md), and [Xbox GPU evidence](research/xbox-gpu.md) — Specifications, evidence scope, and unknown console behavior.
 - [Shader inputs](research/shader-containers.md) and [risk register](risk-register.md) — Input provenance and unresolved engineering risks.
 - [Running a program through the hybrid path](hybrid-execution.md) — What each layer owns, the commands, the acceptance gates with their evidence and limits, and security limits.
+- [Security review of the hybrid path](research/security-audit-2026-11-25.md) — Why a CrossOver bottle is not a sandbox, findings and what was not reviewed.
+- [Shader import decision proposal](research/shader-import-decision.md) — The objections to #394 sorted by kind, what can be kept, and the options.
+- [Reference projects](research/reference-projects-2026-11-25.md) — Which rules restrict each reference repository and what a different policy could evaluate.
+- [PortWatch VI inventory](research/portwatch-inventory-2026-11-25.md) — Metadata-only snapshot of the tracker's projects ([JSON](research/portwatch-inventory-2026-11-25.json)).
+- [Audit coverage ledger](research/audit-ledger.tsv) — Every tracked file with the depth it was inspected.
 - [d3dmetal-native evaluation](research/d3dmetal-native-evaluation.md) — Source review and build of a Wine-free D3DMetal host; not run against D3DMetal; reference only.
 - [Hybrid runtime audit and integration record](research/hybrid-runtime-audit-2026-11-25.md) — Integration base, open pull-request dispositions, audit coverage and remaining blockers (2026-11-25).
 - [Upstream integration audit](research/upstream-integration-audit.md) — Source-level review of external macOS compatibility projects, licence and provenance decisions, and what was implemented in `crates/hybrid`.

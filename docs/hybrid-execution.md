@@ -7,7 +7,7 @@ How BetterXen launches an original Windows program through an installed CrossOve
 ```mermaid
 flowchart TD
   subgraph host["Native arm64 macOS (BetterXen)"]
-    CLI["betterxen-hybrid run / bench"] --> PRE["identify program, check backend name and bottle"]
+    CLI["betterxen hybrid run / bench"] --> PRE["identify program, check backend name and bottle"]
     PRE --> SUP["supervisor: memory, stall, timeout, output limit"]
     SUP --> REC["classification, gates, JSON record"]
   end
@@ -38,61 +38,73 @@ The native research crates (`xenora-*`: x86-64 loader and translator, GFX10.3 sh
 
 CrossOver's `bin/wine --bottle`, `wineserver -k` and `CX_GRAPHICS_BACKEND` are not documented by CodeWeavers as macOS automation interfaces ([#350](https://github.com/MacosPorters/betterxen/issues/350)). A CrossOver update may break them.
 
-## Commands
+## Commands and independent reproduction
 
-```sh
-export RUSTUP_TOOLCHAIN=1.100.0-aarch64-apple-darwin
-cargo build --release -p betterxen-hybrid
-target/release/betterxen-hybrid doctor --bottle BOTTLE
-workloads/d3d11-integrated/build.sh "$LLVM_MINGW"
-target/release/betterxen-hybrid run --bottle BOTTLE --expect "PASS integrated" --out artifacts/hybrid-runs \
-    -- "$PWD/artifacts/hybrid-workloads/x86_64/d3d11-integrated.exe" --frames 600
-scripts/hybrid/accept-integrated.sh "$LLVM_MINGW" BOTTLE
-```
+`betterxen hybrid <command>` is the interface; the `betterxen-hybrid` binary runs the same code. Commands: `doctor`, `inspect`, `run`, `bench`, `stop`, `guard`, `frames`, `receipt`.
 
-Prerequisites: Apple Silicon Mac, CrossOver (user-installed), a `win11_64` bottle, Rosetta 2, Rust 1.100.0, the [pinned llvm-mingw](research/hybrid-toolchain.md), and for the window check a GUI session with the Screen Recording permission.
+The child process receives only `HOME`, `USER`, `LOGNAME`, `TMPDIR`, the locale variables, a system-only `PATH`, and values given with `--env NAME=VALUE`. `--inherit-env true` passes everything. SIGINT, SIGTERM and SIGHUP stop the run; after a SIGKILL of the supervisor use `betterxen hybrid stop --bottle BOTTLE`. Use one run per bottle at a time.
+
+To reproduce the results, on an Apple Silicon Mac:
+
+1. Install CrossOver yourself and create a `win11_64` bottle. Install Rosetta 2, Rust 1.100.0 and the Xcode command-line tools (`swift`, `swiftc`).
+2. Download the [pinned llvm-mingw](research/hybrid-toolchain.md), check its SHA-256 and unpack it.
+3. Grant your terminal Screen Recording and Accessibility permission.
+4. Close heavy applications: runs are refused below 50 % free memory.
+5. From a clean checkout: `scripts/hybrid/accept-integrated.sh LLVM_MINGW_DIR BOTTLE`. Do not type while the keyboard step runs.
+6. Report every `ok`, `KNOWN` and `FAIL` line, `commit.txt`, `receipt.json` and the CrossOver version, on [#355](https://github.com/MacosPorters/betterxen/issues/355). Records contain local paths; read them before sharing.
+
+Reviewing the expected images independently is part of the job: they are computed in `expected_pixel` in each workload and again in `check_window.py`, all written by the same author.
 
 ## Acceptance gates
 
-Evidence from `scripts/hybrid/accept-integrated.sh` on one machine: Apple M4 (24 GiB), macOS 27.0 (26A428), CrossOver 26.3 (26.3.0.39832), default backend, 2026-11-25, all 21 steps passing on revision `2b3ad75`. The author of the code ran it, so none of this is independently verified.
-
-One earlier attempt on the same code failed seven of those steps: free memory was under the 50 % start threshold, so the runner refused to launch them (`refused_to_start_low_memory`). The threshold was not changed. The passing run started its programs with 50 to 54 % free, so a busy 24 GiB machine can refuse again.
+Evidence from the acceptance script on one machine: Apple M4 (24 GiB), macOS 27.0 (26A428), CrossOver 26.3 (26.3.0.39832), default backend (inferred D3DMetal), 2026-11-25, revision `14a54f8`: 33 steps ok, one known failure. The author of the code ran it.
 
 | Gate | Status | Evidence | Limit |
 | --- | --- | --- | --- |
 | A. Environment | Pass | `doctor`: all checks true | Checks presence, not correctness |
 | B. Executable | Pass | identified as x86-64 console PE; ARM64 build refused before launch | Delay-load imports not listed |
-| C. Runtime | Pass for the services tested | gates `runtime.threads`, `.memory`, `.exceptions`, `.time`, `.files` | No audio, sockets, controllers or stress on synchronization |
-| D. Graphics initialization | Pass | gate `graphics.init` | Feature level 11_0 only |
-| E. Shader execution | Pass | vs, ps, cs at shader model 5.0; output compared pixel by pixel; `color`, `blank`, `depth` controls fail | Trivial shaders; no console shader input |
-| F. First verified frame | Pass | back-buffer read-back at frame 0; window capture matches 1016 of 1016 samples of the final frame; wrong rendering is detected on screen | Capture is a sampled grid with a tolerance of 6 per channel |
-| G. Continuous rendering | Pass | 20,000 presented frames, 46 read back, none mismatched | Sampled verification; about three minutes |
-| H. Interactive execution | **Partial** | five posted key messages change the rendered image as expected; the `input` control fails | No key was typed on the Mac; no mouse or controller |
-| I. Extended stability | **Partial** | five repeats with identical pixel digests; 20,000-frame run working set 94.8 MB after warm-up and 66.5 MB at the end (an earlier such run: 65.8 to 69.1 MB); crash and hang stopped and followed by a passing run | Minutes, not hours; GPU memory not measured; Ctrl-C of the supervisor not tested |
-| J. Reproducibility | **Not met** | one script and documented prerequisites | No second person or machine has run it |
+| C. Runtime | Pass for the services tested | threads, memory protection, exception handling, timing, files; environment isolation | No audio, sockets or controllers |
+| D. Graphics initialization | Pass, D3D11 and D3D12 | `graphics.init` in both workloads | Feature level 11_0 |
+| E. Shader execution | Pass | vs, ps, cs at shader model 5.0; fault controls fail | Small shaders; no DXIL / shader model 6 |
+| F. First verified frame | Pass | read-back, and a window capture for D3D11 (1016 of 1016 samples) | No window capture of the D3D12 workload |
+| G. Continuous rendering | Pass | 20,000 D3D11 frames; D3D11 and D3D12 digests equal over 600 frames | Sampled verification |
+| H. Interactive | Pass with synthesized macOS events | key events posted to the process with `CGEventPostToPid` move the quad as expected; wrong or no keys fail | No person typed; no mouse or controller |
+| I. Extended stability | See [long run](#long-run) | 5 repeats; 20 back-to-back launches; crash, hang and signal recovery | GPU memory not measured |
+| J. Reproducibility | **Not met** | instructions above | No second person or machine has run it |
+| Resource release (D3D12) | **Fails on D3DMetal** | see below | |
+
+## Observed backend behaviour
+
+All on this one machine and CrossOver version; none confirmed with CodeWeavers or Apple.
+
+- **D3DMetal keeps a reference for every destroyed D3D12 swapchain.** In a minimal program, each create and destroy cycle left `Release` of the swapchain returning 1 and one more device reference (12 after 12 cycles), also after destroying the window. The `wined3d` and `dxvk` settings returned to zero. The D3D12 workload's `shutdown` gate therefore fails on D3DMetal. D3D11 swapchains released cleanly. A program that recreates swapchains often would accumulate them.
+- **Under the `wined3d` and `dxvk` settings** D3D12 is provided by Wine's `vkd3d`. 128-frame runs passed every gate; longer runs slowed to 2.0 s per frame after about 440 frames, with vsync on or off, and timed out. Cause unknown.
+- **`dxmt`** offers no D3D12 device (classified `no_graphics_device`).
+- **Frame pacing with vsync off is bimodal.** The D3D11 workload's median interval switches between about 1 ms and 4 to 9 ms *within* runs, in no relation to run order; with vsync it is 16.7 ms. The earlier "first run is faster" reading was wrong. Vsync-off intervals from these workloads are not performance measurements. Trigger not identified.
 
 ## Backends
 
-One run of 300 frames each, same executable. All five passed with the same pixel digest `e3ee5e2b018b4783`: default (inferred D3DMetal), `d3dmetal`, `dxmt`, `dxvk`, `wined3d`. The workload is far too small to compare performance.
+D3D11: one 300-frame run each; default, `d3dmetal`, `dxmt`, `dxvk`, `wined3d` all passed with the same pixel digest (earlier revision). D3D12: see the observations above.
 
 ## Memory and timing observed
 
+Revision `14a54f8` unless stated.
+
 | Measurement | Value |
 | --- | --- |
-| Workload resident memory, sampled by `ps` | peak 78 to 97 MB across runs |
+| Workload resident memory, sampled by `ps` | 94 to 101 MB in the D3D11 first run, D3D12 run and 20,000-frame run |
 | Persistent CrossOver processes | not part of the workload figure; reported separately as `peak_crossover_rss_kb_sampled` |
-| First verified frame, from program start | about 1.0 s on the first run of a session, about 0.25 s afterwards |
-| Frame interval, 600 frames, vsync off | p50 1.8 to 3.0 ms in the first run of a sequence and about 8.2 ms in later runs; the cause of the difference is **unknown** |
-| Soak, 20,000 frames | p50 8.5 ms, p99 35 ms, maximum 154 ms |
+| First verified frame, from program start | about 0.2 s here; about 1.0 s was seen on some earlier first runs |
+| 20,000 D3D11 frames, vsync off | p50 8.3 ms, p99 20 ms, one frame of 1,023 ms |
+| Frame pacing, vsync off | bimodal; see above |
 | GPU memory, GPU utilization | not measured |
 
-These describe a tiny offscreen-sized scene with periodic read-back. They are not estimates of any application's performance.
+These describe a 256 by 256 scene with periodic read-back. They are not estimates of any application's performance.
+
+## Long run
+
+Pending.
 
 ## Security limits
 
-- **A bottle is not a sandbox.** The workload appeared with a `Y:\` path into the user's home directory. A program run this way can read and write what the user can. Run only programs you trust.
-- The child inherits the supervisor's environment apart from the two backend variables, including any secrets in it.
-- Stopping a run stops every process in that bottle.
-- The supervisor does not handle its own SIGINT or SIGTERM; processes may be left running.
-- The executable is identified and then launched by path, so a file replaced in between is not detected.
-- The PE reader is bounds-checked and tested against truncated and corrupted input; it has not been fuzzed.
+A CrossOver bottle is **not** a sandbox: it maps the whole filesystem. Supervision limits runaway behaviour only. See the [security review](research/security-audit-2026-11-25.md).

@@ -61,6 +61,19 @@ All statements in this table come from the source and its comments. None is meas
 
 When it can be run, an equal comparison needs the same HLSL, resources and expected pixels as `workloads/d3d11-integrated`, with the window, thread and input code replaced by native macOS equivalents. That is a different binary under a different runtime, so only the graphics results (pixel digest, frame intervals, graphics memory) would be comparable; the runtime-service gates would not apply.
 
+## Is there a supported way to host D3DMetal outside Wine?
+
+None was found. A web search on 2026-11-25 did not surface Apple's licence text or any Apple documentation of a native-process host interface; the supported route described is Apple's Wine-based evaluation environment. Secondary sources (for example the [holt-d3dmetal release notes](https://github.com/al0x99/holt-d3dmetal/releases/tag/4.0b3), [MaPC](https://mapc.games/opensource.html) and [D4Mac's notices](https://github.com/MichaelLod/D4Mac/blob/main/THIRD_PARTY_LICENSES.md)) report that use is granted for developing, testing or evaluating video games on Apple hardware and that redistribution is non-commercial and whole-framework only. These are not Apple's words and stay unconfirmed. The document that would settle it is the licence inside a Game Porting Toolkit download from Apple.
+
+Requirements before any proposal to adopt:
+
+| Area | Requirement |
+| --- | --- |
+| Licence | Apple's own licence text read; maintainer (and ideally legal) view that this use, in-process flag writes and a derived interface header are permitted |
+| Binary | Downloaded from Apple by the user; never copied from CrossOver, bundled or patched |
+| Architecture | Either an approved exception to the ARM64 host rule, or an arm64 host that talks to a separately licensed x86-64 helper |
+| Evidence | A demonstrated CrossOver limitation it removes, then the same scenes and expected pixels as the existing workloads |
+
 ## What would reopen this
 
 All of:

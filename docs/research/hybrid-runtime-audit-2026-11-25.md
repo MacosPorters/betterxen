@@ -20,6 +20,8 @@ What was inspected, what the integration branch contains, what to do with the op
 
 `engineering/unified-hybrid-runtime` = `main` + merges of #384, #388, #390 and #402, then the changes described here. Conflicts were in `CHANGELOG.md` only; both sides were kept. It cannot be merged to `main` as an independent change: it contains other contributors' unmerged commits. It becomes a small diff once #384, #388, #390 and #402 land.
 
+Mergeability checked with `git merge-tree` on 2026-11-25: #384 against `main` conflicts in `CHANGELOG.md` only; #388, #390 and #402 merge cleanly onto #384; this branch, #403 and #404 merge cleanly with `main`; #397 conflicts with its base in `component-reuse-matrix.md` and `victory-shader-integration.md`.
+
 Baseline before changes (merged base): format, Clippy, workspace tests (1059 passed, 0 failed, 35 ignored), release build, status, claims, dependency-direction and documentation checks passed. `scripts/assemble-fixture.sh --check` failed because Homebrew `llvm` is not installed; with `llvm@17` one assembled fixture differs. This is a toolchain mismatch present before any change.
 
 Final code: format, Clippy, 1073 tests passed (0 failed, 35 ignored), release build and the same audits passed, with the same fixture failure. `scripts/test-gpu.sh` (native research GPU suite, on revision `e6d614b`; later commits touch no native code) reported 124 passed, 0 failed, 2 ignored.
@@ -47,22 +49,21 @@ Its own provenance record and the independent review on [#399](https://github.co
 
 ## Repository inventory and audit coverage
 
-649 tracked files on `main`. Depth of inspection in this audit:
+**The audit is not complete.** [audit-ledger.tsv](audit-ledger.tsv) lists every tracked file with the depth it received: of 691 files, 23 were read, 11 read in part, 119 summarised from their header comment, size and public item count only, and 538 not read (including tests, fixtures, most documentation and scripts).
 
-| Area | Depth | Classification |
+Reuse in the hybrid path, judged from headers and interfaces, so provisional:
+
+| Existing component | Possible hybrid use | Judgement |
 | --- | --- | --- |
-| `crates/hybrid` | read in full | Implemented; locally validated, not independently |
-| `workloads/` | read: frame loop, build scripts, new workload; others by listing | Original fixtures |
-| `scripts/hybrid`, CI workflows | scripts read or run; workflows read in part | the `native-rust` job runs on a hosted macOS runner; nothing seen there runs CrossOver |
-| `docs/roadmap.md`, hybrid research records | read in part | Current |
-| `crates/loader` (about 62,000 lines), `ffi`, `metal`, `shader`, `decoder`, `isa`, `ref`, `texture`, `import-gen`, `cli` | **not read line by line**: module headers, dependency graph, marker search, test run | Paused research; unit-tested; not on the hybrid path |
-| `app/`, `experiments/x1`, `benchmarks`, `fuzz`, `tests/`, other `scripts/` | **listing only** | Not assessed |
-| Remaining documentation | **not read** | Not assessed |
-| `crates/victory-shader` | not on `main`; provenance records read, code not re-reviewed | Unmerged, not approved |
+| `loader` PE parser and import parser | Executable identification | `crates/hybrid/src/pe.rs` **duplicates** part of it. The loader's parser accepts AMD64 only and its crate depends on the Metal and shader crates. Extracting a shared dependency-free parser would remove the duplication |
+| `loader` static probe, `import-gen` classification and demangling | "What does this program need" diagnostics | Candidate; not wired up |
+| `ref` (CPU depth, blend, indexed, sampling references) | Expected images computed independently of the workload author | Best candidate: would reduce self-verification in graphics workloads |
+| `texture` (BC2 to BC7 decoders, footprints) | Expected values for compressed-texture workloads | Candidate; compressed formats are untested on the hybrid path |
+| `loader` translator, services, scheduler, `shader`, `decoder`, `isa`, `metal` | None: Wine, Rosetta and CrossOver backends fill these roles | Keep as paused research |
+| `ffi` and `app/` | A graphical front end for `betterxen hybrid` | Possible later; no need shown |
+| `experiments/x1`, `fuzz`, `benchmarks` | The PE fuzz target could also cover the new parser | Not done |
 
-Dependency graph: `betterxen-hybrid` has no dependencies. The native crates depend only on each other plus `libc`, `sha2` and the `objc2` Metal bindings. `cargo audit` and `cargo deny` are not installed, so no advisory check was run.
-
-Marker search over all Rust files: no `todo!` or `unimplemented!`, and no TODO, FIXME, XXX or HACK comments outside documentation. That does not show the code is complete. Ignored tests (35) state their reasons: 27 need a Metal device, 5 need an LLVM AMDGPU target and 3 are manual timing runs. A static count of `unsafe` sites (`ffi` 152, `metal` 33, `loader` 28) was taken; they were **not reviewed**.
+Dependency graph: `betterxen-hybrid` depends on `libc`; `betterxen` depends on it and on the native crates. Marker search over Rust files found no `todo!`, `unimplemented!`, TODO or FIXME. Ignored tests (35): 27 need a Metal device, 5 an LLVM AMDGPU target, 3 are manual timing runs.
 
 ## Reference repositories
 
@@ -98,33 +99,38 @@ Upstream infrastructure (Wine, DXVK, DXMT, VKD3D-Proton, MoltenVK) stays an exte
 | `cannot execute` matched on success | Misclassification | Only on non-zero exit |
 | No program presented a frame | Gates F to I had no evidence | `workloads/d3d11-integrated` |
 
+## Later work in this branch
+
+`betterxen hybrid` with environment isolation, signal cleanup and `stop`; a Direct3D 12 workload; keyboard and lifecycle checks; [security review](security-audit-2026-11-25.md); [shader import decision proposal](shader-import-decision.md); [reference projects](reference-projects-2026-11-25.md) and [PortWatch inventory](portwatch-inventory-2026-11-25.md); [d3dmetal-native evaluation](d3dmetal-native-evaluation.md).
+
 ## Not done
 
-- No Direct3D 12 workload, no compiled-from-console shader path, no audio, networking, controller or typed-keyboard test.
-- Texture formats beyond RGBA8 and D32, mip mapping, blending, MSAA, resize, full screen and device loss are untested.
-- The launcher is a separate binary (`betterxen-hybrid`); it was not folded into the `betterxen` native-research CLI.
+- No second-person or second-machine reproduction.
+- No DXIL or shader model 6, audio, networking, controller, mouse, resize, full screen, device loss, MSAA, mip, blending or compressed-texture test on the hybrid path.
 - Shader and pipeline caches are CrossOver's; BetterXen manages none.
-- No thermal, GPU-memory, CPU-utilization attribution or multi-hour stability data.
-- `README.md` and architecture documents were left to #397 to avoid overlapping edits.
+- No GPU-memory or thermal data.
+- `README.md` and architecture documents were left to #397.
 
 ## Blockers
 
 | Kind | Blocker |
 | --- | --- |
-| Decision | Maintainer ruling on #394 / #399 |
+| Decision | #394 / #399 ([proposal](shader-import-decision.md)) |
 | Review | No independent reproduction of #384, #388, #402 or this branch |
+| Coordination | The local worktree on #384's branch holds uncommitted edits and an unpushed merge of `main`, so its conflict was not resolved from here |
+| Upstream behaviour | D3DMetal D3D12 swapchain references; `vkd3d` stall under the `wined3d` and `dxvk` settings |
 | Documentation of interfaces | CrossOver launch and backend interfaces are undocumented (#350) |
-| Scope | Nothing in the repository runs console software under CrossOver; Wine provides Windows interfaces, not Xbox ones. No evidence suggests the current path would run it |
+| Scope | Nothing here runs console software; Wine provides Windows interfaces, not Xbox ones |
 
 ## Next steps
 
-1. Decide #394 as #399 recommends, or record a policy change.
-2. Land #384, #388, #390, #402; rebase this branch.
-3. A second contributor runs `scripts/hybrid/accept-integrated.sh` (gate J).
-4. Type keys on the Mac in `--interactive` mode and record the result (gate H).
-5. Multi-hour run with GPU-memory observation (gate I).
-6. Handle supervisor signals so Ctrl-C stops the bottle.
+1. Decide #394.
+2. Whoever owns the uncommitted #384 work finishes or discards it; then land #384, #388, #390, #402 and rebase this branch.
+3. A second contributor runs the acceptance script (gate J).
+4. Use `crates/ref` for expected images; add compressed-texture and shader model 6 coverage.
+5. Report the D3DMetal swapchain behaviour to CodeWeavers with the minimal program (needs a maintainer to send it).
+6. Finish the unread parts of the audit ledger.
 
 ## Continuation checkpoint
 
-Branch `engineering/unified-hybrid-runtime`; local worktree `artifacts/unified-hybrid-runtime/worktree`; acceptance records under `artifacts/acceptance/` (ignored by Git). Claims posted on #355 and #365. Resume from "Next steps"; the inventory rows marked listing only or not read are the unfinished audit.
+Branch `engineering/unified-hybrid-runtime`; local worktree `artifacts/unified-hybrid-runtime/worktree`; acceptance records under `artifacts/acceptance/` (ignored by Git). Claims posted on #355 and #365; notes on #390 (co-author trailer) and #397 (alignment). Resume from "Next steps"; the inventory rows marked listing only or not read are the unfinished audit.

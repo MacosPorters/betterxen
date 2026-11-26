@@ -14,6 +14,7 @@ remains unsupported.
 - Windows programs started by the hybrid runner no longer inherit the host environment: only a short allowlist and explicit `--env` values are passed. Before this, tokens and `SSH_AUTH_SOCK` were visible to them. This is not a sandbox.
 
 ### Added
+- Added a security review of the hybrid path, a shader-import decision proposal, a reference-project assessment and a per-file audit coverage ledger, which shows the repository audit is incomplete.
 - Recorded an evaluation of utmapp/d3dmetal-native: it builds, 4 of its 55 tests pass without Apple's framework, it was not run against D3DMetal, and it is not adopted (`docs/research/d3dmetal-native-evaluation.md`).
 - Documented the hybrid execution path, its acceptance gates and an audit of the integration base, including which parts of the repository were not read (`docs/hybrid-execution.md`, `docs/research/hybrid-runtime-audit-2026-11-25.md`).
 - Added `betterxen hybrid`, the same commands as `betterxen-hybrid` inside the main CLI, plus `stop --bottle` for recovery. Runs stop their process group and bottle on SIGINT, SIGTERM and SIGHUP, and record any workload process left behind.
