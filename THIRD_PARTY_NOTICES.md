@@ -15,3 +15,5 @@ Cargo resolves the Rust packages from crates.io at the source checksums in [Carg
 [LLVM 23.1.6](https://github.com/llvm/llvm-project/tree/5b10d2d74929eae78912771222c9855af97496f4) is used as an external fixture tool under Apache-2.0 WITH LLVM-exception. Xcode and Metal are separate Apple tools under Apple's license terms.
 
 The [isolated fuzz workspace](fuzz/Cargo.lock) resolves developer-only dependencies, including [libfuzzer-sys](https://github.com/rust-fuzz/libfuzzer/tree/719e4efb9b8857ebaa782ae59376c8cbb78fed0f). See the [fuzz dependency inventory](docs/licenses.md#fuzz-development-dependencies) for locked revisions and selected licenses.
+
+llvm-mingw release 20261117 is used as an external build tool for original Windows test programs under Apache-2.0 with LLVM exceptions plus its component licences; nothing from it is shipped or copied (see [hybrid-toolchain](docs/research/hybrid-toolchain.md)). `crates/hybrid/src/memory.rs` is a Rust reimplementation of the memory-guard logic in skakwy's [victory-mac](https://github.com/skakwy/victory-mac) `mac/run-victory.sh` (commit 22b3f8e45a59, GPL-3.0), used with the author's permission.

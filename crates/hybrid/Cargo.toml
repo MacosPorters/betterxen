@@ -1,0 +1,14 @@
+[package]
+name = "betterxen-hybrid"
+description = "Host receipt, CrossOver discovery, frame-time statistics and Windows cross-toolchain probes for the hybrid direction"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[lints]
+workspace = true
+
+[[bin]]
+name = "betterxen-hybrid"
+path = "src/main.rs"

@@ -12,6 +12,7 @@ The workspace is GPL-3.0-or-later. The following is the lead's preliminary compa
 | bitflags | 2.13.2, `80ce9b545acb0bd42150695fc351889cac1d8eb4` | MIT from MIT OR Apache-2.0 | Runtime transitive dependency |
 | AMD RDNA 2 ISA XML | 2026-02-20, schema 1.1.1 | MIT | Source for generated decoder constants |
 | LLVM AMDGPU tools | 23.1.6 | Apache-2.0 WITH LLVM-exception | External fixture tool, not linked |
+| llvm-mingw | 20261117 (sha256 `98d340bb…446aa`) | Apache-2.0 WITH LLVM-exception, plus component licences in its LICENSE.TXT (mingw-w64 runtime and headers have their own terms; not audited line by line) | External build tool for original Windows test programs, not linked, not distributed |
 | Xcode and Metal tools | Xcode 27.2 | Apple proprietary terms | External host tools, not distributed |
 
 ## Runtime redistribution review
