@@ -1,0 +1,35 @@
+{
+  "positive_gate": {
+    "exit": 0,
+    "elapsed_s": 9.827,
+    "backend": [
+      "/usr/libexec/rosetta/runtime",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+    ],
+    "stdout": "D3D12_DLL C:\\windows\\system32\\d3d12.dll\nSHIM_LOADED 0\nSTAGE ready cpu_ptr=0\nPOSITIVE_GATE withheld=1 word=0xCAFE1234 completed=1\nEND success\n",
+    "unsafe_unwind": false
+  },
+  "fault_signal_stop": {
+    "exit": 2,
+    "elapsed_s": 5.647,
+    "backend": [
+      "/usr/libexec/rosetta/runtime",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+    ],
+    "stdout": "D3D12_DLL C:\\windows\\system32\\d3d12.dll\nSHIM_LOADED 0\nSTAGE ready cpu_ptr=0\nFAIL in_flight operation=Signal HRESULT=0x8007000E target=1 completed=0 wait=4294967295 process_exit=2\n",
+    "unsafe_unwind": false
+  },
+  "fault_wait_timeout": {
+    "exit": 2,
+    "elapsed_s": 15.6,
+    "backend": [
+      "/usr/libexec/rosetta/runtime",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+    ],
+    "stdout": "D3D12_DLL C:\\windows\\system32\\d3d12.dll\nSHIM_LOADED 0\nSTAGE ready cpu_ptr=0\nFAIL in_flight operation=fence completion HRESULT=0x80004005 target=1 completed=0 wait=258 process_exit=2\n",
+    "unsafe_unwind": false
+  }
+}

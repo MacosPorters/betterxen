@@ -99,7 +99,28 @@ def backend(exe, env, cwd):
     return dict(verified=False, message='could not identify unique probe PID', lookup=found)
 
 
-def run_case(command, exe, label, has_gpu, case, env, max_level):
+BASE_PROTOCOL = 'B-local-1.1'
+after_guest = None
+
+
+def stop_private_wine(private, env, cwd):
+    if private is None or not private.is_dir():
+        return None
+    stop_env = env | {'WINEPREFIX': str(private), 'CX_BOTTLE_PATH': str(private)}
+    stopped = capture([CROSSOVER / 'bin/wineserver', '-k'], stop_env, cwd, 10)
+    waited = capture([CROSSOVER / 'bin/wineserver', '-w'], stop_env, cwd, 10)
+    return dict(kill=stopped, wait=waited)
+
+
+def close_stdin(process):
+    if process is not None and process.stdin is not None and not process.stdin.closed:
+        try:
+            process.stdin.close()
+        except OSError:
+            pass
+
+
+def run_case(command, exe, label, has_gpu, case, env, max_level, private=None):
     case.mkdir()
     if label == 'coherence' and has_gpu:
         shader = case.parent / 'source' / (COHERENCE / 'access.hlsl').relative_to(REPO)
@@ -122,19 +143,33 @@ def run_case(command, exe, label, has_gpu, case, env, max_level):
                     raise RuntimeError('pressure gate at paused device before workload')
                 process.stdin.write(b'\n')
                 process.stdin.flush()
+            close_stdin(process)
             result['exit'] = process.wait(timeout=max(0, deadline - time.monotonic()))
     except BaseException as failure:
         result['error'] = repr(failure)
+        close_stdin(process)
         if process is not None:
             if process.poll() is None:
                 try:
                     os.killpg(process.pid, signal.SIGKILL)
                 except ProcessLookupError:
                     pass
+            guest_pid = result.get('backend', {}).get('guest_pid', '')
+            if str(guest_pid).isdigit():
+                try:
+                    os.kill(int(guest_pid), signal.SIGKILL)
+                except ProcessLookupError:
+                    pass
             result['exit'] = process.wait(timeout=5)
+        result['error_wineserver_stop'] = stop_private_wine(private, env, case)
         if isinstance(failure, KeyboardInterrupt):
             result['interrupted'] = True
     finally:
+        if private is not None and private.is_dir() and 'error' not in result:
+            stop_env = env | {'WINEPREFIX': str(private), 'CX_BOTTLE_PATH': str(private)}
+            capture([CROSSOVER / 'bin/wineserver', '-w'], stop_env, case, 10)
+        if after_guest is not None:
+            after_guest(case, result)
         result['output_hashes'] = {p.name: sha(p) for p in case.iterdir() if p.is_file()}
         (case / 'case.json').write_text(json.dumps(result, indent=2) + '\n')
     return result
@@ -159,7 +194,7 @@ def main():
     env = {k: os.environ[k] for k in ['HOME', 'USER', 'LOGNAME', 'PATH', 'LANG', 'LC_ALL'] if k in os.environ}
     env.update(TMPDIR=str(root) + '/', ROSETTA_ADVERTISE_AVX='1',
                CX_GRAPHICS_BACKEND='d3dmetal', WINEDEBUG='-all')
-    receipt = dict(protocol='B-local-1', group=args.group, seed=args.seed,
+    receipt = dict(protocol=BASE_PROTOCOL, group=args.group, seed=args.seed,
                    utc=datetime.now(timezone.utc).isoformat(), independent_review='pending',
                    environment={k: env[k] for k in ['ROSETTA_ADVERTISE_AVX', 'CX_GRAPHICS_BACKEND', 'WINEDEBUG']},
                    commands={}, cases=[])
@@ -249,7 +284,7 @@ def main():
             exe = executables[label]
             command = [str(WINE), '--bottle', str(private), '--no-update', '--no-gui',
                        '--workdir', str(case), str(exe), *argv]
-            result = run_case(command, exe, label, argv != ['watch'], case, env, max_level)
+            result = run_case(command, exe, label, argv != ['watch'], case, env, max_level, private)
             after = pressure(env, root, max_level)
             item.update(run=result, pressure_after=after)
             save()

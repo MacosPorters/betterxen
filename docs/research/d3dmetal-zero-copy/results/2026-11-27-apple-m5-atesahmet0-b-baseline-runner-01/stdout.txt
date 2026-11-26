@@ -1,0 +1,91 @@
+Independent standalone D3D12 UMA probe; C++20; sizeof(void*)=8 expected
+sizeof(void*)=8
+LoadLibraryA(d3d12.dll) path=C:\windows\system32\d3d12.dll
+D3D12CreateDevice FL11_0 HRESULT=0x00000000
+QueryInterface ID3D12Device3 HRESULT=0x00000000
+module d3d12.dll path=C:\windows\system32\d3d12.dll
+module dxgi.dll path=C:\windows\system32\dxgi.dll
+d3d12_xs_loaded=0
+[1] Device capability queries, NodeIndex=0
+D3D12_FEATURE_ARCHITECTURE1 HRESULT=0x00000000
+UMA=0 CacheCoherentUMA=0 TileBasedRenderer=0 IsolatedMMU=0
+D3D12_FEATURE_D3D12_OPTIONS HRESULT=0x00000000
+ResourceHeapTier=2
+queue HRESULT=0x00000000
+allocator HRESULT=0x00000000
+command_list HRESULT=0x00000000
+initial_close HRESULT=0x00000000
+fence HRESULT=0x00000000
+fence_event success=1 error=0
+[2] Existing-memory wrapping (64 KiB)
+VirtualAlloc success=1 error=0
+CreateFileMappingW success=1 error=0
+MapViewOfFile success=1 error=0
+OpenExistingHeapFromAddress HRESULT=0x80004001
+OpenExistingHeapFromFileMapping HRESULT=0x80004001
+address_visibility NOT_RUN (heap open failed)
+file_mapping_visibility NOT_RUN (heap open failed)
+[3] CUSTOM heap creation (size=2097152 alignment=65536)
+WRITE_BACK/L0/ALLOW_ALL HRESULT=0x00000000
+WRITE_COMBINE/L0/ALLOW_ALL HRESULT=0x00000000
+WRITE_BACK/L0/ALLOW_ONLY_BUFFERS HRESULT=0x00000000
+WRITE_BACK/L0/ALLOW_ONLY_NON_RT_DS_TEXTURES HRESULT=0x00000000
+WRITE_BACK/L0/ALLOW_ONLY_RT_DS_TEXTURES HRESULT=0x00000000
+WRITE_BACK/L1/ALLOW_ALL control HRESULT=0x80070057
+mixed_heap HRESULT=0x00000000
+placed_UAV_buffer offset=0 HRESULT=0x00000000
+buffer allocation size=65536 alignment=65536; texture size=65536 alignment=65536 offset=65536
+placed_RGBA8_texture same_heap HRESULT=0x00000000
+mixed_buffer_and_texture_live=1
+texture.Map(null ppData) HRESULT=0x00000000
+texture.WriteToSubresource HRESULT=0x00000000
+texture.ReadFromSubresource HRESULT=0x00000000
+texture roundtrip exact_words=4096/4096 match=1
+[4] Bidirectional persistent Map; no Unmap or remap
+coherence_heap HRESULT=0x00000000
+coherence_placed_UAV_buffer HRESULT=0x00000000
+coherence_readback HRESULT=0x00000000
+coherence_upload HRESULT=0x00000000
+placed.Map HRESULT=0x00000000
+readback.Map HRESULT=0x00000000
+upload.Map HRESULT=0x00000000
+CPU->GPU round=1 expected=11223344,A1B2C3D4 actual=11223344,A1B2C3D4 match=1
+CPU->GPU round=2 expected=55AA00FF,F00DBA5E actual=55AA00FF,F00DBA5E match=1
+GPU->CPU same_cpu_ptr expected=C001D00D,9E3779B9 actual=C001D00D,9E3779B9 match=1
+[5] BENCH CUSTOM/WRITE_BACK/L0/64KiB size=65536 warmup=5 timed=40
+bench_heap HRESULT=0x00000000
+bench_placed_buffer HRESULT=0x00000000
+bench_readback HRESULT=0x00000000
+bench_source.Map HRESULT=0x00000000
+bench_readback.Map HRESULT=0x00000000
+prefault stride=65536 touches=1
+BENCH_RESULT CUSTOM/WRITE_BACK/L0/64KiB bytes=65536 total_ms=13.307500 avg_ms_per_submit=0.332687 exact_matches=40/40 warmup_matches=5/5
+[5] BENCH CUSTOM/WRITE_BACK/L0/256MiB size=268435456 warmup=5 timed=40
+bench_heap HRESULT=0x00000000
+bench_placed_buffer HRESULT=0x00000000
+bench_readback HRESULT=0x00000000
+bench_source.Map HRESULT=0x00000000
+bench_readback.Map HRESULT=0x00000000
+prefault stride=65536 touches=4096
+BENCH_RESULT CUSTOM/WRITE_BACK/L0/256MiB bytes=268435456 total_ms=13.468200 avg_ms_per_submit=0.336705 exact_matches=40/40 warmup_matches=5/5
+[5] BENCH CUSTOM/WRITE_COMBINE/L0/256MiB size=268435456 warmup=5 timed=40
+bench_heap HRESULT=0x00000000
+bench_placed_buffer HRESULT=0x00000000
+bench_readback HRESULT=0x00000000
+bench_source.Map HRESULT=0x00000000
+bench_readback.Map HRESULT=0x00000000
+prefault stride=65536 touches=4096
+BENCH_RESULT CUSTOM/WRITE_COMBINE/L0/256MiB bytes=268435456 total_ms=12.800400 avg_ms_per_submit=0.320010 exact_matches=40/40 warmup_matches=5/5
+[5] BENCH UPLOAD/256MiB size=268435456 warmup=5 timed=40
+bench_upload HRESULT=0x00000000
+bench_readback HRESULT=0x00000000
+bench_source.Map HRESULT=0x00000000
+bench_readback.Map HRESULT=0x00000000
+prefault stride=65536 touches=4096
+BENCH_RESULT UPLOAD/256MiB bytes=268435456 total_ms=6.728500 avg_ms_per_submit=0.168213 exact_matches=40/40 warmup_matches=5/5
+[6] MEM_WRITE_WATCH 65536 bytes; writes at 0 and 16384
+writewatch.VirtualAlloc success=1 error=0
+GetWriteWatch return=0 dirty_page_count=2 granularity=4096
+dirty_page[0] offset=0
+dirty_page[1] offset=16384
+END observed_data_or_submission_failures=0 (unsupported HRESULTs reported separately)

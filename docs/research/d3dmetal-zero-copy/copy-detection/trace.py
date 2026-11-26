@@ -24,6 +24,7 @@ detect = runner.backend
 trace = None
 args = None
 log_file = None
+trace_exit = 0
 
 def attach(exe, env, cwd):
     global trace, args, log_file
@@ -48,22 +49,33 @@ def attach(exe, env, cwd):
         time.sleep(0.1)
     return result
 
+
+def finalize_trace(case, _result):
+    global trace, trace_exit
+    if trace is None:
+        return
+    try:
+        result_code = trace.wait(30)
+    except subprocess.TimeoutExpired:
+        trace.terminate()
+        result_code = trace.wait(5)
+    trace = None
+    trace_exit = result_code
+    receipt = {"command": args, "exit": result_code, "xcrun_developer_dir":
+               "/Applications/Xcode.app/Contents/Developer", "log": log_file.name,
+               "trace_exists": (case / "gpu.trace").exists()}
+    (case / "xctrace.json").write_text(json.dumps(receipt, indent=2) + "\n")
+
+
 runner.backend = attach
+runner.after_guest = finalize_trace
 runner.cases_for = lambda group, seed: [workload]
 status = 1
 try:
     status = runner.main()
 finally:
-    if trace:
-        try:
-            result_code = trace.wait(30)
-        except subprocess.TimeoutExpired:
-            trace.terminate()
-            result_code = trace.wait(5)
-        receipt = {"command": args, "exit": result_code, "xcrun_developer_dir":
-                   "/Applications/Xcode.app/Contents/Developer", "log": log_file.name,
-                   "trace_exists": (log_file.parent / "gpu.trace").exists()}
-        (log_file.parent / "xctrace.json").write_text(json.dumps(receipt, indent=2) + "\n")
-        if result_code and status == 0:
-            status = result_code
+    if trace is not None and log_file is not None:
+        finalize_trace(log_file.parent, None)
+    if trace_exit and status == 0:
+        status = trace_exit
 sys.exit(status)

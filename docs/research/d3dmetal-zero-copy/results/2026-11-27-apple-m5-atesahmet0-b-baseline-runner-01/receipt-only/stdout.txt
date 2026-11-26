@@ -1,0 +1,17 @@
+Independent standalone D3D12 UMA probe; C++20; sizeof(void*)=8 expected
+sizeof(void*)=8
+LoadLibraryA(d3d12.dll) path=C:\windows\system32\d3d12.dll
+D3D12CreateDevice FL11_0 HRESULT=0x00000000
+QueryInterface ID3D12Device3 HRESULT=0x00000000
+module d3d12.dll path=C:\windows\system32\d3d12.dll
+module dxgi.dll path=C:\windows\system32\dxgi.dll
+d3d12_xs_loaded=0
+[2] Existing-memory wrapping (64 KiB)
+VirtualAlloc success=1 error=0
+CreateFileMappingW success=1 error=0
+MapViewOfFile success=1 error=0
+OpenExistingHeapFromAddress HRESULT=0x80004001
+OpenExistingHeapFromFileMapping HRESULT=0x80004001
+address_visibility NOT_RUN (heap open failed)
+file_mapping_visibility NOT_RUN (heap open failed)
+backend receipt pause 10 seconds

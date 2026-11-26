@@ -1,0 +1,26 @@
+{
+  "source_scratch": "/tmp/bx473-m5-render-full",
+  "redactions": {
+    "receipt.json": {
+      "raw_sha256": "da1aa59ecd4b532ee9877a580699450fe36677cdf0c04b78930dda6145b3438e",
+      "archive_sha256": "2e2c7a98cb2a09d07270a597be6bef363e628cc68f0a4db51d54a276d44e3221"
+    }
+  },
+  "omitted_local_artifacts_sha256": {
+    "a-probe.exe": "0608a34809f59a8b9c1f53043a65af81916fa0b3361cb37ff9fc8b137d4d8339",
+    "observe": "cfa22f8c8aaa946cfe03aafeebcd66007d8814063ad4b594b849e0428f479e8e",
+    "render-s0/readback_default_m0_p0.rgba": "8a8168a403c7c1089fcc67d2d03def2f348486c1f5e738773b00df6d95c28748",
+    "render-s0/readback_default_m1_p0.rgba": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+    "render-s0/readback_default_m1_p1.rgba": "8a8168a403c7c1089fcc67d2d03def2f348486c1f5e738773b00df6d95c28748",
+    "render-s0/readback_default_m2_p0.rgba": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+    "render-s0/readback_default_m2_p1.rgba": "8a8168a403c7c1089fcc67d2d03def2f348486c1f5e738773b00df6d95c28748",
+    "render-s0/readback_wb_m0_p0.rgba": "8a8168a403c7c1089fcc67d2d03def2f348486c1f5e738773b00df6d95c28748",
+    "render-s0/readback_wc_m0_p0.rgba": "8a8168a403c7c1089fcc67d2d03def2f348486c1f5e738773b00df6d95c28748",
+    "render-s1/readback_default_m0_p0.rgba": "3aa7c7d458cd3be1c86319a8fd80dcbc118d2e183f3bca587fd92bd54112b447",
+    "render-s1/readback_default_m1_p0.rgba": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+    "render-s1/readback_default_m1_p1.rgba": "3aa7c7d458cd3be1c86319a8fd80dcbc118d2e183f3bca587fd92bd54112b447",
+    "render-s1/readback_wb_m0_p0.rgba": "3aa7c7d458cd3be1c86319a8fd80dcbc118d2e183f3bca587fd92bd54112b447",
+    "render-s1/readback_wc_m0_p0.rgba": "3aa7c7d458cd3be1c86319a8fd80dcbc118d2e183f3bca587fd92bd54112b447"
+  },
+  "policy": "Replace home-directory prefix in JSON metadata with <HOME>. Copy stdout/stderr/source/shader receipts verbatim. Omit executables, private bottle, and raw .rgba dumps while retaining their SHA-256 digests."
+}

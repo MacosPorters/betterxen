@@ -1,0 +1,4 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+STAGE ready cpu_ptr=0
+FAIL in_flight operation=Signal HRESULT=0x8007000E target=1 completed=0 wait=4294967295 process_exit=2

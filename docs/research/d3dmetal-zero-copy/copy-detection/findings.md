@@ -12,7 +12,7 @@ Apple M5, 16 GiB unified RAM, 16 KiB host pages, macOS 27.2.1 build 26B131, Cros
 | Placement and tracking | [First session](../results/2026-11-27-apple-m5-atesahmet0-b-small-02/receipt.json), [second and clock check](../results/2026-11-27-apple-m5-atesahmet0-b-small-03/receipt.json), [clock confirmation](../results/2026-11-27-apple-m5-atesahmet0-b-small-05/03-clock/stdout.txt) |
 | Copy and CPU rates | [Seed 473](../results/2026-11-27-apple-m5-atesahmet0-b-sweep-01/receipt.json), [seed 947](../results/2026-11-27-apple-m5-atesahmet0-b-sweep-02/receipt.json) |
 | Compute | [Seed 473](../results/2026-11-27-apple-m5-atesahmet0-b-compute-01/receipt.json), [seed 947](../results/2026-11-27-apple-m5-atesahmet0-b-compute-02/receipt.json) |
-| Metal System Trace | [Urgent stop before guest workload](../results/2026-11-27-apple-m5-atesahmet0-b-trace-01/receipt.json) |
+| Metal System Trace | [Urgent stop before guest workload](../results/2026-11-27-apple-m5-atesahmet0-b-trace-01/receipt.json), [sanitized target-PID XML inputs](../results/2026-11-27-apple-m5-atesahmet0-b-trace-inputs-01/receipt.json), [B1/B2 audit](b1-b2-audit.md) |
 | A same-source reproduction | [Alias](../results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/receipt.json), [texture](../results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/receipt.json), [review](review-a.md) |
 
 ## Hidden-copy detection

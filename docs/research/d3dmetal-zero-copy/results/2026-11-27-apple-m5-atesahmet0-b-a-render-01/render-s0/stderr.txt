@@ -1,0 +1,2 @@
+vkd3d:00d0:fixme:D3DCompile2VKD3D Ignoring flags 0x8000.
+vkd3d:00d0:fixme:D3DCompile2VKD3D Ignoring flags 0x8000.
