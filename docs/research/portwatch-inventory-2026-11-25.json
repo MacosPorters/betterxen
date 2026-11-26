@@ -1,0 +1,2530 @@
+{
+ "meta": {
+  "source": "https://portwatch-vi.xyz/data/tracker.json",
+  "tracker_updated": "2026-11-26T01:31:36.865Z",
+  "sha256": "c8a32748928e6a76cdaec4c439381961c849f2693217630ad16b225f6cc73178",
+  "counts": {
+   "efforts": 43,
+   "tools": 22,
+   "candidates": 20,
+   "flagged": 6,
+   "dmca": 2,
+   "ignored": 563
+  },
+  "note": "Reported fields are the tracker's claims, not verified by BetterXen. Metadata only: no repository was cloned and no file was downloaded from any of them."
+ },
+ "projects": [
+  {
+   "repo": "Ahmet-Dedeler/awesome-gta6-reverse-engineering",
+   "collections": [
+    "tools"
+   ],
+   "name": "awesome-gta6-RE",
+   "category": "Curated list",
+   "tracker_last_push": "2026-11-26T00:58:17Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "HTML",
+    "license": "NOASSERTION",
+    "parent": null,
+    "pushed_at": "2026-11-26T00:58:17Z",
+    "size_kb": 6538,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Ahmet-Dedeler/bcpack-rs",
+   "collections": [
+    "tools"
+   ],
+   "name": "bcpack-rs",
+   "category": "Texture codec",
+   "tracker_last_push": "2026-11-25T14:15:49Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "master",
+    "fork": false,
+    "language": "Rust",
+    "license": "NOASSERTION",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:53:59Z",
+    "size_kb": 418,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Ahmet-Dedeler/rage9-re",
+   "collections": [
+    "tools"
+   ],
+   "name": "rage9-re",
+   "category": "Data decoder",
+   "tracker_last_push": "2026-11-24T03:07:23Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "master",
+    "fork": false,
+    "language": "Rust",
+    "license": "NOASSERTION",
+    "parent": null,
+    "pushed_at": "2026-11-24T03:07:23Z",
+    "size_kb": 72,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Albotterin/AWC_from_RPF9_Extractor",
+   "collections": [
+    "tools"
+   ],
+   "name": "AWC from RPF9",
+   "category": "Audio extractor",
+   "tracker_last_push": "2026-11-25T23:09:00Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Java",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-25T23:09:00Z",
+    "size_kb": 6296,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "anrq0/SeriesX-Emulator",
+   "collections": [
+    "efforts"
+   ],
+   "name": "SeriesX Emulator",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Emulator",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 2,
+   "tracker_last_push": "2026-11-25T17:03:56Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-25T17:03:56Z",
+    "size_kb": 4023,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Archivist-Atlas/gta-vi-astral",
+   "collections": [
+    "candidates"
+   ],
+   "name": "gta-vi-astral",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Go",
+   "tracker_last_push": "2026-11-24T18:05:18Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Go",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-25T19:09:07Z",
+    "size_kb": 769,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "avatarmanz/VIctory-7900XTX",
+   "collections": [
+    "efforts"
+   ],
+   "name": "AvatarManz",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "portwatch",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 16
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T22:18:27Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T01:47:20Z",
+    "size_kb": 3030,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "batatinhafcbatatinha-pixel/xseriesrecomp",
+   "collections": [
+    "tools"
+   ],
+   "name": "xseriesrecomp",
+   "category": "Front end",
+   "tracker_last_push": "2026-11-23T14:57:54Z",
+   "availability": "unavailable (HTTP 404)"
+  },
+  {
+   "repo": "baummarder/xHoly",
+   "collections": [
+    "candidates"
+   ],
+   "name": "xHoly",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-25T21:48:29Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "Apache-2.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T21:48:29Z",
+    "size_kb": 1927,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Belobug/VIctory-Belobug-AMD",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Belobug",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "portwatch",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 4
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T00:57:17Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "rx9070xt",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T00:57:17Z",
+    "size_kb": 4766,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "brcly/TuxBox",
+   "collections": [
+    "efforts"
+   ],
+   "name": "TuxBox",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T01:30:03Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "Apache-2.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:36:20Z",
+    "size_kb": 13564,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "breadbbbb/rpf9-explorer",
+   "collections": [
+    "tools"
+   ],
+   "name": "rpf9-explorer",
+   "category": "Archive explorer",
+   "tracker_last_push": "2026-11-24T07:58:59Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C#",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-24T07:58:59Z",
+    "size_kb": 3135,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "californiaAlmonds/OpenScarlett",
+   "collections": [
+    "efforts"
+   ],
+   "name": "OpenScarlett",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA",
+    "Intel"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T00:46:25Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-26T00:46:25Z",
+    "size_kb": 12217,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Dark3581/AnyBox",
+   "collections": [
+    "efforts"
+   ],
+   "name": "AnyBox",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Relinker",
+   "target": "Any Xbox Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 2,
+   "tracker_last_push": "2026-11-23T07:20:39Z",
+   "availability": "unavailable (HTTP 404)"
+  },
+  {
+   "repo": "decantlabs/decant",
+   "collections": [
+    "candidates"
+   ],
+   "name": "decant",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-25T22:07:50Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-26T01:14:47Z",
+    "size_kb": 3365,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "deepdev237/victory-mac",
+   "collections": [
+    "candidates"
+   ],
+   "name": "victory-mac",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": null,
+   "tracker_last_push": "2026-11-25T14:47:44Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": null,
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T14:47:44Z",
+    "size_kb": 3370,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "DesignWithTommy/i95",
+   "collections": [
+    "candidates"
+   ],
+   "name": "i95",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-26T01:30:43Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:55:21Z",
+    "size_kb": 77776,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "DexNom/VIctory",
+   "collections": [
+    "efforts"
+   ],
+   "name": "DexNom",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "portwatch",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 3
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T01:12:12Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": true,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": "Marvisak/VIctory",
+    "pushed_at": "2026-11-26T01:12:12Z",
+    "size_kb": 6010,
+    "source": "Marvisak/VIctory",
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "edupode/anyxboxseries",
+   "collections": [
+    "efforts"
+   ],
+   "name": "AnyXboxSeries",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 1,
+   "tracker_last_push": "2026-11-25T06:43:07Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "NOASSERTION",
+    "parent": null,
+    "pushed_at": "2026-11-25T06:43:07Z",
+    "size_kb": 14323,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "ethan00013/keylime",
+   "collections": [
+    "efforts"
+   ],
+   "name": "keylime",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T21:52:57Z",
+   "availability": "unavailable (HTTP 404)"
+  },
+  {
+   "repo": "ExCorvus/gta-pipeline-reconstruction",
+   "collections": [
+    "candidates"
+   ],
+   "name": "gta-pipeline-reconstruction",
+   "category": "unreviewed candidate",
+   "branch": "master",
+   "language": "C++",
+   "tracker_last_push": "2026-11-25T22:59:37Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "master",
+    "fork": false,
+    "language": "C++",
+    "license": "NOASSERTION",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:40:39Z",
+    "size_kb": 54,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "fishingpvalues/gta6-pc-port-hub",
+   "collections": [
+    "tools"
+   ],
+   "name": "GTA VI PC port hub",
+   "category": "Coordination hub",
+   "tracker_last_push": "2026-11-22T19:08:36Z",
+   "availability": "available",
+   "github": {
+    "archived": true,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "CC0-1.0",
+    "parent": null,
+    "pushed_at": "2026-11-22T19:08:36Z",
+    "size_kb": 23,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Freminet/ScarlettX",
+   "collections": [
+    "efforts"
+   ],
+   "name": "ScarlettX",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "HLE emulator",
+   "target": "Any Xbox Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-22T10:38:07Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-22T10:38:07Z",
+    "size_kb": 3215,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "fxceless/victory-fork",
+   "collections": [
+    "efforts"
+   ],
+   "name": "hyphennn",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": [
+    "fxceless/victory-gta6"
+   ],
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 3
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T01:31:17Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:40:50Z",
+    "size_kb": 31232,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "holdmysocks/SixNG",
+   "collections": [
+    "tools"
+   ],
+   "name": "SixNG",
+   "category": "Asset extractor",
+   "tracker_last_push": "2026-11-26T01:31:11Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "master",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:54:18Z",
+    "size_kb": 5915,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "HolyRoses/gta6-explorer",
+   "collections": [
+    "tools"
+   ],
+   "name": "gta6-explorer",
+   "category": "Asset explorer",
+   "tracker_last_push": "2026-11-26T01:18:27Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-26T01:18:27Z",
+    "size_kb": 2972,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Hylanderry/DedSec",
+   "collections": [
+    "efforts"
+   ],
+   "name": "DedSec",
+   "branch": "dedsec-clean",
+   "category": "watchlist",
+   "approach": "Static recompilation (DX12)",
+   "target": "GTA VI",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-23T22:48:15Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "dedsec-clean",
+    "fork": false,
+    "language": "Python",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-23T22:48:15Z",
+    "size_kb": 2379,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "ihaterockstargames/sixth-star",
+   "collections": [
+    "candidates"
+   ],
+   "name": "sixth-star",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-25T21:54:09Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T00:50:40Z",
+    "size_kb": 2051,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "ItsNotRexed/Leonida",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Leonida",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Static recompilation",
+   "target": "GTA VI only",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": true,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-23T21:01:51Z",
+   "availability": "not queried: tracker reports it removed"
+  },
+  {
+   "repo": "jadeowaowa/scarlett-layer",
+   "collections": [
+    "efforts"
+   ],
+   "name": "scarlett-layer",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 2,
+   "tracker_last_push": "2026-11-24T00:30:36Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "Apache-2.0",
+    "parent": null,
+    "pushed_at": "2026-11-24T00:30:36Z",
+    "size_kb": 1154,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "JamesCicada/GTAVI-Recomp",
+   "collections": [
+    "efforts"
+   ],
+   "name": "GTAVI-Recomp",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Relinker (PS5 route)",
+   "target": "PS5 build",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 1,
+   "tracker_last_push": "2026-11-25T12:51:20Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "GPL-2.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T12:51:20Z",
+    "size_kb": 176,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "JoshRob297/rpf9-research",
+   "collections": [
+    "tools"
+   ],
+   "name": "rpf9-research",
+   "category": "Format research",
+   "tracker_last_push": "2026-11-24T19:42:10Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-24T19:42:10Z",
+    "size_kb": 38069,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "JozefDeTremmerie/CCS03",
+   "collections": [
+    "candidates"
+   ],
+   "name": "CCS03",
+   "category": "unreviewed candidate",
+   "branch": "ccs03",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-26T01:20:39Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "ccs03",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:10:22Z",
+    "size_kb": 4574,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "JPTuba9/xlaunch-vi",
+   "collections": [
+    "efforts"
+   ],
+   "name": "XlaunchVI",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T18:27:10Z",
+   "availability": "unavailable (HTTP 404)"
+  },
+  {
+   "repo": "Kajcsi/G6Recomp",
+   "collections": [
+    "efforts"
+   ],
+   "name": "G6Recomp",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-24T07:52:34Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-24T07:52:34Z",
+    "size_kb": 937,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "kry-vex-gta/XBOX-Inspector",
+   "collections": [
+    "tools"
+   ],
+   "name": "XBOX-Inspector",
+   "category": "Build inspector",
+   "tracker_last_push": "2026-11-23T18:20:58Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-23T18:20:58Z",
+    "size_kb": 12037,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Librett0/vice-lens",
+   "collections": [
+    "tools"
+   ],
+   "name": "Vice Lens",
+   "category": "Asset explorer",
+   "tracker_last_push": "2026-11-22T20:35:26Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-22T20:35:26Z",
+    "size_kb": 441,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Linox-IDK/LNX-victory",
+   "collections": [
+    "candidates"
+   ],
+   "name": "LNX-victory",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-25T21:19:56Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T22:53:00Z",
+    "size_kb": 4907,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "ljm-233/Xbgtasix",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Xbgtasix",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 2,
+   "tracker_last_push": "2026-11-25T23:09:31Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T23:09:31Z",
+    "size_kb": 3346,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "LooperSalty/AnyXboxX",
+   "collections": [
+    "efforts"
+   ],
+   "name": "AnyXboxX",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "HLE emulator",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA",
+    "AMD"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 2,
+   "tracker_last_push": "2026-11-26T01:30:33Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:07:12Z",
+    "size_kb": 6220,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "luizwidmer/palmetto",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Palmetto",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Static recompilation",
+   "target": "GTA VI only",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T00:59:08Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:15:42Z",
+    "size_kb": 17462,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "lukinhasnojento/gta6-port-knowledge",
+   "collections": [
+    "candidates"
+   ],
+   "name": "gta6-port-knowledge",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": null,
+   "tracker_last_push": "2026-11-26T01:04:20Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": null,
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:12:43Z",
+    "size_kb": 1277,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "lynxnathan/rage-tools-vi",
+   "collections": [
+    "tools"
+   ],
+   "name": "Rage Tools VI",
+   "category": "Archive toolkit",
+   "tracker_last_push": "2026-11-25T21:25:22Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-25T21:25:22Z",
+    "size_kb": 17617,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Marvisak/VIctory",
+   "collections": [
+    "efforts"
+   ],
+   "name": "VIctory",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T23:27:48Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T23:27:48Z",
+    "size_kb": 4409,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "meetox80/6stars",
+   "collections": [
+    "tools"
+   ],
+   "name": "6stars",
+   "category": "World viewer",
+   "tracker_last_push": "2026-11-22T12:37:16Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-22T12:37:16Z",
+    "size_kb": 2243,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "nineforge0/forge9",
+   "collections": [
+    "tools"
+   ],
+   "name": "forge9",
+   "category": "Archive toolkit",
+   "tracker_last_push": "2026-11-25T21:39:01Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-25T21:39:01Z",
+    "size_kb": 2453,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "nullbrik/RageForge",
+   "collections": [
+    "tools"
+   ],
+   "name": "RageForge",
+   "category": "RE toolkit",
+   "tracker_last_push": "2026-11-23T17:16:01Z",
+   "availability": "unavailable (HTTP 404)"
+  },
+  {
+   "repo": "omonkeyz/xbox-emulator",
+   "collections": [
+    "efforts"
+   ],
+   "name": "xbox-emulator",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility runtime",
+   "target": "Any Xbox Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": [
+    "drycheetah84/TomBox"
+   ],
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T13:47:56Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T13:47:56Z",
+    "size_kb": 10075,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "OnlyMoisties/GTA6-BootTest",
+   "collections": [
+    "efforts"
+   ],
+   "name": "GTA6-BootTest",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-24T01:09:59Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-24T01:09:59Z",
+    "size_kb": 516,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "OpenCommunityEdition/OpenScarlett",
+   "collections": [
+    "efforts"
+   ],
+   "name": "OpenScarlett (Community Edition)",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA",
+    "Intel"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T09:45:19Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "AGPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T09:45:19Z",
+    "size_kb": 4813,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "p-portela/SCARAB",
+   "collections": [
+    "efforts"
+   ],
+   "name": "SCARAB",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "API bridge",
+   "target": "Any Xbox Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 2,
+   "tracker_last_push": "2026-11-23T12:24:22Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-23T12:24:22Z",
+    "size_kb": 284,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "POMXARK/bcpack-gpu-hlsl",
+   "collections": [
+    "candidates"
+   ],
+   "name": "bcpack-gpu-hlsl",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-25T22:04:07Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "NOASSERTION",
+    "parent": null,
+    "pushed_at": "2026-11-26T01:41:25Z",
+    "size_kb": 104754,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "ProhorovIlja/NativeX-Runtime",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Scarlett Windows Compat",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Research probes",
+   "target": "Any Xbox Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 1,
+   "tracker_last_push": "2026-11-25T06:00:33Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-25T06:00:33Z",
+    "size_kb": 882,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "R0Y00/Xbox2Windows",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Xbox2Windows",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Static recompilation",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA",
+    "AMD",
+    "Intel"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 0.5,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T01:31:36Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:55:27Z",
+    "size_kb": 65750,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "RandomSkelly/Series0nLinux",
+   "collections": [
+    "candidates"
+   ],
+   "name": "Series0nLinux",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "C++",
+   "tracker_last_push": "2026-11-25T22:08:52Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-25T23:19:36Z",
+    "size_kb": 2090,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "realdody/americas-recomp",
+   "collections": [
+    "efforts"
+   ],
+   "name": "americas-recomp",
+   "branch": "xbox-series",
+   "category": "tracked",
+   "approach": "Relinker + shader recompiler",
+   "target": "GTA VI first",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": [
+    "boykopovar/AnyPS5"
+   ],
+   "removed": true,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-23T10:03:50Z",
+   "availability": "not queried: tracker reports it removed"
+  },
+  {
+   "repo": "RKouchoo/rdna4rage",
+   "collections": [
+    "candidates"
+   ],
+   "name": "rdna4rage",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "C++",
+   "tracker_last_push": "2026-11-26T01:26:43Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-26T02:24:14Z",
+    "size_kb": 1942,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "rpatty-dev/PercyScarlett",
+   "collections": [
+    "efforts"
+   ],
+   "name": "PercyScarlett",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T09:58:34Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-2.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T09:58:34Z",
+    "size_kb": 6839,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "rpatty-dev/PercyStar",
+   "collections": [
+    "tools"
+   ],
+   "name": "PercyStar",
+   "category": "Archive explorer",
+   "tracker_last_push": "2026-11-25T09:49:54Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "NOASSERTION",
+    "parent": null,
+    "pushed_at": "2026-11-25T09:49:54Z",
+    "size_kb": 37536,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Ryanabcraft/scarlett-victory-bench",
+   "collections": [
+    "candidates"
+   ],
+   "name": "scarlett-victory-bench",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-25T21:33:45Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T21:33:45Z",
+    "size_kb": 4355,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "sammwyy/xvalkyrie",
+   "collections": [
+    "efforts"
+   ],
+   "name": "XValkyrie",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox One or Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T00:55:48Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:25:08Z",
+    "size_kb": 4164,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "sefaalcn/half-step-game-project",
+   "collections": [
+    "candidates"
+   ],
+   "name": "half-step-game-project",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-25T19:11:03Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T23:39:10Z",
+    "size_kb": 1758,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "SentinelInteractive/0x52504639",
+   "collections": [
+    "tools"
+   ],
+   "name": "0x52504639",
+   "category": "Format research",
+   "tracker_last_push": "2026-11-24T18:59:52Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-24T18:59:52Z",
+    "size_kb": 233,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "SSTGxf/ScarlettCompat",
+   "collections": [
+    "efforts"
+   ],
+   "name": "GTA6-COMPAT-LAYER (ScarlettCompat)",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "GTA VI (Xbox Series)",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T01:02:59Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-26T01:02:59Z",
+    "size_kb": 3393,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Steinkoloss/port-of-the-americas",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Port of the Americas",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 0.5,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T00:01:01Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-25T00:01:01Z",
+    "size_kb": 3645,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "sub-north/xbox-hle-lab",
+   "collections": [
+    "tools"
+   ],
+   "name": "xbox-hle-lab",
+   "category": "Test tools",
+   "tracker_last_push": "2026-11-24T15:35:47Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-24T15:35:47Z",
+    "size_kb": 328,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "ThatRecompDev/five-star-recomp",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Five Star Recomp",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T23:50:27Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C#",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:52:22Z",
+    "size_kb": 6769,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "TheoBIET/OpenVI",
+   "collections": [
+    "tools"
+   ],
+   "name": "OpenVI",
+   "category": "Archive explorer",
+   "tracker_last_push": "2026-11-25T14:40:12Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "TypeScript",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-25T14:40:12Z",
+    "size_kb": 12989,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "uiliannn/VItoriaBr",
+   "collections": [
+    "efforts"
+   ],
+   "name": "Uilian",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 4
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T01:31:11Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:36:41Z",
+    "size_kb": 2212,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "viper-community/viper",
+   "collections": [
+    "candidates"
+   ],
+   "name": "viper",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "Rust",
+   "tracker_last_push": "2026-11-26T01:17:29Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "LGPL-2.1",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:38:25Z",
+    "size_kb": 1204,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "walkthestars/GTA6-Asset-Info",
+   "collections": [
+    "tools"
+   ],
+   "name": "GTA6-Asset-Info",
+   "category": "Format notes",
+   "tracker_last_push": "2026-11-20T20:52:02Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": null,
+    "license": "GPL-3.0",
+    "parent": null,
+    "pushed_at": "2026-11-20T20:52:02Z",
+    "size_kb": 72,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "woreksami/ttpf-studio",
+   "collections": [
+    "tools"
+   ],
+   "name": "ttpf-studio",
+   "category": "Texture tool",
+   "tracker_last_push": "2026-11-23T11:06:22Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Python",
+    "license": "MIT",
+    "parent": null,
+    "pushed_at": "2026-11-23T11:06:22Z",
+    "size_kb": 358,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "x6j1ZiqfbxA3u12HVk/Project-Americas",
+   "collections": [
+    "candidates"
+   ],
+   "name": "Project-Americas",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "C++",
+   "tracker_last_push": "2026-11-26T00:36:52Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-26T01:55:50Z",
+    "size_kb": 1540,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "xcl-dev/xcl",
+   "collections": [
+    "efforts",
+    "candidates"
+   ],
+   "name": "XCL",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": [
+    "AMD",
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 0.5,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-26T00:48:16Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "Rust",
+    "license": "GPL-2.0",
+    "parent": null,
+    "pushed_at": "2026-11-26T02:56:39Z",
+    "size_kb": 8487,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Zarexdevs/GMAC",
+   "collections": [
+    "candidates"
+   ],
+   "name": "GMAC",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": null,
+   "tracker_last_push": "2026-11-26T00:39:59Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": null,
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-26T00:39:59Z",
+    "size_kb": 7,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": "Zettrox/ztrx",
+   "collections": [
+    "efforts"
+   ],
+   "name": "ZETTROX",
+   "branch": "main",
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": true,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 2
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": "2026-11-25T01:12:15Z",
+   "availability": "not queried: tracker reports it removed"
+  },
+  {
+   "repo": "zohaiblazuli/GrandTheftXbox",
+   "collections": [
+    "efforts"
+   ],
+   "name": "GrandTheftXbox",
+   "branch": "main",
+   "category": "watchlist",
+   "approach": "Compatibility layer",
+   "target": "Any Xbox Series game",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": null,
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 0,
+    "boots": 0,
+    "menu": 0,
+    "world": 0,
+    "playable": 0,
+    "fps": 0
+   },
+   "reported_limitation_count": 1,
+   "tracker_last_push": "2026-11-20T09:35:39Z",
+   "availability": "unavailable (HTTP 404)"
+  },
+  {
+   "repo": "zsy-miao/ScarlettVI",
+   "collections": [
+    "candidates"
+   ],
+   "name": "ScarlettVI",
+   "category": "unreviewed candidate",
+   "branch": "main",
+   "language": "C++",
+   "tracker_last_push": "2026-11-25T22:18:59Z",
+   "availability": "available",
+   "github": {
+    "archived": false,
+    "default_branch": "main",
+    "fork": false,
+    "language": "C++",
+    "license": null,
+    "parent": null,
+    "pushed_at": "2026-11-25T22:18:59Z",
+    "size_kb": 1179,
+    "source": null,
+    "visibility": "public"
+   }
+  },
+  {
+   "repo": null,
+   "collections": [
+    "efforts"
+   ],
+   "name": "NotNozy",
+   "branch": null,
+   "category": "tracked",
+   "approach": null,
+   "target": null,
+   "gpu": [
+    "AMD"
+   ],
+   "verification": "self-reported",
+   "based_on": [],
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 16
+   },
+   "reported_limitation_count": 2,
+   "tracker_last_push": null,
+   "availability": "not queried: no GitHub repository identifier"
+  },
+  {
+   "repo": null,
+   "collections": [
+    "efforts"
+   ],
+   "name": "Doomsday",
+   "branch": null,
+   "category": "tracked",
+   "approach": null,
+   "target": null,
+   "gpu": [
+    "AMD",
+    "NVIDIA"
+   ],
+   "verification": "portwatch",
+   "based_on": [],
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 4
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": null,
+   "availability": "not queried: no GitHub repository identifier"
+  },
+  {
+   "repo": null,
+   "collections": [
+    "efforts"
+   ],
+   "name": "darkworldhm",
+   "branch": null,
+   "category": "tracked",
+   "approach": null,
+   "target": null,
+   "gpu": [
+    "NVIDIA"
+   ],
+   "verification": "self-reported",
+   "based_on": [
+    "marvis"
+   ],
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 15
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": null,
+   "availability": "not queried: no GitHub repository identifier"
+  },
+  {
+   "repo": null,
+   "collections": [
+    "efforts"
+   ],
+   "name": "suri",
+   "branch": null,
+   "category": "tracked",
+   "approach": null,
+   "target": null,
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": [
+    "victory-gta6"
+   ],
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 3
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": null,
+   "availability": "not queried: no GitHub repository identifier"
+  },
+  {
+   "repo": null,
+   "collections": [
+    "efforts"
+   ],
+   "name": "omonkey",
+   "branch": null,
+   "category": "tracked",
+   "approach": null,
+   "target": null,
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": [
+    "victory-gta6"
+   ],
+   "related": null,
+   "removed": true,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 5
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": null,
+   "availability": "not queried: no GitHub repository identifier"
+  },
+  {
+   "repo": null,
+   "collections": [
+    "efforts"
+   ],
+   "name": "CGBJ",
+   "branch": null,
+   "category": "tracked",
+   "approach": "Compatibility layer",
+   "target": "GTA VI only",
+   "gpu": null,
+   "verification": "self-reported",
+   "based_on": [
+    "marvis",
+    "xcl"
+   ],
+   "related": null,
+   "removed": false,
+   "reported_stages": {
+    "loads": 1,
+    "boots": 1,
+    "menu": 1,
+    "world": 1,
+    "playable": 1,
+    "fps": 4
+   },
+   "reported_limitation_count": 3,
+   "tracker_last_push": null,
+   "availability": "not queried: no GitHub repository identifier"
+  }
+ ]
+}
