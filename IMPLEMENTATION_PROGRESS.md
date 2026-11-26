@@ -9,7 +9,10 @@ Read this section first; the sections below are the earlier session's record.
 - Verified: fmt, clippy, 68 tests, 16 shim DLLs / 102 exports, both shim fixtures; D3D12 and D3D11 workloads, intended-gate negative controls, lifetime, SM6, keyboard, lifecycle 20/20 and independent image oracles on `1be97f2`; two 20,000-frame D3D12 soaks (known shutdown only) and three D3D11 reruns.
 - Findings: D3DMetal swapchain starts with two refs (vkd3d: one); vkd3d path spends 2000 ms per `Present` after ~437 frames; crash hang was Wine's crash dialog (fixed).
 - Open: on-screen checks failed because the window was on another macOS Space; one unexplained D3D11 soak stall; one unexplained keyboard-negative failure; independent maintainer reproduction not done.
-- Next: clean GitHub clone, newly installed dependencies, full acceptance, package, bundle test, draft PR (`Closes #407`; keep #405 open).
+- Pushed; draft PR https://github.com/MacosPorters/betterxen/pull/425 (CI: both checks passed on `c1e9581`). #405 left open and unmodified.
+- Clean clone `../betterxen-maintainer-verify` of `c1e9581` with new llvm-mingw/DXC under `../betterxen-maintainer-deps`: all checks passed except five on-screen captures (screen locked mid-run). Records in that clone's ignored `artifacts/`.
+- Dedicated bottles created by this work: `betterxen-maintainer-407`, `-clean`, `-test`. The user's `betterxen-test` bottle was not used.
+- Next: (1) with the Mac unlocked and a desktop in front, rerun the suite for the on-screen checks; (2) independent maintainer reproduction; (3) D3D11 soak stall if it recurs.
 
 ## Current state
 

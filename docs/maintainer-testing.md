@@ -6,6 +6,26 @@ narrow Windows API behaviour under CrossOver on one Mac. It says nothing about X
 software, game compatibility or performance, and no maintainer has reproduced these
 results yet.
 
+## What has been run
+
+On commit `c1e958194cd608dd99b52e9b476c6c5c0e1b5990`, from a fresh GitHub clone with newly
+downloaded llvm-mingw and DXC (Rust 1.100.0 was already installed), on one Apple M4 with
+CrossOver 26.3, by the author's coding agent. This is not independent verification.
+
+| Check | Result |
+| --- | --- |
+| fmt, clippy, tests | clean; 68 passed, 0 failed, 0 ignored |
+| Shim build | 16 DLLs, 102 exports |
+| Shim fixtures | both passed; 2 `clwb` traps, 0 ADX faults |
+| D3D12 and D3D11 workloads, image oracle, intended-gate negative controls | passed, except D3D12 `shutdown` (known) |
+| Shader Model 6, keyboard, lifecycle, crash and hang recovery | passed |
+| 20,000-frame soaks | D3D12: known `shutdown` only; D3D11: passed |
+| Five on-screen capture checks | **failed**: the screen locked during the run |
+
+The suite exited 1 because of those five lines. **On-screen output has not been verified
+for this build.** An earlier attempt the same night failed the same checks because the
+window was on another Space.
+
 ## Requirements
 
 - Apple Silicon Mac. Developed on an M4 with 24 GB and macOS 27; nothing else was tried.
