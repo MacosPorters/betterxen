@@ -13,6 +13,7 @@ path = "src/main.rs"
 bx-probe = { path = "../bx-probe" }
 bx-telemetry = { path = "../bx-telemetry" }
 dxbc-accc = { path = "../../../shader-transpiler/crates/dxbc-accc" }
+bx-runtime = { path = "../bx-runtime" }
 
 [lints]
 workspace = true

@@ -1,0 +1,10 @@
+[package]
+name = "win-selfcheck-rust"
+version = "0.1.0"
+edition = "2024"
+license = "GPL-3.0-or-later"
+publish = false
+
+# Standalone: built for a Windows target by scripts/hybrid/build-windows-workloads.sh, not a
+# member of the BetterXen workspace.
+[workspace]

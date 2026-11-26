@@ -7,6 +7,7 @@ name = "bx-cli"
 version = "0.2.0"
 dependencies = [
  "bx-probe",
+ "bx-runtime",
  "bx-telemetry",
  "dxbc-accc",
 ]
@@ -16,9 +17,22 @@ name = "bx-probe"
 version = "0.2.0"
 
 [[package]]
+name = "bx-runtime"
+version = "0.2.0"
+dependencies = [
+ "libc",
+]
+
+[[package]]
 name = "bx-telemetry"
 version = "0.2.0"
 
 [[package]]
 name = "dxbc-accc"
 version = "0.2.0"
+
+[[package]]
+name = "libc"
+version = "0.2.191"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "65cd87c9a6d60536580b316ad985726104730a5151c99845f2490428ef91240a"

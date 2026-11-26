@@ -1,0 +1,13 @@
+[package]
+name = "bx-runtime"
+description = "Shared CrossOver launch supervision, environment checks and run evidence"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[dependencies]
+libc = "=0.2.191"
+
+[lints]
+workspace = true

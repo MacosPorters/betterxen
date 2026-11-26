@@ -3,6 +3,7 @@ members = [
     "launcher/crates/bx-cli",
     "launcher/crates/bx-probe",
     "launcher/crates/bx-telemetry",
+    "launcher/crates/bx-runtime",
     "shader-transpiler/crates/dxbc-accc",
 ]
 exclude = ["legacy-native"]
@@ -12,7 +13,7 @@ resolver = "3"
 version = "0.2.0"
 edition = "2024"
 license = "GPL-3.0-or-later"
-rust-version = "1.85"
+rust-version = "1.100"
 
 [workspace.lints.rust]
 unsafe_op_in_unsafe_fn = "deny"

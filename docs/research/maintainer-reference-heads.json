@@ -1,0 +1,196 @@
+{
+  "evidence_class": "D",
+  "observed_date_local": "2026-11-25",
+  "scope": "Public repository accessibility/head metadata only; authenticated private repository metadata remains in ignored local evidence. Source review scope is separate.",
+  "repositories": [
+    {
+      "repo": "MacosPorters/VIctory-macOS",
+      "url": "https://github.com/MacosPorters/VIctory-macOS",
+      "branch": "main",
+      "head": "d6fc0620f53a5c9073b9d08d0910c8d6aa5d0bdf",
+      "license": "GPL-3.0",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "pragyaangaur/VIctory-macOS",
+      "url": "https://github.com/pragyaangaur/VIctory-macOS",
+      "branch": "main",
+      "head": "b6dd0b184277fc307b93a4cc90d23dca9f05e7b3",
+      "license": "GPL-3.0",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "utmapp/d3dmetal-native",
+      "url": "https://github.com/utmapp/d3dmetal-native",
+      "branch": "main",
+      "head": "af1ee1710711fadff41dead87960d0f1336c1047",
+      "license": "MIT",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "ProhorovIlja/NativeX-Runtime",
+      "url": "https://github.com/ProhorovIlja/NativeX-Runtime",
+      "branch": "main",
+      "head": "b3087ce0ab191227dc9e7af37cab97a0b097bb98",
+      "license": "MIT",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "wine-mirror/wine",
+      "url": "https://github.com/wine-mirror/wine",
+      "branch": "master",
+      "head": "274fcfa9691bf3b7f24c0833ad33e9d57c3df65f",
+      "license": "NOASSERTION",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "doitsujin/dxvk",
+      "url": "https://github.com/doitsujin/dxvk",
+      "branch": "master",
+      "head": "6e25a5e7af5a05e5729e7abc5bf1184df9242e2a",
+      "license": "Zlib",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "HansKristian-Work/vkd3d-proton",
+      "url": "https://github.com/HansKristian-Work/vkd3d-proton",
+      "branch": "master",
+      "head": "71cae091b06571e51446cf2a937f0b04c237c04d",
+      "license": "LGPL-2.1",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "3Shain/dxmt",
+      "url": "https://github.com/3Shain/dxmt",
+      "branch": "main",
+      "head": "faa73e4a0686e432ce5d3bb99a02b5363d76885c",
+      "license": "NOASSERTION",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "KhronosGroup/MoltenVK",
+      "url": "https://github.com/KhronosGroup/MoltenVK",
+      "branch": "main",
+      "head": "5189f8de86ec365860f63bf1da736815cfaea5cd",
+      "license": "Apache-2.0",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "llvm/llvm-project",
+      "url": "https://github.com/llvm/llvm-project",
+      "branch": "main",
+      "head": "0cae57720c3ca7cb09b5ba48d199f1ba04e3aae2",
+      "license": "NOASSERTION",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "mstorsjo/llvm-mingw",
+      "url": "https://github.com/mstorsjo/llvm-mingw",
+      "branch": "master",
+      "head": "903f4cf7faa24e30c8e0c4615f8ce61a0f3d80f8",
+      "license": "NOASSERTION",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "microsoft/DirectXShaderCompiler",
+      "url": "https://github.com/microsoft/DirectXShaderCompiler",
+      "branch": "main",
+      "head": "2600ae89a6153302421b13b4db7d3bd1bd0d9385",
+      "license": "NOASSERTION",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "microsoft/DirectX-Graphics-Samples",
+      "url": "https://github.com/microsoft/DirectX-Graphics-Samples",
+      "branch": "master",
+      "head": "68a2b1e97f71642924e74c7757ca21756ad221b5",
+      "license": "MIT",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "microsoft/DirectX-Headers",
+      "url": "https://github.com/microsoft/DirectX-Headers",
+      "branch": "main",
+      "head": "61c7718954ec73dbdd43c723240fe1a0452a3724",
+      "license": "MIT",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "microsoft/DirectXTex",
+      "url": "https://github.com/microsoft/DirectXTex",
+      "branch": "main",
+      "head": "a8e5dbf42909aeeb9fcf9c2ae399ae3c06737379",
+      "license": "MIT",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "KhronosGroup/SPIRV-Cross",
+      "url": "https://github.com/KhronosGroup/SPIRV-Cross",
+      "branch": "main",
+      "head": "57e4efcc84112abcd426dc5ec248b5339bee04f2",
+      "license": "Apache-2.0",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "gfx-rs/wgpu",
+      "url": "https://github.com/gfx-rs/wgpu",
+      "branch": "trunk",
+      "head": "60cef2be828e03ba54e2e1598001b4625c0c2163",
+      "license": "Apache-2.0",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "LIEF-project/LIEF",
+      "url": "https://github.com/lief-project/LIEF",
+      "branch": "main",
+      "head": "2a6fdbc5a3af9b7ac797514ca38b1175c78f3fcf",
+      "license": "Apache-2.0",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "FEX-Emu/FEX",
+      "url": "https://github.com/FEX-Emu/FEX",
+      "branch": "main",
+      "head": "3ee25399232a6431c77c6314c437ea523ec29d0c",
+      "license": "MIT",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "apitrace/apitrace",
+      "url": "https://github.com/apitrace/apitrace",
+      "branch": "master",
+      "head": "28bb3aba57f3f9df4932867496308f4fc0a2b423",
+      "license": "MIT",
+      "archived": false,
+      "private": false
+    },
+    {
+      "repo": "apple/game-porting-toolkit",
+      "url": "https://github.com/apple/game-porting-toolkit",
+      "branch": "main",
+      "head": "4f42344c90be22112f46becc3fb9687f423f2f88",
+      "license": "Apache-2.0",
+      "archived": false,
+      "private": false
+    }
+  ]
+}

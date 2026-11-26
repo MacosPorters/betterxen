@@ -22,6 +22,7 @@
 - [CrossOver Licensing & Redistribution Boundaries](research/crossover-licensing.md) — Per-component license review for CrossOver, Wine, DXMT, DXVK, VKD3D-Proton, MoltenVK, D3DMetal, and Rosetta 2.
 - [Upstream Research Registry](research/upstream-registry.md) & [Component Reuse Matrix](research/component-reuse-matrix.md) — Public upstream evaluation and provenance screening.
 - [Primary-Source Verification (2026-11-25)](research/primary-source-verification-2026-11-25.md) & [Hybrid Backlog Research Record](research/hybrid-backlog-research-2026-11-25.md) — Vendor documentation verification notes.
+- [Runtime Integration Source Review](research/maintainer-upstream-review.md) and its [reference revisions](research/maintainer-reference-heads.json) — Upstream source inspected for the supervised runtime; nothing adopted.
 - [Public Technical References](research/sources.md), [Xbox GDK Notes](research/xbox-gdk.md), [RDNA 2 Notes](research/rdna2.md), and [Shader Containers](research/shader-containers.md) — Public specification references for shim and shader work.
 
 ## Governance, Security & Legal

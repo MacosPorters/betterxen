@@ -2,6 +2,14 @@
 
 The workspace is GPL-3.0-or-later. The following is the lead's preliminary compatibility inventory. The independent license audit is pending.
 
+## Active hybrid launcher
+
+The migrated `bx-cli` uses only `libc` 0.2.191 as an external Rust dependency (revision `ccc2ff4aaab962f7fde7b8edda7379c045b1ca12`, MIT selected). Its MIT notice was read at the locked source and is compatible with GPL-3.0-or-later; source and notices are retained in private bundles. Rust 1.100.0, llvm-mingw 20261117 and optional Microsoft DXC v1.9.2609 are external build tools. Their compiler/runtime notices remain applicable to compiled output and are preserved as described in [third-party notices](../THIRD_PARTY_NOTICES.md).
+
+The native-first dependency inventory and redistribution discussion below are historical, preserved for the retired code at `native-first-final`. Those objc2/native graphics packages are not dependencies of the active hybrid launcher.
+
+## Historical native-first inventory
+
 | Component | Version and upstream revision | License used | Scope |
 |---|---|---|---|
 | objc2 | 0.6.5, `d7d2fa23ceaa5e6096c923b081040e5d81b3b9df` | MIT | Runtime bindings |

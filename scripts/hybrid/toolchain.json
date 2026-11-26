@@ -1,0 +1,8 @@
+{
+  "release": "20261117",
+  "asset": "llvm-mingw-20261117-ucrt-macos-universal.tar.xz",
+  "url": "https://github.com/mstorsjo/llvm-mingw/releases/download/20261117/llvm-mingw-20261117-ucrt-macos-universal.tar.xz",
+  "sha256": "98d340bbb8d46b09ad6886ffba88bd9d5415e131c316de48e6bd7647377446aa",
+  "llvm_commit": "5b10d2d74929eae78912771222c9855af97496f4",
+  "rust": "1.100.0"
+}
