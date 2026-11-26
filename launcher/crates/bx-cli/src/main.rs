@@ -5,7 +5,8 @@ mod supervise;
 use std::collections::BTreeMap;
 use std::env;
 use std::fmt::Write as _;
-use std::fs;
+use std::fs::{self, OpenOptions};
+use std::io;
 use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode};
 use std::time::Duration;
@@ -19,6 +20,84 @@ const SHIM_DLL_OVERRIDES: &str = "bx_runtime_veh,d3d12_xs,xg_xs,xmem,XCRDAPI,xga
 api-ms-win-core-psm-appnotify-l1-1-0,api-ms-win-core-psm-appnotify-l1-1-1,\
 ext-ms-win-rtcore-ntuser-message-l1-1-0,ext-ms-win-rtcore-ntuser-message-ansi-l1-1-0,\
 ext-ms-win-rtcore-ntuser-window-l1-1-0,ext-ms-win-rtcore-ntuser-window-ansi-l1-1-0=n,b";
+
+/// Non-host Xbox shim DLLs that guest loaders resolve via `LOAD_LIBRARY_SEARCH_SYSTEM32`
+/// (bypassing `WINEPATH`), plus `bx_runtime_veh.dll` which `xgameruntime.dll` imports. Staged into
+/// `drive_c/windows/system32/` only when absent and removed when the run completes.
+const SYSTEM32_STAGED_SHIMS: &[&str] = &["bx_runtime_veh.dll", "xgameruntime.dll"];
+
+/// RAII guard for BetterXen shim DLLs temporarily staged into `drive_c/windows/system32/`.
+/// Never overwrites or removes pre-existing files or symlinks.
+struct StagedSystem32Shims {
+    staged: Vec<PathBuf>,
+}
+
+impl StagedSystem32Shims {
+    fn stage(prefix: &Path, shims_dir: &Path, dll_names: &[&str]) -> Self {
+        let mut staged = Vec::new();
+        let system32 = prefix.join("drive_c/windows/system32");
+        if !system32.is_dir() {
+            return Self { staged };
+        }
+        for &name in dll_names {
+            let src = shims_dir.join(name);
+            if !src.is_file() {
+                continue;
+            }
+            let dst = system32.join(name);
+            if dst.symlink_metadata().is_ok() {
+                eprintln!(
+                    "note: leaving pre-existing {} untouched during system32 staging",
+                    dst.display()
+                );
+                continue;
+            }
+            let copy_result = (|| -> io::Result<()> {
+                let mut reader = fs::File::open(&src)?;
+                let mut writer = OpenOptions::new().write(true).create_new(true).open(&dst)?;
+                io::copy(&mut reader, &mut writer)?;
+                Ok(())
+            })();
+            match copy_result {
+                Ok(()) => staged.push(dst),
+                Err(e) if e.kind() == io::ErrorKind::AlreadyExists => {
+                    eprintln!(
+                        "note: leaving pre-existing {} untouched during system32 staging",
+                        dst.display()
+                    );
+                }
+                Err(e) => {
+                    let _ = fs::remove_file(&dst);
+                    eprintln!(
+                        "warning: could not stage {} into {}: {e}",
+                        src.display(),
+                        dst.display()
+                    );
+                }
+            }
+        }
+        Self { staged }
+    }
+
+    fn cleanup(&mut self) {
+        for path in self.staged.drain(..) {
+            if let Err(e) = fs::remove_file(&path)
+                && e.kind() != io::ErrorKind::NotFound
+            {
+                eprintln!(
+                    "warning: failed to remove staged shim {}: {e}",
+                    path.display()
+                );
+            }
+        }
+    }
+}
+
+impl Drop for StagedSystem32Shims {
+    fn drop(&mut self) {
+        self.cleanup();
+    }
+}
 
 /// Accepted `--backend` values. CrossOver ignores an unknown value silently, so one is refused.
 const BACKENDS: [&str; 4] = ["d3dmetal", "dxmt", "dxvk", "wined3d"];
@@ -538,6 +617,9 @@ fn cmd_run(args: &[String]) -> ExitCode {
     let log_size = |log: &PathBuf| fs::metadata(log).map_or(0, |m| m.len());
     let log_size_before = abs_log.as_ref().map_or(0, log_size);
 
+    let mut staged_shims =
+        StagedSystem32Shims::stage(&environment_dir, &abs_shims, SYSTEM32_STAGED_SHIMS);
+
     supervise::install_signal_handlers();
     let outcome = supervise::supervise(cmd, timeout, supervise::received_signal);
     let code = match &outcome {
@@ -584,6 +666,9 @@ fn cmd_run(args: &[String]) -> ExitCode {
         }
         _ => {}
     }
+
+    // Remove staged system32 shims after wineserver teardown so open handles do not linger.
+    staged_shims.cleanup();
 
     // Printed for failed and stopped runs too, which is when it matters most.
     if let Some(log) = &abs_log
@@ -881,5 +966,90 @@ sub setup_bottle_wineprefix {
             format_clwb_line(3, Some(4)),
             "clwb VEH traps   : at least 4 (sampled)"
         );
+    }
+
+    #[test]
+    fn stages_allowlisted_shims_into_system32_and_removes_on_drop() {
+        let root = env::temp_dir().join(format!("bx-cli-stage-ok-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let shims = root.join("shims");
+        let sys32 = root.join("prefix/drive_c/windows/system32");
+        fs::create_dir_all(&shims).unwrap();
+        fs::create_dir_all(&sys32).unwrap();
+        fs::write(shims.join("bx_runtime_veh.dll"), b"bx-veh-bytes").unwrap();
+        fs::write(shims.join("xgameruntime.dll"), b"bx-shim-bytes").unwrap();
+
+        let staged_veh = sys32.join("bx_runtime_veh.dll");
+        let staged_xgr = sys32.join("xgameruntime.dll");
+        {
+            let guard =
+                StagedSystem32Shims::stage(&root.join("prefix"), &shims, SYSTEM32_STAGED_SHIMS);
+            assert_eq!(guard.staged, vec![staged_veh.clone(), staged_xgr.clone()]);
+            assert_eq!(fs::read(&staged_veh).unwrap(), b"bx-veh-bytes");
+            assert_eq!(fs::read(&staged_xgr).unwrap(), b"bx-shim-bytes");
+        }
+        assert!(!staged_veh.exists());
+        assert!(!staged_xgr.exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn staging_never_overwrites_or_deletes_preexisting_system32_dll() {
+        let root = env::temp_dir().join(format!("bx-cli-stage-keep-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let shims = root.join("shims");
+        let sys32 = root.join("prefix/drive_c/windows/system32");
+        fs::create_dir_all(&shims).unwrap();
+        fs::create_dir_all(&sys32).unwrap();
+        fs::write(shims.join("xgameruntime.dll"), b"bx-shim-bytes").unwrap();
+        let dst = sys32.join("xgameruntime.dll");
+        fs::write(&dst, b"host-original-bytes").unwrap();
+
+        {
+            let guard =
+                StagedSystem32Shims::stage(&root.join("prefix"), &shims, SYSTEM32_STAGED_SHIMS);
+            assert!(guard.staged.is_empty());
+            assert_eq!(fs::read(&dst).unwrap(), b"host-original-bytes");
+        }
+        assert_eq!(fs::read(&dst).unwrap(), b"host-original-bytes");
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn staging_refuses_to_clobber_preexisting_symlink_in_system32() {
+        use std::os::unix::fs::symlink;
+        let root = env::temp_dir().join(format!("bx-cli-stage-sym-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let shims = root.join("shims");
+        let sys32 = root.join("prefix/drive_c/windows/system32");
+        fs::create_dir_all(&shims).unwrap();
+        fs::create_dir_all(&sys32).unwrap();
+        fs::write(shims.join("xgameruntime.dll"), b"bx-shim-bytes").unwrap();
+        let dst = sys32.join("xgameruntime.dll");
+        symlink(root.join("dangling-target"), &dst).unwrap();
+
+        {
+            let guard =
+                StagedSystem32Shims::stage(&root.join("prefix"), &shims, SYSTEM32_STAGED_SHIMS);
+            assert!(guard.staged.is_empty());
+        }
+        assert!(dst.symlink_metadata().unwrap().file_type().is_symlink());
+        assert!(!root.join("dangling-target").exists());
+        fs::remove_dir_all(root).unwrap();
+    }
+
+    #[test]
+    fn staging_is_a_noop_when_system32_directory_is_absent() {
+        let root = env::temp_dir().join(format!("bx-cli-stage-empty-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&root);
+        let shims = root.join("shims");
+        fs::create_dir_all(&shims).unwrap();
+        fs::write(shims.join("xgameruntime.dll"), b"bx-shim-bytes").unwrap();
+
+        let guard =
+            StagedSystem32Shims::stage(&root.join("bare-prefix"), &shims, SYSTEM32_STAGED_SHIMS);
+        assert!(guard.staged.is_empty());
+        assert!(!root.join("bare-prefix").exists());
+        fs::remove_dir_all(root).unwrap();
     }
 }

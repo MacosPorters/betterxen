@@ -1,0 +1,2 @@
+add_executable(test_system32_staging main.cpp)
+target_link_libraries(test_system32_staging PRIVATE kernel32)
