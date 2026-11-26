@@ -69,7 +69,7 @@ Evidence from the acceptance script on one machine: Apple M4 (24 GiB), macOS 27.
 | F. First verified frame | Pass | read-back, and a window capture for D3D11 (1016 of 1016 samples) | No window capture of the D3D12 workload |
 | G. Continuous rendering | Pass | 20,000 D3D11 frames; D3D11 and D3D12 digests equal over 600 frames | Sampled verification |
 | H. Interactive | Pass with synthesized macOS events | key events posted to the process with `CGEventPostToPid` move the quad as expected; wrong or no keys fail | No person typed; no mouse or controller |
-| I. Extended stability | See [long run](#long-run) | 5 repeats; 20 back-to-back launches; crash, hang and signal recovery | GPU memory not measured |
+| I. Extended stability | Pass for rendering and memory over two hours; resource release fails | [long run](#long-run); 5 repeats; 20 back-to-back launches; crash, hang and signal recovery | One run, one machine, D3D12 only; GPU memory not measured |
 | J. Reproducibility | **Not met** | instructions above | No second person or machine has run it |
 | Resource release (D3D12) | **Fails on D3DMetal** | see below | |
 
@@ -80,7 +80,7 @@ All on this one machine and CrossOver version; none confirmed with CodeWeavers o
 - **D3DMetal keeps a reference for every destroyed D3D12 swapchain.** In a minimal program, each create and destroy cycle left `Release` of the swapchain returning 1 and one more device reference (12 after 12 cycles), also after destroying the window. The `wined3d` and `dxvk` settings returned to zero. The D3D12 workload's `shutdown` gate therefore fails on D3DMetal. D3D11 swapchains released cleanly. A program that recreates swapchains often would accumulate them.
 - **Under the `wined3d` and `dxvk` settings** D3D12 is provided by Wine's `vkd3d`. 128-frame runs passed every gate; longer runs slowed to 2.0 s per frame after about 440 frames, with vsync on or off, and timed out. Cause unknown.
 - **`dxmt`** offers no D3D12 device (classified `no_graphics_device`).
-- **Frame pacing with vsync off is bimodal.** The D3D11 workload's median interval switches between about 1 ms and 4 to 9 ms *within* runs, in no relation to run order; with vsync it is 16.7 ms. The earlier "first run is faster" reading was wrong. Vsync-off intervals from these workloads are not performance measurements. Trigger not identified.
+- **Frame pacing with vsync off is bimodal.** The D3D11 workload's median interval switches between about 1 ms and 4 to 9 ms *within* runs, in no relation to run order; in short D3D11 runs with vsync it was 16.7 ms (the [long D3D12 run](#long-run) did not hold that). The earlier "first run is faster" reading was wrong. Vsync-off intervals from these workloads are not performance measurements. Trigger not identified.
 
 ## Backends
 
@@ -103,7 +103,26 @@ These describe a 256 by 256 scene with periodic read-back. They are not estimate
 
 ## Long run
 
-Pending.
+One D3D12 run of two hours with vsync requested, on the machine above (workload and runner code of revision `14a54f8`, 2026-11-25):
+
+```sh
+betterxen hybrid run --bottle betterxen-test --timeout 7600 --stall-timeout 120 --keep-output true --out <dir> -- <path>/d3d12-integrated.exe --duration-s 7200 --vsync --verify-every 600
+```
+
+The run is classified `failed_exit_1`: every gate passed except `shutdown`, the D3D12 reference retention described above.
+
+| Measurement | Value |
+| --- | --- |
+| Frames presented | 844,497 over 7,200 s |
+| Frames verified by read-back | 1,414, none mismatched |
+| Resource create and destroy cycles | 8,445; device references after release: 2, as in short runs |
+| Device removed | no |
+| Workload working set, sampled each minute by the program | 95.3 MB in the first sample, then falling; 50.9 MB at the end |
+| Lowest system free memory | 46% (69% at start) |
+| Frame interval | p50 8.9 ms, p99 20.4 ms, p99.9 34.2 ms, maximum 1,019 ms; 21 frames over 100 ms |
+| Thermal warnings recorded by `pmset` before and after | none |
+
+The frame intervals did not settle at a display refresh period despite `--vsync`: per-minute medians ranged from 8.1 to 16.6 ms. The cause of this, and of the 1 s frame, is unknown. The machine was not isolated from other use. GPU memory was not measured, and a longer or heavier scene was not tried.
 
 ## Security limits
 
