@@ -69,6 +69,8 @@ checkpoints retain their original evidence scope.
 
 - [Public sources](research/sources.md), [RDNA 2 notes](research/rdna2.md), and [Xbox GPU evidence](research/xbox-gpu.md) — Specifications, evidence scope, and unknown console behavior.
 - [Shader inputs](research/shader-containers.md) and [risk register](risk-register.md) — Input provenance and unresolved engineering risks.
+- [Running a program through the hybrid path](hybrid-execution.md) — What each layer owns, the commands, the acceptance gates with their evidence and limits, and security limits.
+- [Hybrid runtime audit and integration record](research/hybrid-runtime-audit-2026-11-25.md) — Integration base, open pull-request dispositions, audit coverage and remaining blockers (2026-11-25).
 - [Upstream integration audit](research/upstream-integration-audit.md) — Source-level review of external macOS compatibility projects, licence and provenance decisions, and what was implemented in `crates/hybrid`.
 - [CrossOver baseline](research/crossover-baseline-2026-11-25.md) — First executions of original workloads under CrossOver 26.3 on the M4, backend comparison and its limits.
 - [Windows cross-toolchain](research/hybrid-toolchain.md) — Pinned llvm-mingw release, how original Windows workloads are built, and what was and was not executed.

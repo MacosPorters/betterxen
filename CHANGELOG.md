@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Added
+- Documented the hybrid execution path, its acceptance gates and an audit of the integration base, including which parts of the repository were not read (`docs/hybrid-execution.md`, `docs/research/hybrid-runtime-audit-2026-11-25.md`).
 - Added an original integrated Windows workload (`workloads/d3d11-integrated`, #365): threads, memory protection and exception handling, timing, files, a window and swapchain, textured depth-tested rendering, a compute pass, scripted input, resource churn and shutdown checks, each reported as a pass/fail gate, with seven fault injections as negative controls. Locally verified on CrossOver 26.3 (Apple M4): pixels match a CPU-computed image on the default, D3DMetal, DXMT, DXVK and wined3d settings, and a macOS capture of the window matches the final frame. Not independently reproduced; input is posted inside Windows, not typed on the Mac.
 - Added `betterxen-hybrid doctor` (environment preflight) and `inspect` (identify a Windows executable). `run` and `bench` now refuse non-programs, DLLs, ARM64 images, unknown backend names and missing bottles before launching, record the executable's SHA-256 and imports, honour `--require-gates`, and stop runaway output (#355).
 - Added `scripts/hybrid/accept-integrated.sh`, which reproduces the integrated acceptance sequence including crash and hang recovery, repeats and a 20,000-frame run.
