@@ -72,4 +72,36 @@ extern const void* const package_object;    // package.cpp
 void release_game_save_state();  // game_save.cpp
 void release_package_state();    // package.cpp
 
+// XGameSave and XPackage slots shared by the synthetic objects and the const public vtables
+// in com_dispatch.cpp. C++ linkage only. The DLL export list does not include them.
+// The container-info callback receives the public XGameSaveContainerInfo layout.
+using GameSaveContainerInfoCallback = bool(CALLBACK*)(const void* info, void* context);
+
+HRESULT WINAPI initialize_provider(void* self, void* user, const char* scid, bool sync_on_demand, void** provider);
+HRESULT WINAPI initialize_provider_async(void* self, void* user, const char* scid, bool sync_on_demand, void* async);
+HRESULT WINAPI initialize_provider_result(void* self, void* async, void** provider);
+void WINAPI close_provider(void* self, void* provider);
+HRESULT WINAPI create_container(void* self, void* provider, const char* name, void** out);
+void WINAPI close_container(void* self, void* container);
+HRESULT WINAPI enumerate_container_info(void* self, void* provider, void* context,
+                                        GameSaveContainerInfoCallback callback);
+HRESULT WINAPI read_blob_data(void* self, void* container, const char** names, uint32_t* count, size_t size,
+                              void* blobs);
+HRESULT WINAPI read_blob_data_async(void* self, void* container, const char** names, uint32_t count, void* async);
+HRESULT WINAPI read_blob_data_result(void* self, void* async, size_t size, void* blobs, uint32_t* count);
+HRESULT WINAPI create_update(void* self, void* container, const char* display_name, void** out);
+void WINAPI close_update(void* self, void* update);
+HRESULT WINAPI submit_blob_write(void* self, void* update, const char* blob_name, const uint8_t* data, size_t size);
+HRESULT WINAPI submit_update(void* self, void* update);
+HRESULT WINAPI submit_update_async(void* self, void* update, void* async);
+HRESULT WINAPI submit_update_result(void* self, void* async);
+
+bool WINAPI is_packaged_process(void* self);
+HRESULT WINAPI get_current_process_package_identifier(void* self, size_t size, char* buffer);
+HRESULT WINAPI get_package_kind(void* self, const char* identifier, uint32_t* kind);
+HRESULT WINAPI mount(void* self, const char* identifier, void** out);
+HRESULT WINAPI get_mount_path_size(void* self, void* handle, size_t* size);
+HRESULT WINAPI get_mount_path(void* self, void* handle, size_t size, char* path);
+void WINAPI close_mount_handle(void* self, void* handle);
+
 } // namespace bx::gdk

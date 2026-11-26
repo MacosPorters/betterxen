@@ -1,8 +1,9 @@
 /*
  * Offline XPackage identity and mount queries (#468).
  *
- * Reached only through QueryApiImpl with the BetterXen synthetic xpackage key; the key and
- * the vtable slot order are in synthetic_keys.h. Nothing here is exported.
+ * Reached through QueryApiImpl. The BetterXen synthetic key and its vtable order are in
+ * synthetic_keys.h. Public class and interface ids use the const vtable in com_dispatch.cpp.
+ * Nothing here is exported.
  *
  * Public reference (Microsoft Learn, gdk-2610, checked 2026-11-26): the XPackage members
  * page, the pages for the functions below, and XPackageKind (enum class : uint32_t
@@ -97,7 +98,16 @@ HRESULT stale_handle_error(uint32_t generation) {
     return generation ? kRuntimeInvalidHandle : kRuntimeNotInitialized;
 }
 
-// --- Slots ---
+}  // anonymous helpers
+
+// Slot functions declared in runtime_internal.h. The const public vtable takes their addresses
+// at static initialization.
+
+bool WINAPI is_packaged_process(void*) {
+    if (!active_runtime_generation()) return false;
+    char id[kIdBytes];
+    return SUCCEEDED(current_identifier(id));
+}
 
 HRESULT WINAPI get_current_process_package_identifier(void*, size_t size, char* buffer) {
     if (!buffer) return E_POINTER;
@@ -179,6 +189,8 @@ void WINAPI close_mount_handle(void*, void* handle) {
     std::lock_guard lock(mount_mutex);
     mounts.erase(handle);
 }
+
+namespace {
 
 // --- COM object ---
 

@@ -444,6 +444,170 @@ int writer_main(int id, int count, const wchar_t* event_name) {
     return 0;
 }
 
+// Public COM ids and slot numbers counted from xodus-gaming/xgameruntime-docs
+// commit 7090008692569aa6081e30dfdd9de58237741e24. IUnknown is slots 0-2.
+// The test keeps its own copies. IXGameSaveImpl lists 27 methods in slots 3-29.
+// IXGameSaveImpl2 adds 3 methods in slots 30-32 and IXGameSaveImpl3 adds none.
+// IXPackageImpl lists 32 methods in slots 3-34. IXPackageImpl2 adds 4, IXPackageImpl3
+// adds 2, and IXPackageImpl4 adds 1.
+enum : int {
+    kGsInit = 3, kGsInitAsync, kGsInitResult, kGsCloseProvider, kGsQuota, kGsQuotaAsync, kGsQuotaResult,
+    kGsDelete, kGsDeleteAsync, kGsDeleteResult, kGsGetContainerInfo, kGsEnumerate, kGsEnumerateByName,
+    kGsCreateContainer, kGsCloseContainer, kGsEnumerateBlobs, kGsEnumerateBlobsByName, kGsRead, kGsReadAsync,
+    kGsReadResult, kGsCreateUpdate, kGsCloseUpdate, kGsBlobWrite, kGsBlobDelete, kGsSubmit, kGsSubmitAsync,
+    kGsSubmitResult, kGsFilesFolderAsync, kGsFilesFolderResult, kGsFilesQuota,
+};
+static_assert(kGsQuota == 7 && kGsEnumerate == 14 && kGsCreateContainer == 16 && kGsRead == 20);
+static_assert(kGsCreateUpdate == 23 && kGsBlobWrite == 25 && kGsSubmit == 27 && kGsFilesQuota == 32);
+
+enum : int {
+    kPkId = 3, kPkIsPackaged, kPkCreateMonitor, kPkCloseMonitor, kPkGetProgress, kPkUpdateMonitor,
+    kPkRegisterProgress, kPkUnregisterProgress, kPkLocale, kPkFindChunk, kPkEnumChunk, kPkChangeOrder,
+    kPkInstall, kPkInstallAsync, kPkInstallResult, kPkEstimate, kPkUninstallChunks, kPkUnknown20,
+    kPkUnknown21, kPkUnregisterInstalled, kPkMount, kPkPathSize, kPkPath, kPkCloseMount, kPkUnknown27,
+    kPkEnumPackages, kPkRegisterInstalled, kPkWriteStats, kPkUnknown31, kPkUninstallUwp, kPkEnumFeatures,
+    kPkUninstall, kPkEnumPackages2, kPkRegisterInstalled2, kPkMountUiAsync, kPkMountUiResult,
+    kPkEnumPackages3, kPkRegisterInstalled3, kPkKind,
+};
+static_assert(kPkUnknown20 == 20 && kPkMount == 23 && kPkCloseMount == 26 && kPkKind == 41);
+
+GUID guid_bytes(uint32_t a, uint16_t b, uint16_t c, uint8_t d0, uint8_t d1, uint8_t d2, uint8_t d3, uint8_t d4,
+                uint8_t d5, uint8_t d6, uint8_t d7) {
+    return {a, b, c, {d0, d1, d2, d3, d4, d5, d6, d7}};
+}
+
+void expect_same_object(void* object, const GUID& iid) {
+    void* out = nullptr;
+    CHECK(slot<QiFn>(object, kQueryInterface)(object, &iid, &out) == S_OK && out == object);
+}
+
+// QueryApiImpl with the public class and interface ids, then one save and one package round trip
+// through those vtable slots. Expected bytes and the mount path come from this function's inputs.
+void check_public_dispatch(void* user, void* synthetic_save, void* synthetic_package, time_t started) {
+    const GUID save_class = guid_bytes(0x704C3F58, 0xE629, 0x4CC2, 0xB1, 0x97, 0x30, 0x51, 0x1B, 0x99, 0x6F, 0xE2);
+    const GUID save_iid2 = guid_bytes(0x704C3F58, 0xE629, 0x4CC2, 0xB1, 0x97, 0x30, 0x51, 0x1B, 0x99, 0x6E, 0xE2);
+    const GUID save_iid3 = guid_bytes(0x1BFFF3AF, 0xF14A, 0x40A3, 0x8E, 0x35, 0x9A, 0xDA, 0x90, 0x65, 0x93, 0xF9);
+    const GUID package_class = guid_bytes(0xAF406016, 0xE850, 0x4AA8, 0xA8, 0x8D, 0x2F, 0x3D, 0xCB, 0x9D, 0xAC, 0x7E);
+    const GUID package_iid = guid_bytes(0x3720DE07, 0xE8E4, 0x44A3, 0xAD, 0x32, 0xB3, 0x59, 0xE8, 0xAD, 0xBE, 0x55);
+    const GUID package_iid2 = guid_bytes(0xF92D8712, 0x2B27, 0x4D8A, 0xBF, 0x01, 0x11, 0xA6, 0xF8, 0xE3, 0xEB, 0x42);
+    const GUID package_iid3 = guid_bytes(0xE2A4734B, 0x2F4A, 0x456D, 0xAA, 0x8F, 0xD0, 0x65, 0xE0, 0x4F, 0xB2, 0x09);
+    const GUID package_iid4 = guid_bytes(0x0B9D556E, 0xAB70, 0x43F4, 0xBA, 0xA0, 0x99, 0x99, 0xAC, 0x4C, 0xB0, 0x40);
+    const GUID iunknown = {0x00000000, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
+    const GUID unknown = {0xDEADBEEF, 0x0000, 0x0000, {0x11, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00}};
+
+    void* save = nullptr;
+    CHECK(QueryApiImpl(&save_class, &save_class, &save) == S_OK && save && save != synthetic_save);
+    void* again = nullptr;
+    CHECK(QueryApiImpl(&save_class, &save_iid2, &again) == S_OK && again == save);
+    CHECK(QueryApiImpl(&save_class, &save_iid3, &again) == S_OK && again == save);
+    CHECK(QueryApiImpl(&save_class, &iunknown, &again) == S_OK && again == save);
+    expect_same_object(save, iunknown);
+    expect_same_object(save, save_class);
+    expect_same_object(save, save_iid2);
+    expect_same_object(save, save_iid3);
+    void* refused = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
+    CHECK(slot<QiFn>(save, kQueryInterface)(save, &unknown, &refused) == E_NOINTERFACE && !refused);
+    refused = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
+    CHECK(QueryApiImpl(&save_class, &unknown, &refused) == E_NOINTERFACE && !refused);
+    CHECK(slot<RefFn>(save, kAddRef)(save) >= 1 && slot<RefFn>(save, kRelease)(save) >= 1);
+
+    using Hr0 = HRESULT(WINAPI*)(void*);
+    CHECK(slot<Hr0>(save, kGsQuota)(save) == E_NOTIMPL);
+    CHECK(slot<Hr0>(save, kGsFilesQuota)(save) == E_NOTIMPL);
+
+    constexpr const char* kPublicScid = "11111111-1111-1111-1111-111111111111";
+    constexpr const char* kContainer = "pub_slot";
+    constexpr const char* kDisplay = "Round";
+    constexpr const char* kBlob = "note";
+    const uint8_t payload[] = {0x10, 0x20, 0x30, 0xFF};
+    using InitFn = HRESULT(WINAPI*)(void*, void*, const char*, bool, void**);
+    void* provider = nullptr;
+    CHECK(slot<InitFn>(save, kGsInit)(save, user, kPublicScid, false, &provider) == S_OK && provider);
+
+    void* container = nullptr;
+    CHECK(slot<CreateContainerFn>(save, kGsCreateContainer)(save, provider, kContainer, &container) == S_OK &&
+          container);
+    void* update = nullptr;
+    CHECK(slot<CreateUpdateFn>(save, kGsCreateUpdate)(save, container, kDisplay, &update) == S_OK && update);
+    CHECK(slot<BlobWriteFn>(save, kGsBlobWrite)(save, update, kBlob, payload, sizeof(payload)) == S_OK);
+    using SubmitFn = HRESULT(WINAPI*)(void*, void*);
+    CHECK(slot<SubmitFn>(save, kGsSubmit)(save, update) == S_OK);
+
+    const char* names[] = {kBlob};
+    uint32_t count = 1;
+    using ReadFn = HRESULT(WINAPI*)(void*, void*, const char**, uint32_t*, size_t, Blob*);
+    CHECK(slot<ReadFn>(save, kGsRead)(save, container, names, &count, 0, nullptr) == kBufferTooSmall && count == 0);
+    count = 1;
+    const size_t need = sizeof(Blob) + std::strlen(kBlob) + 1 + sizeof(payload);
+    std::vector<unsigned char> buffer(need + 8, 0xCD);
+    auto* blobs = reinterpret_cast<Blob*>(buffer.data());
+    CHECK(slot<ReadFn>(save, kGsRead)(save, container, names, &count, need, blobs) == S_OK && count == 1);
+    CHECK(std::strcmp(blobs[0].name, kBlob) == 0 && blobs[0].size == sizeof(payload));
+    CHECK(std::memcmp(blobs[0].data, payload, sizeof(payload)) == 0);
+    const auto* base = buffer.data();
+    CHECK(reinterpret_cast<const unsigned char*>(blobs[0].name) >= base &&
+          reinterpret_cast<const unsigned char*>(blobs[0].name) + std::strlen(kBlob) + 1 <= base + need);
+    CHECK(blobs[0].data >= base && blobs[0].data + blobs[0].size <= base + need);
+    for (size_t i = need; i < buffer.size(); ++i) CHECK(buffer[i] == 0xCD);
+
+    Listing listing;
+    CHECK(slot<EnumerateFn>(save, kGsEnumerate)(save, provider, &listing, collect) == S_OK);
+    CHECK(listing.seen.size() == 1);
+    CHECK(listing.seen[0].name == kContainer && listing.seen[0].display_name == kDisplay);
+    CHECK(listing.seen[0].blob_count == 1 && listing.seen[0].total_size == sizeof(payload));
+    CHECK(!listing.seen[0].needs_sync && listing.seen[0].modified >= started);
+
+    slot<CloseFn>(save, kGsCloseUpdate)(save, update);
+    slot<CloseFn>(save, kGsCloseContainer)(save, container);
+    slot<CloseFn>(save, kGsCloseProvider)(save, provider);
+
+    void* package = nullptr;
+    CHECK(QueryApiImpl(&package_class, &package_iid4, &package) == S_OK && package && package != synthetic_package);
+    CHECK(QueryApiImpl(&package_class, &package_iid, &again) == S_OK && again == package);
+    CHECK(QueryApiImpl(&package_class, &package_iid2, &again) == S_OK && again == package);
+    CHECK(QueryApiImpl(&package_class, &package_iid3, &again) == S_OK && again == package);
+    CHECK(QueryApiImpl(&package_class, &iunknown, &again) == S_OK && again == package);
+    expect_same_object(package, iunknown);
+    expect_same_object(package, package_iid);
+    expect_same_object(package, package_iid2);
+    expect_same_object(package, package_iid3);
+    expect_same_object(package, package_iid4);
+    refused = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
+    CHECK(slot<QiFn>(package, kQueryInterface)(package, &unknown, &refused) == E_NOINTERFACE && !refused);
+    refused = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
+    CHECK(QueryApiImpl(&package_class, &save_class, &refused) == E_NOINTERFACE && !refused);
+    refused = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
+    CHECK(QueryApiImpl(&package_class, &package_class, &refused) == E_NOINTERFACE && !refused);
+
+    using Bool1 = bool(WINAPI*)(void*);
+    CHECK(slot<Bool1>(package, kPkIsPackaged)(package) == true);
+    using Bool2 = bool(WINAPI*)(void*, void*);
+    CHECK(slot<Bool2>(package, kPkUpdateMonitor)(package, nullptr) == false);
+    using Void2 = void(WINAPI*)(void*, void*);
+    slot<Void2>(package, kPkCloseMonitor)(package, nullptr);
+    CHECK(slot<Hr0>(package, kPkUnknown20)(package) == E_NOTIMPL);
+
+    char id[64]{};
+    CHECK(slot<GetIdFn>(package, kPkId)(package, sizeof(id), id) == S_OK);
+    CHECK(std::strncmp(id, "BXPKG", 5) == 0 && std::strlen(id) == 21);
+    uint32_t kind = 99;
+    CHECK(slot<GetKindFn>(package, kPkKind)(package, id, &kind) == S_OK && kind == 0);
+    wchar_t exe_w[MAX_PATH]{};
+    CHECK(GetModuleFileNameW(nullptr, exe_w, MAX_PATH) > 0);
+    *std::wcsrchr(exe_w, L'\\') = L'\0';
+    const std::string exe_dir = utf8(exe_w);
+    void* mount = nullptr;
+    CHECK(slot<MountFn>(package, kPkMount)(package, id, &mount) == S_OK && mount);
+    size_t path_size = 0;
+    CHECK(slot<PathSizeFn>(package, kPkPathSize)(package, mount, &path_size) == S_OK);
+    CHECK(path_size == exe_dir.size() + 1);
+    std::vector<char> path(path_size);
+    CHECK(slot<PathFn>(package, kPkPath)(package, mount, path_size, path.data()) == S_OK);
+    CHECK(exe_dir == path.data());
+    slot<CloseFn>(package, kPkCloseMount)(package, mount);
+    CHECK(slot<PathSizeFn>(package, kPkPathSize)(package, mount, &path_size) == kInvalidHandle);
+}
+
 void check_blobs(const Blobs& blobs, char prefix, int writers, int count) {
     for (int id = 0; id < writers; ++id) {
         for (int k = 0; k < count; ++k) {
@@ -486,6 +650,7 @@ int main() {
     CHECK(XTaskQueueCreate(kManual, kManual, &queue) == S_OK && queue);
     const Saves saves{api, queue};
     void* user = add_user(queue);
+    check_public_dispatch(user, api, package, started);
 
     const std::string dir = saves_directory(kScid);
     const std::string other_dir = saves_directory("scid-b");
@@ -875,6 +1040,6 @@ int main() {
     CHECK(slot<GetIdFn>(package, kGetId)(package, sizeof(id), id) == kNotInitialized);
 
     std::printf("PASS: test_xgameruntime_saves (round trip, SCID isolation, damaged files, failed replace, "
-                "64 threaded + 160 cross-process submits, uninitialize; package %s)\n", id);
+                "64 threaded + 160 cross-process submits, uninitialize, public COM ids; package %s)\n", id);
     return 0;
 }

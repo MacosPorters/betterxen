@@ -1,8 +1,9 @@
 /*
  * Offline XGameSave over bottle-local storage (#468).
  *
- * Reached only through QueryApiImpl with the BetterXen synthetic xgamesave key; the key and
- * the vtable slot order are in synthetic_keys.h. Nothing here is exported.
+ * Reached through QueryApiImpl. The BetterXen synthetic key and its vtable order are in
+ * synthetic_keys.h. Public class and interface ids use the const vtable in com_dispatch.cpp.
+ * Nothing here is exported.
  *
  * Public reference (Microsoft Learn, gdk-2610, checked 2026-11-26): the XGameSave members
  * page and the function and structure pages it links. The signatures, the
@@ -64,6 +65,8 @@
 #include <vector>
 
 #include "bx_log.h"
+
+extern "C" HRESULT WINAPI XAsyncGetStatus(void* block, bool wait);
 
 namespace bx::gdk {
 namespace {
@@ -663,7 +666,10 @@ HRESULT stale_handle_error(uint32_t generation) {
     return generation ? kRuntimeInvalidHandle : kRuntimeNotInitialized;
 }
 
-// --- Slots ---
+}  // anonymous helpers
+
+// Slot functions declared in runtime_internal.h. The const public vtable takes their addresses
+// at static initialization.
 
 HRESULT WINAPI initialize_provider_async(void*, void* user, const char* scid, bool /*sync_on_demand*/,
                                          void* async) {
@@ -822,21 +828,22 @@ HRESULT WINAPI read_blob_data_async(void*, void* container, const char** names, 
     return begin_async_op(async, std::move(op));
 }
 
-HRESULT WINAPI read_blob_data_result(void*, void* async, size_t size, Blob* blobs, uint32_t* count) {
+HRESULT WINAPI read_blob_data_result(void*, void* async, size_t size, void* blobs, uint32_t* count) {
     if (!count) return E_POINTER;
     *count = 0;
     return consume_async_op(async, kReadBlobsOp, [&](AsyncOp& base) {
         const auto& op = static_cast<const ReadBlobsOp&>(base);
         if (size < op.bytes) return kProvidedBufferTooSmall;
         if (op.bytes && !blobs) return E_POINTER;
-        op.copy_to(blobs);
+        op.copy_to(static_cast<Blob*>(blobs));
         *count = static_cast<uint32_t>(op.found.size());
         return S_OK;
     });
 }
 
-HRESULT WINAPI enumerate_container_info(void*, void* provider, void* context, ContainerInfoCallback callback) {
+HRESULT WINAPI enumerate_container_info(void*, void* provider, void* context, GameSaveContainerInfoCallback callback) {
     if (!callback) return E_INVALIDARG;
+    const auto typed = reinterpret_cast<ContainerInfoCallback>(callback);
     const auto generation = active_runtime_generation();
     std::vector<ContainerData> list;
     try {
@@ -860,10 +867,56 @@ HRESULT WINAPI enumerate_container_info(void*, void* provider, void* context, Co
         const ContainerInfo info{data.name.c_str(), data.display_name.c_str(),
                                  static_cast<uint32_t>(data.blobs.size()), data.total_size,
                                  static_cast<time_t>(data.last_modified), false};
-        if (!callback(&info, context)) break;
+        if (!typed(&info, context)) break;
     }
     return S_OK;
 }
+
+// Synchronous public slots. Each one runs the async operation above on the process task
+// queue (a null XAsyncBlock queue) and waits. syncOnDemand is passed through and has no
+// effect, the same as InitializeProviderAsync. Signatures follow the public Microsoft Learn
+// pages for these three functions.
+struct LocalAsync {
+    void* queue;
+    void* context;
+    void (CALLBACK* callback)(LocalAsync*);
+    unsigned char internal[4 * sizeof(void*)];
+};
+static_assert(sizeof(LocalAsync) == 7 * sizeof(void*));
+
+HRESULT WINAPI initialize_provider(void*, void* user, const char* scid, bool sync_on_demand, void** provider) {
+    if (!provider) return E_POINTER;
+    *provider = nullptr;
+    LocalAsync block{};
+    const auto hr = initialize_provider_async(nullptr, user, scid, sync_on_demand, &block);
+    if (FAILED(hr)) return hr;
+    const auto status = XAsyncGetStatus(&block, true);
+    if (FAILED(status)) return status;
+    return initialize_provider_result(nullptr, &block, provider);
+}
+
+HRESULT WINAPI read_blob_data(void*, void* container, const char** names, uint32_t* count, size_t size, void* blobs) {
+    if (!count) return E_POINTER;
+    const uint32_t requested = *count;
+    *count = 0;
+    LocalAsync block{};
+    const auto hr = read_blob_data_async(nullptr, container, names, requested, &block);
+    if (FAILED(hr)) return hr;
+    const auto status = XAsyncGetStatus(&block, true);
+    if (FAILED(status)) return status;
+    return read_blob_data_result(nullptr, &block, size, blobs, count);
+}
+
+HRESULT WINAPI submit_update(void*, void* update) {
+    LocalAsync block{};
+    const auto hr = submit_update_async(nullptr, update, &block);
+    if (FAILED(hr)) return hr;
+    const auto status = XAsyncGetStatus(&block, true);
+    if (FAILED(status)) return status;
+    return submit_update_result(nullptr, &block);
+}
+
+namespace {
 
 // --- COM object ---
 

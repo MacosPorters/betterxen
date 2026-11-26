@@ -29,6 +29,7 @@ remains unsupported.
 
     Each of eleven injected faults (non-atomic write, missing or per-process lock, ignored SCID, no-op close, lax parsing, uncounted names, retained results, stale work running, children kept after a provider close) makes it fail.
   - **Not done:** validation against a caller linked to Microsoft's `xgameruntime.lib`, since these keys are BetterXen's own. `abi/defs/xgameruntime.def` is unchanged (49 exports).
+- `QueryApiImpl` also serves offline XGameSave and XPackage on the public COM class and interface ids, with slot order from [xgameruntime-docs](https://github.com/xodus-gaming/xgameruntime-docs) commit `7090008692569aa6081e30dfdd9de58237741e24` (#468). The ids and slot order come from that documentation and were not measured against a GDK-linked caller.
 - Added `docs/research/d3dmetal-gpu-limits.md` and `tests/conformance/test_d3dmetal_gpu_limits/` (#453). The fixture is an original D3D12 compute test that loads the host `d3d12.dll` directly, with four original HLSL kernels and committed DXC 1.9.2609 output (`shaders/compile.sh` regenerates them). It skips with exit 77 below shader model 6.6. Required checks:
   - a kernel without `WaveSize` runs, and its lane indices form a permutation within each wave;
   - a per-texel spin lock with acquire and release fences and a 1024-try cap emulates 64-bit add and max with no dropped update and exact values.

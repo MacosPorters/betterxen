@@ -6,8 +6,15 @@
  * distributed PC GDK NuGet package (Microsoft.GDK.Windows 2610.0.9661, nuget.org) using an
  * independently authored synthetic caller invoking public documented GDK APIs. No Microsoft
  * source code or binary code is copied or bundled.
+ *
+ * XGameSave and XPackage class ids, interface ids, and vtable order are separate from that
+ * work. Those facts are from https://github.com/xodus-gaming/xgameruntime-docs commit
+ * 7090008692569aa6081e30dfdd9de58237741e24. Function signatures follow the public Microsoft
+ * Learn GDK reference (learn.microsoft.com/gaming/gdk). No text from either source is copied.
  */
 #include "com_dispatch.h"
+
+#include "runtime_internal.h"
 
 #include <array>
 #include <atomic>
@@ -573,6 +580,198 @@ const std::array<const void*, 8> kGameVtbl = [] {
 }();
 ComSingleton kGameObj{kGameVtbl.data(), &kGameIid, "IXGame"};
 
+// --- XGameSave / XPackage (#468) ---
+// Ids and inheritance from xodus-gaming/xgameruntime-docs commit
+// 7090008692569aa6081e30dfdd9de58237741e24.
+// IXGameSaveImpl uses the class id and lists 27 methods in slots 3-29.
+// IXGameSaveImpl2 adds 3 XGameSaveFiles methods in slots 30-32.
+// IXGameSaveImpl3 adds none.
+// IXPackageImpl lists 32 methods in slots 3-34.
+// IXPackageImpl2 adds 4 methods in slots 35-38.
+// IXPackageImpl3 adds 2 methods in slots 39-40.
+// IXPackageImpl4 adds XPackageGetPackageKind at slot 41.
+
+constexpr GUID kGameSaveClsid = {0x704C3F58, 0xE629, 0x4CC2, {0xB1, 0x97, 0x30, 0x51, 0x1B, 0x99, 0x6F, 0xE2}};
+constexpr GUID kGameSaveIid2 = {0x704C3F58, 0xE629, 0x4CC2, {0xB1, 0x97, 0x30, 0x51, 0x1B, 0x99, 0x6E, 0xE2}};
+constexpr GUID kGameSaveIid3 = {0x1BFFF3AF, 0xF14A, 0x40A3, {0x8E, 0x35, 0x9A, 0xDA, 0x90, 0x65, 0x93, 0xF9}};
+constexpr GUID kPackageClsid = {0xAF406016, 0xE850, 0x4AA8, {0xA8, 0x8D, 0x2F, 0x3D, 0xCB, 0x9D, 0xAC, 0x7E}};
+constexpr GUID kPackageIid = {0x3720DE07, 0xE8E4, 0x44A3, {0xAD, 0x32, 0xB3, 0x59, 0xE8, 0xAD, 0xBE, 0x55}};
+constexpr GUID kPackageIid2 = {0xF92D8712, 0x2B27, 0x4D8A, {0xBF, 0x01, 0x11, 0xA6, 0xF8, 0xE3, 0xEB, 0x42}};
+constexpr GUID kPackageIid3 = {0xE2A4734B, 0x2F4A, 0x456D, {0xAA, 0x8F, 0xD0, 0x65, 0xE0, 0x4F, 0xB2, 0x09}};
+constexpr GUID kPackageIid4 = {0x0B9D556E, 0xAB70, 0x43F4, {0xBA, 0xA0, 0x99, 0x99, 0xAC, 0x4C, 0xB0, 0x40}};
+
+HRESULT WINAPI game_save_query_interface(void* self, const GUID* riid, void** out) {
+    if (!out) return E_POINTER;
+    *out = nullptr;
+    if (!riid) return E_INVALIDARG;
+    if (guid_eq(*riid, kIUnknown) || guid_eq(*riid, kGameSaveClsid) || guid_eq(*riid, kGameSaveIid2) ||
+        guid_eq(*riid, kGameSaveIid3)) {
+        *out = self;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+HRESULT WINAPI package_query_interface(void* self, const GUID* riid, void** out) {
+    if (!out) return E_POINTER;
+    *out = nullptr;
+    if (!riid) return E_INVALIDARG;
+    if (guid_eq(*riid, kIUnknown) || guid_eq(*riid, kPackageIid) || guid_eq(*riid, kPackageIid2) ||
+        guid_eq(*riid, kPackageIid3) || guid_eq(*riid, kPackageIid4)) {
+        *out = self;
+        return S_OK;
+    }
+    return E_NOINTERFACE;
+}
+
+#define BX_HR(fn, iface, slot, method) \
+    HRESULT WINAPI fn(void*) { \
+        BX_VTABLE_STUB_LOG(iface, static_cast<uint32_t>(slot), method); \
+        return E_NOTIMPL; \
+    }
+#define BX_VOID(fn, iface, slot, method) \
+    void WINAPI fn(void*) { BX_VTABLE_STUB_LOG(iface, static_cast<uint32_t>(slot), method); }
+// Bool slots log and return false. The HRESULT bit pattern would look like true to a caller.
+#define BX_BOOL(fn, iface, slot, method) \
+    bool WINAPI fn(void*) { \
+        BX_VTABLE_STUB_LOG(iface, static_cast<uint32_t>(slot), method); \
+        return false; \
+    }
+
+BX_HR(gs_quota, "IXGameSaveImpl", 7, "XGameSaveGetRemainingQuota")
+BX_HR(gs_quota_async, "IXGameSaveImpl", 8, "XGameSaveGetRemainingQuotaAsync")
+BX_HR(gs_quota_result, "IXGameSaveImpl", 9, "XGameSaveGetRemainingQuotaResult")
+BX_HR(gs_delete, "IXGameSaveImpl", 10, "XGameSaveDeleteContainer")
+BX_HR(gs_delete_async, "IXGameSaveImpl", 11, "XGameSaveDeleteContainerAsync")
+BX_HR(gs_delete_result, "IXGameSaveImpl", 12, "XGameSaveDeleteContainerResult")
+BX_HR(gs_container_info, "IXGameSaveImpl", 13, "XGameSaveGetContainerInfo")
+BX_HR(gs_enum_by_name, "IXGameSaveImpl", 15, "XGameSaveEnumerateContainerInfoByName")
+BX_HR(gs_enum_blobs, "IXGameSaveImpl", 18, "XGameSaveEnumerateBlobInfo")
+BX_HR(gs_enum_blobs_by_name, "IXGameSaveImpl", 19, "XGameSaveEnumerateBlobInfoByName")
+BX_HR(gs_blob_delete, "IXGameSaveImpl", 26, "XGameSaveSubmitBlobDelete")
+BX_HR(gs_files_folder_async, "IXGameSaveImpl2", 30, "XGameSaveFilesGetFolderWithUiAsync")
+BX_HR(gs_files_folder_result, "IXGameSaveImpl2", 31, "XGameSaveFilesGetFolderWithUiResult")
+BX_HR(gs_files_quota, "IXGameSaveImpl2", 32, "XGameSaveFilesGetRemainingQuota")
+
+BX_HR(pk_create_monitor, "IXPackageImpl", 5, "XPackageCreateInstallationMonitor")
+BX_VOID(pk_close_monitor, "IXPackageImpl", 6, "XPackageCloseInstallationMonitorHandle")
+BX_VOID(pk_get_progress, "IXPackageImpl", 7, "XPackageGetInstallationProgress")
+BX_BOOL(pk_update_monitor, "IXPackageImpl", 8, "XPackageUpdateInstallationMonitor")
+BX_HR(pk_reg_progress, "IXPackageImpl", 9, "XPackageRegisterInstallationProgressChanged")
+BX_BOOL(pk_unreg_progress, "IXPackageImpl", 10, "XPackageUnregisterInstallationProgressChanged")
+BX_HR(pk_locale, "IXPackageImpl", 11, "XPackageGetUserLocale")
+BX_HR(pk_find_chunk, "IXPackageImpl", 12, "XPackageFindChunkAvailability")
+BX_HR(pk_enum_chunk, "IXPackageImpl", 13, "XPackageEnumerateChunkAvailability")
+BX_HR(pk_change_order, "IXPackageImpl", 14, "XPackageChangeChunkInstallOrder")
+BX_HR(pk_install, "IXPackageImpl", 15, "XPackageInstallChunks")
+BX_HR(pk_install_async, "IXPackageImpl", 16, "XPackageInstallChunksAsync")
+BX_HR(pk_install_result, "IXPackageImpl", 17, "XPackageInstallChunksResult")
+BX_HR(pk_estimate, "IXPackageImpl", 18, "XPackageEstimateDownloadSize")
+BX_HR(pk_uninstall_chunks, "IXPackageImpl", 19, "XPackageUninstallChunks")
+BX_HR(pk_unknown_20, "IXPackageImpl", 20, "unknown")
+BX_HR(pk_unknown_21, "IXPackageImpl", 21, "unknown")
+BX_BOOL(pk_unreg_installed, "IXPackageImpl", 22, "XPackageUnregisterPackageInstalled")
+BX_HR(pk_unknown_27, "IXPackageImpl", 27, "unknown")
+BX_HR(pk_enum_packages, "IXPackageImpl", 28, "XPackageEnumeratePackages")
+BX_HR(pk_reg_installed, "IXPackageImpl", 29, "XPackageRegisterPackageInstalled")
+BX_HR(pk_write_stats, "IXPackageImpl", 30, "XPackageGetWriteStats")
+BX_HR(pk_unknown_31, "IXPackageImpl", 31, "unknown")
+BX_HR(pk_uninstall_uwp, "IXPackageImpl", 32, "XPackageUninstallUWPInstance")
+BX_HR(pk_enum_features, "IXPackageImpl", 33, "XPackageEnumerateFeatures")
+BX_HR(pk_uninstall, "IXPackageImpl", 34, "XPackageUninstallPackage")
+BX_HR(pk_enum_packages_2, "IXPackageImpl2", 35, "XPackageEnumeratePackages")
+BX_HR(pk_reg_installed_2, "IXPackageImpl2", 36, "XPackageRegisterPackageInstalled")
+BX_HR(pk_mount_ui_async, "IXPackageImpl2", 37, "XPackageMountWithUiAsync")
+BX_HR(pk_mount_ui_result, "IXPackageImpl2", 38, "XPackageMountWithUiResult")
+BX_HR(pk_enum_packages_3, "IXPackageImpl3", 39, "XPackageEnumeratePackages")
+BX_HR(pk_reg_installed_3, "IXPackageImpl3", 40, "XPackageRegisterPackageInstalled")
+#undef BX_HR
+#undef BX_VOID
+#undef BX_BOOL
+
+const std::array<const void*, 33> kGameSaveVtbl = [] {
+    auto v = make_default_vtbl<33>();
+    v[0] = reinterpret_cast<const void*>(&game_save_query_interface);
+    v[3] = reinterpret_cast<const void*>(&initialize_provider);
+    v[4] = reinterpret_cast<const void*>(&initialize_provider_async);
+    v[5] = reinterpret_cast<const void*>(&initialize_provider_result);
+    v[6] = reinterpret_cast<const void*>(&close_provider);
+    v[7] = reinterpret_cast<const void*>(&gs_quota);
+    v[8] = reinterpret_cast<const void*>(&gs_quota_async);
+    v[9] = reinterpret_cast<const void*>(&gs_quota_result);
+    v[10] = reinterpret_cast<const void*>(&gs_delete);
+    v[11] = reinterpret_cast<const void*>(&gs_delete_async);
+    v[12] = reinterpret_cast<const void*>(&gs_delete_result);
+    v[13] = reinterpret_cast<const void*>(&gs_container_info);
+    v[14] = reinterpret_cast<const void*>(&enumerate_container_info);
+    v[15] = reinterpret_cast<const void*>(&gs_enum_by_name);
+    v[16] = reinterpret_cast<const void*>(&create_container);
+    v[17] = reinterpret_cast<const void*>(&close_container);
+    v[18] = reinterpret_cast<const void*>(&gs_enum_blobs);
+    v[19] = reinterpret_cast<const void*>(&gs_enum_blobs_by_name);
+    v[20] = reinterpret_cast<const void*>(&read_blob_data);
+    v[21] = reinterpret_cast<const void*>(&read_blob_data_async);
+    v[22] = reinterpret_cast<const void*>(&read_blob_data_result);
+    v[23] = reinterpret_cast<const void*>(&create_update);
+    v[24] = reinterpret_cast<const void*>(&close_update);
+    v[25] = reinterpret_cast<const void*>(&submit_blob_write);
+    v[26] = reinterpret_cast<const void*>(&gs_blob_delete);
+    v[27] = reinterpret_cast<const void*>(&submit_update);
+    v[28] = reinterpret_cast<const void*>(&submit_update_async);
+    v[29] = reinterpret_cast<const void*>(&submit_update_result);
+    v[30] = reinterpret_cast<const void*>(&gs_files_folder_async);
+    v[31] = reinterpret_cast<const void*>(&gs_files_folder_result);
+    v[32] = reinterpret_cast<const void*>(&gs_files_quota);
+    return v;
+}();
+ComSingleton kGameSaveObj{kGameSaveVtbl.data(), &kGameSaveClsid, "IXGameSaveImpl"};
+
+const std::array<const void*, 42> kPackageVtbl = [] {
+    auto v = make_default_vtbl<42>();
+    v[0] = reinterpret_cast<const void*>(&package_query_interface);
+    v[3] = reinterpret_cast<const void*>(&get_current_process_package_identifier);
+    v[4] = reinterpret_cast<const void*>(&is_packaged_process);
+    v[5] = reinterpret_cast<const void*>(&pk_create_monitor);
+    v[6] = reinterpret_cast<const void*>(&pk_close_monitor);
+    v[7] = reinterpret_cast<const void*>(&pk_get_progress);
+    v[8] = reinterpret_cast<const void*>(&pk_update_monitor);
+    v[9] = reinterpret_cast<const void*>(&pk_reg_progress);
+    v[10] = reinterpret_cast<const void*>(&pk_unreg_progress);
+    v[11] = reinterpret_cast<const void*>(&pk_locale);
+    v[12] = reinterpret_cast<const void*>(&pk_find_chunk);
+    v[13] = reinterpret_cast<const void*>(&pk_enum_chunk);
+    v[14] = reinterpret_cast<const void*>(&pk_change_order);
+    v[15] = reinterpret_cast<const void*>(&pk_install);
+    v[16] = reinterpret_cast<const void*>(&pk_install_async);
+    v[17] = reinterpret_cast<const void*>(&pk_install_result);
+    v[18] = reinterpret_cast<const void*>(&pk_estimate);
+    v[19] = reinterpret_cast<const void*>(&pk_uninstall_chunks);
+    v[20] = reinterpret_cast<const void*>(&pk_unknown_20);
+    v[21] = reinterpret_cast<const void*>(&pk_unknown_21);
+    v[22] = reinterpret_cast<const void*>(&pk_unreg_installed);
+    v[23] = reinterpret_cast<const void*>(&mount);
+    v[24] = reinterpret_cast<const void*>(&get_mount_path_size);
+    v[25] = reinterpret_cast<const void*>(&get_mount_path);
+    v[26] = reinterpret_cast<const void*>(&close_mount_handle);
+    v[27] = reinterpret_cast<const void*>(&pk_unknown_27);
+    v[28] = reinterpret_cast<const void*>(&pk_enum_packages);
+    v[29] = reinterpret_cast<const void*>(&pk_reg_installed);
+    v[30] = reinterpret_cast<const void*>(&pk_write_stats);
+    v[31] = reinterpret_cast<const void*>(&pk_unknown_31);
+    v[32] = reinterpret_cast<const void*>(&pk_uninstall_uwp);
+    v[33] = reinterpret_cast<const void*>(&pk_enum_features);
+    v[34] = reinterpret_cast<const void*>(&pk_uninstall);
+    v[35] = reinterpret_cast<const void*>(&pk_enum_packages_2);
+    v[36] = reinterpret_cast<const void*>(&pk_reg_installed_2);
+    v[37] = reinterpret_cast<const void*>(&pk_mount_ui_async);
+    v[38] = reinterpret_cast<const void*>(&pk_mount_ui_result);
+    v[39] = reinterpret_cast<const void*>(&pk_enum_packages_3);
+    v[40] = reinterpret_cast<const void*>(&pk_reg_installed_3);
+    v[41] = reinterpret_cast<const void*>(&get_package_kind);
+    return v;
+}();
+ComSingleton kPackageObj{kPackageVtbl.data(), &kPackageIid4, "IXPackageImpl"};
+
 struct PublicEntry {
     const GUID* clsid;
     const GUID* iid;
@@ -592,6 +791,13 @@ const PublicEntry kPublicEntries[] = {
     {&kGameUiClsid, &kGameUiIid, &kGameUiObj},
     {&kNetworkingClsid, &kNetworkingIid, &kNetworkingObj},
     {&kGameClsid, &kGameIid, &kGameObj},
+    {&kGameSaveClsid, &kGameSaveClsid, &kGameSaveObj},
+    {&kGameSaveClsid, &kGameSaveIid2, &kGameSaveObj},
+    {&kGameSaveClsid, &kGameSaveIid3, &kGameSaveObj},
+    {&kPackageClsid, &kPackageIid, &kPackageObj},
+    {&kPackageClsid, &kPackageIid2, &kPackageObj},
+    {&kPackageClsid, &kPackageIid3, &kPackageObj},
+    {&kPackageClsid, &kPackageIid4, &kPackageObj},
 };
 
 } // namespace

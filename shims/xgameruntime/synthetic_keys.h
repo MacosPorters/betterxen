@@ -6,8 +6,10 @@
  * These class and interface ids are defined by BetterXen. They are NOT Microsoft
  * identifiers and were not derived from any Microsoft binary. A title linked against
  * Microsoft's xgameruntime.lib will not request them. They let BetterXen's own callers
- * and conformance fixtures reach the offline families through QueryApiImpl until a
- * properly sourced mapping exists. To replace a family's keys, change its entry here and
+ * and conformance fixtures reach the offline families through QueryApiImpl. The public
+ * class and interface ids for XGameSave and XPackage are registered separately in
+ * com_dispatch.cpp. These synthetic keys stay so the fixtures below keep working.
+ * To replace a family's keys, change its entry here and
  * the expected values in the fixtures listed below. The fixtures keep their own copies on
  * purpose, so a wrong key here fails a test instead of agreeing with itself:
  *   tests/conformance/test_xgameruntime/main.cpp        (all families)
