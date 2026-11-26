@@ -51,6 +51,14 @@ def expected(x, y, first_frame=False):
     return (b, r, g)
 
 
+def exists_off_screen(scratch, title):
+    """True when macOS knows the window but is not showing it (another Space, minimised)."""
+    script = scratch / "window_any.swift"
+    script.write_text((WINDOW_ID_SWIFT % title).replace("[.optionOnScreenOnly]", "[.optionAll]"))
+    found = subprocess.run(["swift", str(script)], capture_output=True, text=True).stdout.strip()
+    return found.isdigit()
+
+
 def read_bmp(path):
     data = path.read_bytes()
     if data[:2] != b"BM":
@@ -120,7 +128,7 @@ def main():
         log = open(scratch / "run.json", "w+")
         run = subprocess.Popen([a.runner, "run", "--bottle", a.bottle, "--timeout", "90", "--"] + workload,
                                stdout=log, stderr=subprocess.DEVNULL)
-        result = None
+        result, off_screen = None, False
         deadline = time.time() + 60
         while time.time() < deadline and run.poll() is None:
             wid = subprocess.run(["swift", str(script)], capture_output=True, text=True).stdout.strip()
@@ -133,8 +141,14 @@ def main():
                         Path(a.keep).write_bytes(png.read_bytes())
                     if result[1] == 0:
                         break
+            elif result is None and not off_screen:
+                off_screen = exists_off_screen(scratch, title)
             time.sleep(0.5)
         run.wait(timeout=120)
+        if result is None and off_screen:
+            print("FAIL window: the window exists but is not on the active Space; leave a desktop "
+                  "(not a full-screen app) frontmost and rerun")
+            return 1
         if result is None:
             print("FAIL window: no window was captured (permission, GUI session or window missing)")
             return 1

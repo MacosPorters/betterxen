@@ -149,7 +149,8 @@ python3 scripts/audit/docs_hygiene.py
 | `bx-cli doctor` | Inspects Apple Silicon host, RAM (recommends `lockhart` on 16 GB Macs or `anaconda` on 32 GB+), Rosetta 2, CrossOver, D3DMetal, and `mingw-w64` |
 | `bx-cli probe <pe32+>` | Static PE32+ import scanner that classifies every imported DLL into Tracks A–E or Wine built-ins |
 | `bx-cli shader <blob>` | Classifies a `DXBC` shader container (`DXIL` vs. legacy `SHDR`/`SHEX` vs. `ACCC`/`FSPX`) |
-| `bx-cli run --exe <path> ...` | Launches a PE32+ binary under CrossOver/Wine with `env_clear()` host isolation (`--inherit-env` opt-in), `ROSETTA_ADVERTISE_AVX=1`, `WINEDLLOVERRIDES`, `BX_PROFILE`, and JSONL trace capture |
+| `bx-cli run --exe <path> ...` | Launches a PE32+ binary under CrossOver/Wine with `env_clear()` host isolation (`--inherit-env` opt-in), `ROSETTA_ADVERTISE_AVX=1`, `WINEDLLOVERRIDES`, `BX_PROFILE`, and JSONL trace capture. Needs `--bottle` or `--prefix`; supervised with timeout, stall, memory and output limits and writes a JSON record |
+| `bx-cli stop (--bottle B \| --prefix P)` | Recovers an environment after a supervisor was force-killed |
 | `bx-cli trace <log.jsonl>` | Aggregates `bx_runtime_veh.dll` logs (unimplemented API counts, COM vtable misses, `clwb` VEH traps, ADX tripwires) |
 
 ---

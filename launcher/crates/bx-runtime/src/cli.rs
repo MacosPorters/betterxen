@@ -424,11 +424,57 @@ fn doctor(args: &[String]) -> ExitCode {
         facts.bottle = Some(("prefix".into(), path));
     }
     let checks = preflight::evaluate(&facts);
-    print!("{}", preflight::to_json(&checks).render());
+    let mut report = preflight::to_json(&checks);
+    if let Json::Obj(fields) = &mut report {
+        fields.push(("host_info".into(), host_info(install.as_ref())));
+    }
+    print!("{}", report.render());
     if checks.iter().all(|c| c.ok) {
         ExitCode::SUCCESS
     } else {
         ExitCode::from(1)
+    }
+}
+
+/// Reported, never gating: running a prebuilt program needs none of these. Preserves what
+/// #406's `doctor` showed (memory profile, D3DMetal presence, the shim cross-compiler).
+fn host_info(install: Option<&crossover::Install>) -> Json {
+    let memory_gib = host::collect().memory_bytes.map(|b| b >> 30);
+    let d3dmetal = install.map(|i| {
+        i.path
+            .join("Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework")
+            .exists()
+    });
+    let mingw = std::env::var_os("PATH").and_then(|path| {
+        std::env::split_paths(&path)
+            .map(|dir| dir.join("x86_64-w64-mingw32-g++"))
+            .find(|candidate| candidate.is_file())
+    });
+    Json::obj(vec![
+        (
+            "memory_gib",
+            memory_gib.map_or(Json::Null, |g| Json::Num(g as f64)),
+        ),
+        (
+            "recommended_profile",
+            Json::opt_str(memory_gib.map(|g| recommended_profile(g).to_string())),
+        ),
+        (
+            "d3dmetal_framework_present",
+            d3dmetal.map_or(Json::Null, Json::Bool),
+        ),
+        (
+            "shim_cross_compiler",
+            Json::opt_str(mingw.map(|p| p.display().to_string())),
+        ),
+    ])
+}
+
+fn recommended_profile(memory_gib: u64) -> &'static str {
+    if memory_gib >= 32 {
+        "anaconda"
+    } else {
+        "lockhart"
     }
 }
 
@@ -643,6 +689,13 @@ mod foundation_contract_tests {
     use super::*;
 
     #[test]
+    fn profile_recommendation_matches_the_foundation_threshold() {
+        assert_eq!(recommended_profile(16), "lockhart");
+        assert_eq!(recommended_profile(24), "lockhart");
+        assert_eq!(recommended_profile(32), "anaconda");
+    }
+
+    #[test]
     fn converts_unix_path_to_wine_z_drive() {
         assert_eq!(
             unix_to_wine_z_path(std::path::Path::new("/tmp/bx-test.jsonl")),
@@ -651,8 +704,8 @@ mod foundation_contract_tests {
     }
 }
 
-/// Entry point shared by `betterxen hybrid` and the `betterxen-hybrid` binary. `args` excludes
-/// the program name and the `hybrid` word.
+/// Entry point for the runtime subcommands of `bx-cli`. `args` excludes the program name; a
+/// leading `hybrid` word (the #405 spelling) is accepted and ignored.
 pub fn run_cli(args: &[String]) -> ExitCode {
     // The standalone maintainer bundle accepts the same `hybrid ...` argument vector as
     // the full CLI. Both enter this implementation; no wrapper or native research runtime

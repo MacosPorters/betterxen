@@ -6,6 +6,10 @@
 #
 #   scripts/hybrid/accept-integrated.sh <llvm-mingw-dir> <bottle> [soak-frames] [repeats]
 #
+# Exit 0: every check ran and passed. 1: a check failed. 2: the only deviations are the known
+# D3DMetal swapchain retention and/or checks reported NOT-RUN. NOT-RUN is never a pass.
+# Shader Model 6 needs Microsoft's DXC (scripts/hybrid/install-dxc.py); point
+# BETTERXEN_DXC_DIR at its bin/x64 directory.
 # Needs CrossOver, an existing win11_64 bottle, Rust 1.100.0, the pinned llvm-mingw
 # (docs/research/hybrid-toolchain.md), and for the on-screen check a GUI session with the
 # Screen Recording and Accessibility permissions (the latter for the keyboard check, which
@@ -22,6 +26,7 @@ mkdir -p "$ROOT/artifacts/acceptance" || exit 1
 OUT=$(mktemp -d "$ROOT/artifacts/acceptance/$(date -u +%Y%m%dT%H%M%SZ)-XXXXXX") || exit 1
 failed=0
 known=0
+not_run=0
 ok() { echo "ok   $1"; }
 bad() { echo "FAIL $1"; failed=1; }
 
@@ -31,12 +36,18 @@ if [ -z "${BETTERXEN_RUNNER:-}" ]; then
 fi
 if [ -n "${BETTERXEN_WORKLOAD_DIR:-}" ]; then
     mkdir -p "$OUT/bin" || exit 1
-    cp "$BETTERXEN_WORKLOAD_DIR/d3d11-integrated.exe" "$BETTERXEN_WORKLOAD_DIR/d3d12-integrated.exe" "$OUT/bin/" || exit 1
+    for name in d3d11-integrated d3d12-integrated d3d12-lifetime d3d12-wave-probe; do
+        cp "$BETTERXEN_WORKLOAD_DIR/$name.exe" "$OUT/bin/" || exit 1
+    done
 else
 "$ROOT/tests/conformance/test_d3d11_integrated/build.sh" "$TC" "$OUT/bin" >"$OUT/build-workload.log" 2>&1 ||
     { bad "build workload"; exit 1; }
 "$ROOT/tests/conformance/test_d3d12_integrated/build.sh" "$TC" "$OUT/bin" >"$OUT/build-workload12.log" 2>&1 ||
     { bad "build D3D12 workload"; exit 1; }
+for probe in lifetime wave; do
+    "$ROOT/tests/conformance/test_d3d12_$probe/build.sh" "$TC" "$OUT/bin" >"$OUT/build-$probe.log" 2>&1 ||
+        { bad "build D3D12 $probe probe"; exit 1; }
+done
 fi
 BX=${BETTERXEN_RUNNER:-"${CARGO_TARGET_DIR:-$ROOT/target}/release/bx-cli"}
 HYBRID=${BETTERXEN_HYBRID_RUNNER:-"$(dirname "$BX")/bx-cli"}
@@ -85,14 +96,33 @@ run() {
 run C-F-G-H-full passed --require-gates "$GATES" --timeout 180 --stall-timeout 60 -- --frames 600
 run BC1-full passed --require-gates "$GATES,textures.bc1" --timeout 180 -- --frames 128 --bc1
 run BC1-negative failed_exit_1 --timeout 120 -- --frames 128 --bc1 --fault bc1
+
+# a negative control counts only if the gate the fault targets is the one that failed
+intended() {
+    case "$1" in
+        input) echo input ;;
+        stale) echo frame.continuous ;;
+        bc1) echo textures.bc1 ;;
+        *) echo "frame.first frame.continuous" ;;
+    esac
+}
+detects() {
+    # shellcheck disable=SC2046 # gate names are fixed words
+    if python3 "$ROOT/scripts/hybrid/check-failed-gates.py" "$OUT/$1.json" $(intended "$2") >"$OUT/$1.gates.log" 2>&1;
+    then ok "$1 failed its intended gate ($(cat "$OUT/$1.gates.log"))"
+    else bad "$1: $(cat "$OUT/$1.gates.log")"; fi
+}
+detects BC1-negative bc1
 for scene in C-F-G-H-full BC1-full; do
     if python3 "$ROOT/scripts/hybrid/check-image-digest.py" "$OUT/$scene.json" >"$OUT/oracle-$scene.log" 2>&1;
     then ok "independent image oracle $scene"; else bad "independent image oracle $scene (see log)"; fi
 done
 for fault in color blank stale input depth; do
     run "negative-$fault" failed_exit_1 --timeout 120 -- --frames 128 --fault "$fault"
+    detects "negative-$fault" "$fault"
 done
-run negative-crash 'failed_exit_*' --timeout 60 -- --frames 128 --fault crash
+# CrossOver starts winedbg on a crash; it has taken 4 s to more than 60 s on the same Mac.
+run negative-crash 'failed_exit_*' --timeout 240 -- --frames 128 --fault crash
 run recovery-after-crash passed --require-gates "$GATES" --timeout 120 -- --frames 128
 run negative-hang stalled --timeout 90 --stall-timeout 15 -- --frames 128 --fault hang
 if pgrep -f "$(basename "$EXE")" >/dev/null; then bad "hung workload still running after stop";
@@ -157,15 +187,38 @@ done
 for fault in color blank stale input depth upload; do
     "$BX" hybrid run --bottle "$BOTTLE" --keep-output true --out "$OUT/raw" --timeout 90 -- "$EXE12" --frames 128 --fault "$fault" \
         >"$OUT/d3d12-negative-$fault.json" 2>/dev/null
-    read -r class backend failed12 digest12 <<EOT
-$(d12_summary "$OUT/d3d12-negative-$fault.json")
-EOT
-    # the fault must break a gate other than the known shutdown one
-    case "$class:${failed12%shutdown}" in
-        failed_exit_1:?*) ok "D3D12 negative-$fault ($failed12)" ;;
-        *) bad "D3D12 negative-$fault: $class failed=$failed12" ;;
-    esac
+    detects "d3d12-negative-$fault" "$fault"
 done
+
+# Minimal swapchain lifetime probe: no application GPU work. The detach control must pass
+# and the deliberately retained reference must be caught, or the witness proves nothing.
+LIFE="$OUT/bin/d3d12-lifetime.exe"
+lifetime() {
+    name=$1
+    shift
+    "$BX" hybrid run --bottle "$BOTTLE" --keep-output true --out "$OUT/raw" --timeout 90 -- "$LIFE" "$@" \
+        >"$OUT/$name.json" 2>"$OUT/$name.log"
+}
+if lifetime lifetime-detach-control --detach-witness; then ok "lifetime witness detaches";
+else bad "lifetime detach control (see lifetime-detach-control.log)"; fi
+lifetime lifetime-retained-negative --detach-witness --retain-app-reference
+if python3 "$ROOT/scripts/hybrid/check-failed-gates.py" "$OUT/lifetime-retained-negative.json" resources.private-data-detach >/dev/null 2>&1;
+then ok "lifetime witness catches a retained reference"; else bad "lifetime retained-reference control"; fi
+if lifetime lifetime-swapchain; then ok "D3D12 swapchain released"
+elif grep -q 'adapter=AMD Compatibility Mode' "$OUT/lifetime-swapchain.json" &&
+    python3 "$ROOT/scripts/hybrid/check-failed-gates.py" "$OUT/lifetime-swapchain.json" resources.swapchain-release >/dev/null 2>&1; then
+    known=1
+    echo "KNOWN D3D12 swapchain retention under D3DMetal (minimal probe)"
+else bad "lifetime probe (see lifetime-swapchain.log)"; fi
+
+DXC=${BETTERXEN_DXC_DIR:-$ROOT/artifacts/dependencies/dxc-v1.9.2609/bin/x64}
+if [ -f "$DXC/dxc.exe" ]; then
+    if python3 "$ROOT/scripts/hybrid/accept-sm6.py" "$BX" "$BOTTLE" "$OUT/bin/d3d12-wave-probe.exe" "$DXC" "$OUT/sm6" \
+        >"$OUT/sm6.log" 2>&1; then ok "Shader Model 6 GPU readback"; else bad "Shader Model 6: $(tail -1 "$OUT/sm6.log")"; fi
+else
+    not_run=1
+    echo "NOT-RUN Shader Model 6: no dxc.exe at $DXC"
+fi
 if python3 "$ROOT/tests/conformance/test_d3d12_integrated/send_keys.py" "$BX" "$BOTTLE" "$EXE12" >"$OUT/keys.log" 2>&1;
 then ok "H macOS keyboard events"; else bad "H keyboard: $(tail -1 "$OUT/keys.log")"; fi
 if python3 "$ROOT/tests/conformance/test_d3d12_integrated/send_keys.py" "$BX" "$BOTTLE" "$EXE12" --keys up,up \
@@ -178,16 +231,16 @@ then ok "lifecycle: signals, kill and stop, repeated launch"; else
 run I-soak passed --require-gates "$GATES" --timeout 1800 --stall-timeout 60 -- --frames "$SOAK" --verify-every 500
 
 echo "records: $OUT"
-python3 - "$OUT" "$failed" "$known" <<'PY'
+python3 - "$OUT" "$failed" "$known" "$not_run" <<'PY'
 import json, pathlib, sys
 path = pathlib.Path(sys.argv[1])
-failed, known = map(int, sys.argv[2:])
+failed, known, not_run = map(int, sys.argv[2:])
 (path / "summary.json").write_text(json.dumps({
     "schema": "betterxen-integrated-acceptance/0",
-    "unexpected_failures": bool(failed), "known_d3d12_shutdown_failure": bool(known),
-    "all_checks_passed": not (failed or known),
+    "unexpected_failures": bool(failed), "known_d3d12_swapchain_retention": bool(known),
+    "checks_not_run": bool(not_run), "all_checks_passed": not (failed or known or not_run),
 }, indent=2) + "\n")
 PY
 [ "$failed" -eq 0 ] || exit 1
-[ "$known" -eq 0 ] || exit 2
+[ "$known" -eq 0 ] && [ "$not_run" -eq 0 ] || exit 2
 exit 0

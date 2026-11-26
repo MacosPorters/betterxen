@@ -7,6 +7,11 @@ It adds no runner and reports no new Windows or GPU execution results.
 
 ## Implementation checkpoint
 
+Current runner: the same commands are `bx-cli` subcommands (`receipt`, `run`, `bench`,
+`stop`, `frames`) and the workloads are under `tests/conformance/`; see
+[maintainer testing](../maintainer-testing.md). The text below records the protocol as
+first written against the earlier candidate and is kept for its provenance.
+
 The commands below refer to [PR #384](https://github.com/MacosPorters/betterxen/pull/384),
 reviewed at commit `566272082a74d8b45fcec37edd00f4f6703df3ab` on 2026-11-25.
 Its `betterxen-hybrid` command, build script and Windows workloads are not on

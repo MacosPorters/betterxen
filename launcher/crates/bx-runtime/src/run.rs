@@ -27,7 +27,7 @@
 //!
 //! The launcher runs in its own process group. SIGINT, SIGTERM or SIGHUP to the supervisor
 //! stops the group and the bottle. SIGKILL of the supervisor cannot be handled; use
-//! `betterxen hybrid stop --bottle B` afterwards.
+//! `bx-cli stop --bottle B` (or `--prefix P`) afterwards.
 //!
 //! A workload may print `gate <name> pass|FAIL <detail>` lines. They are recorded, and a run
 //! whose process exits 0 is still not a pass if any gate failed or a required gate is absent:

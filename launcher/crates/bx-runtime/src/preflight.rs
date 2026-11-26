@@ -1,4 +1,4 @@
-//! Read-only environment checks before a run (`betterxen-hybrid doctor`).
+//! Read-only environment checks before a run (`bx-cli doctor`).
 //!
 //! Each check is something observed on this host. A pass means the pieces the runner needs
 //! are present; it does not mean any program will run.
@@ -75,7 +75,7 @@ pub fn evaluate(f: &Facts) -> Vec<Check> {
                 name: "bottle_session",
                 ok: clean,
                 detail: if clean { "no unfinished BetterXen session".into() } else {
-                    "active, unfinished or invalid session marker; SIGTERM an active runner, or use hybrid stop for abandoned sessions".into()
+                    "active, unfinished or invalid session marker; SIGTERM an active runner, or use `bx-cli stop` for abandoned sessions".into()
                 },
             });
         }

@@ -45,7 +45,7 @@ impl BottleSession {
             .map_err(|e| e.to_string())?;
         if !recovery && !previous.is_empty() {
             return Err(format!(
-                "bottle has an unfinished session ({previous:?}); use `betterxen hybrid stop --bottle B` before another run"
+                "bottle has an unfinished session ({previous:?}); run `bx-cli stop --bottle B` (or `--prefix P`) before another run"
             ));
         }
         file.set_len(0).map_err(|e| e.to_string())?;

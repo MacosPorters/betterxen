@@ -5,6 +5,7 @@
 // retention without treating a backend's numeric Release return as the only evidence.
 // Public contract: https://learn.microsoft.com/windows/win32/api/dxgi/nf-dxgi-idxgiobject-setprivatedatainterface
 #define COBJMACROS
+#define WIDL_C_INLINE_WRAPPERS /* struct-returning D3D12 methods in C (mingw-w64) */
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <d3d12.h>
@@ -64,6 +65,15 @@ int main(int argc, char **argv) {
     if (FAILED(code)) { printf("NO DEVICE hr=0x%08lx\n",(unsigned long)code); return 2; }
     IDXGIFactory4 *factory=NULL;
     API(CreateDXGIFactory1(&IID_IDXGIFactory4,(void **)&factory));
+    /* Name the implementation that actually answered; a requested backend is not evidence. */
+    IDXGIAdapter1 *adapter=NULL;
+    DXGI_ADAPTER_DESC1 desc={0};
+    LUID luid;
+    luid=ID3D12Device_GetAdapterLuid(device);
+    API(IDXGIFactory4_EnumAdapterByLuid(factory,luid,&IID_IDXGIAdapter1,(void **)&adapter));
+    API(IDXGIAdapter1_GetDesc1(adapter,&desc));
+    printf("adapter=%ls vendor=0x%04x device=0x%04x\n",desc.Description,desc.VendorId,desc.DeviceId);
+    IDXGIAdapter1_Release(adapter);
     ID3D12CommandQueue *queue=NULL;
     D3D12_COMMAND_QUEUE_DESC qd={.Type=D3D12_COMMAND_LIST_TYPE_DIRECT};
     API(ID3D12Device_CreateCommandQueue(device,&qd,&IID_ID3D12CommandQueue,(void **)&queue));
@@ -81,6 +91,9 @@ int main(int argc, char **argv) {
             .SwapEffect=DXGI_SWAP_EFFECT_FLIP_DISCARD};
         IDXGISwapChain1 *swap=NULL;
         API(IDXGIFactory4_CreateSwapChainForHwnd(factory,(IUnknown *)queue,window,&sd,NULL,NULL,&swap));
+        /* AddRef/Release pair: the count the application is handed, before it does anything else. */
+        IDXGISwapChain1_AddRef(swap);
+        ULONG refs_after_create=IDXGISwapChain1_Release(swap);
         LONG before=w->refs;
         API(IDXGISwapChain1_SetPrivateDataInterface(swap,&witness_guid,(IUnknown *)w));
         if (w->refs != before+1) { puts("FAIL private-data attachment did not AddRef the witness"); return 1; }
@@ -98,8 +111,8 @@ int main(int argc, char **argv) {
         drain(100);
         ULONG device_refs=ID3D12Device_AddRef(device)-1;
         ID3D12Device_Release(device);
-        printf("cycle=%d witness_refs=%ld swap_release_return=%lu device_refs=%lu\n",
-            n+1,(long)w->refs,(unsigned long)swap_refs,(unsigned long)device_refs);
+        printf("cycle=%d witness_refs=%ld swap_refs_after_create=%lu swap_release_return=%lu device_refs=%lu\n",
+            n+1,(long)w->refs,(unsigned long)refs_after_create,(unsigned long)swap_refs,(unsigned long)device_refs);
     }
     ID3D12CommandQueue_Release(queue);
     IDXGIFactory4_Release(factory);

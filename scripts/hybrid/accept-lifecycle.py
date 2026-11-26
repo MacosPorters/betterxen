@@ -111,9 +111,17 @@ def main():
     healthy("after stop")
 
     passed = 0
-    for _ in range(a.launches):
+    for launch in range(a.launches):
         with tempfile.TemporaryFile("w+") as out:
-            passed += start(["--frames", "64"], out).wait(timeout=150) == 0
+            code = start(["--frames", "64"], out).wait(timeout=150)
+            passed += code == 0
+            if code:
+                out.seek(0)
+                try:
+                    reason = json.load(out).get("classification")
+                except json.JSONDecodeError:
+                    reason = "no record"
+                print(f"     launch {launch + 1}: {reason}", flush=True)
     check(passed == a.launches, f"repeated launch: {passed} of {a.launches} passed")
     check(not workload_pids(name), "repeated launch: nothing left running")
     return 1 if failed else 0
