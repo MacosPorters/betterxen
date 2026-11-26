@@ -9,6 +9,7 @@ rust-version.workspace = true
 workspace = true
 
 [dependencies]
+betterxen-hybrid = { path = "../hybrid" }
 xenora-decoder = { path = "../decoder" }
 xenora-isa = { path = "../isa" }
 xenora-metal = { path = "../metal" }

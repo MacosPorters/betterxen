@@ -20,6 +20,15 @@
 //! environment unless a backend was requested. Inherited values silently changed the backend
 //! while the record said none was requested (reproduced by IamHeavyLazer in issue #350).
 //!
+//! The child does not inherit the caller's environment. Only [`ENV_ALLOWLIST`] and explicit
+//! `--env` pairs are passed, because a Windows program run this way could otherwise read any
+//! host variable (observed: tokens and `SSH_AUTH_SOCK` are visible to it). This limits what
+//! is handed over; it is not a sandbox, and the program can still reach the user's files.
+//!
+//! The launcher runs in its own process group. SIGINT, SIGTERM or SIGHUP to the supervisor
+//! stops the group and the bottle. SIGKILL of the supervisor cannot be handled; use
+//! `betterxen hybrid stop --bottle B` afterwards.
+//!
 //! A workload may print `gate <name> pass|FAIL <detail>` lines. They are recorded, and a run
 //! whose process exits 0 is still not a pass if any gate failed or a required gate is absent:
 //! starting a process says nothing about whether it initialised.
@@ -30,8 +39,10 @@
 use crate::frames;
 use crate::json::Json;
 use crate::memory;
+use std::os::unix::process::CommandExt;
 use std::path::{Path, PathBuf};
-use std::process::{Command, Stdio};
+use std::process::{Child, Command, Stdio};
+use std::sync::atomic::{AtomicBool, Ordering};
 use std::time::{Duration, Instant, SystemTime, UNIX_EPOCH};
 
 #[derive(Debug, Clone)]
@@ -56,7 +67,30 @@ pub struct RunConfig {
     pub require_gates: Vec<String>,
     /// Stop the run when stdout and stderr together exceed this many bytes.
     pub max_output: u64,
+    /// Pass the caller's whole environment instead of the allowlist.
+    pub inherit_env: bool,
+    /// Extra variables set for the child.
+    pub env: Vec<(String, String)>,
+    /// Keep the workload's full stdout and stderr files in `work_dir`.
+    pub keep_output: bool,
+    /// Set by a signal handler; the run is then stopped and classified `interrupted`.
+    pub interrupted: &'static AtomicBool,
 }
+
+/// Host variables passed to the child unless the whole environment is requested.
+pub const ENV_ALLOWLIST: [&str; 8] = [
+    "HOME",
+    "USER",
+    "LOGNAME",
+    "TMPDIR",
+    "LANG",
+    "LC_ALL",
+    "LC_CTYPE",
+    "__CF_USER_TEXT_ENCODING",
+];
+
+/// System directories only: CrossOver's launcher is a script that needs standard tools.
+const CHILD_PATH: &str = "/usr/bin:/bin:/usr/sbin:/sbin";
 
 /// Backend names accepted for `CX_GRAPHICS_BACKEND`. The installed CrossOver ignores an
 /// unknown value silently, so the runner refuses it instead.
@@ -107,6 +141,8 @@ pub enum Class {
     /// A gate reported failure, or a required gate never reported.
     GateFailed,
     OutputLimit,
+    /// The supervisor received SIGINT, SIGTERM or SIGHUP.
+    Interrupted,
 }
 
 impl Class {
@@ -125,6 +161,7 @@ impl Class {
             Class::LaunchFailed => "launch_failed".into(),
             Class::GateFailed => "gate_failed".into(),
             Class::OutputLimit => "stopped_output_limit".into(),
+            Class::Interrupted => "interrupted".into(),
         }
     }
 }
@@ -185,6 +222,62 @@ pub struct Samples {
     pub samples: u32,
     pub peak_workload_rss_kb: u64,
     pub last_workload_rss_kb: u64,
+}
+
+/// Process ids of the workload, identified the same way as for memory sampling. Input lines
+/// are `ps -axo pid=,command=`.
+fn workload_pids(ps: &str, file_name: &str) -> Vec<i32> {
+    let needle = format!("\\{file_name}").to_ascii_lowercase();
+    ps.lines()
+        .filter_map(|l| {
+            let (pid, command) = l.trim_start().split_once(char::is_whitespace)?;
+            let command = command.trim_start().to_ascii_lowercase();
+            let b = command.as_bytes();
+            (b.len() > 3 && b[1] == b':' && b[2] == b'\\' && command.contains(&needle))
+                .then(|| pid.parse().ok())?
+        })
+        .filter(|pid| *pid > 1)
+        .collect()
+}
+
+pub fn running_workload_pids(file_name: &str) -> Vec<i32> {
+    let ps = crate::cmdutil::run("/bin/ps", &["-axo", "pid=,command="]).unwrap_or_default();
+    workload_pids(&ps, file_name)
+}
+
+/// Wait briefly for the workload to disappear; kill what remains. Returns how many were
+/// still alive after the wait.
+fn reap_leftovers(file_name: &str, patience: Duration) -> usize {
+    let t = Instant::now();
+    loop {
+        let pids = running_workload_pids(file_name);
+        if pids.is_empty() {
+            return 0;
+        }
+        if t.elapsed() >= patience {
+            for pid in &pids {
+                // SAFETY: kill takes plain integers; `pid` is a positive process id.
+                unsafe { libc::kill(*pid, libc::SIGKILL) };
+            }
+            return pids.len();
+        }
+        std::thread::sleep(Duration::from_millis(200));
+    }
+}
+
+/// Stop the launcher's whole process group: SIGTERM, then SIGKILL after `grace`.
+fn stop_group(child: &mut Child, grace: Duration) {
+    let group = child.id() as i32;
+    // SAFETY: the child was started as leader of its own group, so `group` names only its
+    // descendants; killpg takes plain integers.
+    unsafe { libc::killpg(group, libc::SIGTERM) };
+    let t = Instant::now();
+    while t.elapsed() < grace && !matches!(child.try_wait(), Ok(Some(_))) {
+        std::thread::sleep(Duration::from_millis(50));
+    }
+    // SAFETY: as above. A group that has already exited returns ESRCH, which is harmless.
+    unsafe { libc::killpg(group, libc::SIGKILL) };
+    let _ = child.wait();
 }
 
 /// RSS (KB) of the workload itself. Observed on CrossOver 26.3: the Windows program is
@@ -272,6 +365,8 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         .work_dir
         .join(format!("stderr-{t_wall}-{}.txt", std::process::id()));
     let mut settle: Option<(Duration, bool)> = None;
+    let mut leftovers: Option<usize> = None;
+    let mut passed_names: Vec<String> = Vec::new();
     let thermal_before = thermal();
     let free_start = (cfg.read_free)();
 
@@ -292,6 +387,7 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         .collect();
 
     match free_start {
+        _ if cfg.interrupted.load(Ordering::SeqCst) => result.class = Class::Interrupted,
         None => result.class = Class::MemoryUnreadable,
         Some(f) if f < cfg.limits.min_start_free => result.class = Class::RefusedToStart,
         Some(_) => {
@@ -307,9 +403,23 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                     .arg(&cfg.program)
                     .args(&cfg.args);
                 cmd.stdout(Stdio::from(o)).stderr(Stdio::from(e));
-                for key in BACKEND_VARS {
-                    cmd.env_remove(key);
+                cmd.process_group(0);
+                if cfg.inherit_env {
+                    for key in BACKEND_VARS {
+                        cmd.env_remove(key);
+                    }
+                } else {
+                    cmd.env_clear().env("PATH", CHILD_PATH);
+                    for key in ENV_ALLOWLIST {
+                        if let Some(value) = std::env::var_os(key) {
+                            cmd.env(key, value);
+                        }
+                    }
                 }
+                for (key, value) in &cfg.env {
+                    cmd.env(key, value);
+                }
+                passed_names = cfg.env.iter().map(|(k, _)| k.clone()).collect();
                 if let Some(b) = &cfg.backend {
                     cmd.env("CX_GRAPHICS_BACKEND", b);
                 }
@@ -341,7 +451,7 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                             Ok(None) => {}
                             Err(error) => {
                                 result.error = Some(format!("lost track of the launcher: {error}"));
-                                memory::terminate(&mut child, cfg.limits.grace);
+                                stop_group(&mut child, cfg.limits.grace);
                                 stop_bottle(&cfg.wine, &cfg.bottle);
                                 break;
                             }
@@ -376,6 +486,9 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                             last_len = len;
                             last_growth = Instant::now();
                         }
+                        if cfg.interrupted.load(Ordering::SeqCst) {
+                            stop = Some(Class::Interrupted);
+                        }
                         if stop.is_none() && len > cfg.max_output {
                             stop = Some(Class::OutputLimit);
                         }
@@ -388,13 +501,14 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                             stop = Some(Class::Stalled);
                         }
                         if stop.is_some() {
-                            memory::terminate(&mut child, cfg.limits.grace);
+                            stop_group(&mut child, cfg.limits.grace);
                             stop_bottle(&cfg.wine, &cfg.bottle);
                             break;
                         }
                         std::thread::sleep(cfg.limits.poll);
                     }
                     result.duration = started.elapsed();
+                    leftovers = Some(reap_leftovers(file_name(&cfg.program), cfg.limits.grace));
                     if stop.is_some() {
                         let t = Instant::now();
                         let need = cfg.limits.min_start_free;
@@ -404,7 +518,8 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                                 recovered = true;
                                 break;
                             }
-                            if t.elapsed() >= cfg.settle_bound {
+                            // a second signal is not needed to leave the wait
+                            if t.elapsed() >= cfg.settle_bound || stop == Some(Class::Interrupted) {
                                 break;
                             }
                             std::thread::sleep(cfg.limits.poll);
@@ -580,24 +695,49 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
             ),
         ),
         ("launcher_error", Json::opt_str(result.error.clone())),
+        (
+            "environment_policy",
+            Json::str(if cfg.inherit_env {
+                "inherited"
+            } else {
+                "allowlist"
+            }),
+        ),
+        (
+            "extra_environment_names",
+            Json::Arr(passed_names.into_iter().map(Json::Str).collect()),
+        ),
+        (
+            "workload_processes_killed_after_exit",
+            leftovers.map_or(Json::Null, |n| Json::Num(n as f64)),
+        ),
     ]);
     fields.extend(gpu_wired.json_fields());
     result.json = Json::obj(fields);
-    let _ = std::fs::remove_file(&out_path);
-    let _ = std::fs::remove_file(&err_path);
+    if !cfg.keep_output {
+        let _ = std::fs::remove_file(&out_path);
+        let _ = std::fs::remove_file(&err_path);
+    }
     result
 }
 
 /// Prefix directory of a bottle. CrossOver documents `BottleDir` in its preferences; otherwise
 /// the default location under Application Support is used.
 pub fn bottle_prefix(bottle: &str) -> PathBuf {
-    let base = crate::crossover::preference("BottleDir")
-        .map(PathBuf::from)
-        .unwrap_or_else(|| {
-            PathBuf::from(std::env::var("HOME").unwrap_or_default())
-                .join("Library/Application Support/CrossOver/Bottles")
-        });
-    base.join(bottle)
+    let home = std::env::var("HOME").unwrap_or_default();
+    bottle_base(crate::crossover::preference("BottleDir"), &home).join(bottle)
+}
+
+/// The `BottleDir` preference may be written with a leading `~`, which `Path` does not expand.
+fn bottle_base(preference: Option<String>, home: &str) -> PathBuf {
+    let home = PathBuf::from(home);
+    match preference {
+        None => home.join("Library/Application Support/CrossOver/Bottles"),
+        Some(p) if p == "~" => home,
+        Some(p) => p
+            .strip_prefix("~/")
+            .map_or_else(|| PathBuf::from(&p), |rest| home.join(rest)),
+    }
 }
 
 /// Stop every process of one bottle with `wineserver -k`, selecting the bottle through
@@ -666,6 +806,8 @@ mod tests {
         p
     }
 
+    static NEVER: AtomicBool = AtomicBool::new(false);
+
     fn cfg(wine: PathBuf, timeout_ms: u64, tag: &str) -> RunConfig {
         RunConfig {
             wine,
@@ -687,6 +829,10 @@ mod tests {
             read_free: memory::free_percentage,
             require_gates: vec![],
             max_output: 1 << 20,
+            inherit_env: false,
+            env: vec![],
+            keep_output: false,
+            interrupted: &NEVER,
         }
     }
 
@@ -938,5 +1084,87 @@ mod tests {
             classify(Some(0), "PASS", "child: cannot execute", Some("PASS")),
             Class::Passed
         );
+    }
+
+    #[test]
+    fn host_variables_are_withheld_unless_allowed_or_requested() {
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        // CARGO_MANIFEST_DIR is set by cargo for the test process and is not allowlisted.
+        assert!(std::env::var_os("CARGO_MANIFEST_DIR").is_some());
+        let dir = std::env::temp_dir().join(format!("bxrun-env-{}", std::process::id()));
+        let w = stub(
+            &dir,
+            "echo \"manifest=${CARGO_MANIFEST_DIR:-absent} extra=${BX_EXTRA:-absent} home=${HOME:+set}\"; echo PASS",
+        );
+        let mut c = cfg(w, 10_000, "env");
+        c.env = vec![("BX_EXTRA".into(), "yes".into())];
+        let r = execute(&c, None);
+        assert!(
+            r.stdout.contains("manifest=absent extra=yes home=set"),
+            "{}",
+            r.stdout
+        );
+        assert!(
+            r.json
+                .render()
+                .contains("\"environment_policy\": \"allowlist\"")
+        );
+        c.inherit_env = true;
+        let r = execute(&c, None);
+        assert!(!r.stdout.contains("manifest=absent"), "{}", r.stdout);
+    }
+
+    #[test]
+    fn an_interrupt_stops_the_whole_process_group() {
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        static STOP: AtomicBool = AtomicBool::new(false);
+        let dir = std::env::temp_dir().join(format!("bxrun-int-{}", std::process::id()));
+        let pidfile = dir.join("grandchild.pid");
+        let w = stub(
+            &dir,
+            &format!("/bin/sleep 30 & echo $! > '{}'; wait", pidfile.display()),
+        );
+        let mut c = cfg(w, 20_000, "int");
+        c.interrupted = &STOP;
+        let h = std::thread::spawn(|| {
+            std::thread::sleep(Duration::from_millis(400));
+            STOP.store(true, Ordering::SeqCst);
+        });
+        let t = Instant::now();
+        let r = execute(&c, None);
+        h.join().unwrap();
+        assert_eq!(r.class, Class::Interrupted);
+        assert!(t.elapsed() < Duration::from_secs(10));
+        let pid: i32 = std::fs::read_to_string(pidfile)
+            .unwrap()
+            .trim()
+            .parse()
+            .unwrap();
+        std::thread::sleep(Duration::from_millis(200));
+        // SAFETY: signal 0 only asks whether the process exists.
+        assert_ne!(unsafe { libc::kill(pid, 0) }, 0, "grandchild survived");
+        // A run requested after the interrupt does not start at all.
+        assert_eq!(execute(&c, None).class, Class::Interrupted);
+    }
+
+    #[test]
+    fn workload_processes_are_identified_by_windows_command_line_only() {
+        let ps = "  501 Y:\\w\\d3d.exe --frames 1\n  502 /usr/bin/betterxen hybrid run -- /w/d3d.exe\n  1 C:\\x\\d3d.exe\n  503 Z:\\w\\other.exe";
+        assert_eq!(workload_pids(ps, "d3d.exe"), [501]);
+    }
+
+    #[test]
+    fn bottle_directory_preference_may_use_a_tilde() {
+        assert_eq!(bottle_base(Some("~/B".into()), "/h"), PathBuf::from("/h/B"));
+        assert_eq!(bottle_base(Some("~".into()), "/h"), PathBuf::from("/h"));
+        assert_eq!(
+            bottle_base(Some("/v/B".into()), "/h"),
+            PathBuf::from("/v/B")
+        );
+        assert!(bottle_base(None, "/h").ends_with("CrossOver/Bottles"));
     }
 }

@@ -2,6 +2,7 @@
 //! launches and measurement around an externally installed CrossOver. Nothing here claims
 //! game or console compatibility.
 
+pub mod cli;
 pub mod cmdutil;
 pub mod crossover;
 pub mod frames;

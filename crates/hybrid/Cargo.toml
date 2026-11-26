@@ -12,3 +12,7 @@ workspace = true
 [[bin]]
 name = "betterxen-hybrid"
 path = "src/main.rs"
+
+[dependencies]
+# signal handling and process groups; already used by the native loader
+libc = "0.2"

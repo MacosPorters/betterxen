@@ -6,6 +6,7 @@ version = 4
 name = "betterxen"
 version = "0.1.0"
 dependencies = [
+ "betterxen-hybrid",
  "xenora-decoder",
  "xenora-import-gen",
  "xenora-isa",
@@ -18,6 +19,9 @@ dependencies = [
 [[package]]
 name = "betterxen-hybrid"
 version = "0.1.0"
+dependencies = [
+ "libc",
+]
 
 [[package]]
 name = "bitflags"

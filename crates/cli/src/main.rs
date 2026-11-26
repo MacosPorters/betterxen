@@ -43,6 +43,10 @@ fn main() -> ExitCode {
             }
         },
         Some("run") => runner::command(std::env::args_os().skip(2)),
+        // Windows programs through an installed CrossOver: the active hybrid path.
+        Some("hybrid") => {
+            betterxen_hybrid::cli::run_cli(&std::env::args().skip(2).collect::<Vec<_>>())
+        }
         Some("imports") => imports_command(std::env::args().skip(2).collect()),
         Some("shaders") => shaders::command(&std::env::args().skip(2).collect::<Vec<_>>()),
         Some("probe") => {
@@ -137,7 +141,7 @@ fn main() -> ExitCode {
             }
         }
         _ => {
-            eprintln!("usage: betterxen <info|demo|inspect|probe|run|imports|shaders>");
+            eprintln!("usage: betterxen <hybrid|info|demo|inspect|probe|run|imports|shaders>");
             ExitCode::from(2)
         }
     }
