@@ -21,6 +21,8 @@ checkpoints retain their original evidence scope.
 
 ## Architecture and technical design
 
+- [Proposed hybrid responsibility boundary](adr/0006-hybrid-responsibility-boundary.md) — Draft for #351; independent evidence review and maintainer acceptance remain required.
+
 - [Interface contracts](interfaces.md) — Translated shader stages, guest services, native command submission, and synthetic textures.
 - [Fixture memory model](adr/0003-demo-memory-model.md) and [CPU boundary](adr/0004-cpu-boundary.md) — Buffer bindings, guest address translation, and dependency direction.
 

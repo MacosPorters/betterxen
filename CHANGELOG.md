@@ -6,6 +6,9 @@ exact revision and known limitations.
 
 ## [Unreleased]
 
+### Added
+- Proposed a BetterXen/CrossOver responsibility boundary for #351, separating candidate tooling from accepted capabilities and listing the evidence and maintainer decision still required. No architecture acceptance or implementation change.
+
 Guest execution uses original, purpose-built test programs. Commercial Xbox game execution
 remains unsupported.
 
