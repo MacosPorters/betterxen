@@ -17,8 +17,13 @@ constexpr HRESULT kRuntimeInvalidHandle = static_cast<HRESULT>(0x8924010cu);
 constexpr HRESULT kIllegalMethodCall = static_cast<HRESULT>(0x8000000eu);
 constexpr HRESULT kInsufficientBuffer = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 
-// Work for an XAsyncBlock, run on the block's work port. The object is kept until its
-// result is consumed, the block is reused, or the runtime is uninitialized.
+// Work for an XAsyncBlock, run on the block's work port. execute() is skipped, and the block
+// completes with E_GAMERUNTIME_NOT_INITIALIZED (0x89240100), if the runtime was uninitialized
+// after the operation started; an execute() that is already running finishes. A finished
+// object, including its result data, is kept until its Result call consumes it, the same
+// block starts another operation, or the last uninitialize. A caller that frees a block
+// without calling Result leaves that result in memory until then; the retention is not
+// bounded.
 class AsyncOp {
 public:
     virtual ~AsyncOp() = default;
@@ -56,8 +61,15 @@ HRESULT ensure_directory(const wchar_t* path);
 // FNV-1a over UTF-16 code units, as used for the storage directory name.
 uint64_t fnv1a(const wchar_t* text);
 
+constexpr GUID kIUnknownIid = {0x00000000, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
+
 // COM IUnknown objects QueryApiImpl returns for the synthetic xgamesave and xpackage keys.
 extern const void* const game_save_object;  // game_save.cpp
 extern const void* const package_object;    // package.cpp
+
+// Close every XGameSave / XPackage handle. Called by the last uninitialize, with the runtime
+// lock held (the runtime lock is always taken before these files' own locks).
+void release_game_save_state();  // game_save.cpp
+void release_package_state();    // package.cpp
 
 } // namespace bx::gdk

@@ -18,6 +18,8 @@
  *  - Mount (the documented, deprecated XPackageMount) accepts only that identifier, and the
  *    mount path is the executable's directory. On Windows only content packages can be
  *    mounted; BetterXen allows the game's own package so titles can locate their files.
+ *  - The last XGameRuntimeUninitialize closes every mount handle.
+ *  - An executable path of MAX_PATH or more fails with ERROR_FILENAME_EXCED_RANGE.
  */
 #include "runtime_internal.h"
 #include "synthetic_keys.h"
@@ -78,8 +80,11 @@ struct Mount {
 };
 
 std::mutex mount_mutex;
-uintptr_t last_handle = 0;
+uintptr_t handle_counter = 0;
 std::unordered_map<void*, Mount> mounts;
+
+// Mount handles use tag 4 in bits 40-43, a range no XGameSave handle uses (game_save.cpp).
+constexpr uintptr_t kMountTag = 4;
 
 // Caller holds mount_mutex.
 const Mount* find_mount(void* handle, uint32_t generation) {
@@ -138,8 +143,8 @@ HRESULT WINAPI mount(void*, const char* identifier, void** out) {
         WideCharToMultiByte(CP_UTF8, WC_ERR_INVALID_CHARS, dir.c_str(), -1, path.data(), bytes, nullptr, nullptr);
         path.pop_back();  // The terminator is added back on copy-out.
         std::lock_guard lock(mount_mutex);
-        last_handle += 0x10;
-        void* handle = reinterpret_cast<void*>(last_handle);
+        ++handle_counter;
+        void* handle = reinterpret_cast<void*>(kMountTag << 40 | (handle_counter & 0xFFFFFFFFFu) << 4);
         mounts.emplace(handle, Mount{generation, std::move(path)});
         *out = handle;
     } catch (const std::bad_alloc&) {
@@ -181,9 +186,8 @@ HRESULT WINAPI query_interface(void* self, const GUID* iid, void** out) {
     if (!out) return E_POINTER;
     *out = nullptr;
     if (!iid) return E_INVALIDARG;
-    constexpr GUID iunknown = {0x00000000, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
     constexpr GUID own = synthetic::key(synthetic::kPackage.iid);
-    if (IsEqualGUID(*iid, iunknown) || IsEqualGUID(*iid, own)) {
+    if (IsEqualGUID(*iid, kIUnknownIid) || IsEqualGUID(*iid, own)) {
         *out = self;
         return S_OK;
     }
@@ -223,5 +227,10 @@ const ComObject kObject{kVtbl.data()};
 } // namespace
 
 const void* const package_object = &kObject;
+
+void release_package_state() {
+    std::lock_guard lock(mount_mutex);
+    mounts.clear();
+}
 
 } // namespace bx::gdk

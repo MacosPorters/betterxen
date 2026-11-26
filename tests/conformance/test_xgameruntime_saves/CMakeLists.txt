@@ -1,2 +1,2 @@
 add_executable(test_xgameruntime_saves main.cpp)
-target_link_libraries(test_xgameruntime_saves PRIVATE xgameruntime kernel32)
+target_link_libraries(test_xgameruntime_saves PRIVATE xgameruntime kernel32 shell32)

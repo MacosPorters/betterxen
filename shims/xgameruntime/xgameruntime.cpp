@@ -194,18 +194,25 @@ private:
     void finish(const QueueRef& queue, bool canceled) {
         const bool entitled = !canceled && operation == Operation::game_license && fixture_entitlement();
         bool cancel_requested;
+        bool stale;
         {
             std::lock_guard lock(state_mutex);
-            cancel_requested = read_state(block).cancel_requested;
+            const auto state = read_state(block);
+            cancel_requested = state.cancel_requested;
+            stale = !runtime_refs || state.runtime_generation != runtime_generation;
         }
         // The block stays E_PENDING meanwhile, so the caller cannot reuse it. Once an op has
-        // run, a later XAsyncCancel cannot undo it, so its own status is reported.
-        const bool executed = op && !canceled && !cancel_requested;
+        // run, a later XAsyncCancel or uninitialize cannot undo it, so its own status is
+        // reported. An op whose runtime was uninitialized before it ran is not run.
+        const bool executed = op && !canceled && !cancel_requested && !stale;
         const HRESULT op_status = executed ? op->execute() : S_OK;
         {
             std::lock_guard lock(state_mutex);
             auto state = read_state(block);
-            state.status = executed ? op_status : (canceled || state.cancel_requested) ? E_ABORT : S_OK;
+            state.status = executed                              ? op_status
+                           : canceled || state.cancel_requested ? E_ABORT
+                           : op && stale                        ? runtime_not_initialized
+                                                                : S_OK;
             state.entitled = entitled;
             if (op && SUCCEEDED(state.status) && state.runtime_generation == runtime_generation && runtime_refs) {
                 try {
@@ -333,6 +340,8 @@ bool release_runtime_ref() {
         users.clear();
         stores.clear();
         finished_ops.clear();
+        bx::gdk::release_game_save_state();
+        bx::gdk::release_package_state();
     }
     return true;
 }
@@ -887,20 +896,21 @@ struct Family {
     uint32_t iid;
     const char* name;
     const void* table;
+    bool com;  // table is a COM object, so IID_IUnknown also reaches it
 };
 
 // Synthetic BetterXen dispatch keys, not Microsoft CLSIDs. All keys and the COM slot
 // orders live in synthetic_keys.h.
 const Family families[] = {
-    {synthetic::kTaskQueue.clsid, synthetic::kTaskQueue.iid, "xtaskqueue", &task_queue_api},
-    {synthetic::kAsync.clsid, synthetic::kAsync.iid, "xasync", &async_api},
-    {synthetic::kUser.clsid, synthetic::kUser.iid, "xuser", &user_api},
-    {synthetic::kStore.clsid, synthetic::kStore.iid, "xstore", &store_api},
-    {synthetic::kSystem.clsid, synthetic::kSystem.iid, "xsystem", &system_api},
+    {synthetic::kTaskQueue.clsid, synthetic::kTaskQueue.iid, "xtaskqueue", &task_queue_api, false},
+    {synthetic::kAsync.clsid, synthetic::kAsync.iid, "xasync", &async_api, false},
+    {synthetic::kUser.clsid, synthetic::kUser.iid, "xuser", &user_api, false},
+    {synthetic::kStore.clsid, synthetic::kStore.iid, "xstore", &store_api, false},
+    {synthetic::kSystem.clsid, synthetic::kSystem.iid, "xsystem", &system_api, false},
     {synthetic::kPersistentLocalStorage.clsid, synthetic::kPersistentLocalStorage.iid, "xpersistentlocalstorage",
-     &storage_api},
-    {synthetic::kGameSave.clsid, synthetic::kGameSave.iid, "xgamesave", bx::gdk::game_save_object},
-    {synthetic::kPackage.clsid, synthetic::kPackage.iid, "xpackage", bx::gdk::package_object},
+     &storage_api, false},
+    {synthetic::kGameSave.clsid, synthetic::kGameSave.iid, "xgamesave", bx::gdk::game_save_object, true},
+    {synthetic::kPackage.clsid, synthetic::kPackage.iid, "xpackage", bx::gdk::package_object, true},
 };
 
 const Family* find_family(const GUID* clsid) {
@@ -932,7 +942,8 @@ HRESULT WINAPI QueryApiImpl(const GUID* clsid, const GUID* iid, void** out) {
     }
 
     const auto* family = find_family(clsid);
-    if (family && synthetic_guid(iid) && iid->Data1 == family->iid) {
+    if (family && ((synthetic_guid(iid) && iid->Data1 == family->iid) ||
+                   (family->com && IsEqualGUID(*iid, bx::gdk::kIUnknownIid)))) {
         *out = const_cast<void*>(family->table);
         char detail[64];
         std::snprintf(detail, sizeof(detail), "dispatch family=%s", family->name);

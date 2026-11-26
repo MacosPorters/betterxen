@@ -1,9 +1,14 @@
 // Offline XGameSave and XPackage through QueryApiImpl (#468).
 //
-// This fixture declares its own copies of the BetterXen synthetic keys and slot orders and
-// of the public structures, instead of including the shim's headers, so a mistake there fails
-// here. The keys must match shims/xgameruntime/synthetic_keys.h. Structure layouts and error
-// values follow the Microsoft Learn XGameSave and XPackage reference pages.
+// This fixture declares its own copies of the BetterXen synthetic keys and slot orders, of
+// the public structures, and of the documented storage layout, instead of including the
+// shim's headers, so a mistake there fails here. The keys must match
+// shims/xgameruntime/synthetic_keys.h. Structure layouts and error values follow the Microsoft
+// Learn XGameSave and XPackage reference pages; the file layout and naming follow the header
+// comment of shims/xgameruntime/game_save.cpp.
+//
+// Run with no arguments. "--writer <id> <count> <event>" is the child mode used by the
+// cross-process check.
 #include <windows.h>
 
 #include <cstddef>
@@ -11,6 +16,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <cwchar>
 #include <ctime>
 #include <string>
 #include <vector>
@@ -71,8 +77,10 @@ constexpr HRESULT kNotInitialized = static_cast<HRESULT>(0x89240100u);
 constexpr HRESULT kIllegalCall = static_cast<HRESULT>(0x8000000eu);
 constexpr HRESULT kInsufficient = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
 constexpr HRESULT kNotFound = HRESULT_FROM_WIN32(ERROR_NOT_FOUND);
+constexpr HRESULT kCorrupt = HRESULT_FROM_WIN32(ERROR_FILE_CORRUPT);
 constexpr uint32_t kManual = 0, kWork = 0;
 constexpr size_t kMiB16 = 16u * 1024u * 1024u;
+constexpr const char* kScid = "00000000-0000-0000-0000-000000000000";
 
 GUID synthetic(uint32_t data1) {
     return {data1, 0x5853, 0x4000, {0x80, 0, 0, 0, 0, 0, 0, 0x01}};
@@ -115,19 +123,40 @@ using MountFn = HRESULT(WINAPI*)(void*, const char*, void**);
 using PathSizeFn = HRESULT(WINAPI*)(void*, void*, size_t*);
 using PathFn = HRESULT(WINAPI*)(void*, void*, size_t, char*);
 
+using Blobs = std::vector<std::pair<std::string, std::string>>;
+
+void* query(uint32_t clsid, uint32_t iid) {
+    const GUID c = synthetic(clsid), i = synthetic(iid);
+    void* api = nullptr;
+    CHECK(QueryApiImpl(&c, &i, &api) == S_OK && api);
+    return api;
+}
+
+void* add_user(void* queue) {
+    Async async{queue, nullptr, nullptr, {}};
+    void* user = nullptr;
+    CHECK(XUserAddAsync(0, &async) == S_OK);
+    if (queue) CHECK(XTaskQueueDispatch(queue, kWork, 0));
+    else CHECK(XAsyncGetStatus(&async, true) == S_OK);
+    CHECK(XUserAddResult(&async, &user) == S_OK && user);
+    return user;
+}
+
+// queue null: the process task queue (thread pool); otherwise a manual queue run inline.
 struct Saves {
     void* api;
     void* queue;
 
-    // Runs the queued work item on this thread (manual queue).
-    void run() const { CHECK(XTaskQueueDispatch(queue, kWork, 0)); }
+    void wait(Async& async) const {
+        if (queue) CHECK(XTaskQueueDispatch(queue, kWork, 0));
+        else XAsyncGetStatus(&async, true);
+    }
 
-    void* provider(void* user) const {
+    void* provider(void* user, const char* scid = kScid) const {
         Async async{queue, nullptr, nullptr, {}};
-        CHECK(slot<InitAsyncFn>(api, kInitAsync)(api, user, "00000000-0000-0000-0000-000000000000", false, &async) ==
-              S_OK);
-        CHECK(XAsyncGetStatus(&async, false) == E_PENDING);
-        run();
+        CHECK(slot<InitAsyncFn>(api, kInitAsync)(api, user, scid, false, &async) == S_OK);
+        if (queue) CHECK(XAsyncGetStatus(&async, false) == E_PENDING);
+        wait(async);
         size_t size = 0;
         CHECK(XAsyncGetResultSize(&async, &size) == S_OK && size == sizeof(void*));
         void* provider = nullptr;
@@ -153,21 +182,38 @@ struct Saves {
         return slot<BlobWriteFn>(api, kSubmitBlobWrite)(api, update, blob, static_cast<const uint8_t*>(data), size);
     }
 
-    void submit(void* update) const {
+    HRESULT submit_status(void* update) const {
         Async async{queue, nullptr, nullptr, {}};
-        CHECK(slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, update, &async) == S_OK);
-        run();
-        CHECK(slot<AsyncResultFn>(api, kSubmitUpdateResult)(api, &async) == S_OK);
+        const auto hr = slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, update, &async);
+        if (FAILED(hr)) return hr;
+        wait(async);
+        const auto status = XAsyncGetStatus(&async, false);
+        CHECK(slot<AsyncResultFn>(api, kSubmitUpdateResult)(api, &async) == status);
+        return status;
+    }
+
+    void submit(void* update) const {
+        const auto status = submit_status(update);
+        if (status != S_OK) std::fprintf(stderr, "submit status 0x%08lx\n", static_cast<unsigned long>(status));
+        CHECK(status == S_OK);
+    }
+
+    // One update writing one blob, submitted and closed.
+    void put(void* container, const char* blob, const std::string& data) const {
+        void* staged = update(container, nullptr);
+        CHECK(write(staged, blob, data.data(), data.size()) == S_OK);
+        submit(staged);
+        close(kCloseUpdate, staged);
     }
 
     void close(int which, void* handle) const { slot<CloseFn>(api, which)(api, handle); }
 
     // Reads blobs (all when names is empty) and returns them as name -> bytes.
-    std::vector<std::pair<std::string, std::string>> read(void* container, std::vector<const char*> names) const {
+    Blobs read(void* container, std::vector<const char*> names) const {
         Async async{queue, nullptr, nullptr, {}};
         CHECK(slot<ReadAsyncFn>(api, kReadAsync)(api, container, names.empty() ? nullptr : names.data(),
                                                  static_cast<uint32_t>(names.size()), &async) == S_OK);
-        run();
+        wait(async);
         size_t size = 0;
         CHECK(XAsyncGetResultSize(&async, &size) == S_OK);
         std::vector<unsigned char> buffer(size + 16, 0xCD);
@@ -180,10 +226,10 @@ struct Saves {
         CHECK(read_result(api, &async, size, blobs, &consumed) == kIllegalCall && consumed == 0);
         for (size_t i = size; i < buffer.size(); ++i) CHECK(buffer[i] == 0xCD);
 
-        std::vector<std::pair<std::string, std::string>> out;
+        Blobs out;
         size_t expected = count * sizeof(Blob);
+        const auto* base = reinterpret_cast<const unsigned char*>(buffer.data());
         for (uint32_t i = 0; i < count; ++i) {
-            const auto* base = reinterpret_cast<const unsigned char*>(buffer.data());
             CHECK(reinterpret_cast<const unsigned char*>(blobs[i].name) >= base &&
                   reinterpret_cast<const unsigned char*>(blobs[i].name) < base + size);
             CHECK(blobs[i].size == 0 || (blobs[i].data >= base && blobs[i].data + blobs[i].size <= base + size));
@@ -199,15 +245,20 @@ struct Saves {
         const auto hr = slot<ReadAsyncFn>(api, kReadAsync)(api, container, names.empty() ? nullptr : names.data(),
                                                            static_cast<uint32_t>(names.size()), &async);
         if (FAILED(hr)) return hr;
-        run();
+        wait(async);
         uint32_t count = 0;
         const auto status = XAsyncGetStatus(&async, false);
-        CHECK(slot<ReadResultFn>(api, kReadResult)(api, &async, 0, nullptr, &count) == status);
+        size_t size = 0;
+        if (SUCCEEDED(status)) CHECK(XAsyncGetResultSize(&async, &size) == S_OK);
+        std::vector<unsigned char> buffer(size);
+        CHECK(slot<ReadResultFn>(api, kReadResult)(api, &async, size,
+                                                   size ? reinterpret_cast<Blob*>(buffer.data()) : nullptr,
+                                                   &count) == status);
         return status;
     }
 };
 
-const std::string* find_blob(const std::vector<std::pair<std::string, std::string>>& blobs, const char* name) {
+const std::string* find_blob(const Blobs& blobs, const char* name) {
     for (const auto& [blob, bytes] : blobs) {
         if (blob == name) return &bytes;
     }
@@ -234,16 +285,74 @@ bool CALLBACK collect(const ContainerInfo* info, void* context) {
     return listing.seen.size() < listing.stop_after;
 }
 
-std::string saves_directory() {
-    char path[MAX_PATH * 4]{};
-    CHECK(XPersistentLocalStorageGetPath(sizeof(path), path, nullptr) == S_OK);
-    return std::string(path) + "\\saves";
+Listing list(const Saves& saves, void* provider) {
+    Listing listing;
+    CHECK(slot<EnumerateFn>(saves.api, kEnumerate)(saves.api, provider, &listing, collect) == S_OK);
+    return listing;
 }
 
-// Container files left by an earlier run of this fixture (storage is bottle-persistent).
-size_t container_files(const std::string& dir, bool remove) {
+// --- The documented storage layout, re-derived here ---
+
+// FNV-1a (64-bit) over each byte widened to a UTF-16 code unit, printed as 16 hex digits.
+std::string hex_id(const std::string& text) {
+    uint64_t hash = 14695981039346656037ULL;
+    for (unsigned char c : text) {
+        hash ^= c;
+        hash *= 1099511628211ULL;
+    }
+    char out[17];
+    std::snprintf(out, sizeof(out), "%016llx", static_cast<unsigned long long>(hash));
+    return out;
+}
+
+std::string saves_directory(const char* scid) {
+    char path[MAX_PATH * 4]{};
+    CHECK(XPersistentLocalStorageGetPath(sizeof(path), path, nullptr) == S_OK);
+    return std::string(path) + "\\saves\\" + hex_id(scid);
+}
+
+std::string container_path(const std::string& dir, const std::string& name) {
+    return dir + "\\" + hex_id(name) + ".bxgs";
+}
+
+void put32(std::string& out, uint32_t value) {
+    for (int i = 0; i < 4; ++i) out.push_back(static_cast<char>(value >> (8 * i)));
+}
+
+void put_str(std::string& out, const std::string& text) {
+    put32(out, static_cast<uint32_t>(text.size()));
+    out += text;
+}
+
+// "BXGS", version 1, name, display name, i64 time, blob count, then name / size / bytes.
+std::string container_bytes(const std::string& name, const std::vector<std::pair<std::string, std::string>>& blobs) {
+    std::string out = "BXGS";
+    put32(out, 1);
+    put_str(out, name);
+    put_str(out, "crafted");
+    put32(out, 1700000000);
+    put32(out, 0);
+    put32(out, static_cast<uint32_t>(blobs.size()));
+    for (const auto& [blob, data] : blobs) {
+        put_str(out, blob);
+        put_str(out, data);
+    }
+    return out;
+}
+
+void write_file(const std::string& path, const std::string& bytes) {
+    const HANDLE file = CreateFileA(path.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
+                                    nullptr);
+    CHECK(file != INVALID_HANDLE_VALUE);
+    DWORD wrote = 0;
+    CHECK(WriteFile(file, bytes.data(), static_cast<DWORD>(bytes.size()), &wrote, nullptr) && wrote == bytes.size());
+    CHECK(CloseHandle(file));
+}
+
+// Files matching pattern in dir; optionally deletes them.
+size_t files(const std::string& dir, const char* pattern, bool remove) {
     WIN32_FIND_DATAA found;
-    const HANDLE search = FindFirstFileA((dir + "\\*.bxgs").c_str(), &found);
+    const HANDLE search = FindFirstFileA((dir + "\\" + pattern).c_str(), &found);
     if (search == INVALID_HANDLE_VALUE) return 0;
     size_t count = 0;
     do {
@@ -265,41 +374,130 @@ void check_com(void* object, const GUID& own, const GUID& other) {
     CHECK(slot<RefFn>(object, kAddRef)(object) >= 1 && slot<RefFn>(object, kRelease)(object) >= 1);
 }
 
+// Committed private memory, summed over the address space (Wine reports PrivateUsage as 0).
+uint64_t private_bytes() {
+    uint64_t total = 0;
+    MEMORY_BASIC_INFORMATION region{};
+    for (auto* at = static_cast<const char*>(nullptr);
+         VirtualQuery(at, &region, sizeof(region)) == sizeof(region);
+         at = static_cast<const char*>(region.BaseAddress) + region.RegionSize) {
+        if (region.State == MEM_COMMIT && region.Type == MEM_PRIVATE) total += region.RegionSize;
+        if (region.RegionSize == 0) break;
+    }
+    return total;
+}
+
+std::string utf8(const wchar_t* text) {
+    const int bytes = WideCharToMultiByte(CP_UTF8, 0, text, -1, nullptr, 0, nullptr, nullptr);
+    CHECK(bytes > 0);
+    std::string out(static_cast<size_t>(bytes), '\0');
+    WideCharToMultiByte(CP_UTF8, 0, text, -1, out.data(), bytes, nullptr, nullptr);
+    out.pop_back();
+    return out;
+}
+
+// --- Concurrency ---
+
+constexpr char kShared[] = "shared/race";
+
+struct ThreadJob {
+    void* api;
+    void* container;
+    int id;
+    int count;
+};
+
+DWORD WINAPI thread_writer(void* context) {
+    const auto& job = *static_cast<ThreadJob*>(context);
+    const Saves saves{job.api, nullptr};
+    for (int k = 0; k < job.count; ++k) {
+        char blob[32];
+        std::snprintf(blob, sizeof(blob), "t%d_%d", job.id, k);
+        saves.put(job.container, blob, blob);
+    }
+    return 0;
+}
+
+// Cross-process payload: the blob name, then padding to 64 KiB so each rewrite takes a while.
+std::string payload(const char* blob) {
+    std::string data(blob);
+    data.resize(64 * 1024, '.');
+    return data;
+}
+
+// Child process: submits count blobs "w<id>_<k>" to kShared once the parent's event is set.
+int writer_main(int id, int count, const wchar_t* event_name) {
+    CHECK(XGameRuntimeInitialize() == S_OK);
+    const Saves saves{query(0xB7581601, 0xB7581602), nullptr};
+    void* user = add_user(nullptr);
+    void* provider = saves.provider(user);
+    void* container = saves.container(provider, kShared);
+    const HANDLE go = OpenEventW(SYNCHRONIZE, FALSE, event_name);
+    CHECK(go && WaitForSingleObject(go, 30000) == WAIT_OBJECT_0);
+    CloseHandle(go);
+    for (int k = 0; k < count; ++k) {
+        char blob[32];
+        std::snprintf(blob, sizeof(blob), "w%d_%d", id, k);
+        saves.put(container, blob, payload(blob));
+    }
+    XGameRuntimeUninitialize();
+    return 0;
+}
+
+void check_blobs(const Blobs& blobs, char prefix, int writers, int count) {
+    for (int id = 0; id < writers; ++id) {
+        for (int k = 0; k < count; ++k) {
+            char blob[32];
+            std::snprintf(blob, sizeof(blob), "%c%d_%d", prefix, id, k);
+            const auto* data = find_blob(blobs, blob);
+            CHECK(data && *data == (prefix == 'w' ? payload(blob) : std::string(blob)));
+        }
+    }
+}
+
 } // namespace
 
 int main() {
+    int argc = 0;
+    wchar_t** argv = CommandLineToArgvW(GetCommandLineW(), &argc);
+    if (argc == 5 && std::wcscmp(argv[1], L"--writer") == 0) {
+        return writer_main(std::wcstol(argv[2], nullptr, 10), std::wcstol(argv[3], nullptr, 10), argv[4]);
+    }
+
     const time_t started = std::time(nullptr);
     CHECK(XGameRuntimeInitialize() == S_OK);
 
     // --- QueryApiImpl reaches both families as COM objects ---
     const GUID save_clsid = synthetic(0xB7581601), save_iid = synthetic(0xB7581602);
     const GUID package_clsid = synthetic(0xB7581701), package_iid = synthetic(0xB7581702);
-    void* api = nullptr;
-    void* package = nullptr;
-    CHECK(QueryApiImpl(&save_clsid, &save_iid, &api) == S_OK && api);
-    CHECK(QueryApiImpl(&package_clsid, &package_iid, &package) == S_OK && package && package != api);
+    const GUID iunknown = {0x00000000, 0x0000, 0x0000, {0xC0, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x46}};
+    void* api = query(0xB7581601, 0xB7581602);
+    void* package = query(0xB7581701, 0xB7581702);
+    CHECK(package != api);
     void* wrong = reinterpret_cast<void*>(static_cast<uintptr_t>(1));
     CHECK(QueryApiImpl(&save_clsid, &package_iid, &wrong) == E_NOINTERFACE && !wrong);
+    void* via_unknown = nullptr;
+    CHECK(QueryApiImpl(&save_clsid, &iunknown, &via_unknown) == S_OK && via_unknown == api);
+    CHECK(QueryApiImpl(&package_clsid, &iunknown, &via_unknown) == S_OK && via_unknown == package);
     check_com(api, save_iid, package_iid);
     check_com(package, package_iid, save_iid);
 
     void* queue = nullptr;
     CHECK(XTaskQueueCreate(kManual, kManual, &queue) == S_OK && queue);
     const Saves saves{api, queue};
-    Async async{queue, nullptr, nullptr, {}};
-    void* user = nullptr;
-    CHECK(XUserAddAsync(0, &async) == S_OK);
-    saves.run();
-    CHECK(XUserAddResult(&async, &user) == S_OK && user);
+    void* user = add_user(queue);
 
-    const std::string dir = saves_directory();
-    container_files(dir, true);
+    const std::string dir = saves_directory(kScid);
+    const std::string other_dir = saves_directory("scid-b");
+    files(dir, "*", true);
+    files(other_dir, "*", true);
 
     // --- Provider ---
+    Async async{queue, nullptr, nullptr, {}};
     const auto init_async = slot<InitAsyncFn>(api, kInitAsync);
-    CHECK(init_async(api, nullptr, "scid", false, &async) == kInvalidHandle);
+    CHECK(init_async(api, nullptr, kScid, false, &async) == kInvalidHandle);
     CHECK(init_async(api, user, nullptr, false, &async) == E_INVALIDARG);
-    CHECK(init_async(api, user, "scid", false, nullptr) == E_POINTER);
+    CHECK(init_async(api, user, kScid, false, nullptr) == E_POINTER);
     void* provider = saves.provider(user);
 
     // --- Container names (XGameSaveCreateContainer rules) ---
@@ -326,7 +524,7 @@ int main() {
         Async read{queue, nullptr, nullptr, {}};
         CHECK(slot<ReadAsyncFn>(api, kReadAsync)(api, main_container, nullptr, 1, &read) == E_INVALIDARG);
     }
-    CHECK(container_files(dir, false) == 0);
+    CHECK(files(dir, "*.bxgs", false) == 0);
 
     // --- Write, then read back ---
     std::string progress(300, '\0');
@@ -336,25 +534,21 @@ int main() {
     CHECK(saves.write(update, "progress", progress.data(), progress.size()) == S_OK);
     CHECK(saves.write(update, "progress", progress.data(), progress.size()) == E_INVALIDARG);
     CHECK(saves.write(update, "", "x", 1) == E_INVALIDARG);
+    CHECK(saves.write(update, std::string(257, 'n').c_str(), "x", 1) == E_INVALIDARG);  // 256-byte name limit
     CHECK(saves.write(update, "settings", settings.data(), settings.size()) == S_OK);
-    {
-        // The staged total may not exceed GS_MAX_BLOB_SIZE (16 MB, read as 16 MiB).
-        std::vector<char> big(kMiB16);
-        const size_t staged = progress.size() + settings.size();
-        CHECK(saves.write(update, "big", big.data(), kMiB16 - staged + 1) == kUpdateTooBig);
-    }
     {
         Async submit{queue, nullptr, nullptr, {}};
         CHECK(slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, update, &submit) == S_OK);
         Async twice{queue, nullptr, nullptr, {}};
-        CHECK(slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, update, &twice) == kIllegalCall);
+        CHECK(slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, update, &twice) == kIllegalCall);  // pending
         CHECK(saves.write(update, "late", "x", 1) == kIllegalCall);
-        saves.run();
+        saves.wait(submit);
         size_t size = 1;
         CHECK(XAsyncGetResultSize(&submit, &size) == S_OK && size == 0);
         CHECK(slot<AsyncResultFn>(api, kSubmitUpdateResult)(api, &submit) == S_OK);
     }
     saves.close(kCloseUpdate, update);
+    CHECK(saves.write(update, "closed", "x", 1) == kInvalidHandle);  // CloseUpdate closes it
 
     auto blobs = saves.read(main_container, {});
     CHECK(blobs.size() == 2);
@@ -363,18 +557,25 @@ int main() {
     blobs = saves.read(main_container, {"settings"});
     CHECK(blobs.size() == 1 && blobs[0].first == "settings" && blobs[0].second == settings);
 
+    // The 16 MiB limit counts blob names: "big" (3 bytes) plus 16 MiB - 3 bytes fills it exactly.
+    {
+        std::vector<char> big(kMiB16);
+        void* full = saves.update(main_container, nullptr);
+        CHECK(saves.write(full, "big", big.data(), kMiB16 - 3 + 1) == kUpdateTooBig);
+        CHECK(saves.write(full, "big", big.data(), kMiB16 - 3) == S_OK);
+        CHECK(saves.write(full, "x", nullptr, 0) == kUpdateTooBig);
+        saves.close(kCloseUpdate, full);
+    }
+
     // --- A second container, then enumeration ---
     void* slot_container = saves.container(provider, "slot_1");
-    void* slot_update = saves.update(slot_container, nullptr);
-    CHECK(saves.write(slot_update, "a", "A", 1) == S_OK);
-    saves.submit(slot_update);
-    saves.close(kCloseUpdate, slot_update);
+    saves.put(slot_container, "a", "A");
     saves.close(kCloseContainer, slot_container);
-    CHECK(container_files(dir, false) == 2);
+    CHECK(files(dir, "*.bxgs", false) == 2);
 
     const auto enumerate = slot<EnumerateFn>(api, kEnumerate);
-    Listing listing;
-    CHECK(enumerate(api, provider, &listing, collect) == S_OK && listing.seen.size() == 2);
+    Listing listing = list(saves, provider);
+    CHECK(listing.seen.size() == 2);
     const time_t now = std::time(nullptr);
     for (const auto& seen : listing.seen) {
         CHECK(!seen.needs_sync && seen.modified >= started - 5 && seen.modified <= now + 5);
@@ -386,22 +587,98 @@ int main() {
         }
     }
     CHECK(listing.seen[0].name != listing.seen[1].name);
-    // A file that does not parse is skipped (and logged as corrupt_container), not reported.
-    {
-        const std::string junk = dir + "\\0000000000000000.bxgs";
-        const HANDLE file = CreateFileA(junk.c_str(), GENERIC_WRITE, 0, nullptr, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL,
-                                        nullptr);
-        CHECK(file != INVALID_HANDLE_VALUE);
-        DWORD wrote = 0;
-        CHECK(WriteFile(file, "not a container", 15, &wrote, nullptr) && wrote == 15 && CloseHandle(file));
-        Listing with_junk;
-        CHECK(enumerate(api, provider, &with_junk, collect) == S_OK && with_junk.seen.size() == 2);
-        CHECK(DeleteFileA(junk.c_str()));
-    }
     Listing first_only;
     first_only.stop_after = 1;
     CHECK(enumerate(api, provider, &first_only, collect) == S_OK && first_only.seen.size() == 1);
     CHECK(enumerate(api, provider, nullptr, nullptr) == E_INVALIDARG);
+
+    // --- Saves are separated by SCID ---
+    {
+        void* other = saves.provider(user, "scid-b");
+        CHECK(list(saves, other).seen.empty());
+        void* same_name = saves.container(other, "profiles/main");
+        CHECK(saves.read(same_name, {}).empty());
+        saves.put(same_name, "progress", "other scid");
+        CHECK(files(other_dir, "*.bxgs", false) == 1);
+        void* staged = saves.update(same_name, nullptr);
+        {
+            std::vector<char> big(kMiB16 - 16);
+            CHECK(saves.write(staged, "staged", big.data(), big.size()) == S_OK);
+        }
+        const uint64_t open_bytes = private_bytes();
+        saves.close(kCloseProvider, other);
+        // Closing a provider closes its containers and their updates, and frees what they staged.
+        CHECK(private_bytes() + 8 * (1u << 20) < open_bytes);
+        CHECK(saves.read_status(same_name, {}) == kInvalidHandle);
+        CHECK(saves.write(staged, "x", "x", 1) == kInvalidHandle);
+        CHECK(*find_blob(saves.read(main_container, {"progress"}), "progress") == progress);
+    }
+
+    // --- Files that are damaged, foreign or unreadable ---
+    {
+        const auto crafted = [&](const char* name, std::string bytes) {
+            write_file(container_path(dir, name), bytes);
+            void* container = saves.container(provider, name);
+            const auto status = saves.read_status(container, {});
+            saves.close(kCloseContainer, container);
+            return status;
+        };
+        CHECK(crafted("craft_ok", container_bytes("craft_ok", {{"a", "1"}})) == S_OK);  // the format is as documented
+        CHECK(crafted("craft_tail", container_bytes("craft_tail", {{"a", "1"}}) + "!") == kCorrupt);
+        CHECK(crafted("craft_dup", container_bytes("craft_dup", {{"a", "1"}, {"a", "2"}})) == kCorrupt);
+        std::string truncated = container_bytes("craft_cut", {{"a", "12345"}});
+        truncated.pop_back();
+        CHECK(crafted("craft_cut", truncated) == kCorrupt);
+        CHECK(crafted("craft_nul", container_bytes(std::string("craft_nul\0x", 11), {})) == kCorrupt);
+        CHECK(crafted("craft_blobnul", container_bytes("craft_blobnul", {{std::string("a\0b", 3), "1"}})) == kCorrupt);
+        CHECK(crafted("craft_badname", container_bytes("bad name", {})) == kCorrupt);
+        // Enumeration lists the two real containers and the valid crafted one, skipping the rest.
+        CHECK(list(saves, provider).seen.size() == 3);
+
+        // A file another process holds exclusively is skipped, not fatal to enumeration.
+        const HANDLE locked = CreateFileA(container_path(dir, "craft_ok").c_str(), GENERIC_READ, 0, nullptr,
+                                          OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        CHECK(locked != INVALID_HANDLE_VALUE);
+        CHECK(list(saves, provider).seen.size() == 2);
+        CloseHandle(locked);
+        CHECK(files(dir, "*.bxgs", false) == 9);
+        for (const char* name : {"craft_ok", "craft_tail", "craft_dup", "craft_cut", "craft_nul", "craft_blobnul",
+                                 "craft_badname"}) {
+            CHECK(DeleteFileA(container_path(dir, name).c_str()));
+        }
+    }
+
+    // --- A failed replace keeps the old save; a successful one replaces the file ---
+    {
+        const auto file_id = [&] {
+            const HANDLE file = CreateFileA(container_path(dir, "profiles/main").c_str(), 0,
+                                            FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
+                                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+            CHECK(file != INVALID_HANDLE_VALUE);
+            BY_HANDLE_FILE_INFORMATION info{};
+            CHECK(GetFileInformationByHandle(file, &info));
+            CloseHandle(file);
+            return (static_cast<uint64_t>(info.nFileIndexHigh) << 32) | info.nFileIndexLow;
+        };
+        const uint64_t original = file_id();
+        // A reader that allows writes but not deletion blocks the rename, not an in-place write.
+        const HANDLE reader = CreateFileA(container_path(dir, "profiles/main").c_str(), GENERIC_READ,
+                                          FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr, OPEN_EXISTING,
+                                          FILE_ATTRIBUTE_NORMAL, nullptr);
+        CHECK(reader != INVALID_HANDLE_VALUE);
+        void* blocked = saves.update(main_container, nullptr);
+        CHECK(saves.write(blocked, "progress", "BLOCKED", 7) == S_OK);
+        CHECK(FAILED(saves.submit_status(blocked)));
+        CloseHandle(reader);
+        CHECK(*find_blob(saves.read(main_container, {"progress"}), "progress") == progress);
+        CHECK(files(dir, "*.tmp", false) == 0);
+        // The failed update was not consumed: submitting it again now succeeds.
+        CHECK(file_id() == original);
+        saves.submit(blocked);
+        saves.close(kCloseUpdate, blocked);
+        CHECK(*find_blob(saves.read(main_container, {"progress"}), "progress") == "BLOCKED");
+        CHECK(file_id() != original);  // written to a new file and renamed over, not in place
+    }
 
     // --- Persistence across provider close and reopen ---
     saves.close(kCloseContainer, main_container);
@@ -410,47 +687,91 @@ int main() {
     provider = saves.provider(user);
     main_container = saves.container(provider, "profiles/main");
     blobs = saves.read(main_container, {"settings", "progress"});
-    CHECK(blobs.size() == 2 && *find_blob(blobs, "progress") == progress && *find_blob(blobs, "settings") == settings);
+    CHECK(blobs.size() == 2 && *find_blob(blobs, "progress") == "BLOCKED" && *find_blob(blobs, "settings") == settings);
 
     // Overwrite one blob through the process task queue; the other blob and the display name stay.
     const std::string progress2 = "lvl=9";
-    update = saves.update(main_container, nullptr);
-    CHECK(saves.write(update, "progress", progress2.data(), progress2.size()) == S_OK);
     {
-        Async pooled{nullptr, nullptr, nullptr, {}};
-        CHECK(slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, update, &pooled) == S_OK);
-        CHECK(XAsyncGetStatus(&pooled, true) == S_OK);
-        CHECK(slot<AsyncResultFn>(api, kSubmitUpdateResult)(api, &pooled) == S_OK);
+        const Saves pooled{api, nullptr};
+        pooled.put(main_container, "progress", progress2);
     }
-    saves.close(kCloseUpdate, update);
     blobs = saves.read(main_container, {});
     CHECK(blobs.size() == 2 && *find_blob(blobs, "progress") == progress2 && *find_blob(blobs, "settings") == settings);
-    listing = {};
-    CHECK(enumerate(api, provider, &listing, collect) == S_OK);
-    for (const auto& seen : listing.seen) {
+    for (const auto& seen : list(saves, provider).seen) {
         if (seen.name == "profiles/main") CHECK(seen.display_name == "Main profile");
     }
 
-    // A canceled submit writes nothing.
-    update = saves.update(main_container, "Canceled");
+    // A canceled submit writes nothing, and the update can then be submitted again.
+    update = saves.update(main_container, nullptr);
     CHECK(saves.write(update, "progress", "X", 1) == S_OK);
     {
         Async canceled{queue, nullptr, nullptr, {}};
         CHECK(slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, update, &canceled) == S_OK);
         XAsyncCancel(&canceled);
-        saves.run();
+        saves.wait(canceled);
         CHECK(XAsyncGetStatus(&canceled, false) == E_ABORT);
         CHECK(slot<AsyncResultFn>(api, kSubmitUpdateResult)(api, &canceled) == E_ABORT);
     }
+    CHECK(*find_blob(saves.read(main_container, {"progress"}), "progress") == progress2);
+    saves.submit(update);
     saves.close(kCloseUpdate, update);
-    blobs = saves.read(main_container, {"progress"});
-    CHECK(blobs.size() == 1 && blobs[0].second == progress2);
+    CHECK(*find_blob(saves.read(main_container, {"progress"}), "progress") == "X");
 
-    // A closed container handle is rejected.
+    // A closed container handle is rejected, and so are its updates.
+    void* orphan = saves.update(main_container, nullptr);
     saves.close(kCloseContainer, main_container);
     CHECK(saves.read_status(main_container, {}) == kInvalidHandle);
+    CHECK(saves.write(orphan, "x", "x", 1) == kInvalidHandle);
     update = nullptr;
     CHECK(slot<CreateUpdateFn>(api, kCreateUpdate)(api, main_container, "x", &update) == kInvalidHandle && !update);
+
+    // --- Concurrent submits to one container: threads, then processes ---
+    void* shared = saves.container(provider, kShared);
+    {
+        constexpr int kThreads = 8, kEach = 8;
+        ThreadJob jobs[kThreads];
+        HANDLE threads[kThreads];
+        for (int i = 0; i < kThreads; ++i) {
+            jobs[i] = {api, shared, i, kEach};
+            threads[i] = CreateThread(nullptr, 0, thread_writer, &jobs[i], 0, nullptr);
+            CHECK(threads[i]);
+        }
+        CHECK(WaitForMultipleObjects(kThreads, threads, TRUE, 60000) == WAIT_OBJECT_0);
+        for (HANDLE thread : threads) CloseHandle(thread);
+        blobs = saves.read(shared, {});
+        CHECK(blobs.size() == kThreads * kEach);
+        check_blobs(blobs, 't', kThreads, kEach);
+    }
+    {
+        constexpr int kWriters = 4, kEach = 40;
+        wchar_t event_name[64];
+        std::swprintf(event_name, 64, L"Local\\bx_saves_go_%lu", GetCurrentProcessId());
+        const HANDLE go = CreateEventW(nullptr, TRUE, FALSE, event_name);
+        CHECK(go);
+        wchar_t exe[MAX_PATH];
+        CHECK(GetModuleFileNameW(nullptr, exe, MAX_PATH) > 0);
+        PROCESS_INFORMATION children[kWriters];
+        for (int id = 0; id < kWriters; ++id) {
+            wchar_t command[MAX_PATH + 128];
+            std::swprintf(command, MAX_PATH + 128, L"\"%ls\" --writer %d %d %ls", exe, id, kEach, event_name);
+            STARTUPINFOW startup{};
+            startup.cb = sizeof(startup);
+            CHECK(CreateProcessW(exe, command, nullptr, nullptr, FALSE, 0, nullptr, nullptr, &startup, &children[id]));
+        }
+        CHECK(SetEvent(go));
+        for (auto& child : children) {
+            DWORD code = 99;
+            CHECK(WaitForSingleObject(child.hProcess, 120000) == WAIT_OBJECT_0);
+            CHECK(GetExitCodeProcess(child.hProcess, &code) && code == 0);
+            CloseHandle(child.hProcess);
+            CloseHandle(child.hThread);
+        }
+        CloseHandle(go);
+        blobs = saves.read(shared, {});
+        CHECK(blobs.size() == 8 * 8 + kWriters * kEach);
+        check_blobs(blobs, 'w', kWriters, kEach);
+    }
+    saves.close(kCloseContainer, shared);
 
     // --- XPackage ---
     char id[64]{};
@@ -466,30 +787,94 @@ int main() {
     CHECK(slot<GetKindFn>(package, kGetKind)(package, id, &kind) == S_OK && kind == 0);  // XPackageKind::Game
     CHECK(slot<GetKindFn>(package, kGetKind)(package, "BXPKG0000000000000000", &kind) == kNotFound);
 
-    char exe[MAX_PATH]{};
-    CHECK(GetModuleFileNameA(nullptr, exe, MAX_PATH) > 0);
-    *std::strrchr(exe, '\\') = '\0';
+    // The mount path is the executable's directory in UTF-8 (W API, so non-ASCII paths work).
+    wchar_t exe_w[MAX_PATH]{};
+    CHECK(GetModuleFileNameW(nullptr, exe_w, MAX_PATH) > 0);
+    *std::wcsrchr(exe_w, L'\\') = L'\0';
+    const std::string exe_dir = utf8(exe_w);
     void* mount = nullptr;
     CHECK(slot<MountFn>(package, kMount)(package, "BXPKG0000000000000000", &mount) == kNotFound && !mount);
     CHECK(slot<MountFn>(package, kMount)(package, id, &mount) == S_OK && mount);
     size_t path_size = 0;
     CHECK(slot<PathSizeFn>(package, kGetMountPathSize)(package, mount, &path_size) == S_OK);
-    CHECK(path_size == std::strlen(exe) + 1);
+    CHECK(path_size == exe_dir.size() + 1);
     std::vector<char> path(path_size);
     CHECK(slot<PathFn>(package, kGetMountPath)(package, mount, path_size - 1, path.data()) == kInsufficient);
     CHECK(slot<PathFn>(package, kGetMountPath)(package, mount, path_size, path.data()) == S_OK);
-    CHECK(std::strcmp(path.data(), exe) == 0);
+    CHECK(exe_dir == path.data());
+    // Handle types do not overlap: a mount handle is not a provider handle.
+    saves.close(kCloseProvider, mount);
+    CHECK(list(saves, provider).seen.size() == 3);
+    CHECK(slot<PathSizeFn>(package, kGetMountPathSize)(package, mount, &path_size) == S_OK);
     slot<CloseFn>(package, kCloseMount)(package, mount);
     CHECK(slot<PathSizeFn>(package, kGetMountPathSize)(package, mount, &path_size) == kInvalidHandle);
 
-    // --- After uninitialize, handles are stale ---
+    // --- Uninitialize then reinitialize: old handles stay dead, queued work does not run ---
+    {
+        void* old_container = saves.container(provider, "profiles/main");
+        void* old_update = saves.update(old_container, nullptr);
+        CHECK(saves.write(old_update, "progress", "STALE", 5) == S_OK);
+        void* old_mount = nullptr;
+        CHECK(slot<MountFn>(package, kMount)(package, id, &old_mount) == S_OK);
+
+        // Results and staged data held across the uninitialize must be released by it.
+        std::vector<char> big(kMiB16 - 8);
+        void* heavy = saves.update(old_container, nullptr);
+        CHECK(saves.write(heavy, "heavy", big.data(), big.size()) == S_OK);
+        std::vector<Async> unread(6, Async{queue, nullptr, nullptr, {}});
+        void* big_container = saves.container(provider, "big");
+        {
+            void* filler = saves.update(big_container, nullptr);
+            CHECK(saves.write(filler, "data", big.data(), big.size()) == S_OK);
+            saves.submit(filler);
+            saves.close(kCloseUpdate, filler);
+        }
+        big = {};
+        const uint64_t before = private_bytes();
+        for (auto& read : unread) {
+            CHECK(slot<ReadAsyncFn>(api, kReadAsync)(api, big_container, nullptr, 0, &read) == S_OK);
+            CHECK(XTaskQueueDispatch(queue, kWork, 0));
+        }
+        const uint64_t held = private_bytes();
+        // Queued last on the manual queue, so the dispatches above do not run it.
+        Async pending{queue, nullptr, nullptr, {}};
+        CHECK(slot<SubmitAsyncFn>(api, kSubmitUpdateAsync)(api, old_update, &pending) == S_OK);
+
+        XGameRuntimeUninitialize();
+        CHECK(XGameRuntimeInitialize() == S_OK);
+        const uint64_t after = private_bytes();
+        std::printf("memory: before reads %llu MiB, with 6 unread results %llu MiB, after uninitialize %llu MiB\n",
+                    static_cast<unsigned long long>(before >> 20), static_cast<unsigned long long>(held >> 20),
+                    static_cast<unsigned long long>(after >> 20));
+        // The measurement sees the six results (about 16 MiB each)...
+        CHECK(held > before + 80 * (1u << 20));
+        // ...and uninitialize released them and the open 16 MiB update counted in "before".
+        CHECK(after + 8 * (1u << 20) < before);
+
+        // The submit queued before uninitialize must not write now.
+        CHECK(XTaskQueueDispatch(queue, kWork, 0));
+        CHECK(XAsyncGetStatus(&pending, false) == kNotInitialized);
+        CHECK(slot<AsyncResultFn>(api, kSubmitUpdateResult)(api, &pending) == kNotInitialized);
+        CHECK(slot<CreateContainerFn>(api, kCreateContainer)(api, provider, "slot_1", &handle) == kInvalidHandle);
+        CHECK(saves.read_status(old_container, {}) == kInvalidHandle);
+        CHECK(saves.write(old_update, "x", "x", 1) == kInvalidHandle);
+        CHECK(slot<PathSizeFn>(package, kGetMountPathSize)(package, old_mount, &path_size) == kInvalidHandle);
+
+        void* fresh_user = add_user(queue);
+        void* fresh = saves.provider(fresh_user);
+        void* check = saves.container(fresh, "profiles/main");
+        CHECK(*find_blob(saves.read(check, {"progress"}), "progress") == "X");
+        XUserCloseHandle(fresh_user);
+    }
+
+    // --- After the last uninitialize, handles are stale ---
     XUserCloseHandle(user);
     XTaskQueueCloseHandle(queue);
     XGameRuntimeUninitialize();
     CHECK(create_container(api, provider, "slot_1", &handle) == kNotInitialized);
     CHECK(slot<GetIdFn>(package, kGetId)(package, sizeof(id), id) == kNotInitialized);
 
-    std::printf("PASS: test_xgameruntime_saves (%llu bytes round-tripped across provider reopen; package %s)\n",
-                static_cast<unsigned long long>(progress.size() + settings.size()), id);
+    std::printf("PASS: test_xgameruntime_saves (round trip, SCID isolation, damaged files, failed replace, "
+                "64 threaded + 160 cross-process submits, uninitialize; package %s)\n", id);
     return 0;
 }
