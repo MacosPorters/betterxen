@@ -11,10 +11,10 @@ This checklist separates publication integrity, narrowly accepted findings, unre
 - [x] Check documentation, Python sources, credential/personal-path scans and excluded executable/cache artifacts. Preserve byte-exact source snapshots; any retained whitespace warning is documented rather than silently reformatted.
 - [x] Preserve per-file allocator MIT provenance/notices and external-only vendor/runtime status; no proprietary runtime or executable payload is published.
 - [x] Confirm no production, ABI, main or shared-branch source modification. Research publication is confined to `research/473-workstream-a-memory`.
-- [ ] Complete this publication's DCO sign-off, remote-HEAD verification and pinned issue handoff. The issue handoff, not a self-referential hash in this document, records the actual published SHA.
+- [x] Publish the DCO-signed research update at `d3ae607fb68865fb5cd449f11d43d36543d1432a`, verify the remote HEAD and post the [pinned issue handoff](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205840779). The handoff records the latest verified publication SHA, including this checklist completion; it does not substitute for final independent review.
 - [ ] Obtain Asufte's final review of this exact new consolidation revision. Prior endorsement is not automatically an endorsement of later changes.
 
-The first seven checks are mechanical/source checks, not self-certification of experimental results. The final two are completed by the recorded publication and independent review respectively; an unchecked item is not a passing result.
+The first seven checks are mechanical/source checks, not self-certification of experimental results. Publication is recorded separately from independent review; the latter remains pending, and an unchecked item is not a passing result.
 
 ## Thirteen independently accepted scopes
 
