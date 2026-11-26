@@ -1,6 +1,6 @@
 #!/bin/sh
 # SPDX-License-Identifier: GPL-3.0-or-later
-# Build the integrated workload with the pinned llvm-mingw (docs/research/hybrid-toolchain.md).
+# Build the integrated workload with the pinned llvm-mingw (https://github.com/MacosPorters/betterxen/blob/54264e23a417e861834ee879f810717385b91f58/docs/research/hybrid-toolchain.md).
 #   tests/conformance/test_d3d11_integrated/build.sh <llvm-mingw-dir> [output-dir]
 set -eu
 TC=${1:?usage: build.sh LLVM_MINGW_DIR [OUTPUT_DIR]}

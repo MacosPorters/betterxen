@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // Original BetterXen workload (issue #364): a Rust Windows console program that checks itself.
 // Exercises thread-local storage and threads, which the contributor notes in
-// docs/research/upstream-integration-audit.md report as the failure point of the plain
+// https://github.com/MacosPorters/betterxen/blob/54264e23a417e861834ee879f810717385b91f58/docs/research/upstream-integration-audit.md report as the failure point of the plain
 // `-gnu` Windows target. Exit 0 means every check passed.
 use std::cell::Cell;
 use std::sync::atomic::{AtomicU64, Ordering};

@@ -9,7 +9,7 @@
 #
 # <llvm-mingw-dir> is an unpacked llvm-mingw release (https://github.com/mstorsjo/llvm-mingw;
 # wrappers/scripts ISC, compiler and runtime under their component licences);
-# see docs/research/hybrid-toolchain.md for the pinned
+# see https://github.com/MacosPorters/betterxen/blob/54264e23a417e861834ee879f810717385b91f58/docs/research/hybrid-toolchain.md for the pinned
 # release and checksum. Rust workloads use the x86_64-pc-windows-gnullvm and
 # aarch64-pc-windows-gnullvm targets (rustup target add ...) linked with that toolchain.
 set -eu

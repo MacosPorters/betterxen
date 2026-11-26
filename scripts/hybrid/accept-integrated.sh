@@ -11,7 +11,7 @@
 # Shader Model 6 needs Microsoft's DXC (scripts/hybrid/install-dxc.py); point
 # BETTERXEN_DXC_DIR at its bin/x64 directory.
 # Needs CrossOver, an existing win11_64 bottle, Rust 1.100.0, the pinned llvm-mingw
-# (docs/research/hybrid-toolchain.md), and for the on-screen check a GUI session with the
+# (https://github.com/MacosPorters/betterxen/blob/54264e23a417e861834ee879f810717385b91f58/docs/research/hybrid-toolchain.md), and for the on-screen check a GUI session with the
 # Screen Recording and Accessibility permissions (the latter for the keyboard check, which
 # brings the test window to the front: do not type while it runs). Opens small windows; do not
 # run on a busy machine or alongside anything else using the same bottle.
