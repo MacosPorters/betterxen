@@ -185,9 +185,25 @@ fn crossover_build() -> Option<String> {
         })
 }
 
-fn save(dir: &std::path::Path, name: &str, j: &Json) {
-    let _ = std::fs::create_dir_all(dir);
-    let _ = std::fs::write(dir.join(name), j.render());
+fn save(dir: &std::path::Path, kind: &str, j: &Json) -> Result<(), String> {
+    betterxen_hybrid::records::save(dir, kind, j)
+        .map(|path| eprintln!("report saved: {}", path.display()))
+        .map_err(|error| format!("cannot save {kind} report in {}: {error}", dir.display()))
+}
+
+fn finish_report(passed: bool, out: Option<&std::path::Path>, kind: &str, j: &Json) -> ExitCode {
+    print!("{}", j.render());
+    if let Some(dir) = out
+        && let Err(error) = save(dir, kind, j)
+    {
+        eprintln!("{error}");
+        return ExitCode::from(1);
+    }
+    if passed {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 fn run_cmd(args: &[String]) -> ExitCode {
@@ -199,24 +215,12 @@ fn run_cmd(args: &[String]) -> ExitCode {
         }
     };
     let r = run::execute(&a.cfg, crossover_build());
-    print!("{}", r.json.render());
-    if let Some(dir) = &a.out {
-        save(
-            dir,
-            &format!(
-                "run-{}.json",
-                std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)
-                    .map_or(0, |d| d.as_secs())
-            ),
-            &r.json,
-        );
-    }
-    if r.class == run::Class::Passed {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::from(1)
-    }
+    finish_report(
+        r.class == run::Class::Passed,
+        a.out.as_deref(),
+        "run",
+        &r.json,
+    )
 }
 
 fn bench_cmd(args: &[String]) -> ExitCode {
@@ -258,15 +262,7 @@ fn bench_cmd(args: &[String]) -> ExitCode {
         ("host", host::collect().to_json()),
         ("results", Json::Arr(per_backend)),
     ]);
-    print!("{}", doc.render());
-    if let Some(dir) = &a.out {
-        save(dir, "bench.json", &doc);
-    }
-    if all_ok {
-        ExitCode::SUCCESS
-    } else {
-        ExitCode::from(1)
-    }
+    finish_report(all_ok, a.out.as_deref(), "bench", &doc)
 }
 
 fn main() -> ExitCode {
@@ -314,5 +310,43 @@ fn main() -> ExitCode {
             eprintln!("{e}");
             ExitCode::from(2)
         }
+    }
+}
+
+#[cfg(test)]
+mod report_tests {
+    use super::*;
+
+    #[test]
+    fn requested_evidence_failure_overrides_a_passing_workload() {
+        let path = std::env::temp_dir().join(format!(
+            "bx-report-invalid-{}-{}",
+            std::process::id(),
+            std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
+        std::fs::write(&path, "keep this file").unwrap();
+        for kind in ["run", "bench"] {
+            assert_eq!(
+                finish_report(true, Some(&path), kind, &Json::Null),
+                ExitCode::from(1)
+            );
+        }
+        assert_eq!(std::fs::read_to_string(&path).unwrap(), "keep this file");
+        std::fs::remove_file(path).unwrap();
+    }
+
+    #[test]
+    fn stdout_only_reporting_preserves_workload_status() {
+        assert_eq!(
+            finish_report(true, None, "run", &Json::Null),
+            ExitCode::SUCCESS
+        );
+        assert_eq!(
+            finish_report(false, None, "bench", &Json::Null),
+            ExitCode::from(1)
+        );
     }
 }

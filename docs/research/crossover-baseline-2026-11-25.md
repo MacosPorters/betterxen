@@ -57,3 +57,13 @@ Observations, with their limits:
 ## What this does and does not establish
 
 Established on this machine and build: CrossOver 26.3 runs original x86-64 console, threaded, Direct3D 11 clear and triangle programs under four graphics backends with correct pixels; it does not run ARM64 Windows programs; BetterXen can detect, supervise, classify and record such runs. Not established: anything about Direct3D 12, real-scene performance, other macOS or CrossOver versions, other machines, or any game. A second contributor still has to reproduce this.
+
+## Saving new baseline evidence
+
+The runner now writes `run-<nanoseconds>-<pid>-<sequence>.json` and
+`bench-<nanoseconds>-<pid>-<sequence>.json` when `--out` is supplied. Exclusive
+creation preserves existing reports, including older `bench.json` files. The
+selected path is printed to stderr; stdout retains the workload classification
+and report JSON. A directory, creation or write error returns a nonzero CLI
+status even if the workload itself passed. These persistence changes do not
+revalidate or replace the historical results above.

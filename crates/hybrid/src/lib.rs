@@ -7,6 +7,7 @@ pub mod frames;
 pub mod host;
 pub mod json;
 pub mod memory;
+pub mod records;
 pub mod run;
 pub mod toolchain;
 
