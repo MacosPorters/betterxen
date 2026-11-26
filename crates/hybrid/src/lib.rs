@@ -1,5 +1,6 @@
-//! BetterXen hybrid tooling: read-only inspection and measurement helpers around an
-//! externally installed CrossOver. Nothing here launches a game or claims compatibility.
+//! BetterXen hybrid tooling: environment checks, executable identification, supervised
+//! launches and measurement around an externally installed CrossOver. Nothing here claims
+//! game or console compatibility.
 
 pub mod cmdutil;
 pub mod crossover;
@@ -7,6 +8,8 @@ pub mod frames;
 pub mod host;
 pub mod json;
 pub mod memory;
+pub mod pe;
+pub mod preflight;
 pub mod records;
 pub mod run;
 pub mod toolchain;

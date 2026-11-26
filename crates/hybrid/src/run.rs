@@ -16,6 +16,14 @@
 //! bottle with `wineserver -k` and its prefix, and do not start the next run until memory has
 //! been returned. Reimplemented here; none of his code is copied.
 //!
+//! `CX_GRAPHICS_BACKEND` and `CX_GRAPHICS_BACKEND_VERSION` are removed from the child's
+//! environment unless a backend was requested. Inherited values silently changed the backend
+//! while the record said none was requested (reproduced by IamHeavyLazer in issue #350).
+//!
+//! A workload may print `gate <name> pass|FAIL <detail>` lines. They are recorded, and a run
+//! whose process exits 0 is still not a pass if any gate failed or a required gate is absent:
+//! starting a process says nothing about whether it initialised.
+//!
 //! A record names the backend *requested* and relies on the workload's own diagnostics
 //! (adapter name, backend log lines) to show what actually ran.
 
@@ -44,6 +52,40 @@ pub struct RunConfig {
     pub settle_bound: Duration,
     /// Free-memory reader; `memory::free_percentage` outside tests.
     pub read_free: fn() -> Option<u8>,
+    /// Gate names that must appear as passed.
+    pub require_gates: Vec<String>,
+    /// Stop the run when stdout and stderr together exceed this many bytes.
+    pub max_output: u64,
+}
+
+/// Backend names accepted for `CX_GRAPHICS_BACKEND`. The installed CrossOver ignores an
+/// unknown value silently, so the runner refuses it instead.
+pub const BACKENDS: [&str; 4] = ["d3dmetal", "dxmt", "dxvk", "wined3d"];
+
+const BACKEND_VARS: [&str; 2] = ["CX_GRAPHICS_BACKEND", "CX_GRAPHICS_BACKEND_VERSION"];
+
+#[derive(Debug, Clone, PartialEq)]
+pub struct Gate {
+    pub name: String,
+    pub passed: bool,
+    pub detail: String,
+}
+
+pub fn parse_gates(stdout: &str) -> Vec<Gate> {
+    stdout
+        .lines()
+        .filter_map(|l| {
+            let mut it = l.trim_end().strip_prefix("gate ")?.splitn(3, ' ');
+            let name = it.next()?.to_string();
+            // Anything other than the exact word "pass" is not a pass.
+            let passed = it.next()? == "pass";
+            Some(Gate {
+                name,
+                passed,
+                detail: it.next().unwrap_or("").to_string(),
+            })
+        })
+        .collect()
 }
 
 #[derive(Debug, Clone, PartialEq)]
@@ -62,6 +104,9 @@ pub enum Class {
     NoDevice,
     MemoryUnreadable,
     LaunchFailed,
+    /// A gate reported failure, or a required gate never reported.
+    GateFailed,
+    OutputLimit,
 }
 
 impl Class {
@@ -78,13 +123,16 @@ impl Class {
             Class::NoDevice => "no_graphics_device".into(),
             Class::MemoryUnreadable => "memory_unreadable".into(),
             Class::LaunchFailed => "launch_failed".into(),
+            Class::GateFailed => "gate_failed".into(),
+            Class::OutputLimit => "stopped_output_limit".into(),
         }
     }
 }
 
 /// Classify a finished (or stopped) run from observable facts only.
 pub fn classify(exit: Option<i32>, stdout: &str, stderr: &str, expect: Option<&str>) -> Class {
-    if stderr.contains("cannot execute") {
+    // A successful program may itself mention "cannot execute" (for example about a child).
+    if exit != Some(0) && stderr.contains("cannot execute") {
         return Class::CannotExecute;
     }
     if stdout.contains("NO DEVICE") && exit == Some(2) {
@@ -135,14 +183,31 @@ pub struct Samples {
     pub mean_cpu_percent_of_core: f64,
     pub min_free_percent: Option<u8>,
     pub samples: u32,
+    pub peak_workload_rss_kb: u64,
+    pub last_workload_rss_kb: u64,
+}
+
+/// RSS (KB) of the workload itself. Observed on CrossOver 26.3: the Windows program is
+/// re-parented to launchd and its command line is a drive-letter path (`Y:\...\name.exe`),
+/// so neither the bundle path nor the bottle path appears in it.
+fn workload_rss_kb(ps: &str, file_name: &str) -> u64 {
+    let needle = format!("\\{file_name}").to_ascii_lowercase();
+    ps.lines()
+        .filter_map(|l| {
+            let l = l.trim_start();
+            let (rss, rest) = l.split_once(char::is_whitespace)?;
+            let (_cpu, command) = rest.trim_start().split_once(char::is_whitespace)?;
+            let command = command.trim_start().to_ascii_lowercase();
+            let b = command.as_bytes();
+            (b.len() > 3 && b[1] == b':' && b[2] == b'\\' && command.contains(&needle))
+                .then(|| rss.parse::<u64>().ok())?
+        })
+        .sum()
 }
 
 /// Sum RSS (KB) and CPU % of processes whose command line mentions the CrossOver bundle or the
 /// bottle directory. Heuristic: processes not started from those paths are not counted.
-fn sample_processes(needles: &[String]) -> (u64, f64) {
-    let Some(out) = crate::cmdutil::run("/bin/ps", &["-axo", "rss=,pcpu=,command="]) else {
-        return (0, 0.0);
-    };
+fn sample_processes(out: &str, needles: &[String]) -> (u64, f64) {
     let (mut rss, mut cpu) = (0u64, 0f64);
     for l in out.lines() {
         if !needles.iter().any(|n| l.contains(n.as_str())) {
@@ -175,6 +240,22 @@ pub struct RunRecord {
     pub stderr: String,
     pub samples: Samples,
     pub json: Json,
+    pub gates: Vec<Gate>,
+    /// Why the launcher could not be started or supervised, when it could not.
+    pub error: Option<String>,
+}
+
+fn file_name(program: &str) -> &str {
+    program.rsplit(['/', '\\']).next().unwrap_or(program)
+}
+
+/// Windows programs and Wine may write bytes that are not UTF-8; losing the whole log over
+/// one of them would hide the evidence.
+fn read_lossy(path: &Path) -> String {
+    std::fs::read(path).map_or_else(
+        |_| String::new(),
+        |b| String::from_utf8_lossy(&b).into_owned(),
+    )
 }
 
 pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
@@ -202,7 +283,13 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         stderr: String::new(),
         samples: Samples::default(),
         json: Json::Null,
+        gates: Vec::new(),
+        error: None,
     };
+    let inherited_backend: Vec<(&str, String)> = BACKEND_VARS
+        .iter()
+        .filter_map(|k| std::env::var(k).ok().map(|v| (*k, v)))
+        .collect();
 
     match free_start {
         None => result.class = Class::MemoryUnreadable,
@@ -210,6 +297,9 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         Some(_) => {
             let files = std::fs::File::create(&out_path)
                 .and_then(|o| std::fs::File::create(&err_path).map(|e| (o, e)));
+            if let Err(error) = &files {
+                result.error = Some(format!("cannot create output files: {error}"));
+            }
             if let Ok((o, e)) = files {
                 let mut cmd = Command::new(&cfg.wine);
                 cmd.arg("--bottle")
@@ -217,11 +307,18 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                     .arg(&cfg.program)
                     .args(&cfg.args);
                 cmd.stdout(Stdio::from(o)).stderr(Stdio::from(e));
+                for key in BACKEND_VARS {
+                    cmd.env_remove(key);
+                }
                 if let Some(b) = &cfg.backend {
                     cmd.env("CX_GRAPHICS_BACKEND", b);
                 }
                 let started = Instant::now();
-                if let Ok(mut child) = cmd.spawn() {
+                let spawned = cmd.spawn();
+                if let Err(error) = &spawned {
+                    result.error = Some(format!("{}: {error}", cfg.wine.display()));
+                }
+                if let Ok(mut child) = spawned {
                     let bundle = cfg
                         .wine
                         .to_string_lossy()
@@ -229,7 +326,8 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                         .next()
                         .unwrap_or("")
                         .to_string();
-                    let needles = vec![bundle, format!("Bottles/{}", cfg.bottle)];
+                    let needles =
+                        vec![bundle, format!("{}/", bottle_prefix(&cfg.bottle).display())];
                     let (mut cpu_sum, mut n) = (0f64, 0u32);
                     let mut stop: Option<Class> = None;
                     let mut last_len = 0u64;
@@ -241,10 +339,23 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                                 break;
                             }
                             Ok(None) => {}
-                            Err(_) => break,
+                            Err(error) => {
+                                result.error = Some(format!("lost track of the launcher: {error}"));
+                                memory::terminate(&mut child, cfg.limits.grace);
+                                stop_bottle(&cfg.wine, &cfg.bottle);
+                                break;
+                            }
                         }
-                        let (rss, cpu) = sample_processes(&needles);
+                        let ps = crate::cmdutil::run("/bin/ps", &["-axo", "rss=,pcpu=,command="])
+                            .unwrap_or_default();
+                        let (rss, cpu) = sample_processes(&ps, &needles);
                         result.samples.peak_rss_kb = result.samples.peak_rss_kb.max(rss);
+                        let own = workload_rss_kb(&ps, file_name(&cfg.program));
+                        if own > 0 {
+                            result.samples.last_workload_rss_kb = own;
+                            result.samples.peak_workload_rss_kb =
+                                result.samples.peak_workload_rss_kb.max(own);
+                        }
                         cpu_sum += cpu;
                         n += 1;
                         match (cfg.read_free)() {
@@ -264,6 +375,9 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                         if len != last_len {
                             last_len = len;
                             last_growth = Instant::now();
+                        }
+                        if stop.is_none() && len > cfg.max_output {
+                            stop = Some(Class::OutputLimit);
                         }
                         if stop.is_none() && started.elapsed() > cfg.timeout {
                             stop = Some(Class::TimedOut);
@@ -300,8 +414,8 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                     result.samples.samples = n;
                     result.samples.mean_cpu_percent_of_core =
                         if n > 0 { cpu_sum / n as f64 } else { 0.0 };
-                    result.stdout = std::fs::read_to_string(&out_path).unwrap_or_default();
-                    result.stderr = std::fs::read_to_string(&err_path).unwrap_or_default();
+                    result.stdout = read_lossy(&out_path);
+                    result.stderr = read_lossy(&err_path);
                     result.class = stop.unwrap_or_else(|| {
                         classify(
                             result.exit,
@@ -310,6 +424,17 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
                             cfg.expect.as_deref(),
                         )
                     });
+                    result.gates = parse_gates(&result.stdout);
+                    if result.class == Class::Passed {
+                        let failed = result.gates.iter().any(|g| !g.passed);
+                        let missing = cfg
+                            .require_gates
+                            .iter()
+                            .any(|r| !result.gates.iter().any(|g| &g.name == r && g.passed));
+                        if failed || missing {
+                            result.class = Class::GateFailed;
+                        }
+                    }
                 }
             }
         }
@@ -411,6 +536,51 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         ("stdout_tail", tail(&result.stdout)),
         ("stderr_tail", tail(&result.stderr)),
     ];
+    fields.extend(vec![
+        (
+            "peak_workload_rss_kb_sampled",
+            Json::Num(result.samples.peak_workload_rss_kb as f64),
+        ),
+        (
+            "last_workload_rss_kb_sampled",
+            Json::Num(result.samples.last_workload_rss_kb as f64),
+        ),
+        (
+            "gates",
+            Json::Arr(
+                result
+                    .gates
+                    .iter()
+                    .map(|g| {
+                        Json::obj(vec![
+                            ("name", Json::str(g.name.clone())),
+                            ("passed", Json::Bool(g.passed)),
+                            ("detail", Json::str(g.detail.clone())),
+                        ])
+                    })
+                    .collect(),
+            ),
+        ),
+        (
+            "required_gates",
+            Json::Arr(
+                cfg.require_gates
+                    .iter()
+                    .map(|g| Json::str(g.clone()))
+                    .collect(),
+            ),
+        ),
+        (
+            "inherited_backend_variables_removed",
+            Json::Obj(
+                inherited_backend
+                    .into_iter()
+                    .map(|(k, v)| (k.to_string(), Json::Str(v)))
+                    .collect(),
+            ),
+        ),
+        ("launcher_error", Json::opt_str(result.error.clone())),
+    ]);
     fields.extend(gpu_wired.json_fields());
     result.json = Json::obj(fields);
     let _ = std::fs::remove_file(&out_path);
@@ -515,6 +685,8 @@ mod tests {
             stall_timeout: None,
             settle_bound: Duration::from_millis(200),
             read_free: memory::free_percentage,
+            require_gates: vec![],
+            max_output: 1 << 20,
         }
     }
 
@@ -686,6 +858,85 @@ mod tests {
         assert!(
             got.contains("Bottles/my-bottle") || got.contains("/my-bottle"),
             "{got}"
+        );
+    }
+
+    #[test]
+    fn gates_decide_even_when_the_process_exits_zero() {
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!("bxrun-gates-{}", std::process::id()));
+        let w = stub(
+            &dir,
+            "echo 'gate init pass ok'; echo 'gate draw FAIL pixels'; echo PASS",
+        );
+        assert_eq!(
+            execute(&cfg(w, 10_000, "g1"), None).class,
+            Class::GateFailed
+        );
+        let w = stub(&dir, "echo 'gate init pass ok'; echo PASS");
+        let mut c = cfg(w, 10_000, "g2");
+        c.require_gates = vec!["init".into()];
+        assert_eq!(execute(&c, None).class, Class::Passed);
+        c.require_gates.push("draw".into());
+        let r = execute(&c, None);
+        assert_eq!(r.class, Class::GateFailed);
+        assert!(r.json.render().contains("\"name\": \"init\""));
+    }
+
+    #[test]
+    fn only_the_exact_word_pass_passes_a_gate() {
+        let g = parse_gates("gate a pass x y\r\ngate b PASS\ngate c skipped\nnot a gate\ngate d");
+        assert_eq!(
+            g.iter()
+                .map(|g| (g.name.as_str(), g.passed))
+                .collect::<Vec<_>>(),
+            [("a", true), ("b", false), ("c", false)]
+        );
+        assert_eq!(g[0].detail, "x y");
+    }
+
+    #[test]
+    fn non_utf8_output_is_kept_and_runaway_output_is_stopped() {
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        let dir = std::env::temp_dir().join(format!("bxrun-bytes-{}", std::process::id()));
+        let w = stub(&dir, "printf '\\377\\n'; echo PASS");
+        assert_eq!(execute(&cfg(w, 10_000, "u1"), None).class, Class::Passed);
+        let w = stub(&dir, "exec /usr/bin/yes");
+        let mut c = cfg(w, 20_000, "u2");
+        c.max_output = 4096;
+        assert_eq!(execute(&c, None).class, Class::OutputLimit);
+    }
+
+    #[test]
+    fn missing_launcher_reports_why() {
+        if !cfg!(target_os = "macos") {
+            return;
+        }
+        let r = execute(&cfg("/nonexistent/wine".into(), 1000, "m"), None);
+        assert_eq!(r.class, Class::LaunchFailed);
+        assert!(r.error.unwrap().contains("/nonexistent/wine"));
+    }
+
+    #[test]
+    fn workload_memory_is_found_by_its_windows_command_line() {
+        // Shapes copied from `ps` output observed under CrossOver 26.3.
+        let ps = " 34444 0.0 /Applications/CrossOver.app/x/winewrapper.exe --run -- /Users/u/w/d3d.exe\n\
+                   89960 1.0 Y:\\w\\d3d.exe --frames 128\n\
+                   28316 0.0 C:\\windows\\system32\\winedevice.exe\n\
+                    1000 0.0 /usr/bin/betterxen-hybrid run -- /Users/u/w/d3d.exe";
+        assert_eq!(workload_rss_kb(ps, "d3d.exe"), 89960);
+        assert_eq!(workload_rss_kb(ps, "other.exe"), 0);
+    }
+
+    #[test]
+    fn a_zero_exit_is_not_reclassified_by_child_process_text() {
+        assert_eq!(
+            classify(Some(0), "PASS", "child: cannot execute", Some("PASS")),
+            Class::Passed
         );
     }
 }

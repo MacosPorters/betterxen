@@ -1,4 +1,6 @@
-use betterxen_hybrid::{crossover, frames, host, json::Json, memory, run, toolchain};
+use betterxen_hybrid::{
+    crossover, frames, host, json::Json, memory, pe, preflight, run, toolchain,
+};
 use std::path::PathBuf;
 use std::process::ExitCode;
 
@@ -9,7 +11,11 @@ const USAGE: &str = "usage: betterxen-hybrid <command>
   frames <file>         frame-time statistics; file has one interval in ms per line (JSON)
   guard [--min-start-free N] [--min-free N] -- CMD ARGS...
                         run CMD; refuse to start / stop it when free memory is low
-  run --bottle B [--backend X] [--timeout S] [--stall-timeout S] [--settle-bound S] [--expect TEXT] [--out DIR]
+  doctor [--bottle B] [--min-start-free N]
+                        check that a run could start here (JSON); non-zero exit if not
+  inspect <file.exe>    identify a Windows executable: machine, subsystem, imports (JSON)
+  run --bottle B [--backend d3dmetal|dxmt|dxvk|wined3d] [--timeout S] [--stall-timeout S]
+      [--settle-bound S] [--expect TEXT] [--require-gates a,b,c] [--out DIR]
       [--min-start-free N] [--min-free N] -- EXE [ARGS...]
                         run a Windows program through CrossOver; write a JSON record
   bench --bottle B --backends a,b,c [--repeat N] [same options] -- EXE [ARGS...]
@@ -104,6 +110,8 @@ struct RunArgs {
     backends: Vec<String>,
     repeat: u32,
     out: Option<PathBuf>,
+    /// What the program file is, recorded with every run.
+    executable: Json,
 }
 
 fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
@@ -115,6 +123,7 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
     let mut stall = None;
     let mut settle = 60u64;
     let mut expect = None;
+    let mut require_gates = Vec::new();
     let mut out = None;
     let (mut min_start, mut min_free) = (50u8, 15u8);
     let mut i = 0;
@@ -132,6 +141,7 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
             "--stall-timeout" => stall = Some(v.parse().map_err(|_| "bad --stall-timeout")?),
             "--settle-bound" => settle = v.parse().map_err(|_| "bad --settle-bound")?,
             "--expect" => expect = Some(v),
+            "--require-gates" => require_gates = v.split(',').map(String::from).collect(),
             "--out" => out = Some(PathBuf::from(v)),
             "--min-start-free" => min_start = v.parse().map_err(|_| "bad --min-start-free")?,
             "--min-free" => min_free = v.parse().map_err(|_| "bad --min-free")?,
@@ -140,6 +150,24 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
         i += 2;
     }
     let program = args.get(i + 1).ok_or("missing program after --")?.clone();
+    let bottle: String = bottle.ok_or("--bottle is required")?;
+    if !preflight::valid_bottle_name(&bottle) {
+        return Err(format!("invalid bottle name {bottle:?}"));
+    }
+    if let Some(unknown) = backend
+        .iter()
+        .chain(backends.iter().filter(|b| *b != "default"))
+        .find(|b| !run::BACKENDS.contains(&b.as_str()))
+    {
+        return Err(format!(
+            "unknown backend {unknown:?} (CrossOver would ignore it silently); use one of {}",
+            run::BACKENDS.join(", ")
+        ));
+    }
+    if program.starts_with('-') {
+        return Err("the program path must not start with '-' (write ./name.exe)".into());
+    }
+    let executable = identify(std::path::Path::new(&program))?;
     let home = PathBuf::from(std::env::var("HOME").unwrap_or_default());
     let installs = crossover::discover(&crossover::candidate_paths(&home));
     let install = installs.first().ok_or("no CrossOver installation found")?;
@@ -150,13 +178,19 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
             wine.display()
         ));
     }
+    if !run::bottle_prefix(&bottle).join("drive_c").is_dir() {
+        return Err(format!(
+            "bottle {bottle:?} not found at {}",
+            run::bottle_prefix(&bottle).display()
+        ));
+    }
     let work = out
         .clone()
         .unwrap_or_else(|| PathBuf::from("artifacts/hybrid-runs"));
     Ok(RunArgs {
         cfg: run::RunConfig {
             wine,
-            bottle: bottle.ok_or("--bottle is required")?,
+            bottle,
             backend,
             program,
             args: args[i + 2..].to_vec(),
@@ -172,11 +206,74 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
             stall_timeout: stall.map(std::time::Duration::from_secs),
             settle_bound: std::time::Duration::from_secs(settle),
             read_free: memory::free_percentage,
+            require_gates,
+            max_output: 64 << 20,
         },
         backends,
         repeat,
         out,
+        executable,
     })
+}
+
+/// Refuse anything that is not a launchable Windows program, and describe what is.
+fn identify(path: &std::path::Path) -> Result<Json, String> {
+    let image = pe::inspect(path)?;
+    image
+        .check_launchable()
+        .map_err(|e| format!("{}: {e}", path.display()))?;
+    let sha256 = betterxen_hybrid::cmdutil::run(
+        "/usr/bin/shasum",
+        &["-a", "256", &path.display().to_string()],
+    )
+    .and_then(|o| o.split_whitespace().next().map(String::from));
+    Ok(Json::obj(vec![
+        ("path", Json::str(path.display().to_string())),
+        ("sha256", Json::opt_str(sha256)),
+        ("image", image.to_json()),
+    ]))
+}
+
+fn with_executable(mut record: Json, executable: &Json) -> Json {
+    if let Json::Obj(fields) = &mut record {
+        fields.push(("executable".into(), executable.clone()));
+    }
+    record
+}
+
+fn doctor(args: &[String]) -> ExitCode {
+    let (mut bottle, mut min_start) = (None, 50u8);
+    let mut it = args.iter();
+    while let Some(a) = it.next() {
+        match (a.as_str(), it.next()) {
+            ("--bottle", Some(v)) => bottle = Some(v.clone()),
+            ("--min-start-free", Some(v)) if v.parse::<u8>().is_ok() => {
+                min_start = v.parse().unwrap_or(min_start)
+            }
+            _ => {
+                eprintln!("{USAGE}");
+                return ExitCode::from(2);
+            }
+        }
+    }
+    let home = PathBuf::from(std::env::var("HOME").unwrap_or_default());
+    let install = crossover::discover(&crossover::candidate_paths(&home))
+        .into_iter()
+        .next();
+    let wine = install.as_ref().map(|i| run::wine_path(&i.path));
+    let facts = preflight::gather(
+        bottle.as_deref(),
+        wine.as_deref()
+            .map(|w| (crossover_build().unwrap_or_else(|| "unknown".into()), w)),
+        min_start,
+    );
+    let checks = preflight::evaluate(&facts);
+    print!("{}", preflight::to_json(&checks).render());
+    if checks.iter().all(|c| c.ok) {
+        ExitCode::SUCCESS
+    } else {
+        ExitCode::from(1)
+    }
 }
 
 fn crossover_build() -> Option<String> {
@@ -222,11 +319,20 @@ fn run_cmd(args: &[String]) -> ExitCode {
         }
     };
     let r = run::execute(&a.cfg, crossover_build());
+    if r.class != run::Class::Passed {
+        eprintln!("run: {}", r.class.name());
+        for g in r.gates.iter().filter(|g| !g.passed) {
+            eprintln!("  gate {} failed: {}", g.name, g.detail);
+        }
+        if let Some(e) = &r.error {
+            eprintln!("  {e}");
+        }
+    }
     finish_report(
         r.class == run::Class::Passed,
         a.out.as_deref(),
         "run",
-        &r.json,
+        &with_executable(r.json, &a.executable),
     )
 }
 
@@ -256,7 +362,7 @@ fn bench_cmd(args: &[String]) -> ExitCode {
             };
             let r = run::execute(&cfg, build.clone());
             all_ok &= r.class == run::Class::Passed;
-            runs.push(r.json);
+            runs.push(with_executable(r.json, &a.executable));
         }
         per_backend.push(Json::obj(vec![
             ("backend", Json::str(b.clone())),
@@ -275,6 +381,7 @@ fn bench_cmd(args: &[String]) -> ExitCode {
 fn main() -> ExitCode {
     match std::env::args().nth(1).as_deref() {
         Some("run") => return run_cmd(&std::env::args().skip(2).collect::<Vec<_>>()),
+        Some("doctor") => return doctor(&std::env::args().skip(2).collect::<Vec<_>>()),
         Some("bench") => return bench_cmd(&std::env::args().skip(2).collect::<Vec<_>>()),
         _ => {}
     }
@@ -284,6 +391,10 @@ fn main() -> ExitCode {
     let args: Vec<String> = std::env::args().skip(1).collect();
     let result: Result<Json, String> = match args.first().map(String::as_str) {
         Some("host") => Ok(host::collect().to_json()),
+        Some("inspect") => match args.get(1) {
+            None => Err("inspect needs a file".into()),
+            Some(f) => pe::inspect(std::path::Path::new(f)).map(|i| i.to_json()),
+        },
         Some("crossover") => {
             let app = match args.get(1).map(String::as_str) {
                 Some("--app") => args.get(2).map(PathBuf::from),
@@ -323,6 +434,27 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod report_tests {
     use super::*;
+
+    fn args(a: &[&str]) -> Vec<String> {
+        a.iter().map(|s| s.to_string()).collect()
+    }
+
+    // These fail before CrossOver discovery, so they run on hosts without CrossOver.
+    #[test]
+    fn bad_backend_bottle_or_program_is_refused_before_launch() {
+        let err = |a: &[&str]| parse_run_args(&args(a)).err().unwrap();
+        assert!(
+            err(&["--bottle", "b", "--backend", "dmxt", "--", "x.exe"]).contains("unknown backend")
+        );
+        assert!(
+            err(&["--bottle", "b", "--backends", "default,typo", "--", "x.exe"])
+                .contains("unknown backend")
+        );
+        assert!(err(&["--bottle", "../b", "--", "x.exe"]).contains("invalid bottle"));
+        assert!(err(&["--bottle", "b", "--", "/nonexistent/x.exe"]).contains("/nonexistent/x.exe"));
+        assert!(err(&["--bottle", "b", "--", "/bin/sh"]).contains("not a PE"));
+        assert!(err(&["--bottle", "b", "--", "--help"]).contains("must not start with"));
+    }
 
     #[test]
     fn requested_evidence_failure_overrides_a_passing_workload() {
