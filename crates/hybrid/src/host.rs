@@ -20,11 +20,54 @@ pub struct HostReceipt {
     pub gpu_name: Option<String>,
     pub gpu_cores: Option<String>,
     pub metal_support: Option<String>,
+    pub gpu_wired: GpuWired,
     pub host_arch_of_this_binary: &'static str,
 }
 
 fn sysctl(name: &str) -> Option<String> {
     run("/usr/sbin/sysctl", &["-n", name])
+}
+
+/// GPU wired-memory sysctls (issue #386), recorded as the raw integers `sysctl -n` prints.
+///
+/// Read only: nothing in BetterXen writes these keys. `None` means the key is absent (the
+/// command failed) or its output is not an unsigned integer. A value of 0 was observed on an
+/// M4 and an M5; Apple does not document what 0 means in anything reviewed for #386, so it is
+/// reported as observed and never interpreted (for example as "system default" or "no limit").
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
+pub struct GpuWired {
+    /// `iogpu.wired_limit_mb`.
+    pub limit_mb: Option<u64>,
+    /// `iogpu.wired_lwm_mb`.
+    pub lwm_mb: Option<u64>,
+}
+
+pub const GPU_WIRED_SOURCE: &str = "sysctl -n iogpu.wired_limit_mb, iogpu.wired_lwm_mb (read-only; raw values, meaning of 0 undocumented)";
+
+/// Read the GPU wired-memory keys through `read`, which returns a key's trimmed output or
+/// `None` when the key cannot be read. Injected so tests do not depend on this Mac.
+pub fn gpu_wired_with(read: impl Fn(&str) -> Option<String>) -> GpuWired {
+    let num = |key: &str| read(key).and_then(|v| v.trim().parse::<u64>().ok());
+    GpuWired {
+        limit_mb: num("iogpu.wired_limit_mb"),
+        lwm_mb: num("iogpu.wired_lwm_mb"),
+    }
+}
+
+pub fn gpu_wired() -> GpuWired {
+    gpu_wired_with(sysctl)
+}
+
+impl GpuWired {
+    /// The record fields shared by the host receipt and every run record.
+    pub fn json_fields(&self) -> Vec<(&'static str, Json)> {
+        let n = |v: Option<u64>| v.map_or(Json::Null, |x| Json::Num(x as f64));
+        vec![
+            ("gpu_wired_limit_mb", n(self.limit_mb)),
+            ("gpu_wired_lwm_mb", n(self.lwm_mb)),
+            ("gpu_wired_source", Json::str(GPU_WIRED_SOURCE)),
+        ]
+    }
 }
 
 pub fn collect() -> HostReceipt {
@@ -50,6 +93,7 @@ pub fn collect() -> HostReceipt {
         gpu_name: gpu.as_ref().map(|g| g.0.clone()),
         gpu_cores: gpu.as_ref().and_then(|g| g.1.clone()),
         metal_support: gpu.as_ref().and_then(|g| g.2.clone()),
+        gpu_wired: gpu_wired(),
         host_arch_of_this_binary: std::env::consts::ARCH,
     }
 }
@@ -78,7 +122,7 @@ fn string_value(json: &str, key: &str) -> Option<String> {
 impl HostReceipt {
     pub fn to_json(&self) -> Json {
         let n = |v: Option<u32>| v.map_or(Json::Null, |x| Json::Num(x as f64));
-        Json::obj(vec![
+        let mut fields = vec![
             ("macos_version", Json::opt_str(self.macos_version.clone())),
             ("macos_build", Json::opt_str(self.macos_build.clone())),
             ("chip", Json::opt_str(self.chip.clone())),
@@ -101,11 +145,13 @@ impl HostReceipt {
             ("gpu_name", Json::opt_str(self.gpu_name.clone())),
             ("gpu_cores", Json::opt_str(self.gpu_cores.clone())),
             ("metal_support", Json::opt_str(self.metal_support.clone())),
-            (
-                "receipt_binary_arch",
-                Json::str(self.host_arch_of_this_binary),
-            ),
-        ])
+        ];
+        fields.extend(self.gpu_wired.json_fields());
+        fields.push((
+            "receipt_binary_arch",
+            Json::str(self.host_arch_of_this_binary),
+        ));
+        Json::obj(fields)
     }
 }
 
@@ -126,6 +172,48 @@ mod tests {
     #[test]
     fn missing_gpu_is_none() {
         assert!(parse_gpu("{}").is_none());
+    }
+
+    fn reader<'a>(pairs: &'a [(&'a str, &'a str)]) -> impl Fn(&str) -> Option<String> + 'a {
+        move |key| {
+            pairs
+                .iter()
+                .find(|(k, _)| *k == key)
+                .map(|(_, v)| v.to_string())
+        }
+    }
+
+    #[test]
+    fn gpu_wired_values_are_reported_raw() {
+        let w = gpu_wired_with(reader(&[
+            ("iogpu.wired_limit_mb", "24576"),
+            ("iogpu.wired_lwm_mb", "0"),
+        ]));
+        assert_eq!(w.limit_mb, Some(24576));
+        // 0 is a value like any other, not "absent".
+        assert_eq!(w.lwm_mb, Some(0));
+    }
+
+    #[test]
+    fn missing_or_unparsable_gpu_wired_keys_are_null() {
+        let w = gpu_wired_with(reader(&[("iogpu.wired_limit_mb", "unlimited")]));
+        assert_eq!(w, GpuWired::default());
+        let j = Json::obj(w.json_fields()).render();
+        assert!(j.contains("\"gpu_wired_limit_mb\": null"), "{j}");
+        assert!(j.contains("\"gpu_wired_lwm_mb\": null"), "{j}");
+        assert!(j.contains("\"gpu_wired_source\": \"sysctl -n"), "{j}");
+    }
+
+    #[test]
+    fn receipt_carries_gpu_wired_fields() {
+        let mut r = collect();
+        r.gpu_wired = GpuWired {
+            limit_mb: Some(0),
+            lwm_mb: None,
+        };
+        let j = r.to_json().render();
+        assert!(j.contains("\"gpu_wired_limit_mb\": 0"), "{j}");
+        assert!(j.contains("\"gpu_wired_lwm_mb\": null"), "{j}");
     }
 
     #[test]

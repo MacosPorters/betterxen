@@ -181,6 +181,8 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
     let t_wall = SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .map_or(0, |d| d.as_secs());
+    // Read before the launch so the record holds the ceiling this run started under (#386).
+    let gpu_wired = crate::host::gpu_wired();
     let _ = std::fs::create_dir_all(&cfg.work_dir);
     let out_path = cfg
         .work_dir
@@ -334,7 +336,7 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         };
         Json::Arr(keep.iter().map(|l| Json::str(*l)).collect())
     };
-    result.json = Json::obj(vec![
+    let mut fields = vec![
         ("schema", Json::str("betterxen-hybrid-run/0")),
         ("unix_time", Json::Num(t_wall as f64)),
         ("crossover_build", Json::opt_str(crossover_build)),
@@ -408,7 +410,9 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         ("frame_stats", frame_stats.unwrap_or(Json::Null)),
         ("stdout_tail", tail(&result.stdout)),
         ("stderr_tail", tail(&result.stderr)),
-    ]);
+    ];
+    fields.extend(gpu_wired.json_fields());
+    result.json = Json::obj(fields);
     let _ = std::fs::remove_file(&out_path);
     let _ = std::fs::remove_file(&err_path);
     result
@@ -538,6 +542,8 @@ mod tests {
             !j.contains("frame_ms 10"),
             "frame lines belong in frame_stats, not the tail"
         );
+        assert!(j.contains("\"gpu_wired_limit_mb\""), "{j}");
+        assert!(j.contains("\"gpu_wired_source\""), "{j}");
     }
 
     #[test]
