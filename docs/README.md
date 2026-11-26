@@ -8,6 +8,7 @@
 - [Wave 1 Parallel Backlog](issues/wave-1-backlog.md) — Non-overlapping starter issues across Tracks A–F.
 - [Frozen ABI Contracts](../abi/README.md) — Cross-DLL C headers (`abi/include/`) and canonical `.def` export tables (`abi/defs/`).
 - [Synthetic Conformance Suite](../tests/conformance/README.md) — Auto-discovered PE32+ conformance binaries.
+- [Maintainer Testing Guide](maintainer-testing.md) — Build, acceptance, expected graphics, known limitations and cleanup for the hybrid runtime.
 - [Changelog](../CHANGELOG.md) — Unreleased and historical changes.
 - [Implementation checkpoint](../IMPLEMENTATION_PROGRESS.md) — Preserved donor work, actual local checks and remaining maintainer-build tasks.
 

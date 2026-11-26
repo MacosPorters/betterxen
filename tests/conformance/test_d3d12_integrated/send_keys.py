@@ -70,9 +70,11 @@ def main():
         print(sent.stdout.strip())
         run.wait(timeout=120)
         record.seek(0)
-        gates = {g["name"]: g for g in json.load(record)["gates"]}
+        result = json.load(record)
+        gates = {g["name"]: g for g in result["gates"]}
     if sent.returncode != 0 or "input" not in gates:
-        print("FAIL keyboard: the events were not sent or the workload reported no input gate")
+        print(f"FAIL keyboard: the events were not sent or the workload reported no input gate "
+              f"(sender exit {sent.returncode}, run {result['classification']})")
         return 1
     print("workload:", gates["input"]["detail"])
     passed = gates["input"]["passed"]

@@ -17,8 +17,8 @@ NAME="betterxen-maintainer-$COMMIT"
 [ ! -e "$ROOT/artifacts/packages/$NAME.tar.gz" ] || { echo "artifact already exists; preserving it" >&2; exit 1; }
 mkdir "$STAGE/$NAME"
 mkdir "$STAGE/$NAME/bin"
-# The native research CLI has an unresolved redistribution gate in docs/licenses.md.
-# The standalone hybrid binary has the same runtime commands and depends only on libc.
+# bx-cli's only external dependency is libc (docs/licenses.md); CrossOver, Apple components,
+# compilers and DXC are never copied into the bundle.
 cp "$OUT/bin/bx-cli" "$STAGE/$NAME/bin/"
 mkdir "$STAGE/$NAME/workloads"
 for exe in selfcheck-c selfcheck-rust d3d11-clear d3d11-frameloop d3d11-integrated d3d12-integrated d3d12-lifetime d3d12-wave-probe; do

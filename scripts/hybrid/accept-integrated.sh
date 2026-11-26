@@ -121,7 +121,8 @@ for fault in color blank stale input depth; do
     run "negative-$fault" failed_exit_1 --timeout 120 -- --frames 128 --fault "$fault"
     detects "negative-$fault" "$fault"
 done
-# CrossOver starts winedbg on a crash; it has taken 4 s to more than 60 s on the same Mac.
+# With Wine's crash dialog on, winedbg waits for a click and this times out;
+# scripts/hybrid/create-test-bottle.py turns it off in new test bottles.
 run negative-crash 'failed_exit_*' --timeout 240 -- --frames 128 --fault crash
 run recovery-after-crash passed --require-gates "$GATES" --timeout 120 -- --frames 128
 run negative-hang stalled --timeout 90 --stall-timeout 15 -- --frames 128 --fault hang
@@ -228,7 +229,20 @@ if python3 "$ROOT/scripts/hybrid/accept-lifecycle.py" "$BX" "$BOTTLE" "$EXE" >"$
 then ok "lifecycle: signals, kill and stop, repeated launch"; else
     bad "lifecycle (see lifecycle.log)"; grep FAIL "$OUT/lifecycle.log"; fi
 
-run I-soak passed --require-gates "$GATES" --timeout 1800 --stall-timeout 60 -- --frames "$SOAK" --verify-every 500
+# Direct3D 12 is the primary target, so it is soaked first; Direct3D 11 stays as the control.
+"$BX" hybrid run --bottle "$BOTTLE" --keep-output true --out "$OUT/raw" --timeout 1800 --stall-timeout 60 -- "$EXE12" \
+    --frames "$SOAK" --verify-every 500 >"$OUT/I-soak-d3d12.json" 2>"$OUT/I-soak-d3d12.log"
+read -r class backend failed12 digest12 <<EOT
+$(d12_summary "$OUT/I-soak-d3d12.json")
+EOT
+case "$class:$backend:$failed12" in
+    passed:*:-) ok "I-soak D3D12 ($SOAK frames)" ;;
+    failed_exit_1:d3dmetal:shutdown)
+        known=1
+        ok "I-soak D3D12 all gates but the known shutdown ($SOAK frames)" ;;
+    *) bad "I-soak D3D12: $class backend=$backend failed=$failed12" ;;
+esac
+run I-soak-d3d11 passed --require-gates "$GATES" --timeout 1800 --stall-timeout 60 -- --frames "$SOAK" --verify-every 500
 
 echo "records: $OUT"
 python3 - "$OUT" "$failed" "$known" "$not_run" <<'PY'

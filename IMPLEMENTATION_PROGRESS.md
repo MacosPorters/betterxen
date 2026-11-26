@@ -1,5 +1,16 @@
 # Maintainer build implementation checkpoint
 
+## Latest state (resumed by Claude Code, 2026-11-26)
+
+Read this section first; the sections below are the earlier session's record.
+
+- Branch `engineering/maintainer-build-readiness`, worktree `../betterxen-maintainer-hybrid`.
+- Commits: `b9469aa` migration (Codex's uncommitted work, backed up under ignored `artifacts/recovery/`), `a9d7bc0` merge of `main` `a51271d`, `1be97f2` acceptance fixes, then the crash-dialog, D3D12 soak and testing-guide commit.
+- Verified: fmt, clippy, 68 tests, 16 shim DLLs / 102 exports, both shim fixtures; D3D12 and D3D11 workloads, intended-gate negative controls, lifetime, SM6, keyboard, lifecycle 20/20 and independent image oracles on `1be97f2`; two 20,000-frame D3D12 soaks (known shutdown only) and three D3D11 reruns.
+- Findings: D3DMetal swapchain starts with two refs (vkd3d: one); vkd3d path spends 2000 ms per `Present` after ~437 frames; crash hang was Wine's crash dialog (fixed).
+- Open: on-screen checks failed because the window was on another macOS Space; one unexplained D3D11 soak stall; one unexplained keyboard-negative failure; independent maintainer reproduction not done.
+- Next: clean GitHub clone, newly installed dependencies, full acceptance, package, bundle test, draft PR (`Closes #407`; keep #405 open).
+
 ## Current state
 
 - Active branch: `engineering/maintainer-build-readiness`.

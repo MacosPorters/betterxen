@@ -42,6 +42,10 @@ jobs:
           binary=target/aarch64-apple-darwin/debug/bx-cli
           file "$binary"
           test "$(lipo -archs "$binary")" = arm64
+      - name: Check hybrid script syntax (no CrossOver on the runner, nothing launched)
+        run: |
+          for script in scripts/hybrid/*.sh tests/conformance/test_*/build.sh; do sh -n "$script"; done
+          python3 -c 'import ast, glob; [ast.parse(open(f).read(), f) for f in glob.glob("scripts/hybrid/*.py") + glob.glob("tests/conformance/test_*/*.py")]'
       - name: Install mingw-w64 and CMake
         env:
           HOMEBREW_NO_AUTO_UPDATE: 1

@@ -9,7 +9,12 @@ exact revision and known limitations.
 Guest execution uses original, purpose-built test programs. Commercial Xbox game execution
 remains unsupported.
 
+### Fixed
+- Fixed unattended crash handling in new test bottles: `create-test-bottle.py` now turns off Wine's crash dialog, which otherwise waits for a click until the run times out (observed: timeout at 240 s with the dialog, 2.8 s without).
+- The acceptance suite now soaks Direct3D 12 as well as the Direct3D 11 control. One D3D11 soak stalled on a GPU event query after 9,183 frames; three reruns passed and the cause is unknown.
+
 ### Added
+- Added `docs/maintainer-testing.md` (build, acceptance, expected graphics, known limitations, cleanup) and a CI syntax check for the hybrid scripts.
 - Strengthened the hybrid acceptance suite (#407): every injected rendering fault must now fail the specific gate it targets, the crash control allows for slow `winedbg` start-up, the suite includes the swapchain lifetime probe and the Shader Model 6 readback check (reported `NOT-RUN` without DXC, never as a pass), and a window hidden on another macOS Space is reported as such. `bx-cli doctor` again reports the recommended memory profile, D3DMetal presence and the shim cross-compiler.
 - Recorded two local findings on Apple M4 with CrossOver 26.3, neither independently reproduced: under D3DMetal a new D3D12 swapchain starts with two references and survives the application's release, while the same binary on the `vkd3d` path starts with one and is freed; on the `vkd3d` path frames after about 437 each spend 2000 ms inside `Present`, and teardown then hangs.
 - Moved #405's supervised runtime onto the six-track layout (#407): `bx-cli run`, `doctor`, `bench`, `stop` and the evidence commands now share one engine in `launcher/crates/bx-runtime`, replacing the unsupervised launch path. It adds timeout, stall, memory and output limits, a per-environment session lock with explicit recovery, cleanup limited to the selected environment, and JSON run records; `probe`, `shader` and `trace` are unchanged. `bx-cli run` now requires `--bottle` or `--prefix` (there is no shared `/tmp` default). The D3D11 and D3D12 workloads moved to `tests/conformance/`. Verified locally only; no independent reproduction.
