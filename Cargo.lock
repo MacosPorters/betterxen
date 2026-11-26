@@ -28,6 +28,13 @@ name = "bx-telemetry"
 version = "0.2.0"
 
 [[package]]
+name = "d3dmetal-harness"
+version = "0.2.0"
+dependencies = [
+ "dxbc-accc",
+]
+
+[[package]]
 name = "dxbc-accc"
 version = "0.2.0"
 

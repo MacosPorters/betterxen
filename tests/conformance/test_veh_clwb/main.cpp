@@ -29,15 +29,25 @@ int main() {
         }
     }
 
-    /* 2. Verify clwb trapping via bx_runtime_veh.dll (both legacy and REX forms) */
-    alignas(64) uint8_t buf[128] = {0x42};
-    uint64_t before = bx_veh_get_clwb_trap_count();
-    __asm__ volatile("clwb (%0)" :: "r"(buf) : "memory");
-    __asm__ volatile("clwb 64(%0)" :: "r"(buf) : "memory");
-    uint64_t after = bx_veh_get_clwb_trap_count();
-    std::printf("clwb traps observed: %llu -> %llu\n",
-                static_cast<unsigned long long>(before),
-                static_cast<unsigned long long>(after));
+    // Fixed registers ensure the assembler emits the intended ModRM/REX forms.
+    alignas(64) uint8_t buf[512] = {0x42};
+    const uint64_t before = bx_veh_get_clwb_trap_count();
+    __asm__ volatile(
+        "clwb (%%rax)\n\t"
+        "clwb 64(%%rax)\n\t"
+        "clwb 256(%%rax)\n\t"
+        "mov %%rax, %%r8\n\t"
+        "clwb (%%r8)\n\t"
+        "clwb 64(%%rax,%%rcx,4)\n\t"
+        "clwb (%%rip)"
+        :: "a"(buf), "c"(8) : "r8", "memory");
+    const uint64_t delta = bx_veh_get_clwb_trap_count() - before;
+    if (delta != 6) {
+        std::fprintf(stderr, "FAIL: expected 6 CLWB traps, observed %llu\n",
+                     static_cast<unsigned long long>(delta));
+        return 4;
+    }
+    std::printf("CLWB traps observed: %llu\n", static_cast<unsigned long long>(delta));
 
     /* 3. Verify basic XMem allocation + transfer + stats contract */
     void* src = XMemAlloc(4096, 0);

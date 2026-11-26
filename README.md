@@ -27,6 +27,58 @@ BetterXen builds the missing Xbox Game OS layer around **CrossOver 26.3+**, **Ro
 
 ---
 
+## Progress Tracker
+
+> *Tracks engineering milestones and synthetic conformance progress only — not commercial game compatibility percentages.*
+
+```mermaid
+flowchart LR
+    M0["M0: Foundation & Shims\n(Merged #406)"]:::done
+    M1["M1: Boot to D3D12\n(Active — Milestone #17)"]:::active
+    M2["M2: First Frame &\nShader Gate"]:::planned
+    M3["M3: Shaders &\nTexture Tiling"]:::planned
+    M4["M4: 3D, DXR/BVH\n& Input"]:::planned
+    M5["M5: Audio, Saves\n& Stability"]:::planned
+    M6["M6: Cache & 16 GB\nOptimization"]:::planned
+
+    M0 --> M1 --> M2 --> M3 --> M4 --> M5 --> M6
+
+    classDef done fill:#dafbe1,stroke:#1a7f37,color:#0f5323,stroke-width:2px
+    classDef active fill:#ddf4ff,stroke:#0969da,color:#0a3069,stroke-width:2px
+    classDef planned fill:#f6f8fa,stroke:#8c959f,color:#57606a
+```
+
+Legend: 🟢 **Done / Merged** · 🔵 **Active Milestone** · ⚪ **Planned**
+
+### Active Milestone — [M1: Startup Shims to `D3D12XboxCreateDevice`](https://github.com/MacosPorters/betterxen/milestone/17)
+
+| Track | Focus | Visual Status | Live Issues |
+| --- | --- | --- | --- |
+| **Track A** | `bx-cli` supervision, `clwb` VEH + crash dumper, Win32 bridge | `🟨🟨🟨` *(3/3 PRs open)* | [View Track A](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+A%22) |
+| **Track B** | `xmem.dll` core + physical/scatter pages, `XCRDAPI.dll` DirectStorage | `🟨🟨🟨` *(3/3 PRs open)* | [View Track B](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+B%22) |
+| **Track C** | `d3d12_xs.dll` COM proxy (D3DMetal 3.0), `xg_xs.dll` texture computer | `⬜⬜` *(needs contributors!)* | [View Track C](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+C%22) |
+| **Track D** | `dxbc-accc` FSPX C ABI bridge, `d3dmetal-native` harness | `🟨⬜` *(1 PR open, 1 ready)* | [View Track D](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+D%22) |
+| **Track E** | `xgameruntime.dll` offline GDK, `AcpHal`/`xapu`/`chad`, `GameInput` | `🟨🟨` *(2/2 PRs open)* | [View Track E](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+E%22) |
+| **Track F** | End-to-end synthetic boot fixture (`test_integration_boot`) | `🟨` *(1/1 PR open)* | [View Track F](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+F%22) |
+
+`🟩` Merged & verified · `🟨` PR open / in review · `⬜` Open & ready to claim
+
+### Milestone Roadmap (M0 → M6)
+
+| Milestone | Scope | Status |
+| --- | --- | --- |
+| **M0 — Repo, ABI & Cross-Build** | 6-track layout, frozen `abi/`, ARM64 `bx-cli`, 16 cross-compiled PE32+ shims, live CrossOver + Rosetta 2 smoke tests (`test_veh_clwb`, `test_shim_exports`) | 🟢 **Merged (`#406`)** |
+| **M1 — Boot to `D3D12XboxCreateDevice`** | Full startup shim coverage (`xmem` physical/scatter pages, `XCRDAPI` async file reads, `d3d12_xs` auto-logging COM proxy, offline `xgameruntime`, audio queue stubs) | 🔵 **Active ([Milestone #17](https://github.com/MacosPorters/betterxen/milestone/17))** |
+| **M2 — First Frame & Shader Gate** | `PresentX` → `IDXGISwapChain3::Present` via D3DMetal 3.0; inspect runtime shaders to select DXIL fast path vs. `ACCC`/`FSPX` RDNA 2 transpilation | ⚪ Planned |
+| **M3 — Shaders, Streaming & Textures** | DirectStorage decompression, RDNA 2 `xg_xs` texture deswizzling, full shader pipeline | ⚪ Planned |
+| **M4 — 3D Rendering, DXR/BVH & Input** | BVH4 rehydration → live D3DMetal 3.0 DXR rebuild, PC FidelityFX/MetalFX upscaling shim, full `GameInput` | ⚪ Planned |
+| **M5 — Audio, Saves & Stability** | Software audio/DSP decoding (`AcpHal`/`xapu`/`chad`), `PersistentLocalStorage`, multi-hour soak stability | ⚪ Planned |
+| **M6 — Cache, 16 GB Tuning & Polish** | Persistent PSO/shader disk cache, Lockhart 16 GB unified memory optimization, Metal System Trace tuning | ⚪ Planned |
+
+See [docs/architecture/parallel-tracks.md](docs/architecture/parallel-tracks.md) and [docs/roadmap.md](docs/roadmap.md) for full details.
+
+---
+
 ## Architecture
 
 Rosetta 2 executes x86-64 CPU code (including AVX/AVX2/FMA/F16C/BMI1/BMI2/128-bit VAES when launched with `ROSETTA_ADVERTISE_AVX=1`), CrossOver/Wine provides Win32/NT/CRT/XAudio2/WinHTTP, and D3DMetal 3.0 translates Direct3D 12 + DXR onto Metal. BetterXen supplies the modular Xbox Game OS shims, `clwb` exception handling, shader bridge, and ARM64 orchestration around that stack.
@@ -86,22 +138,6 @@ The repository is organized into disjoint track directories around a single froz
 | `shader-transpiler/` | Track D | Rust (`arm64`) | `dxbc-accc` (`DXBC`/`DXIL`/`ACCC`/`FSPX` classifier), future RDNA 2 transpiler & `d3dmetal-native` isolation harness |
 | `shims/xgameruntime/`, `shims/gameinput/`, `shims/audio/` | Track E | C++20 (`x86_64` PE) | Offline GDK runtime (`xgameruntime.dll`), `GameInput.dll` (`@1`), and `AcpHal.dll`/`xapu.dll`/`chad.dll` |
 | [`tests/conformance/`](tests/conformance/README.md) | Track F | C++20 (`x86_64` PE) | Auto-discovered clean-room synthetic PE32+ test binaries (`test_*/CMakeLists.txt`) |
-
----
-
-## Milestones
-
-| Milestone | Scope | Status |
-| --- | --- | --- |
-| **M0 — Repo, ABI & Cross-Build** | 6-track layout, frozen `abi/`, ARM64 `bx-cli`, 16 cross-compiled PE32+ shims, live CrossOver + Rosetta 2 smoke tests (`test_veh_clwb`, `test_shim_exports`) | **Verified locally on Apple M5** |
-| **M1 — Boot to `D3D12XboxCreateDevice`** | Full startup shim coverage (`xmem` physical/scatter pages, `XCRDAPI` async file reads, `d3d12_xs` auto-logging COM proxy, offline `xgameruntime`, audio queue stubs) | **Open (Wave 1 backlog ready)** |
-| **M2 — First Frame & Shader Gate** | `PresentX` → `IDXGISwapChain3::Present` via D3DMetal 3.0; inspect runtime shaders to select DXIL fast path vs. `ACCC`/`FSPX` RDNA 2 transpilation | Planned |
-| **M3 — Shaders, Streaming & Textures** | DirectStorage decompression, RDNA 2 `xg_xs` texture deswizzling, full shader pipeline | Planned |
-| **M4 — 3D Rendering, DXR/BVH & Input** | BVH4 rehydration → live D3DMetal 3.0 DXR rebuild, PC FidelityFX/MetalFX upscaling shim, full `GameInput` | Planned |
-| **M5 — Audio, Saves & Stability** | Software audio/DSP decoding (`AcpHal`/`xapu`/`chad`), `PersistentLocalStorage`, multi-hour soak stability | Planned |
-| **M6 — Cache, 16 GB Tuning & Polish** | Persistent PSO/shader disk cache, Lockhart 16 GB unified memory optimization, Metal System Trace tuning | Planned |
-
-See [docs/architecture/parallel-tracks.md](docs/architecture/parallel-tracks.md) and [docs/roadmap.md](docs/roadmap.md) for full details.
 
 ---
 

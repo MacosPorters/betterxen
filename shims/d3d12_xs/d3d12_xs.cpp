@@ -1,13 +1,16 @@
-#include <windows.h>
-#include <cstdint>
+#include "proxy.h"
 
-#include "bx_log.h"
+#include <cstdio>
+
 #include "bx_xmem_internal.h"
 
 /*
- * Track C (M1-C1): Xbox Series D3D12 COM proxy over Wine's d3d12.dll (D3DMetal 3.0).
- * Root signature serialization/deserialization forwards directly to Wine's d3d12.dll;
- * D3D12XboxCreateDevice and D3D12ConfigureVirtualMemoryX are owned by Track C1.
+ * Track C (M1-C1, #414): Xbox Series D3D12 entry points over the host's d3d12.dll
+ * (Wine's d3d12.dll, which CrossOver backs with D3DMetal or another translation layer).
+ *
+ * D3D12XboxCreateDevice creates a host device with D3D12CreateDevice and returns an
+ * auto-logging COM proxy around it (see proxy.h). Root signature serialization and
+ * deserialization forward directly to the host d3d12.dll.
  */
 
 namespace {
@@ -17,29 +20,86 @@ HMODULE get_host_d3d12() {
     return mod;
 }
 
+void refresh_trace_flag() {
+    const bx_runtime_config_t* cfg = bx_get_runtime_config();
+    g_bx_trace_d3d = (cfg && cfg->trace_d3d) ? 1u : 0u;
+}
+
 } // namespace
 
 extern "C" {
 
-HRESULT WINAPI D3D12XboxCreateDevice(PVOID /*params*/, REFIID /*riid*/, void** ppv) {
-    BX_STUB_LOG("d3d12_xs.dll", "D3D12XboxCreateDevice");
-    if (ppv) {
-        *ppv = nullptr;
+/*
+ * `params` is the console creation-parameter block. Its layout is not defined in abi/ and is not
+ * interpreted here: the host device is created on the default adapter at the lowest feature level
+ * D3D12 accepts, and that fact is logged. `riid` must name an interface the proxy models (or one
+ * the host device answers); anything else fails with E_NOINTERFACE and a logged IID.
+ */
+HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv) {
+    if (!ppv) {
+        return E_POINTER;
     }
-    return E_NOTIMPL;
+    *ppv = nullptr;
+    refresh_trace_flag();
+
+    using CreateFn = HRESULT(WINAPI*)(IUnknown*, D3D_FEATURE_LEVEL, REFIID, void**);
+    HMODULE d3d12 = get_host_d3d12();
+    auto create = d3d12
+        ? reinterpret_cast<CreateFn>(reinterpret_cast<void*>(GetProcAddress(d3d12, "D3D12CreateDevice")))
+        : nullptr;
+    if (!create) {
+        bx_log_emit(BX_LOG_ERROR, "d3d12_xs", "host_d3d12_missing", "d3d12.dll!D3D12CreateDevice not available");
+        return E_NOINTERFACE;
+    }
+
+    ID3D12Device* host = nullptr;
+    HRESULT hr = create(nullptr, D3D_FEATURE_LEVEL_11_0, __uuidof(ID3D12Device), reinterpret_cast<void**>(&host));
+    if (FAILED(hr) || !host) {
+        char detail[96];
+        std::snprintf(detail, sizeof(detail), "D3D12CreateDevice hr=0x%08lx", static_cast<unsigned long>(hr));
+        bx_log_emit(BX_LOG_ERROR, "d3d12_xs", "host_device_failed", detail);
+        return FAILED(hr) ? hr : E_FAIL;
+    }
+
+    BxDeviceProxy* proxy = BxDeviceProxy::create(host);
+    host->Release();
+    if (!proxy) {
+        return E_OUTOFMEMORY;
+    }
+
+    /* Record how far up the ID3D12DeviceN chain the host goes: QueryInterface on the proxy stops there. */
+    int highest = 0;
+    ID3D12Device* const levels[] = {
+        proxy->h_ID3D12Device1, proxy->h_ID3D12Device2, proxy->h_ID3D12Device3, proxy->h_ID3D12Device4,
+        proxy->h_ID3D12Device5, proxy->h_ID3D12Device6, proxy->h_ID3D12Device7, proxy->h_ID3D12Device8,
+        proxy->h_ID3D12Device9, proxy->h_ID3D12Device10,
+    };
+    for (int i = 0; i < 10; ++i) {
+        if (levels[i]) highest = i + 1;
+    }
+    char detail[192];
+    std::snprintf(detail, sizeof(detail),
+                  "host device wrapped; highest_host_interface=ID3D12Device%d feature_level=11_0 params=%s (not interpreted) trace_d3d=%u",
+                  highest, params ? "non-null" : "null", g_bx_trace_d3d);
+    bx_log_emit(BX_LOG_INFO, "d3d12_xs", "D3D12XboxCreateDevice", detail);
+
+    hr = proxy->QueryInterface(riid, ppv);
+    proxy->Release();
+    return hr;
 }
 
+/* Logged no-op: console startup sequences check SUCCEEDED(hr) before reserving virtual memory. */
 HRESULT WINAPI D3D12ConfigureVirtualMemoryX(PVOID /*config*/) {
     BX_STUB_LOG("d3d12_xs.dll", "D3D12ConfigureVirtualMemoryX");
     return S_OK;
 }
 
 HRESULT WINAPI D3D12SerializeVersionedRootSignature(
-    const void* desc,
-    void** blob,
-    void** error_blob
+    const D3D12_VERSIONED_ROOT_SIGNATURE_DESC* desc,
+    ID3DBlob** blob,
+    ID3DBlob** error_blob
 ) {
-    using Fn = HRESULT(WINAPI*)(const void*, void**, void**);
+    using Fn = HRESULT(WINAPI*)(const D3D12_VERSIONED_ROOT_SIGNATURE_DESC*, ID3DBlob**, ID3DBlob**);
     HMODULE d3d12 = get_host_d3d12();
     if (d3d12) {
         auto fn = reinterpret_cast<Fn>(reinterpret_cast<void*>(

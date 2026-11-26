@@ -9,6 +9,14 @@ body:
         Use this template to hand off work to contributors across Tracks A-F.
         Keep file scopes disjoint so 5-8+ contributors can work concurrently without merge conflicts.
         Never include proprietary game files, names, hashes, or leaked material in issues or PRs.
+  - type: textarea
+    id: zen
+    attributes:
+      label: Zen
+      description: 1–2 plain-English sentences explaining the core purpose of this issue and why it matters.
+      placeholder: Enable guest allocations to stay within a 16 GiB Mac's unified memory budget so bring-up never OOMs.
+    validations:
+      required: true
   - type: dropdown
     id: track
     attributes:

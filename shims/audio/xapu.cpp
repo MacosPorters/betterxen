@@ -1,32 +1,24 @@
-#include <windows.h>
-#include <cstdint>
-
-#include "bx_log.h"
-
-/* Track E (M1-E2 / M5): xapu.dll APU command queue shim. */
+#include "command_ring.h"
 
 extern "C" {
+HRESULT WINAPI XApuConnect(void** out) { return connect(out); }
+HRESULT WINAPI XApuDisconnect(void* conn) { return disconnect(conn); }
 
-HRESULT WINAPI XApuConnect(void** out_conn) {
-    BX_STUB_LOG("xapu.dll", "XApuConnect");
-    if (out_conn) *out_conn = reinterpret_cast<void*>(0x4001);
-    return S_OK;
+HRESULT WINAPI XApuEnqueueCommand(void* conn, const void* cmd, uint32_t size) {
+    std::lock_guard guard(connections_lock);
+    auto* c = lookup(conn);
+    return c ? c->queue.push(cmd, size) : E_HANDLE;
 }
 
-HRESULT WINAPI XApuDisconnect(void* /*conn*/) {
-    return S_OK;
+HRESULT WINAPI XApuDequeueResult(void* conn, void* result, uint32_t size) {
+    std::lock_guard guard(connections_lock);
+    auto* c = lookup(conn);
+    return c ? c->queue.read(result, size) : E_HANDLE;
 }
 
-HRESULT WINAPI XApuEnqueueCommand(void* /*conn*/, const void* /*cmd*/, uint32_t /*size*/) {
-    return S_OK;
+uint32_t WINAPI XApuGetResultCount(void* conn) {
+    std::lock_guard guard(connections_lock);
+    auto* c = lookup(conn);
+    return c ? c->queue.count : 0;
 }
-
-HRESULT WINAPI XApuDequeueResult(void* /*conn*/, void* /*out_res*/, uint32_t /*size*/) {
-    return S_FALSE;
 }
-
-uint32_t WINAPI XApuGetResultCount(void* /*conn*/) {
-    return 0u;
-}
-
-} // extern "C"

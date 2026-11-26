@@ -1,0 +1,17 @@
+[package]
+name = "d3dmetal-harness"
+description = "Opt-in harness that drives a user-supplied D3DMetal.framework outside CrossOver/Wine"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+rust-version.workspace = true
+
+[[bin]]
+name = "bx-d3dmetal-harness"
+path = "src/main.rs"
+
+[dev-dependencies]
+dxbc-accc = { path = "../dxbc-accc" }
+
+[lints]
+workspace = true

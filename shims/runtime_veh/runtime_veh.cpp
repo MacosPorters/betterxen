@@ -13,6 +13,9 @@ CRITICAL_SECTION g_log_lock;
 bool g_log_lock_ready = false;
 HANDLE g_log_handle = INVALID_HANDLE_VALUE;
 PVOID g_veh_handle = nullptr;
+LPTOP_LEVEL_EXCEPTION_FILTER g_previous_filter = nullptr;
+std::atomic_flag g_crash_logged{};
+std::atomic<bool> g_crash_in_flight{false};
 std::atomic<uint64_t> g_clwb_traps{0};
 bx_runtime_config_t g_config = {
     BX_ABI_VERSION,
@@ -26,6 +29,11 @@ bx_runtime_config_t g_config = {
 };
 
 void write_log_line(const char* line, size_t len) {
+    // Pause regular logging while a terminal crash record is being emitted so
+    // background threads cannot interleave with the unlocked crash WriteFile.
+    if (g_crash_in_flight.load(std::memory_order_acquire)) {
+        return;
+    }
     if (g_log_lock_ready) {
         EnterCriticalSection(&g_log_lock);
     }
@@ -45,90 +53,135 @@ void write_log_line(const char* line, size_t len) {
     }
 }
 
-/*
- * Decode an x86-64 `clwb m8` instruction at `ip`.
- * Encoding: [legacy prefixes] 0x66 [REX 0x40..0x4F] 0x0F 0xAE /6 (mod != 3).
- * Returns total instruction length in bytes, or 0 if `ip` is not `clwb`.
- */
-size_t decode_clwb_length(const uint8_t* ip) {
+constexpr size_t kMaxInstructionLength = 15;
+
+size_t read_instruction(uint64_t rip, uint8_t (&bytes)[kMaxInstructionLength]) {
+    HANDLE process = GetCurrentProcess();
+    if (ReadProcessMemory(process, reinterpret_cast<LPCVOID>(rip),
+                          bytes, sizeof(bytes), nullptr)) {
+        return sizeof(bytes);
+    }
+
+    // A short instruction can end immediately before an inaccessible page.
+    size_t size = 0;
+    while (size < sizeof(bytes) &&
+           ReadProcessMemory(process, reinterpret_cast<LPCVOID>(rip + size),
+                             &bytes[size], 1, nullptr)) {
+        ++size;
+    }
+    return size;
+}
+
+// CLWB is 66 0F AE /6 with a memory operand. The address-size override
+// selects 32-bit addressing but leaves the ModRM/SIB displacement lengths intact.
+size_t decode_clwb_length(const uint8_t* ip, size_t size) {
     size_t idx = 0;
     bool has_66 = false;
-    bool has_addr_override = false;
-
-    while (idx < 6) {
-        uint8_t b = ip[idx];
-        if (b == 0x66) {
+    while (idx < size) {
+        const uint8_t byte = ip[idx];
+        if (byte == 0x66) {
             has_66 = true;
-            idx++;
-        } else if (b == 0x67) {
-            has_addr_override = true;
-            idx++;
-        } else if (b == 0x26 || b == 0x2E || b == 0x36 || b == 0x3E || b == 0x64 || b == 0x65) {
-            idx++;
-        } else {
+        } else if (byte != 0x67 && byte != 0x26 && byte != 0x2E &&
+                   byte != 0x36 && byte != 0x3E && byte != 0x64 && byte != 0x65) {
             break;
         }
-    }
-    (void)has_addr_override;
-    if (!has_66) {
-        return 0;
+        ++idx;
     }
 
-    if ((ip[idx] & 0xF0) == 0x40) {
-        idx++; /* Optional REX prefix */
+    // x86-64 allows at most one REX prefix immediately before the opcode.
+    if (idx < size && (ip[idx] & 0xF0) == 0x40) {
+        ++idx;
     }
-
-    if (ip[idx] != 0x0F || ip[idx + 1] != 0xAE) {
+    if (!has_66 || size - idx < 3 || ip[idx] != 0x0F || ip[idx + 1] != 0xAE) {
         return 0;
     }
     idx += 2;
 
-    uint8_t modrm = ip[idx++];
-    uint8_t mod = (modrm >> 6) & 0x3;
-    uint8_t reg = (modrm >> 3) & 0x7;
-    uint8_t rm  = modrm & 0x7;
-
-    /* `clwb` requires memory operand (mod != 3) and opcode extension /6. */
+    const uint8_t modrm = ip[idx++];
+    const uint8_t mod = modrm >> 6;
+    const uint8_t reg = (modrm >> 3) & 7;
+    const uint8_t rm = modrm & 7;
     if (mod == 3 || reg != 6) {
         return 0;
     }
 
+    uint8_t base = rm;
     if (rm == 4) {
-        uint8_t sib = ip[idx++];
-        if (mod == 0 && (sib & 0x7) == 5) {
-            idx += 4; /* disp32 with no base */
+        if (idx == size) {
+            return 0;
         }
-    } else if (mod == 0 && rm == 5) {
-        idx += 4; /* RIP-relative disp32 */
+        base = ip[idx++] & 7;
     }
-
     if (mod == 1) {
-        idx += 1; /* disp8 */
-    } else if (mod == 2) {
-        idx += 4; /* disp32 */
+        idx += 1;
+    } else if (mod == 2 || (mod == 0 && base == 5)) {
+        idx += 4;
     }
-
-    return idx;
+    return idx <= size ? idx : 0;
 }
 
-bool is_adx_opcode(const uint8_t* ip) {
+bool is_adx_opcode(const uint8_t* ip, size_t size) {
     size_t idx = 0;
-    bool has_66_or_f3 = false;
-    while (idx < 4) {
-        if (ip[idx] == 0x66 || ip[idx] == 0xF3) {
-            has_66_or_f3 = true;
-            idx++;
-        } else {
-            break;
-        }
+    while (idx < size && (ip[idx] == 0x66 || ip[idx] == 0xF3)) {
+        ++idx;
     }
-    if (!has_66_or_f3) {
+    if (idx == 0) {
         return false;
     }
-    if ((ip[idx] & 0xF0) == 0x40) {
-        idx++;
+    if (idx < size && (ip[idx] & 0xF0) == 0x40) {
+        ++idx;
     }
-    return ip[idx] == 0x0F && ip[idx + 1] == 0x38 && ip[idx + 2] == 0xF6;
+    // Require the 3-byte ADCX/ADOX opcode (0F 38 F6) plus at least 1 ModRM byte.
+    return size - idx >= 4 && ip[idx] == 0x0F && ip[idx + 1] == 0x38 && ip[idx + 2] == 0xF6;
+}
+
+LONG WINAPI log_unhandled_exception(PEXCEPTION_POINTERS ep) {
+    // Wine can invoke the top-level filter again for the same terminal fault.
+    if (ep && ep->ExceptionRecord && ep->ContextRecord &&
+        !g_crash_logged.test_and_set(std::memory_order_relaxed)) {
+        g_crash_in_flight.store(true, std::memory_order_release);
+        const CONTEXT& ctx = *ep->ContextRecord;
+        MEMORY_BASIC_INFORMATION region{};
+        unsigned long long module_base = 0;
+        if (VirtualQuery(reinterpret_cast<LPCVOID>(ctx.Rip), &region, sizeof(region)) &&
+            region.Type == MEM_IMAGE) {
+            module_base = reinterpret_cast<uintptr_t>(region.AllocationBase);
+        }
+
+        char line[1024];
+        int length = std::snprintf(
+            line, sizeof(line),
+            "{\"ts_ms\":%llu,\"tid\":%lu,\"level\":\"ERROR\",\"sub\":\"runtime_veh\","
+            "\"event\":\"unhandled_exception\",\"exception_code\":\"0x%08lx\","
+            "\"module_base\":\"0x%016llx\",\"rva\":\"0x%016llx\","
+            "\"rip\":\"0x%016llx\",\"rsp\":\"0x%016llx\","
+            "\"registers\":{\"rax\":\"0x%016llx\",\"rbx\":\"0x%016llx\","
+            "\"rcx\":\"0x%016llx\",\"rdx\":\"0x%016llx\",\"rsi\":\"0x%016llx\","
+            "\"rdi\":\"0x%016llx\",\"rbp\":\"0x%016llx\",\"r8\":\"0x%016llx\","
+            "\"r9\":\"0x%016llx\",\"r10\":\"0x%016llx\",\"r11\":\"0x%016llx\","
+            "\"r12\":\"0x%016llx\",\"r13\":\"0x%016llx\",\"r14\":\"0x%016llx\","
+            "\"r15\":\"0x%016llx\"}}\n",
+            static_cast<unsigned long long>(GetTickCount64()), GetCurrentThreadId(),
+            ep->ExceptionRecord->ExceptionCode, module_base,
+            module_base ? ctx.Rip - module_base : 0ULL, ctx.Rip, ctx.Rsp,
+            ctx.Rax, ctx.Rbx, ctx.Rcx, ctx.Rdx, ctx.Rsi, ctx.Rdi, ctx.Rbp,
+            ctx.R8, ctx.R9, ctx.R10, ctx.R11, ctx.R12, ctx.R13, ctx.R14, ctx.R15);
+        // A crashed thread may already own the regular logger's lock.
+        HANDLE output = g_log_handle != INVALID_HANDLE_VALUE
+            ? g_log_handle : GetStdHandle(STD_ERROR_HANDLE);
+        if (length > 0 && length < static_cast<int>(sizeof(line)) &&
+            output && output != INVALID_HANDLE_VALUE) {
+            DWORD written = 0;
+            WriteFile(output, line, static_cast<DWORD>(length), &written, nullptr);
+        }
+    }
+
+    const LONG disposition = g_previous_filter ? g_previous_filter(ep) : EXCEPTION_CONTINUE_SEARCH;
+    if (disposition == EXCEPTION_CONTINUE_EXECUTION) {
+        g_crash_in_flight.store(false, std::memory_order_release);
+        g_crash_logged.clear(std::memory_order_relaxed);
+    }
+    return disposition;
 }
 
 LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
@@ -139,9 +192,10 @@ LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
-    auto* ip = reinterpret_cast<const uint8_t*>(ep->ContextRecord->Rip);
+    uint8_t ip[kMaxInstructionLength]{};
+    const size_t size = read_instruction(ep->ContextRecord->Rip, ip);
     if (g_config.enable_clwb_veh) {
-        size_t len = decode_clwb_length(ip);
+        size_t len = decode_clwb_length(ip, size);
         if (len > 0) {
             uint64_t count = g_clwb_traps.fetch_add(1, std::memory_order_relaxed) + 1;
             if (count == 1 || (count & (count - 1)) == 0) {
@@ -158,7 +212,7 @@ LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
         }
     }
 
-    if (g_config.enable_adx_tripwire && is_adx_opcode(ip)) {
+    if (g_config.enable_adx_tripwire && is_adx_opcode(ip, size)) {
         char msg[160];
         std::snprintf(msg, sizeof(msg),
                       "rip=0x%016llx bytes=%02x %02x %02x %02x %02x",
@@ -262,9 +316,18 @@ BOOL WINAPI DllMain(HINSTANCE, DWORD reason, LPVOID) {
     if (reason == DLL_PROCESS_ATTACH) {
         init_config_and_logging();
         bx_veh_install();
+        g_previous_filter = SetUnhandledExceptionFilter(log_unhandled_exception);
         bx_log_emit(BX_LOG_INFO, "runtime_veh", "attached",
                     g_config.profile == BX_PROFILE_ANACONDA ? "profile=anaconda" : "profile=lockhart");
     } else if (reason == DLL_PROCESS_DETACH) {
+        // Restore g_previous_filter only when our filter is still the active
+        // top-level filter; if the guest installed its own filter after attach,
+        // put the guest filter back unchanged. (The frozen .def has no separate
+        // uninstall export, so detach performs this bounded pointer swap.)
+        const auto current_filter = SetUnhandledExceptionFilter(g_previous_filter);
+        if (current_filter != log_unhandled_exception) {
+            SetUnhandledExceptionFilter(current_filter);
+        }
         if (g_veh_handle) {
             RemoveVectoredExceptionHandler(g_veh_handle);
             g_veh_handle = nullptr;

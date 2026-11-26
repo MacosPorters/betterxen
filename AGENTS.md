@@ -100,7 +100,6 @@ Every feature issue belongs to **one track** and defines an **exclusive file sco
 ## 6. Legal & Clean-Room Rules
 
 - Use only publicly accessible documentation, publicly licensed software, and authorized synthetic workloads. Never obtain, paste, or commit leaked executables or SDKs, confidential Xbox documentation, restricted console tools, firmware, encryption keys, unauthorized assets or source code, or proprietary game builds and shader collections.
-- **Contributor clean-room rule:** Contributors who have seen leaked or confidential Xbox materials must not contribute (`CONTRIBUTING.md`, DCO `Signed-off-by` required on all commits).
 - **Legal boundary (`docs/legal.md`):** BetterXen does not circumvent console security or DRM and does not load encrypted or protected content. Validate technical compatibility and safety of user-provided files; do not ask for ownership receipts, accounts, or acquisition provenance as part of file loading.
 - Never place restricted material, personal paths, or secrets in the repository or its Git history.
 
