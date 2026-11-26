@@ -1,6 +1,26 @@
 # Wave 1 Parallel Contributor Backlog (M0 → M1)
 
-All issues below have **disjoint file scopes** and can be claimed simultaneously by **6–10 contributors** as soon as M0 lands on `main`. Each issue uses `.github/ISSUE_TEMPLATE/track-handoff.yml`.
+All issues below were written with **disjoint file scopes** so contributors could work in parallel after M0. Each issue uses `.github/ISSUE_TEMPLATE/track-handoff.yml`. The entries below record the original contracts, not what was delivered.
+
+## Status as of 2026-11-26
+
+| Entry | Issue | State | Follow-up |
+| --- | --- | --- | --- |
+| M1-A1 | #408 | open | |
+| M1-A2 | #409 | merged | |
+| M1-A3 | #410 | merged | #437 |
+| M1-B1 | #411 | merged; hook dispatch not implemented | #442 |
+| M1-B2 | #412 | merged | |
+| M1-B3 | #413 | merged | |
+| M1-C1 | #414 | merged; newer interfaces not proxied | #443, #444 |
+| M1-C2 | #415 | merged | |
+| M1-D1 | #416 | merged; not reachable from Windows guests, no histogram | #445 |
+| M1-D2 | #417 | merged | |
+| M1-E1 | #418 | merged | #439 (open) |
+| M1-E2 | #419 | merged | |
+| M1-F1 | #420 | merged; stages still pending | #437, #446 |
+
+The [milestone page](https://github.com/MacosPorters/betterxen/milestone/17) is current. The exit gate is in the [roadmap](../roadmap.md#m1-exit-gate).
 
 ---
 
@@ -86,7 +106,7 @@ All issues below have **disjoint file scopes** and can be claimed simultaneously
 
 ## Track F — Conformance, Integration & Telemetry
 
-### `[M1-F1]` End-to-End Synthetic Mini-Engine Fixture (`tests/integration/`)
-- **Scope:** `tests/conformance/**`, `tests/integration/**`
+### `[M1-F1]` End-to-End Synthetic Mini-Engine Fixture (`tests/conformance/test_integration_boot/`)
+- **Scope:** `tests/conformance/**`
 - **Contract:** Build a single synthetic PE32+ executable that simultaneously links `xmem.dll`, `XCRDAPI.dll`, `d3d12_xs.dll`, `xg_xs.dll`, `xgameruntime.dll`, `AcpHal.dll`, `xapu.dll`, `chad.dll`, `GameInput.dll`, `psm-appnotify`, and `ntuser` forwarders, executes AVX2 + `clwb`, initializes every subsystem in startup order, and verifies zero unresolved symbols and clean shutdown.
-- **Test:** Passes end-to-end via `bx-cli run --exe build-shims/bin/integration_boot.exe`.
+- **Test:** Passes end-to-end via `bx-cli run --shims build-shims/bin --exe build-shims/bin/test_integration_boot.exe`.

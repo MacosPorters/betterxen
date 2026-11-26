@@ -9,13 +9,13 @@
 ![Platform: Apple Silicon](https://img.shields.io/badge/platform-Apple%20Silicon%20(ARM64)-1f6feb?logo=apple&logoColor=white)
 ![Graphics: D3DMetal 3.0](https://img.shields.io/badge/graphics-D3DMetal%203.0%20%2F%20Metal-8957e5)
 ![Stack: Rust + C++20 PE32+](https://img.shields.io/badge/stack-Rust%20%2B%20C%2B%2B20%20PE32%2B-dea584)
-![Status: experimental](https://img.shields.io/badge/status-experimental%20(M0)-d29922)
+![Status: experimental](https://img.shields.io/badge/status-experimental%20(M1)-d29922)
 ![License: GPL-3.0-or-later](https://img.shields.io/badge/license-GPL--3.0--or--later-2ea043)
 
 </div>
 
 > [!IMPORTANT]
-> **Experimental status.** BetterXen is an active, open-source compatibility engineering project currently at **Milestone M0** (cross-compiled shim foundation and live CrossOver/Rosetta smoke tests verified on synthetic PE32+ workloads). **Commercial Xbox game execution is not yet supported.** CrossOver, Rosetta 2, and D3DMetal are externally installed dependencies and are never bundled or redistributed.
+> **Experimental status.** BetterXen is an active, open-source compatibility engineering project currently at **Milestone M1** (in development). The M0 foundation is merged; only synthetic PE32+ workloads have been run. **Commercial Xbox game execution is not yet supported.** CrossOver, Rosetta 2, and D3DMetal are externally installed dependencies and are never bundled or redistributed.
 
 BetterXen builds the missing Xbox Game OS layer around **CrossOver 26.3+**, **Rosetta 2**, and **D3DMetal 3.0** on Apple Silicon:
 - **Native ARM64 macOS tooling** (`launcher/`, Rust) for host diagnostics, PE32+ static probing, CrossOver bottle orchestration, and structured trace aggregation.
@@ -52,16 +52,18 @@ Legend: 🟢 **Done / Merged** · 🔵 **Active Milestone** · ⚪ **Planned**
 
 ### Active Milestone — [M1: Startup Shims to `D3D12XboxCreateDevice`](https://github.com/MacosPorters/betterxen/milestone/17)
 
-| Track | Focus | Visual Status | Live Issues |
-| --- | --- | --- | --- |
-| **Track A** | `bx-cli` supervision, `clwb` VEH + crash dumper, Win32 bridge | `🟨🟨🟨` *(3/3 PRs open)* | [View Track A](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+A%22) |
-| **Track B** | `xmem.dll` core + physical/scatter pages, `XCRDAPI.dll` DirectStorage | `🟨🟨🟨` *(3/3 PRs open)* | [View Track B](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+B%22) |
-| **Track C** | `d3d12_xs.dll` COM proxy (D3DMetal 3.0), `xg_xs.dll` texture computer | `⬜⬜` *(needs contributors!)* | [View Track C](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+C%22) |
-| **Track D** | `dxbc-accc` FSPX C ABI bridge, `d3dmetal-native` harness | `🟨⬜` *(1 PR open, 1 ready)* | [View Track D](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+D%22) |
-| **Track E** | `xgameruntime.dll` offline GDK, `AcpHal`/`xapu`/`chad`, `GameInput` | `🟨🟨` *(2/2 PRs open)* | [View Track E](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+E%22) |
-| **Track F** | End-to-end synthetic boot fixture (`test_integration_boot`) | `🟨` *(1/1 PR open)* | [View Track F](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+F%22) |
+Snapshot of 2026-11-26. The [milestone page](https://github.com/MacosPorters/betterxen/milestone/17) is current.
 
-`🟩` Merged & verified · `🟨` PR open / in review · `⬜` Open & ready to claim
+| Track | Focus | Merged | Open | Live Issues |
+| --- | --- | --- | --- | --- |
+| **Track A** | `bx-cli` supervision, `clwb` VEH + crash dumper, Win32 bridge | #409, #410 | #408, #437 | [View Track A](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+A%22) |
+| **Track B** | `xmem.dll` core + physical/scatter pages, `XCRDAPI.dll` DirectStorage | #411, #412, #413 | #442 | [View Track B](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+B%22) |
+| **Track C** | `d3d12_xs.dll` COM proxy (D3DMetal 3.0), `xg_xs.dll` texture computer | #414, #415 | #443, #444 | [View Track C](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+C%22) |
+| **Track D** | `dxbc-accc` FSPX C ABI bridge, `d3dmetal-native` harness | #416, #417 | #445 | [View Track D](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+D%22) |
+| **Track E** | `xgameruntime.dll` offline GDK, `AcpHal`/`xapu`/`chad`, `GameInput` | #418, #419 | #439 | [View Track E](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+E%22) |
+| **Track F** | End-to-end synthetic boot fixture (`test_integration_boot`) | #420 | #446 | [View Track F](https://github.com/MacosPorters/betterxen/issues?q=is%3Aopen+label%3A%22track%3A+F%22) |
+
+"Merged" means the issue's pull request is on `main`. It does not mean the result was independently verified, and some merged issues have follow-ups in the Open column.
 
 ### Milestone Roadmap (M0 → M6)
 
