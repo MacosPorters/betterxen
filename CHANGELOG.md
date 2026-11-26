@@ -9,9 +9,15 @@ exact revision and known limitations.
 Guest execution uses original, purpose-built test programs. Commercial Xbox game execution
 remains unsupported.
 
+### Security
+
+- Windows programs started by the hybrid runner no longer inherit the host environment: only a short allowlist and explicit `--env` values are passed. Before this, tokens and `SSH_AUTH_SOCK` were visible to them. This is not a sandbox.
+
 ### Added
 - Recorded an evaluation of utmapp/d3dmetal-native: it builds, 4 of its 55 tests pass without Apple's framework, it was not run against D3DMetal, and it is not adopted (`docs/research/d3dmetal-native-evaluation.md`).
 - Documented the hybrid execution path, its acceptance gates and an audit of the integration base, including which parts of the repository were not read (`docs/hybrid-execution.md`, `docs/research/hybrid-runtime-audit-2026-11-25.md`).
+- Added `betterxen hybrid`, the same commands as `betterxen-hybrid` inside the main CLI, plus `stop --bottle` for recovery. Runs stop their process group and bottle on SIGINT, SIGTERM and SIGHUP, and record any workload process left behind.
+- Added an original Direct3D 12 workload (`workloads/d3d12-integrated`). On one Mac it passes every gate except resource release under D3DMetal, where each destroyed D3D12 swapchain leaves a device reference; it produces the same pixel digest as the Direct3D 11 workload. Under the `wined3d` setting frames slow to 2 s after about 440 frames (cause unknown). Not independently reproduced.
 - Added an original integrated Windows workload (`workloads/d3d11-integrated`, #365): threads, memory protection and exception handling, timing, files, a window and swapchain, textured depth-tested rendering, a compute pass, scripted input, resource churn and shutdown checks, each reported as a pass/fail gate, with seven fault injections as negative controls. Locally verified on CrossOver 26.3 (Apple M4): pixels match a CPU-computed image on the default, D3DMetal, DXMT, DXVK and wined3d settings, and a macOS capture of the window matches the final frame. Not independently reproduced; input is posted inside Windows, not typed on the Mac.
 - Added `betterxen-hybrid doctor` (environment preflight) and `inspect` (identify a Windows executable). `run` and `bench` now refuse non-programs, DLLs, ARM64 images, unknown backend names and missing bottles before launching, record the executable's SHA-256 and imports, honour `--require-gates`, and stop runaway output (#355).
 - Added `scripts/hybrid/accept-integrated.sh`, which reproduces the integrated acceptance sequence including crash and hang recovery, repeats and a 20,000-frame run.
@@ -69,6 +75,7 @@ remains unsupported.
 - Extended the read-only RDNA2 planning CLI (`python3 -m qa rdna2`) with family/status filters, compact summaries, Codex-ready manifests under `artifacts/`, active-claim exclusion (family claims exclude those families; path-only claims block overlapping permitted files), coverage reconcile against `semantic_coverage` without inflating counts, and inventory diffs. Covered by `tests/qa/test_rdna2_plan.py`; planning only, no GPU production edits.
 
 ### Fixed
+- The hybrid runner now expands a `~` in CrossOver's `BottleDir` preference (reported in review by 1Bartosz).
 - `betterxen-hybrid run` no longer lets an inherited `CX_GRAPHICS_BACKEND` change the backend while recording none requested (reproduced by IamHeavyLazer in #350); the removed value is recorded.
 - Run records now sample the Windows program's own memory. The earlier `peak_crossover_rss_kb_sampled` values never included it, because Wine re-parents the program with a drive-letter command line.
 - A zero-exit run is no longer classified `cannot_execute` because its output mentions that text, non-UTF-8 output no longer empties the log, bottle process matching no longer includes longer bottle names, and launcher spawn errors are recorded.
