@@ -9,7 +9,7 @@ const USAGE: &str = "usage: betterxen-hybrid <command>
   frames <file>         frame-time statistics; file has one interval in ms per line (JSON)
   guard [--min-start-free N] [--min-free N] -- CMD ARGS...
                         run CMD; refuse to start / stop it when free memory is low
-  run --bottle B [--backend X] [--timeout S] [--expect TEXT] [--out DIR]
+  run --bottle B [--backend X] [--timeout S] [--stall-timeout S] [--settle-bound S] [--expect TEXT] [--out DIR]
       [--min-start-free N] [--min-free N] -- EXE [ARGS...]
                         run a Windows program through CrossOver; write a JSON record
   bench --bottle B --backends a,b,c [--repeat N] [same options] -- EXE [ARGS...]
@@ -112,6 +112,8 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
     let mut backends = Vec::new();
     let mut repeat = 1u32;
     let mut timeout = 300u64;
+    let mut stall = None;
+    let mut settle = 60u64;
     let mut expect = None;
     let mut out = None;
     let (mut min_start, mut min_free) = (50u8, 15u8);
@@ -127,6 +129,8 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
             "--backends" => backends = v.split(',').map(String::from).collect(),
             "--repeat" => repeat = v.parse().map_err(|_| "bad --repeat")?,
             "--timeout" => timeout = v.parse().map_err(|_| "bad --timeout")?,
+            "--stall-timeout" => stall = Some(v.parse().map_err(|_| "bad --stall-timeout")?),
+            "--settle-bound" => settle = v.parse().map_err(|_| "bad --settle-bound")?,
             "--expect" => expect = Some(v),
             "--out" => out = Some(PathBuf::from(v)),
             "--min-start-free" => min_start = v.parse().map_err(|_| "bad --min-start-free")?,
@@ -165,6 +169,9 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
             },
             expect,
             work_dir: work,
+            stall_timeout: stall.map(std::time::Duration::from_secs),
+            settle_bound: std::time::Duration::from_secs(settle),
+            read_free: memory::free_percentage,
         },
         backends,
         repeat,
