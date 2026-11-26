@@ -26,6 +26,12 @@ The suite exited 1 because of those five lines. **On-screen output has not been 
 for this build.** An earlier attempt the same night failed the same checks because the
 window was on another Space.
 
+After merging `main` at `f7194d0` and fixing how `--bottle` runs pass DLL overrides and the
+backend, the Rust checks (109 passed, 0 failed, 1 live test ignored), the shim build and every
+`test_*.exe` fixture were rerun, through both `--bottle` and `--prefix`. All passed except
+`test_veh_unhandled.exe`, which crashes on purpose. **The full acceptance suite has not been
+rerun on the merged tree**, so the table above is for the earlier source.
+
 ## Requirements
 
 - Apple Silicon Mac. Developed on an M4 with 24 GB and macOS 27; nothing else was tried.
@@ -125,6 +131,10 @@ Mac: check the SHA-256, unpack, and run `./test.sh NEW_BOTTLE_NAME` (set
 
 ## Known limitations
 
+- **API-set bridge shims (#437).** Under CrossOver, statically imported `api-ms-win-*` and
+  `ext-ms-win-*` names are answered by Wine, not by the `win32_bridge` shims.
+- **Bottle settings.** `[EnvironmentVariables]` in a bottle apply over variables given with
+  `--env`; only `--backend` and DLL overrides are protected from this.
 - **Intermittent D3D11 control stall.** One 20,000-frame soak stopped after 9,183 frames
   because a GPU event query did not complete within 10 s. Three reruns passed. The cause is
   unknown. The two D3D12 soaks of the same length did not show it.

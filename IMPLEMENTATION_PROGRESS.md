@@ -1,5 +1,16 @@
 # Maintainer build implementation checkpoint
 
+## Merge of main f7194d0 and launcher fix (2026-11-26)
+
+- Merged the M1 work from `main`; `abi/`, `shims/`, `shader-transpiler/` match `main`. The earlier
+  raise of the minimum Rust version to 1.100 was dropped.
+- Fixed (jelly013's report on #425): `bin/wine` discards `WINEDLLOVERRIDES`; now passed with
+  `--dll`. Bottle settings also replaced `--backend` (old runner ran vkd3d when asked for
+  d3dmetal); now passed with `--env`.
+- Rerun: Rust checks, shim build, all `test_*.exe` fixtures in bottle and prefix mode.
+- Not rerun: `scripts/hybrid/accept-integrated.sh` (about 12 minutes), including on-screen checks.
+- #440 (open) changes `bx-cli` trace output and may conflict. #408 overlaps this launcher work.
+
 ## Latest state (resumed by Claude Code, 2026-11-26)
 
 Read this section first; the sections below are the earlier session's record.

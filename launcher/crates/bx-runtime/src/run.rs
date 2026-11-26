@@ -6,8 +6,9 @@
 //! exist in the installed build and answer `--help` (cxbottle, cxstart) as observed on build
 //! 26.3.0.39832. Every record therefore carries the CrossOver build and a flag saying the
 //! launcher interface is vendor-help-only. The graphics backend is selected through the
-//! `CX_GRAPHICS_BACKEND` environment variable, which appears in third-party launch scripts and
-//! is likewise undocumented; an unrecognised value was observed to be ignored silently, so a
+//! `CX_GRAPHICS_BACKEND` environment variable. CodeWeavers does not document it, although the
+//! installed 26.3 bottle templates write it and `cxcompatdb.so` names it (reported by jelly013
+//! on #425, rechecked here); an unrecognised value was observed to be ignored silently, so a
 //!
 //! Stall detection and the wait for memory to settle after a stop follow the supervision
 //! lessons in skakwy's <https://github.com/skakwy/victory-mac> (`mac/PROGRESS.md`,
@@ -15,6 +16,11 @@
 //! work, GPL-3.0, used with his permission): detect a hung run by absence of progress, stop a
 //! bottle with `wineserver -k` and its prefix, and do not start the next run until memory has
 //! been returned. Reimplemented here; none of his code is copied.
+//!
+//! `bin/wine` deletes an inherited `WINEDLLOVERRIDES` and then applies the bottle's
+//! `[EnvironmentVariables]` over what it was given, so in bottle mode DLL overrides are passed
+//! with its `--dll` option and a requested backend with `--env`, which it applies last (see
+//! [`bottle_options`]). A bare prefix runs `wineloader` and takes both from the environment.
 //!
 //! `CX_GRAPHICS_BACKEND` and `CX_GRAPHICS_BACKEND_VERSION` are removed from the child's
 //! environment unless a backend was requested. Inherited values silently changed the backend
@@ -125,6 +131,18 @@ fn isolated_host_env(
 pub const BACKENDS: [&str; 4] = ["d3dmetal", "dxmt", "dxvk", "wined3d"];
 
 const BACKEND_VARS: [&str; 2] = ["CX_GRAPHICS_BACKEND", "CX_GRAPHICS_BACKEND_VERSION"];
+
+/// Options placed before the program when launching through `bin/wine --bottle`.
+fn bottle_options(env: &[(String, String)], backend: Option<&str>) -> Vec<String> {
+    let mut options = Vec::new();
+    if let Some((_, value)) = env.iter().rev().find(|(k, _)| k == "WINEDLLOVERRIDES") {
+        options.extend(["--dll".into(), value.clone()]);
+    }
+    if let Some(backend) = backend {
+        options.extend(["--env".into(), format!("CX_GRAPHICS_BACKEND={backend}")]);
+    }
+    options
+}
 
 #[derive(Debug, Clone, PartialEq)]
 pub struct Gate {
@@ -444,13 +462,16 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
             if let Ok((o, e)) = files {
                 let mut cmd = Command::new(&cfg.wine);
                 if cfg.prefix.is_none() {
-                    cmd.arg("--bottle").arg(&cfg.bottle);
+                    cmd.arg("--bottle")
+                        .arg(&cfg.bottle)
+                        .args(bottle_options(&cfg.env, cfg.backend.as_deref()));
                 }
                 cmd.arg(&cfg.program).args(&cfg.args);
                 cmd.stdout(Stdio::from(o)).stderr(Stdio::from(e));
                 cmd.process_group(0);
                 if cfg.inherit_env {
-                    for key in BACKEND_VARS {
+                    // `bin/wine` reads CX_ENV as a default for its `--env` option.
+                    for key in BACKEND_VARS.into_iter().chain(["CX_ENV"]) {
                         cmd.env_remove(key);
                     }
                 } else {
@@ -950,6 +971,20 @@ mod tests {
         for key in ["GH_TOKEN", "AWS_SECRET_ACCESS_KEY", "CX_GRAPHICS_BACKEND"] {
             assert!(!child.contains_key(key));
         }
+    }
+
+    #[test]
+    fn bottle_mode_passes_overrides_and_backend_as_launcher_options() {
+        let pair = |k: &str, v: &str| (k.to_string(), v.to_string());
+        assert!(bottle_options(&[pair("BX_PROFILE", "lockhart")], None).is_empty());
+        let env = [
+            pair("WINEDLLOVERRIDES", "first="),
+            pair("WINEDLLOVERRIDES", "xmem=n,b"),
+        ];
+        assert_eq!(
+            bottle_options(&env, Some("d3dmetal")),
+            ["--dll", "xmem=n,b", "--env", "CX_GRAPHICS_BACKEND=d3dmetal"]
+        );
     }
 
     #[test]
