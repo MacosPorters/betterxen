@@ -27,6 +27,10 @@ private-bundle run were last done on earlier source, before `main` was merged.
 build and all fixtures, now including `test_xmem_physical.exe`, were rerun with the same
 results; the full acceptance suite was not.
 
+After merging `main` at `bfa80de` (`bx-cli trace` reporting), the Rust checks (113 passed, 0
+failed, 1 ignored), shim build and the shim export, CLWB and crash fixtures with their traces
+were rerun.
+
 ## Requirements
 
 - Apple Silicon Mac. Developed on an M4 with 24 GB and macOS 27; nothing else was tried.
@@ -74,7 +78,7 @@ for t in test_veh_clwb test_shim_exports; do
   "$BX" run --prefix "$PWD/artifacts/m0-prefix" --shims build-shims/bin \
     --log "$PWD/artifacts/m0-shim.jsonl" --exe build-shims/bin/$t.exe
 done
-"$BX" trace artifacts/m0-shim.jsonl                   # expect 2 clwb traps, 0 ADX faults
+"$BX" trace artifacts/m0-shim.jsonl                   # expect "clwb VEH traps : at least 4 (sampled)", ADX 0
 ```
 
 Full acceptance (Direct3D 12 and 11 workloads, negative controls, lifecycle, soak):

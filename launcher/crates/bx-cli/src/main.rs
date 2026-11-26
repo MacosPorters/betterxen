@@ -65,6 +65,16 @@ fn cmd_probe(path: &str) -> ExitCode {
     ExitCode::SUCCESS
 }
 
+fn format_clwb_line(clwb_events: usize, clwb_trap_lower_bound: Option<u64>) -> String {
+    if let Some(lower_bound) = clwb_trap_lower_bound {
+        format!("clwb VEH traps   : at least {lower_bound} (sampled)")
+    } else if clwb_events == 0 {
+        "clwb VEH traps   : 0".to_string()
+    } else {
+        format!("clwb VEH samples : {clwb_events}")
+    }
+}
+
 fn cmd_trace(path: &str) -> ExitCode {
     let text = match fs::read_to_string(path) {
         Ok(s) => s,
@@ -75,8 +85,26 @@ fn cmd_trace(path: &str) -> ExitCode {
     };
     let summary = summarize_jsonl(&text);
     println!("Trace events     : {}", summary.total_lines);
-    println!("clwb VEH traps   : {}", summary.clwb_events);
+    println!(
+        "{}",
+        format_clwb_line(summary.clwb_events, summary.clwb_trap_lower_bound)
+    );
     println!("ADX illegal ops  : {}", summary.adx_errors);
+    if !summary.unhandled_exceptions.is_empty() {
+        println!(
+            "\nUnhandled exceptions ({}):",
+            summary.unhandled_exceptions.len()
+        );
+        for crash in summary.unhandled_exceptions {
+            println!(
+                "  code={} module_base={} + RVA={} RIP={}",
+                crash.exception_code.as_deref().unwrap_or("unknown"),
+                crash.module_base.as_deref().unwrap_or("unknown"),
+                crash.rva.as_deref().unwrap_or("unknown"),
+                crash.rip.as_deref().unwrap_or("unknown"),
+            );
+        }
+    }
     if !summary.unimpl_apis.is_empty() {
         println!("\nUnimplemented APIs:");
         for (api, count) in summary.unimpl_apis {
@@ -147,5 +175,20 @@ fn main() -> ExitCode {
             print_usage();
             ExitCode::FAILURE
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn formats_clwb_summary_lines() {
+        assert_eq!(format_clwb_line(0, None), "clwb VEH traps   : 0");
+        assert_eq!(format_clwb_line(2, None), "clwb VEH samples : 2");
+        assert_eq!(
+            format_clwb_line(3, Some(4)),
+            "clwb VEH traps   : at least 4 (sampled)"
+        );
     }
 }
