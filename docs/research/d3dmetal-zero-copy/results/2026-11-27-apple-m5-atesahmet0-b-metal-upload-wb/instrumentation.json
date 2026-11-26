@@ -1,0 +1,57 @@
+{
+  "wrapper_sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874",
+  "instrumentation_exit": 0,
+  "matched_sample_archive": true,
+  "recorded_trace": "/private/tmp/b473-metal-upload-wb/00-upload-wb/gpu.trace",
+  "trace_bundle_archived": false,
+  "target_only_excerpts": true,
+  "extractor_sha256": "8f0cf4863b19e7cee1aaabce6a2f4f475c0388a30f30ebc90b69944d552b2a52",
+  "extracts": {
+    "gpu-intervals.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-upload-wb/00-upload-wb/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-gpu-intervals\"]",
+        "--output",
+        "/private/tmp/b473-metal-upload-wb/gpu-intervals.xml"
+      ],
+      "sha256": "cf9827d50a60545d570b7989cc08121b86c2ef43d5332f4710635237f11bd626",
+      "exit": 0,
+      "archived": false
+    },
+    "metal-encoders.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-upload-wb/00-upload-wb/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-application-encoders-list\"]",
+        "--output",
+        "/private/tmp/b473-metal-upload-wb/metal-encoders.xml"
+      ],
+      "sha256": "b21bf495eab7d36881e4cbdc273c1862bf161132d0d851d95277fcf905c1b57c",
+      "exit": 0,
+      "archived": false
+    }
+  },
+  "extractor_command": [
+    "python3",
+    "docs/research/d3dmetal-zero-copy/copy-detection/summarize-trace.py",
+    "/private/tmp/b473-metal-upload-wb",
+    "/private/tmp/b473-metal-upload-wb/gpu-intervals.xml",
+    "/private/tmp/b473-metal-upload-wb/metal-encoders.xml"
+  ],
+  "extractor_output_sha256": "d530d47489156ef7baa7b4aac261e0f3f8ea509d157b402f9bf63748c9140140",
+  "late_output_hashes": {
+    "00-upload-wb/xctrace-output.txt": {
+      "early_case_sha256": "ec0bb79f08773023b9e8981c87f33506c4fec05f0ee586bfe880ab6fec8649e7",
+      "final_archive_sha256": "dd989674cb86daff46191cdfee6f980d3c22ce0b8e9fe8d0e5e9b7096c8b935d"
+    }
+  }
+}

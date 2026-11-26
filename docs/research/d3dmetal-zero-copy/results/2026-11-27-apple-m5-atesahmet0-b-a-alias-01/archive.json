@@ -1,0 +1,10 @@
+{
+  "source_scratch": "/private/tmp/b473-a-alias-01",
+  "redactions": {
+    "receipt.json": {
+      "raw_sha256": "25d6b4105a4b41f75dc478cf40ade8d07fbce677554d4a63efeb131ef48f4550",
+      "archive_sha256": "6f7b346c3d1139c0b07e46071cb4ea59e03bf0fc760f9dc0936162bc534b9532"
+    }
+  },
+  "policy": "Replace home-directory prefix in metadata with <HOME>. Benchmark stdout/stderr are copied byte for byte. Keep source, compiled original shader, receipts, and logs. Omit executable, bottle and full Instruments trace."
+}

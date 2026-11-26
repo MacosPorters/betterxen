@@ -1,0 +1,19 @@
+{
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/b473-small-02/bottle",
+    "--no-update",
+    "--no-gui",
+    "--workdir",
+    "/private/tmp/b473-small-02/01-watch",
+    "/private/tmp/b473-small-02/b-coherence.exe",
+    "watch"
+  ],
+  "timeout_seconds": 45,
+  "exit": 0,
+  "output_hashes": {
+    "stdout.txt": "2e0841402a5b6fcff303b6530f8aaa62c2ba35c0c7efefa9b381ee270760a1a8",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

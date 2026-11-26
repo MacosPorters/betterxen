@@ -1,0 +1,15 @@
+WATCH guest_page=4096 allocation_granularity=65536 cpu_mod16k=0
+WATCH phase=fresh rc=0 granularity=4096 count=0 actual= expected=
+WATCH phase=only_second_guest_page rc=0 granularity=4096 count=1 actual=4096, expected=4096,
+WATCH phase=query_without_reset rc=0 granularity=4096 count=1 actual=4096, expected=4096,
+WATCH phase=second_and_third rc=0 granularity=4096 count=2 actual=4096,8192, expected=4096,8192,
+WATCH phase=after_query_reset rc=0 granularity=4096 count=0 actual= expected=
+WATCH phase=same_page_rearmed rc=0 granularity=4096 count=1 actual=4096, expected=4096,
+WATCH phase=host_boundary rc=0 granularity=4096 count=2 actual=12288,16384, expected=12288,16384,
+WATCH ResetWriteWatch rc=0
+WATCH phase=after_explicit_reset rc=0 granularity=4096 count=0 actual= expected=
+WATCH read_only value=5
+WATCH phase=after_read_only rc=0 granularity=4096 count=0 actual= expected=
+WATCH phase=same_value_store_after_reset rc=0 granularity=4096 count=1 actual=16384, expected=16384,
+WATCH phase=final_empty rc=0 granularity=4096 count=0 actual= expected=
+END complete

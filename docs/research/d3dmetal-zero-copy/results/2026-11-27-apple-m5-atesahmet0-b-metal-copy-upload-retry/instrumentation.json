@@ -1,0 +1,57 @@
+{
+  "wrapper_sha256": "b9ff1e4acd3cb26ce4951ad17d2a2c3ed612d67a529b5c87530aacecb18b7985",
+  "instrumentation_exit": 0,
+  "matched_sample_archive": true,
+  "recorded_trace": "/private/tmp/b473-metal-copy-upload-retry/00-trace-copy-upload/gpu.trace",
+  "trace_bundle_archived": false,
+  "target_only_excerpts": true,
+  "extractor_sha256": "8f0cf4863b19e7cee1aaabce6a2f4f475c0388a30f30ebc90b69944d552b2a52",
+  "extracts": {
+    "gpu-intervals.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-copy-upload-retry/00-trace-copy-upload/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-gpu-intervals\"]",
+        "--output",
+        "/private/tmp/b473-metal-copy-upload-retry/gpu-intervals.xml"
+      ],
+      "sha256": "681e09d3892da6b7ae30b4af541a79beebd1d5ba860e11662b27681084ba3f9e",
+      "exit": 0,
+      "archived": false
+    },
+    "metal-encoders.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-copy-upload-retry/00-trace-copy-upload/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-application-encoders-list\"]",
+        "--output",
+        "/private/tmp/b473-metal-copy-upload-retry/metal-encoders.xml"
+      ],
+      "sha256": "1bb16d3370a6a9886e00400a768391c019b50699728cde88b3df010fae00b615",
+      "exit": 0,
+      "archived": false
+    }
+  },
+  "extractor_command": [
+    "python3",
+    "docs/research/d3dmetal-zero-copy/copy-detection/summarize-trace.py",
+    "/private/tmp/b473-metal-copy-upload-retry",
+    "/private/tmp/b473-metal-copy-upload-retry/gpu-intervals.xml",
+    "/private/tmp/b473-metal-copy-upload-retry/metal-encoders.xml"
+  ],
+  "extractor_output_sha256": "e2001a24ac10864d03fa3f1c6f8bc801a970ddf1c38926e31acbbe13658dd903",
+  "late_output_hashes": {
+    "00-trace-copy-upload/xctrace-output.txt": {
+      "early_case_sha256": "3cdec76d9f8dbc1e2ff95d9f20028ef670c49ac660fb868e1776bebe6a1aa0ce",
+      "final_archive_sha256": "359c5b2cfaa92b7f1051a7b0c80a9b17e6197336d6d8648cf25babf10ad8985e"
+    }
+  }
+}

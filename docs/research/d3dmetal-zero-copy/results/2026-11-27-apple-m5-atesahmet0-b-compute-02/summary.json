@@ -1,0 +1,1810 @@
+[
+  {
+    "directory": "b473-compute-02",
+    "group": "compute",
+    "seed": 947,
+    "stop_reason": null,
+    "cases": {
+      "00-wb": {
+        "exit": 0,
+        "backend": {
+          "verified": true,
+          "guest_pid": "58137",
+          "lsof_exit": 0,
+          "paths": [
+            "/usr/libexec/rosetta/runtime",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+          ]
+        },
+        "error": null,
+        "samples": [
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "both"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.5,
+                "p10": 0.5,
+                "median": 0.9,
+                "p90": 1.8,
+                "max": 1.9,
+                "mad": 0.25
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.5,
+                "p10": 2.6,
+                "median": 3.1500000000000004,
+                "p90": 4.6,
+                "max": 6.4,
+                "mad": 0.35000000000000053
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.3,
+                "p10": 0.3,
+                "median": 0.4,
+                "p90": 0.5,
+                "max": 0.6,
+                "mad": 0.1
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 502.2,
+                "p10": 516.2,
+                "median": 691.0,
+                "p90": 828.0,
+                "max": 844.5,
+                "mad": 103.94999999999999
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 505.3,
+                "p10": 519.1,
+                "median": 695.0,
+                "p90": 831.1,
+                "max": 851.5,
+                "mad": 103.80000000000001
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 4.925782736347622,
+                "p10": 5.046689929009746,
+                "median": 6.035872619008796,
+                "p90": 8.079953766133693,
+                "max": 8.300621413021966,
+                "mad": 0.8736047905300963
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 4.925782736347622,
+                "p10": 5.046689929009746,
+                "median": 6.035872619008796,
+                "p90": 8.079953766133693,
+                "max": 8.300621413021966,
+                "mad": 0.8736047905300963
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "full_read"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.5,
+                "p10": 0.5,
+                "median": 0.55,
+                "p90": 0.6,
+                "max": 0.9,
+                "mad": 0.050000000000000044
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.2,
+                "p10": 2.2,
+                "median": 2.4,
+                "p90": 2.8,
+                "max": 2.9,
+                "mad": 0.1499999999999999
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 0.4,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 461.9,
+                "p10": 480.3,
+                "median": 569.0999999999999,
+                "p90": 641.7,
+                "max": 747.7,
+                "mad": 40.099999999999966
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 464.5,
+                "p10": 482.8,
+                "median": 571.95,
+                "p90": 644.8,
+                "max": 750.3,
+                "mad": 40.25
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 5.5901692656270825,
+                "p10": 6.504813895781639,
+                "median": 7.333497756693283,
+                "p90": 8.687456503728251,
+                "max": 9.029717976318622,
+                "mad": 0.5390928972888496
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.34938557910169266,
+                "p10": 0.4065508684863524,
+                "median": 0.45834360979333016,
+                "p90": 0.5429660314830157,
+                "max": 0.5643573735199139,
+                "mad": 0.0336933060805531
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_4k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.4,
+                "median": 0.5,
+                "p90": 0.5,
+                "max": 0.7,
+                "mad": 0.04999999999999999
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.1,
+                "p10": 2.1,
+                "median": 2.3499999999999996,
+                "p90": 2.6,
+                "max": 2.7,
+                "mad": 0.15000000000000036
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 0.3,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 177.3,
+                "p10": 178.7,
+                "median": 186.7,
+                "p90": 190.9,
+                "max": 194.1,
+                "mad": 4.1000000000000085
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 179.8,
+                "p10": 181.1,
+                "median": 189.45,
+                "p90": 193.6,
+                "max": 196.5,
+                "mad": 4.050000000000011
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.020844783715012725,
+                "p10": 0.02115702479338843,
+                "median": 0.021622771159874606,
+                "p90": 0.022617338487023745,
+                "max": 0.022780867630700776,
+                "mad": 0.00045480685004698797
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.020844783715012725,
+                "p10": 0.02115702479338843,
+                "median": 0.021622771159874606,
+                "p90": 0.022617338487023745,
+                "max": 0.022780867630700776,
+                "mad": 0.00045480685004698797
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_16k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.5,
+                "median": 0.5,
+                "p90": 0.6,
+                "max": 0.7,
+                "mad": 0.04999999999999999
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.0,
+                "p10": 2.0,
+                "median": 2.2,
+                "p90": 2.7,
+                "max": 2.8,
+                "mad": 0.19999999999999973
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 2.3,
+                "max": 2.8,
+                "mad": 0.09999999999999998
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 176.5,
+                "p10": 179.2,
+                "median": 196.55,
+                "p90": 206.4,
+                "max": 259.5,
+                "mad": 8.0
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 179.2,
+                "p10": 181.5,
+                "median": 200.4,
+                "p90": 208.8,
+                "max": 261.9,
+                "mad": 6.75
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.003909889270714013,
+                "p10": 0.004904214559386973,
+                "median": 0.0051097817114726905,
+                "p90": 0.005641873278236915,
+                "max": 0.005714285714285714,
+                "mad": 0.00016950050320461898
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.003909889270714013,
+                "p10": 0.004904214559386973,
+                "median": 0.0051097817114726905,
+                "p90": 0.005641873278236915,
+                "max": 0.005714285714285714,
+                "mad": 0.00016950050320461898
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "write"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.5,
+                "median": 0.5,
+                "p90": 0.6,
+                "max": 0.6,
+                "mad": 0.04999999999999999
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 1.9,
+                "p10": 2.1,
+                "median": 2.3499999999999996,
+                "p90": 2.7,
+                "max": 2.7,
+                "mad": 0.1999999999999995
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.4,
+                "max": 0.4,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 278.1,
+                "p10": 278.2,
+                "median": 485.65,
+                "p90": 651.2,
+                "max": 715.2,
+                "mad": 169.45000000000002
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 280.8,
+                "p10": 281.2,
+                "median": 488.15,
+                "p90": 654.1,
+                "max": 717.8,
+                "mad": 169.60000000000002
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 5.8432766787405965,
+                "p10": 6.41232839015441,
+                "median": 8.59239572309301,
+                "p90": 14.915732574679943,
+                "max": 14.936980056980058,
+                "mad": 2.464593188645506
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "omitted"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.4,
+                "median": 0.5,
+                "p90": 0.7,
+                "max": 0.7,
+                "mad": 0.09999999999999998
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 1.8,
+                "p10": 2.0,
+                "median": 2.2,
+                "p90": 2.6,
+                "max": 2.8,
+                "mad": 0.10000000000000009
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.3,
+                "p10": 0.3,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 0.3,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 42.4,
+                "p10": 43.0,
+                "median": 45.3,
+                "p90": 48.3,
+                "max": 51.6,
+                "mad": 1.3999999999999986
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 45.0,
+                "p10": 45.4,
+                "median": 48.1,
+                "p90": 50.9,
+                "max": 54.3,
+                "mad": 1.6000000000000014
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {}
+          }
+        ]
+      },
+      "01-default": {
+        "exit": 0,
+        "backend": {
+          "verified": true,
+          "guest_pid": "58163",
+          "lsof_exit": 0,
+          "paths": [
+            "/usr/libexec/rosetta/runtime",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+          ]
+        },
+        "error": null,
+        "samples": [
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "both"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.8,
+                "p10": 1.0,
+                "median": 1.4,
+                "p90": 2.4,
+                "max": 3.5,
+                "mad": 0.35
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.7,
+                "p10": 2.8,
+                "median": 3.2,
+                "p90": 4.6,
+                "max": 5.2,
+                "mad": 0.30000000000000004
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.5,
+                "max": 4.4,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 244.9,
+                "p10": 246.4,
+                "median": 287.4,
+                "p90": 601.1,
+                "max": 779.7,
+                "mad": 38.699999999999974
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 248.3,
+                "p10": 253.5,
+                "median": 291.75,
+                "p90": 605.0,
+                "max": 783.0,
+                "mad": 37.900000000000006
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 5.356710089399745,
+                "p10": 6.93273388429752,
+                "median": 14.418383315659245,
+                "p90": 16.545577909270218,
+                "max": 16.892082158679017,
+                "mad": 2.1044135067964778
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 5.356710089399745,
+                "p10": 6.93273388429752,
+                "median": 14.418383315659245,
+                "p90": 16.545577909270218,
+                "max": 16.892082158679017,
+                "mad": 2.1044135067964778
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "full_read"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.7,
+                "p10": 0.8,
+                "median": 1.5,
+                "p90": 3.8,
+                "max": 7.9,
+                "mad": 0.65
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.6,
+                "p10": 2.6,
+                "median": 3.1,
+                "p90": 19.0,
+                "max": 20.7,
+                "mad": 0.44999999999999996
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 1.0,
+                "max": 3.0,
+                "mad": 0.09999999999999998
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 195.4,
+                "p10": 195.7,
+                "median": 212.0,
+                "p90": 247.8,
+                "max": 534.3,
+                "mad": 15.600000000000009
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 198.5,
+                "p10": 198.9,
+                "median": 217.0,
+                "p90": 252.7,
+                "max": 556.0,
+                "mad": 18.299999999999997
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 7.543712230215828,
+                "p10": 16.597958053027305,
+                "median": 19.332535277113827,
+                "p90": 21.08750125691302,
+                "max": 21.129994962216625,
+                "mad": 1.668795063496713
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.47148201438848925,
+                "p10": 1.0373723783142066,
+                "median": 1.2082834548196142,
+                "p90": 1.3179688285570637,
+                "max": 1.320624685138539,
+                "mad": 0.10429969146854456
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_4k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.7,
+                "p10": 0.7,
+                "median": 1.65,
+                "p90": 2.4,
+                "max": 3.2,
+                "mad": 0.44999999999999996
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.5,
+                "p10": 2.7,
+                "median": 3.25,
+                "p90": 10.0,
+                "max": 17.3,
+                "mad": 0.5999999999999999
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 1.1,
+                "max": 1.2,
+                "mad": 0.09999999999999998
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 161.6,
+                "p10": 168.0,
+                "median": 176.0,
+                "p90": 238.9,
+                "max": 260.4,
+                "mad": 11.200000000000003
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 171.1,
+                "p10": 171.3,
+                "median": 179.55,
+                "p90": 250.1,
+                "max": 263.4,
+                "mad": 8.350000000000009
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.01555049354593774,
+                "p10": 0.016377449020391843,
+                "median": 0.022836829485051224,
+                "p90": 0.023911266783420898,
+                "max": 0.023939216832261835,
+                "mad": 0.0010884123227901422
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.01555049354593774,
+                "p10": 0.016377449020391843,
+                "median": 0.022836829485051224,
+                "p90": 0.023911266783420898,
+                "max": 0.023939216832261835,
+                "mad": 0.0010884123227901422
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_16k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.7,
+                "p10": 0.8,
+                "median": 1.1,
+                "p90": 1.8,
+                "max": 2.4,
+                "mad": 0.24999999999999994
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.2,
+                "p10": 2.5,
+                "median": 3.1,
+                "p90": 3.6,
+                "max": 3.8,
+                "mad": 0.30000000000000004
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.1,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 5.4,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 149.5,
+                "p10": 149.7,
+                "median": 163.8,
+                "p90": 167.3,
+                "max": 182.7,
+                "mad": 4.300000000000011
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 153.0,
+                "p10": 153.1,
+                "median": 167.05,
+                "p90": 170.4,
+                "max": 190.9,
+                "mad": 4.650000000000006
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.0053640649554740705,
+                "p10": 0.006009389671361502,
+                "median": 0.0061299061696400165,
+                "p90": 0.006688438928804703,
+                "max": 0.00669281045751634,
+                "mad": 0.0001734553815756117
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.0053640649554740705,
+                "p10": 0.006009389671361502,
+                "median": 0.0061299061696400165,
+                "p90": 0.006688438928804703,
+                "max": 0.00669281045751634,
+                "mad": 0.0001734553815756117
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "write"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.7,
+                "p10": 1.0,
+                "median": 1.4,
+                "p90": 1.8,
+                "max": 1.9,
+                "mad": 0.34999999999999987
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.4,
+                "p10": 2.6,
+                "median": 2.8499999999999996,
+                "p90": 5.1,
+                "max": 6.4,
+                "mad": 0.25
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.6,
+                "max": 5.9,
+                "mad": 0.04999999999999999
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 222.7,
+                "p10": 230.5,
+                "median": 249.55,
+                "p90": 259.9,
+                "max": 302.3,
+                "mad": 7.900000000000006
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 225.3,
+                "p10": 233.6,
+                "median": 252.7,
+                "p90": 264.4,
+                "max": 309.3,
+                "mad": 10.0
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 13.560633688975104,
+                "p10": 15.863479576399397,
+                "median": 16.598217979779285,
+                "p90": 17.955068493150684,
+                "max": 18.61652907234798,
+                "mad": 0.6319336338123938
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "omitted"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.6,
+                "p10": 0.6,
+                "median": 1.0,
+                "p90": 1.4,
+                "max": 1.5,
+                "mad": 0.30000000000000004
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.5,
+                "p10": 2.6,
+                "median": 2.8499999999999996,
+                "p90": 3.4,
+                "max": 4.2,
+                "mad": 0.25
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.2,
+                "p90": 0.3,
+                "max": 0.3,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 206.6,
+                "p10": 206.7,
+                "median": 229.8,
+                "p90": 240.5,
+                "max": 247.1,
+                "mad": 5.1499999999999915
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 209.7,
+                "p10": 211.2,
+                "median": 232.7,
+                "p90": 243.8,
+                "max": 250.0,
+                "mad": 5.400000000000006
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {}
+          }
+        ]
+      },
+      "02-upload-wb": {
+        "exit": 0,
+        "backend": {
+          "verified": true,
+          "guest_pid": "58184",
+          "lsof_exit": 0,
+          "paths": [
+            "/usr/libexec/rosetta/runtime",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+          ]
+        },
+        "error": null,
+        "samples": [
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "both"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.5,
+                "p10": 0.5,
+                "median": 0.8,
+                "p90": 1.7,
+                "max": 1.9,
+                "mad": 0.30000000000000004
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.8,
+                "p10": 2.8,
+                "median": 3.3499999999999996,
+                "p90": 4.6,
+                "max": 6.4,
+                "mad": 0.44999999999999996
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.4,
+                "p90": 0.6,
+                "max": 3.5,
+                "mad": 0.15
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 524.7,
+                "p10": 528.5,
+                "median": 603.2,
+                "p90": 834.9,
+                "max": 1221.3,
+                "mad": 76.60000000000002
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 531.0,
+                "p10": 532.0,
+                "median": 607.2,
+                "p90": 841.9,
+                "max": 1225.2,
+                "mad": 75.70000000000005
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 3.4233627162912175,
+                "p10": 4.981950350397909,
+                "median": 6.912535722719197,
+                "p90": 7.88403007518797,
+                "max": 7.8988775894538605,
+                "mad": 0.95158890903974
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 3.4233627162912175,
+                "p10": 4.981950350397909,
+                "median": 6.912535722719197,
+                "p90": 7.88403007518797,
+                "max": 7.8988775894538605,
+                "mad": 0.95158890903974
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "full_read"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.5,
+                "p10": 0.5,
+                "median": 0.6499999999999999,
+                "p90": 0.9,
+                "max": 3.0,
+                "mad": 0.1499999999999999
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.0,
+                "p10": 2.3,
+                "median": 2.75,
+                "p90": 3.0,
+                "max": 7.3,
+                "mad": 0.19999999999999996
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 0.4,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 279.9,
+                "p10": 283.9,
+                "median": 521.3,
+                "p90": 580.7,
+                "max": 687.1,
+                "mad": 64.40000000000003
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 282.7,
+                "p10": 286.9,
+                "median": 524.0999999999999,
+                "p90": 583.9,
+                "max": 694.7,
+                "mad": 64.64999999999998
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 6.037575932057003,
+                "p10": 7.183257407090256,
+                "median": 8.005390375154155,
+                "p90": 14.619393516904845,
+                "max": 14.836590024761232,
+                "mad": 1.021552114756676
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.37734849575356266,
+                "p10": 0.448953587943141,
+                "median": 0.5003368984471347,
+                "p90": 0.9137120948065528,
+                "max": 0.927286876547577,
+                "mad": 0.06384700717229225
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_4k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.4,
+                "median": 0.5,
+                "p90": 0.6,
+                "max": 0.6,
+                "mad": 0.0
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 1.9,
+                "p10": 2.1,
+                "median": 2.45,
+                "p90": 2.9,
+                "max": 3.2,
+                "mad": 0.25
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.2,
+                "p90": 0.3,
+                "max": 0.4,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 166.9,
+                "p10": 167.8,
+                "median": 188.4,
+                "p90": 343.7,
+                "max": 355.9,
+                "mad": 18.599999999999994
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 169.1,
+                "p10": 170.8,
+                "median": 191.14999999999998,
+                "p90": 347.3,
+                "max": 358.3,
+                "mad": 18.699999999999974
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.01143176109405526,
+                "p10": 0.011793838180247623,
+                "median": 0.02142960680886098,
+                "p90": 0.02398126463700234,
+                "max": 0.024222353636901242,
+                "mad": 0.0023243799036666117
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.01143176109405526,
+                "p10": 0.011793838180247623,
+                "median": 0.02142960680886098,
+                "p90": 0.02398126463700234,
+                "max": 0.024222353636901242,
+                "mad": 0.0023243799036666117
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_16k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.3,
+                "p10": 0.4,
+                "median": 0.5,
+                "p90": 0.6,
+                "max": 0.7,
+                "mad": 0.04999999999999999
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.2,
+                "p10": 2.2,
+                "median": 2.3499999999999996,
+                "p90": 2.7,
+                "max": 2.9,
+                "mad": 0.14999999999999947
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.25,
+                "p90": 0.3,
+                "max": 3.5,
+                "mad": 0.04999999999999999
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 164.0,
+                "p10": 164.2,
+                "median": 183.35,
+                "p90": 186.8,
+                "max": 309.0,
+                "mad": 2.8000000000000114
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 166.6,
+                "p10": 166.7,
+                "median": 185.95,
+                "p90": 191.3,
+                "max": 311.6,
+                "mad": 4.65000000000002
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.003286264441591784,
+                "p10": 0.005352848928384736,
+                "median": 0.005506857080058073,
+                "p90": 0.006142771445710858,
+                "max": 0.006146458583433373,
+                "mad": 0.00013427674435438283
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.003286264441591784,
+                "p10": 0.005352848928384736,
+                "median": 0.005506857080058073,
+                "p90": 0.006142771445710858,
+                "max": 0.006146458583433373,
+                "mad": 0.00013427674435438283
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "write"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.4,
+                "median": 0.5,
+                "p90": 0.7,
+                "max": 0.7,
+                "mad": 0.09999999999999998
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.2,
+                "p10": 2.2,
+                "median": 2.3499999999999996,
+                "p90": 2.6,
+                "max": 2.8,
+                "mad": 0.14999999999999947
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.2,
+                "p90": 0.3,
+                "max": 0.3,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 255.6,
+                "p10": 413.3,
+                "median": 497.85,
+                "p90": 591.2,
+                "max": 606.5,
+                "mad": 52.599999999999966
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 258.1,
+                "p10": 415.7,
+                "median": 500.4,
+                "p90": 593.9,
+                "max": 608.9,
+                "mad": 52.80000000000007
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 6.888329775004106,
+                "p10": 7.062306785654151,
+                "median": 8.384378948747674,
+                "p90": 10.089737791676692,
+                "max": 16.250693529639673,
+                "mad": 0.8023854151212775
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "omitted"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.4,
+                "median": 0.5,
+                "p90": 0.6,
+                "max": 0.7,
+                "mad": 0.0
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 1.9,
+                "p10": 2.1,
+                "median": 2.3499999999999996,
+                "p90": 2.6,
+                "max": 2.9,
+                "mad": 0.19999999999999996
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 0.3,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 44.0,
+                "p10": 44.3,
+                "median": 48.25,
+                "p90": 57.0,
+                "max": 88.1,
+                "mad": 3.8000000000000007
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 46.6,
+                "p10": 46.6,
+                "median": 50.85,
+                "p90": 59.6,
+                "max": 90.9,
+                "mad": 3.8999999999999986
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {}
+          }
+        ]
+      },
+      "03-wc": {
+        "exit": 0,
+        "backend": {
+          "verified": true,
+          "guest_pid": "58205",
+          "lsof_exit": 0,
+          "paths": [
+            "/usr/libexec/rosetta/runtime",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+          ]
+        },
+        "error": null,
+        "samples": [
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "both"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.5,
+                "p10": 0.6,
+                "median": 0.9,
+                "p90": 1.7,
+                "max": 1.8,
+                "mad": 0.3
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.5,
+                "p10": 2.6,
+                "median": 3.35,
+                "p90": 4.6,
+                "max": 4.8,
+                "mad": 0.6000000000000001
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.3,
+                "median": 0.4,
+                "p90": 0.6,
+                "max": 0.6,
+                "mad": 0.10000000000000003
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 517.9,
+                "p10": 538.7,
+                "median": 690.15,
+                "p90": 795.4,
+                "max": 844.9,
+                "mad": 95.09999999999997
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 521.0,
+                "p10": 544.1,
+                "median": 693.2,
+                "p90": 800.4,
+                "max": 848.0,
+                "mad": 96.19999999999999
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 4.946113207547169,
+                "p10": 5.240259870064968,
+                "median": 6.0576022729898344,
+                "p90": 7.708700606506157,
+                "max": 8.050487523992322,
+                "mad": 0.8291332228622528
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 4.946113207547169,
+                "p10": 5.240259870064968,
+                "median": 6.0576022729898344,
+                "p90": 7.708700606506157,
+                "max": 8.050487523992322,
+                "mad": 0.8291332228622528
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "full_read"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.5,
+                "p10": 0.5,
+                "median": 0.5,
+                "p90": 0.8,
+                "max": 1.8,
+                "mad": 0.0
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.0,
+                "p10": 2.2,
+                "median": 2.3,
+                "p90": 3.1,
+                "max": 4.6,
+                "mad": 0.09999999999999964
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.4,
+                "max": 0.5,
+                "mad": 0.09999999999999998
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 253.6,
+                "p10": 280.8,
+                "median": 499.25,
+                "p90": 594.5,
+                "max": 661.1,
+                "mad": 81.40000000000003
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 256.2,
+                "p10": 283.2,
+                "median": 501.85,
+                "p90": 597.1,
+                "max": 663.5,
+                "mad": 81.25
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 6.321483044461191,
+                "p10": 7.024458214704405,
+                "median": 8.40225251471434,
+                "p90": 14.810395480225989,
+                "max": 16.3712099921936,
+                "mad": 1.2070236322019272
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.39509269027882443,
+                "p10": 0.4390286384190253,
+                "median": 0.5251407821696462,
+                "p90": 0.9256497175141243,
+                "max": 1.0232006245121,
+                "mad": 0.07543897701262045
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_4k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.5,
+                "median": 0.55,
+                "p90": 0.6,
+                "max": 0.6,
+                "mad": 0.04999999999999999
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 1.9,
+                "p10": 2.3,
+                "median": 2.55,
+                "p90": 2.7,
+                "max": 2.8,
+                "mad": 0.1499999999999999
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 0.3,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 122.7,
+                "p10": 167.9,
+                "median": 172.3,
+                "p90": 381.2,
+                "max": 389.1,
+                "mad": 3.9000000000000057
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 125.6,
+                "p10": 170.6,
+                "median": 175.1,
+                "p90": 384.1,
+                "max": 391.2,
+                "mad": 4.049999999999997
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.01047034764826176,
+                "p10": 0.010663889612080186,
+                "median": 0.02339384272646173,
+                "p90": 0.024009378663540446,
+                "max": 0.03261146496815286,
+                "mad": 0.0005525375674076197
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.01047034764826176,
+                "p10": 0.010663889612080186,
+                "median": 0.02339384272646173,
+                "p90": 0.024009378663540446,
+                "max": 0.03261146496815286,
+                "mad": 0.0005525375674076197
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "sparse_read_16k"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.5,
+                "p10": 0.5,
+                "median": 0.55,
+                "p90": 1.0,
+                "max": 1.2,
+                "mad": 0.050000000000000044
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.2,
+                "p10": 2.3,
+                "median": 2.3499999999999996,
+                "p90": 3.0,
+                "max": 3.2,
+                "mad": 0.050000000000000266
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.2,
+                "p90": 0.3,
+                "max": 0.3,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 166.3,
+                "p10": 170.0,
+                "median": 177.3,
+                "p90": 190.5,
+                "max": 203.1,
+                "mad": 7.700000000000003
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 168.8,
+                "p10": 172.5,
+                "median": 180.05,
+                "p90": 193.0,
+                "max": 205.7,
+                "mad": 7.849999999999994
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_read_end_to_end": {
+                "n": 12,
+                "min": 0.004978123480797278,
+                "p10": 0.005305699481865285,
+                "median": 0.005690943381084226,
+                "p90": 0.005936231884057971,
+                "max": 0.006066350710900474,
+                "mad": 0.0002476058463860525
+              },
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 0.004978123480797278,
+                "p10": 0.005305699481865285,
+                "median": 0.005690943381084226,
+                "p90": 0.005936231884057971,
+                "max": 0.006066350710900474,
+                "mad": 0.0002476058463860525
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "write"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.5,
+                "median": 0.6,
+                "p90": 0.9,
+                "max": 1.0,
+                "mad": 0.09999999999999998
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.2,
+                "p10": 2.4,
+                "median": 2.7,
+                "p90": 3.0,
+                "max": 3.5,
+                "mad": 0.19999999999999996
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 5.6,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 251.9,
+                "p10": 274.3,
+                "median": 390.0,
+                "p90": 585.8,
+                "max": 593.1,
+                "mad": 115.44999999999999
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 255.0,
+                "p10": 276.9,
+                "median": 392.75,
+                "p90": 593.9,
+                "max": 596.9,
+                "mad": 115.45000000000002
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {
+              "shader_write_end_to_end": {
+                "n": 12,
+                "min": 7.0268118612832975,
+                "p10": 7.062306785654151,
+                "median": 11.165440368895183,
+                "p90": 15.147360057782594,
+                "max": 16.448250980392157,
+                "mad": 3.7146510768244267
+              }
+            }
+          },
+          {
+            "kind": "COMPUTE",
+            "factors": {
+              "mode": "omitted"
+            },
+            "n": 12,
+            "exact_iterations": 12,
+            "timestamp_invalid": 12,
+            "microseconds": {
+              "encode_us": {
+                "n": 12,
+                "min": 0.4,
+                "p10": 0.5,
+                "median": 0.6,
+                "p90": 1.1,
+                "max": 2.0,
+                "mad": 0.09999999999999998
+              },
+              "execute_us": {
+                "n": 12,
+                "min": 2.1,
+                "p10": 2.2,
+                "median": 2.5,
+                "p90": 3.4,
+                "max": 5.3,
+                "mad": 0.20000000000000018
+              },
+              "signal_us": {
+                "n": 12,
+                "min": 0.2,
+                "p10": 0.2,
+                "median": 0.3,
+                "p90": 0.3,
+                "max": 3.5,
+                "mad": 0.0
+              },
+              "wait_us": {
+                "n": 12,
+                "min": 44.3,
+                "p10": 44.9,
+                "median": 48.900000000000006,
+                "p90": 70.7,
+                "max": 98.2,
+                "mad": 3.5
+              },
+              "completion_us": {
+                "n": 12,
+                "min": 46.7,
+                "p10": 47.4,
+                "median": 51.65,
+                "p90": 74.4,
+                "max": 101.8,
+                "mad": 3.6499999999999986
+              },
+              "gpu_us": null
+            },
+            "decimal_GB_s": {}
+          }
+        ]
+      }
+    }
+  }
+]

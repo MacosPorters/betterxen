@@ -1,0 +1,484 @@
+{
+  "protocol": "B-local-1",
+  "group": "compute",
+  "seed": 947,
+  "utc": "2026-11-26T22:13:37.084217+00:00",
+  "independent_review": "pending",
+  "environment": {
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "CX_GRAPHICS_BACKEND": "d3dmetal",
+    "WINEDEBUG": "-all"
+  },
+  "commands": {
+    "git": {
+      "command": [
+        "git",
+        "-C",
+        "/private/tmp/betterxen-473-b-8cc2f8f",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit": 0,
+      "stdout": "8cc2f8ffbc4368e38950c2e037fee4ce12fa88b8\n",
+      "stderr": ""
+    },
+    "hardware": {
+      "command": [
+        "sysctl",
+        "-n",
+        "machdep.cpu.brand_string",
+        "hw.memsize",
+        "hw.pagesize"
+      ],
+      "exit": 0,
+      "stdout": "Apple M5\n17179869184\n16384\n",
+      "stderr": ""
+    },
+    "os": {
+      "command": [
+        "sw_vers"
+      ],
+      "exit": 0,
+      "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t27.2.1\nBuildVersion:\t\t26B131\n",
+      "stderr": ""
+    },
+    "host": {
+      "command": [
+        "uname",
+        "-m"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": ""
+    },
+    "cpu_load": {
+      "command": [
+        "uptime"
+      ],
+      "exit": 0,
+      "stdout": " 1:13  up 20:10, 7 users, load averages: 4.13 4.46 4.44\n",
+      "stderr": ""
+    },
+    "rosetta": {
+      "command": [
+        "pkgutil",
+        "--pkg-info",
+        "com.apple.pkg.RosettaUpdateAuto"
+      ],
+      "exit": 0,
+      "stdout": "package-id: com.apple.pkg.RosettaUpdateAuto\nversion: 1.0.0.0.1793943009\nvolume: /\nlocation: /\ninstall-time: 1795658671\n",
+      "stderr": ""
+    },
+    "compiler": {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "x86_64-w64-mingw32-g++ (GCC) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": ""
+    },
+    "compiler_arch": {
+      "command": [
+        "file",
+        "-L",
+        "/opt/homebrew/bin/x86_64-w64-mingw32-g++"
+      ],
+      "exit": 0,
+      "stdout": "/opt/homebrew/bin/x86_64-w64-mingw32-g++: Mach-O 64-bit executable arm64\n",
+      "stderr": ""
+    },
+    "cx_version": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Product Name: CrossOver\nPublic Version: 26.3.0\nProduct Version: 26.3.0.39832\nBuild Tag: cxoffice-26.3.0rc2\nBuild Timestamp: 20260715T103801Z\n",
+      "stderr": ""
+    },
+    "wine_engine": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineloader",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "wine-11.0-8726-g2e2f5fca349\n",
+      "stderr": ""
+    },
+    "python": {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Python 3.15.2\n",
+      "stderr": ""
+    },
+    "build_copy": {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "/private/tmp/b473-metal-default/source/docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp",
+        "-o",
+        "/private/tmp/b473-metal-default/b-copy.exe"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "build_coherence": {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "/private/tmp/b473-metal-default/source/docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp",
+        "-o",
+        "/private/tmp/b473-metal-default/b-coherence.exe"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "private_wineserver_stop": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+        "-k"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "cases": [
+    {
+      "directory": "00-default",
+      "pressure_before": {
+        "allowed": true,
+        "max_kernel_level": 1,
+        "kernel": {
+          "command": [
+            "sysctl",
+            "-n",
+            "kern.memorystatus_vm_pressure_level"
+          ],
+          "exit": 0,
+          "stdout": "1\n",
+          "stderr": ""
+        },
+        "free": {
+          "command": [
+            "memory_pressure",
+            "-Q"
+          ],
+          "exit": 0,
+          "stdout": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 56%\n",
+          "stderr": ""
+        },
+        "swap": {
+          "command": [
+            "sysctl",
+            "vm.swapusage"
+          ],
+          "exit": 0,
+          "stdout": "vm.swapusage: total = 3072.00M  used = 1872.12M  free = 1199.88M  (encrypted)\n",
+          "stderr": ""
+        },
+        "vm": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    48072.\nPages active:                                 244223.\nPages inactive:                               280760.\nPages speculative:                              4497.\nPages throttled:                                   0.\nPages wired down:                             184231.\nPages purgeable:                                5655.\n\"Translation faults\":                      907743118.\nPages copy-on-write:                        15609314.\nPages zero filled:                         606117160.\nPages reactivated:                         175166093.\nPages purged:                               56160977.\nFile-backed pages:                            302230.\nAnonymous pages:                              227250.\nPages stored in compressor:                   602849.\nPages occupied by compressor:                 245425.\nDecompressions:                            251218176.\nCompressions:                              275755727.\nPageins:                                    54170281.\nPageouts:                                     431480.\nSwapins:                                     1910094.\nSwapouts:                                    2329198.\nPages tagged:                                 149370.\nPages tagged resident:                         85762.\nPages tagged compressed:                       63608.\nPages tag-storage:                             32768.\nPages tag-storage holding tags:                 4248.\nPages tag-storage free:                          315.\nPages tag-storage non-tag pageable:            27998.\nPages tag-storage non-tag wired:                 101.\nBytes of compressed tags:                   10423616.\nTagged compressions:                        15334081.\nTagged decompressions:                      14767395.\n",
+          "stderr": ""
+        }
+      },
+      "run": {
+        "command": [
+          "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+          "--bottle",
+          "/private/tmp/b473-metal-default/bottle",
+          "--no-update",
+          "--no-gui",
+          "--workdir",
+          "/private/tmp/b473-metal-default/00-default",
+          "/private/tmp/b473-metal-default/b-coherence.exe",
+          "default"
+        ],
+        "timeout_seconds": 45,
+        "exit": 0,
+        "backend": {
+          "verified": true,
+          "guest_pid": "60843",
+          "lsof_exit": 0,
+          "paths": [
+            "/usr/libexec/rosetta/runtime",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+          ]
+        },
+        "pressure_ready": {
+          "allowed": true,
+          "max_kernel_level": 1,
+          "kernel": {
+            "command": [
+              "sysctl",
+              "-n",
+              "kern.memorystatus_vm_pressure_level"
+            ],
+            "exit": 0,
+            "stdout": "1\n",
+            "stderr": ""
+          },
+          "free": {
+            "command": [
+              "memory_pressure",
+              "-Q"
+            ],
+            "exit": 0,
+            "stdout": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 51%\n",
+            "stderr": ""
+          },
+          "swap": {
+            "command": [
+              "sysctl",
+              "vm.swapusage"
+            ],
+            "exit": 0,
+            "stdout": "vm.swapusage: total = 3072.00M  used = 1864.12M  free = 1207.88M  (encrypted)\n",
+            "stderr": ""
+          },
+          "vm": {
+            "command": [
+              "vm_stat"
+            ],
+            "exit": 0,
+            "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     7538.\nPages active:                                 256942.\nPages inactive:                               248730.\nPages speculative:                              8259.\nPages throttled:                                   0.\nPages wired down:                             234680.\nPages purgeable:                                4330.\n\"Translation faults\":                      907978236.\nPages copy-on-write:                        15617417.\nPages zero filled:                         606203258.\nPages reactivated:                         175170584.\nPages purged:                               56161237.\nFile-backed pages:                            268053.\nAnonymous pages:                              245878.\nPages stored in compressor:                   613487.\nPages occupied by compressor:                 251059.\nDecompressions:                            251222060.\nCompressions:                              275770286.\nPageins:                                    54182914.\nPageouts:                                     431480.\nSwapins:                                     1910113.\nSwapouts:                                    2329198.\nPages tagged:                                 149420.\nPages tagged resident:                         85625.\nPages tagged compressed:                       63795.\nPages tag-storage:                             32768.\nPages tag-storage holding tags:                 4241.\nPages tag-storage free:                          105.\nPages tag-storage non-tag pageable:            28208.\nPages tag-storage non-tag wired:                 101.\nBytes of compressed tags:                   10438336.\nTagged compressions:                        15335029.\nTagged decompressions:                      14768156.\n",
+            "stderr": ""
+          }
+        },
+        "output_hashes": {
+          "stdout.txt": "0816894bcf881f8bb4751de0eadcc51421ba92d7b1d7266d307860bed01f8c04",
+          "stderr.txt": "443284e82a7e0abc2c0dea9bf933dfab65a196f84da7f9ee894f02da741d6c55",
+          "xctrace-output.txt": "bbd67977c2baa629ef2d3f8fc1ef18581a2ca9298ee52f0a71d9a6fda440c188",
+          "access.dxbc": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf",
+          "access.hlsl": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+        }
+      },
+      "pressure_after": {
+        "allowed": true,
+        "max_kernel_level": 1,
+        "kernel": {
+          "command": [
+            "sysctl",
+            "-n",
+            "kern.memorystatus_vm_pressure_level"
+          ],
+          "exit": 0,
+          "stdout": "1\n",
+          "stderr": ""
+        },
+        "free": {
+          "command": [
+            "memory_pressure",
+            "-Q"
+          ],
+          "exit": 0,
+          "stdout": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 49%\n",
+          "stderr": ""
+        },
+        "swap": {
+          "command": [
+            "sysctl",
+            "vm.swapusage"
+          ],
+          "exit": 0,
+          "stdout": "vm.swapusage: total = 3072.00M  used = 1864.12M  free = 1207.88M  (encrypted)\n",
+          "stderr": ""
+        },
+        "vm": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    66339.\nPages active:                                 224670.\nPages inactive:                               206525.\nPages speculative:                              8833.\nPages throttled:                                   0.\nPages wired down:                             223692.\nPages purgeable:                                 131.\n\"Translation faults\":                      908316207.\nPages copy-on-write:                        15618019.\nPages zero filled:                         606270802.\nPages reactivated:                         175236972.\nPages purged:                               56164871.\nFile-backed pages:                            272567.\nAnonymous pages:                              167461.\nPages stored in compressor:                   681886.\nPages occupied by compressor:                 277149.\nDecompressions:                            251223413.\nCompressions:                              275852821.\nPageins:                                    54183112.\nPageouts:                                     431481.\nSwapins:                                     1910113.\nSwapouts:                                    2329198.\nPages tagged:                                 148778.\nPages tagged resident:                         80066.\nPages tagged compressed:                       68712.\nPages tag-storage:                             32768.\nPages tag-storage holding tags:                 4172.\nPages tag-storage free:                          259.\nPages tag-storage non-tag pageable:            28111.\nPages tag-storage non-tag wired:                 101.\nBytes of compressed tags:                   11430400.\nTagged compressions:                        15340004.\nTagged decompressions:                      14768214.\n",
+          "stderr": ""
+        }
+      }
+    }
+  ],
+  "sources": {
+    "docs/research/d3dmetal-zero-copy/copy-detection/run.py": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806",
+    "docs/research/d3dmetal-zero-copy/copy-detection/support.h": "a097cd29ae5aee371701722ce7fac0ed4b41c386780360f85a7601be4a8e59d5",
+    "docs/research/d3dmetal-zero-copy/copy-detection/probe.cpp": "f9a7392873a3c77c2f8a8d087432fa370b07170dc7ff00b16570f556bd8343ad",
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/probe.cpp": "92a1679ab187f7eb493e49a46227489de0d2d12e775d584535c09ad7d9f999ce",
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/coherence-and-tracking/access.hlsl": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+  },
+  "baseline_sha256": "33e90bfee89e812f48990613cd74ced56473e5c3fc5d973f2ba1116090646a0c",
+  "framework": {
+    "DTPlatformVersion": "15.4",
+    "CFBundleIdentifier": "com.apple.D3DMetal",
+    "DTCompiler": "com.apple.compilers.llvm.clang.1_0",
+    "DTPlatformBuild": "24E241",
+    "CFBundleInfoDictionaryVersion": "6.0",
+    "CFBundleVersion": "3.0",
+    "CFBundleExecutable": "D3DMetal",
+    "DTXcodeBuild": "16E140",
+    "DTSDKName": "macosx15.4.internal",
+    "CFBundleShortVersionString": "3.0",
+    "DTXcode": "1630",
+    "CFBundleSupportedPlatforms": [
+      "MacOSX"
+    ],
+    "CFBundlePackageType": "FMWK",
+    "BuildMachineOSBuild": "23A344013",
+    "LSMinimumSystemVersion": "14.0",
+    "DTPlatformName": "macosx",
+    "DTSDKBuild": "24E241",
+    "CFBundleDevelopmentRegion": "English",
+    "CFBundleName": "D3DMetal"
+  },
+  "runtime_sha256": {
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll": "bbda1c4e94ee70255c528c5689b28333ca9bece2d755ede7c4197977a534704f",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib/wine/x86_64-windows/d3dcompiler_47.dll": "0f37e0a1d637dd750daca8748761b28c0043d2edfdcd22361ec5f934d0f96a91"
+  },
+  "pressure_before": {
+    "allowed": true,
+    "max_kernel_level": 1,
+    "kernel": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    "free": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 56%\n",
+      "stderr": ""
+    },
+    "swap": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 3072.00M  used = 1872.12M  free = 1199.88M  (encrypted)\n",
+      "stderr": ""
+    },
+    "vm": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    91191.\nPages active:                                 240939.\nPages inactive:                               237229.\nPages speculative:                              3398.\nPages throttled:                                   0.\nPages wired down:                             187632.\nPages purgeable:                                7270.\n\"Translation faults\":                      907665722.\nPages copy-on-write:                        15606943.\nPages zero filled:                         606060571.\nPages reactivated:                         175166076.\nPages purged:                               56160977.\nFile-backed pages:                            256763.\nAnonymous pages:                              224803.\nPages stored in compressor:                   606745.\nPages occupied by compressor:                 246819.\nDecompressions:                            251214319.\nCompressions:                              275755727.\nPageins:                                    54158398.\nPageouts:                                     431480.\nSwapins:                                     1910087.\nSwapouts:                                    2329198.\nPages tagged:                                 149280.\nPages tagged resident:                         84887.\nPages tagged compressed:                       64393.\nPages tag-storage:                             32768.\nPages tag-storage holding tags:                 4248.\nPages tag-storage free:                         1309.\nPages tag-storage non-tag pageable:            27004.\nPages tag-storage non-tag wired:                 101.\nBytes of compressed tags:                   10581888.\nTagged compressions:                        15334081.\nTagged decompressions:                      14766610.\n",
+      "stderr": ""
+    }
+  },
+  "executables": {
+    "copy": {
+      "filename": "b-copy.exe",
+      "sha256": "4508fed09ca386803ae4a51b9aa497b36454550a7480c87074cd4be7dfc343fe",
+      "format": {
+        "command": [
+          "file",
+          "/private/tmp/b473-metal-default/b-copy.exe"
+        ],
+        "exit": 0,
+        "stdout": "/private/tmp/b473-metal-default/b-copy.exe: PE32+ executable (console) x86-64, for MS Windows\n",
+        "stderr": ""
+      }
+    },
+    "coherence": {
+      "filename": "b-coherence.exe",
+      "sha256": "d0366a1020375ef9ef23bf9c033a4ea232feba4f68593061024ce5012621b97f",
+      "format": {
+        "command": [
+          "file",
+          "/private/tmp/b473-metal-default/b-coherence.exe"
+        ],
+        "exit": 0,
+        "stdout": "/private/tmp/b473-metal-default/b-coherence.exe: PE32+ executable (console) x86-64, for MS Windows\n",
+        "stderr": ""
+      }
+    }
+  },
+  "pressure_before_bottle": {
+    "allowed": true,
+    "max_kernel_level": 1,
+    "kernel": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    "free": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 56%\n",
+      "stderr": ""
+    },
+    "swap": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 3072.00M  used = 1872.12M  free = 1199.88M  (encrypted)\n",
+      "stderr": ""
+    },
+    "vm": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    89424.\nPages active:                                 242330.\nPages inactive:                               240347.\nPages speculative:                              4352.\nPages throttled:                                   0.\nPages wired down:                             184437.\nPages purgeable:                                6257.\n\"Translation faults\":                      907729972.\nPages copy-on-write:                        15608218.\nPages zero filled:                         606111812.\nPages reactivated:                         175166076.\nPages purged:                               56160977.\nFile-backed pages:                            261602.\nAnonymous pages:                              225427.\nPages stored in compressor:                   605025.\nPages occupied by compressor:                 246318.\nDecompressions:                            251215978.\nCompressions:                              275755727.\nPageins:                                    54161537.\nPageouts:                                     431480.\nSwapins:                                     1910087.\nSwapouts:                                    2329198.\nPages tagged:                                 149408.\nPages tagged resident:                         85522.\nPages tagged compressed:                       63886.\nPages tag-storage:                             32768.\nPages tag-storage holding tags:                 4248.\nPages tag-storage free:                         1098.\nPages tag-storage non-tag pageable:            27215.\nPages tag-storage non-tag wired:                 101.\nBytes of compressed tags:                   10493888.\nTagged compressions:                        15334081.\nTagged decompressions:                      14767117.\n",
+      "stderr": ""
+    }
+  },
+  "bottle_input_sha256": "2e5691379510b36e1b78e15ed546e7e75ee83a9ec2543062118ebc50db4904dd",
+  "bottle_settings": [
+    "\"AllowUntrusted\" = \"1\"",
+    "\"Template\" = \"win11_64\"",
+    "\"WineArch\" = \"win64\"",
+    "\"CX_GRAPHICS_BACKEND\" = \"d3dmetal\"",
+    "\"CX_GRAPHICS_BACKEND\" = \"d3dmetal\"",
+    "\"AntiVirusScan\" = \"untrusted\""
+  ],
+  "case_order": [
+    [
+      "coherence",
+      [
+        "default"
+      ]
+    ]
+  ],
+  "bottle_unchanged": true
+}

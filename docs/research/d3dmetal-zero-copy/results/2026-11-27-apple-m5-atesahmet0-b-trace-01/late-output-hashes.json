@@ -1,0 +1,14 @@
+{
+  "reason": "Child logs continued writing during teardown after the original case metadata was hashed. The original case metadata and final raw streams are preserved.",
+  "files": {
+    "00-wb/stderr.txt": {
+      "early_reported_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "final_archive_sha256": "b7eab1251cc975b771929b1c6dfe6cb8511bb1ec75b3241336abe9651a151f83"
+    },
+    "00-wb/xctrace-output.txt": {
+      "early_reported_sha256": "fd757502ec37bf81664a6c153e9c0f2050b843e204f6d6ac4f0ae39f188722b6",
+      "final_archive_sha256": "b5769eac9dd93b50f0bfbac3ae33b3a0e30f066f6005c96e6bc40bc5ec184f7e"
+    }
+  },
+  "wrapper_sha256": "ccae38a96c04d30133dcf1f6cb23b6e9166d925a449e6a0b7151d341c6134591"
+}

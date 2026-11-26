@@ -1,0 +1,5 @@
+DEVICE dll=C:\windows\system32\d3d12.dll shim=0 architecture_hr=00000000 uma=0 coherent=0 isolated_mmu=0
+BACKEND_READY
+TIMESTAMP hertz=60
+CLOCK cpu_elapsed_us=152972.100 first=11303491997411704833 untouched=11303491997411704834 expected_untouched=11303491997411704834 last=11303491997411704834 gpu_elapsed_us=16666.667 calibration_hr=00000000 calibration_gpu=55220095934917 calibration_cpu=55220095934959
+END complete

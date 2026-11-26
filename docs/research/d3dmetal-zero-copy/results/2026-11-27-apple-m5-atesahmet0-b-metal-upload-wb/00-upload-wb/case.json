@@ -1,0 +1,72 @@
+{
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/b473-metal-upload-wb/bottle",
+    "--no-update",
+    "--no-gui",
+    "--workdir",
+    "/private/tmp/b473-metal-upload-wb/00-upload-wb",
+    "/private/tmp/b473-metal-upload-wb/b-coherence.exe",
+    "upload-wb"
+  ],
+  "timeout_seconds": 45,
+  "exit": 0,
+  "backend": {
+    "verified": true,
+    "guest_pid": "60758",
+    "lsof_exit": 0,
+    "paths": [
+      "/usr/libexec/rosetta/runtime",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+    ]
+  },
+  "pressure_ready": {
+    "allowed": true,
+    "max_kernel_level": 1,
+    "kernel": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    "free": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 50%\n",
+      "stderr": ""
+    },
+    "swap": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 3072.00M  used = 1872.12M  free = 1199.88M  (encrypted)\n",
+      "stderr": ""
+    },
+    "vm": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     7861.\nPages active:                                 254543.\nPages inactive:                               243662.\nPages speculative:                             10006.\nPages throttled:                                   0.\nPages wired down:                             249484.\nPages purgeable:                                3284.\n\"Translation faults\":                      906686835.\nPages copy-on-write:                        15586557.\nPages zero filled:                         605802582.\nPages reactivated:                         175140516.\nPages purged:                               56159566.\nFile-backed pages:                            242790.\nAnonymous pages:                              265421.\nPages stored in compressor:                   586887.\nPages occupied by compressor:                 241652.\nDecompressions:                            251179512.\nCompressions:                              275676909.\nPageins:                                    54081851.\nPageouts:                                     431148.\nSwapins:                                     1910063.\nSwapouts:                                    2329198.\nPages tagged:                                 149431.\nPages tagged resident:                         87366.\nPages tagged compressed:                       62065.\nPages tag-storage:                             32768.\nPages tag-storage holding tags:                 4248.\nPages tag-storage free:                          129.\nPages tag-storage non-tag pageable:            28181.\nPages tag-storage non-tag wired:                 104.\nBytes of compressed tags:                   10126144.\nTagged compressions:                        15329481.\nTagged decompressions:                      14764339.\n",
+      "stderr": ""
+    }
+  },
+  "output_hashes": {
+    "stdout.txt": "77c54455f19374cf9dbf0d1e682a550acc75e693783160fac8de313b967fc5d4",
+    "stderr.txt": "443284e82a7e0abc2c0dea9bf933dfab65a196f84da7f9ee894f02da741d6c55",
+    "xctrace-output.txt": "ec0bb79f08773023b9e8981c87f33506c4fec05f0ee586bfe880ab6fec8649e7",
+    "access.dxbc": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf",
+    "access.hlsl": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+  }
+}

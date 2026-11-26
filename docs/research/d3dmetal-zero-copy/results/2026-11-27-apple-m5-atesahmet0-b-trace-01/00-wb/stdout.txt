@@ -1,0 +1,2 @@
+DEVICE dll=C:\windows\system32\d3d12.dll shim=0 architecture_hr=00000000 uma=0 coherent=0 isolated_mmu=0
+BACKEND_READY
