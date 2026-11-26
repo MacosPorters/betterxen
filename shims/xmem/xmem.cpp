@@ -10,6 +10,7 @@
 
 #include "bx_log.h"
 #include "bx_xmem_internal.h"
+#include "xmem_accounting.h"
 
 namespace {
 constexpr SIZE_T heap_alignment = 64;
@@ -61,6 +62,7 @@ std::mutex usage_lock;
 CommitTable virtual_commits;
 uint64_t heap_bytes = 0;
 uint64_t virtual_bytes = 0;
+uint64_t physical_bytes = 0;
 uint64_t peak_bytes = 0;
 
 uint64_t title_limit() {
@@ -70,12 +72,12 @@ uint64_t title_limit() {
 
 bool can_commit(uint64_t bytes) {
     const uint64_t limit = title_limit();
-    const uint64_t used = heap_bytes + virtual_bytes;
+    const uint64_t used = heap_bytes + virtual_bytes + physical_bytes;
     return used <= limit && bytes <= limit - used;
 }
 
 void update_peak() {
-    peak_bytes = std::max(peak_bytes, heap_bytes + virtual_bytes);
+    peak_bytes = std::max(peak_bytes, heap_bytes + virtual_bytes + physical_bytes);
 }
 
 uintptr_t region_end(const MEMORY_BASIC_INFORMATION& region) {
@@ -268,29 +270,6 @@ SIZE_T WINAPI XMemVirtualQuery(LPCVOID address, PMEMORY_BASIC_INFORMATION buf, S
     return VirtualQuery(address, buf, len);
 }
 
-BOOL WINAPI XMemAllocatePhysicalPages(SIZE_T* /*num_pages*/, PULONG_PTR /*page_array*/, uint64_t /*flags*/) {
-    BX_STUB_LOG("xmem.dll", "XMemAllocatePhysicalPages");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return FALSE;
-}
-
-BOOL WINAPI XMemFreePhysicalPages(SIZE_T /*num_pages*/, PULONG_PTR /*page_array*/, uint64_t /*flags*/) {
-    BX_STUB_LOG("xmem.dll", "XMemFreePhysicalPages");
-    return TRUE;
-}
-
-PVOID WINAPI XMemMapPhysicalPages(PVOID /*base*/, SIZE_T /*num_pages*/, uint64_t /*flags*/, PULONG_PTR /*page_array*/) {
-    BX_STUB_LOG("xmem.dll", "XMemMapPhysicalPages");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return nullptr;
-}
-
-PVOID WINAPI XMemMapPhysicalPagesScatter(PVOID /*base*/, SIZE_T /*num_pages*/, uint64_t /*flags*/, PULONG_PTR /*page_array*/) {
-    BX_STUB_LOG("xmem.dll", "XMemMapPhysicalPagesScatter");
-    SetLastError(ERROR_CALL_NOT_IMPLEMENTED);
-    return nullptr;
-}
-
 BOOL WINAPI XMemTransferMemory(PVOID dst, LPCVOID src, SIZE_T bytes, uint64_t /*flags*/) {
     if (bytes == 0) return TRUE;
     if (!dst || !src) {
@@ -311,7 +290,7 @@ BOOL WINAPI XMemGetWorkingSetStatistics(PVOID out_stats, SIZE_T stats_size) {
         SetLastError(ERROR_NOT_ENOUGH_MEMORY);
         return FALSE;
     }
-    const bx_xmem_stats_t stats{title_limit(), heap_bytes + virtual_bytes, 0, peak_bytes};
+    const bx_xmem_stats_t stats{title_limit(), heap_bytes + virtual_bytes, physical_bytes, peak_bytes};
     std::memset(out_stats, 0, stats_size);
     std::memcpy(out_stats, &stats, sizeof(stats));
     return TRUE;
@@ -321,18 +300,33 @@ BOOL WINAPI XMemIsToolsMemAvailable(void) {
     return FALSE;
 }
 
-int bx_xmem_query_region(uint64_t /*va*/, bx_xmem_region_info_t* /*out_info*/) {
-    return 0;
-}
-
 void bx_xmem_get_internal_stats(bx_xmem_stats_t* out_stats) {
     if (!out_stats) return;
     if (!XMemGetWorkingSetStatistics(out_stats, sizeof(*out_stats))) {
         // The internal ABI has no error return. Preserve the most recent
         // accounting snapshot if refreshing it runs out of bookkeeping memory.
         std::lock_guard guard(usage_lock);
-        *out_stats = {title_limit(), heap_bytes + virtual_bytes, 0, peak_bytes};
+        *out_stats = {title_limit(), heap_bytes + virtual_bytes, physical_bytes, peak_bytes};
     }
 }
 
 } // extern "C"
+
+namespace bx_xmem {
+
+bool try_reserve_physical(uint64_t bytes) {
+    std::lock_guard guard(usage_lock);
+    if (!can_commit(bytes) && (!refresh_virtual_commits() || !can_commit(bytes))) {
+        return false;
+    }
+    physical_bytes += bytes;
+    update_peak();
+    return true;
+}
+
+void release_physical(uint64_t bytes) {
+    std::lock_guard guard(usage_lock);
+    physical_bytes = physical_bytes >= bytes ? physical_bytes - bytes : 0;
+}
+
+} // namespace bx_xmem
