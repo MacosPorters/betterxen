@@ -81,6 +81,8 @@ Inspected at documentation level only (commit, licence, file tree, README, and t
 | `tools/macos/gnullvm-cc.sh` | Cross-link wrapper | pinned llvm-mingw | Not needed |
 | `crates/victory-shader/src/emit/f64.rs` | Integer emulation of fp64 | none | Deferred (#387); native work is paused |
 
+[utmapp/d3dmetal-native](https://github.com/utmapp/d3dmetal-native) was reviewed later; see its [evaluation](d3dmetal-native-evaluation.md). It is not adopted.
+
 Upstream infrastructure (Wine, DXVK, DXMT, VKD3D-Proton, MoltenVK) stays an external dependency delivered by CrossOver. Mesa, LLVM and DXC are not integrated and were not re-audited.
 
 ## Gaps found and changed here
