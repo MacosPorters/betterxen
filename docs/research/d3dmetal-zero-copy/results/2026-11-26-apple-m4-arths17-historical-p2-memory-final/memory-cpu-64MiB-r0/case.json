@@ -1,0 +1,543 @@
+{
+  "expected_exit": 0,
+  "name": "memory-cpu-64MiB-r0",
+  "args": [
+    "memory",
+    "cpu",
+    "67108864"
+  ],
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/bx-uma-verify/p2-memory-final/bottle",
+    "--no-update",
+    "--no-gui",
+    "/private/tmp/bx-uma-verify/p2-memory-final/phase2.exe",
+    "memory",
+    "cpu",
+    "67108864"
+  ],
+  "timeout_seconds": 150,
+  "snapshots": [
+    {
+      "phase": "baseline",
+      "marker": "STAGE baseline cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":357022408,\"resident_size\":64360448,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357022408}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.06543824996333569,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 357022408,
+            "resident_size": 64360448,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357022408
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":357022408,\"resident_size\":64360448,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357022408}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.0025454999995417893,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 357022408,
+            "resident_size": 64360448,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357022408
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":357022408,\"resident_size\":64360448,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357022408}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.0024862500140443444,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 357022408,
+            "resident_size": 64360448,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357022408
+          }
+        }
+      ],
+      "footprint": {
+        "exit": 0,
+        "file": "baseline-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "baseline-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "baseline-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "baseline-pressure.json"
+      }
+    },
+    {
+      "phase": "created",
+      "marker": "STAGE created cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315210968,\"resident_size\":64569344,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357354664}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.003165458037983626,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315210968,
+            "resident_size": 64569344,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357354664
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315210968,\"resident_size\":64569344,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357354664}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.002333334006834775,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315210968,
+            "resident_size": 64569344,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357354664
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315210968,\"resident_size\":64569344,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357354664}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.002326916961465031,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315210968,
+            "resident_size": 64569344,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357354664
+          }
+        }
+      ],
+      "footprint": {
+        "exit": 0,
+        "file": "created-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "created-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "created-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "created-pressure.json"
+      }
+    },
+    {
+      "phase": "mapped",
+      "marker": "STAGE mapped cpu_ptr=0000000001910000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315174104,\"resident_size\":64536576,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357354664}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.0024973329855129123,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315174104,
+            "resident_size": 64536576,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357354664
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315174104,\"resident_size\":64536576,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357354664}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.0027276669861748815,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315174104,
+            "resident_size": 64536576,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357354664
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315174104,\"resident_size\":64536576,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":357354664}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.0025402919854968786,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315174104,
+            "resident_size": 64536576,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 357354664
+          }
+        }
+      ],
+      "footprint": {
+        "exit": 0,
+        "file": "mapped-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "mapped-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "mapped-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "mapped-pressure.json"
+      }
+    },
+    {
+      "phase": "fully_initialized",
+      "marker": "STAGE fully_initialized cpu_ptr=0000000001910000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":382414232,\"resident_size\":131624960,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382414232}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.0033258330076932907,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 382414232,
+            "resident_size": 131624960,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382414232
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":382414232,\"resident_size\":131624960,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382414232}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.002518167020753026,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 382414232,
+            "resident_size": 131624960,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382414232
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":382414232,\"resident_size\":131624960,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382414232}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.002779583039227873,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 382414232,
+            "resident_size": 131624960,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382414232
+          }
+        }
+      ],
+      "footprint": {
+        "exit": 0,
+        "file": "fully_initialized-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "fully_initialized-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "fully_initialized-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "fully_initialized-pressure.json"
+      }
+    },
+    {
+      "phase": "gpu_complete",
+      "marker": "STAGE gpu_complete cpu_ptr=0000000001910000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":382418328,\"resident_size\":131629056,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382418328}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.003104874980635941,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 382418328,
+            "resident_size": 131629056,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382418328
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":382418328,\"resident_size\":131629056,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382418328}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.002919833001215011,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 382418328,
+            "resident_size": 131629056,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382418328
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":382418328,\"resident_size\":131629056,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382418328}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.003558625001460314,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 382418328,
+            "resident_size": 131629056,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382418328
+          }
+        }
+      ],
+      "footprint": {
+        "exit": 0,
+        "file": "gpu_complete-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "gpu_complete-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "gpu_complete-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "gpu_complete-pressure.json"
+      }
+    },
+    {
+      "phase": "released",
+      "marker": "STAGE released cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315178200,\"resident_size\":64520192,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382418328}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.002778291003778577,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315178200,
+            "resident_size": 64520192,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382418328
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315178200,\"resident_size\":64520192,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382418328}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.0023706250358372927,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315178200,
+            "resident_size": 64520192,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382418328
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx-uma-verify/p2-memory-final/observe",
+            "39915"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":39915,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315178200,\"resident_size\":64520192,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":382418328}\n",
+          "stderr": "",
+          "elapsed_seconds": 0.002457834023516625,
+          "data": {
+            "pid": 39915,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315178200,
+            "resident_size": 64520192,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 382418328
+          }
+        }
+      ],
+      "footprint": {
+        "exit": 0,
+        "file": "released-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "released-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "released-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "released-pressure.json"
+      }
+    }
+  ],
+  "host_pid": 39915,
+  "backend_paths_excerpt": [
+    "/usr/libexec/rosetta/runtime",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/dxgi.dll",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+  ],
+  "exit": 0,
+  "timed_out": false,
+  "elapsed_seconds": 22.408233999973163
+}

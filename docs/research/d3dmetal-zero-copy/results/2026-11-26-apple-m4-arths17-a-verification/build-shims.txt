@@ -1,0 +1,134 @@
+-- The C compiler identification is GNU 16.2.0
+-- The CXX compiler identification is GNU 16.2.0
+-- Detecting C compiler ABI info
+-- Detecting C compiler ABI info - done
+-- Check for working C compiler: /opt/homebrew/bin/x86_64-w64-mingw32-gcc - skipped
+-- Detecting C compile features
+-- Detecting C compile features - done
+-- Detecting CXX compiler ABI info
+-- Detecting CXX compiler ABI info - done
+-- Check for working CXX compiler: /opt/homebrew/bin/x86_64-w64-mingw32-g++ - skipped
+-- Detecting CXX compile features
+-- Detecting CXX compile features - done
+-- Configuring done (0.7s)
+-- Generating done (0.1s)
+-- Build files have been written to: <HOME>/betterxen-473-a/build-shims
+[  2%] Building CXX object runtime_veh/CMakeFiles/bx_runtime_veh.dir/runtime_veh.cpp.obj
+[  2%] Building CXX object win32_bridge/CMakeFiles/ntuser_msg_1_0.dir/empty_forwarder.cpp.obj
+[  4%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-message-l1-1-0.dll
+[  4%] Built target ntuser_msg_1_0
+[  5%] Building CXX object win32_bridge/CMakeFiles/ntuser_msg_ansi_1_0.dir/empty_forwarder.cpp.obj
+[  7%] Linking CXX shared library ../bin/bx_runtime_veh.dll
+[  7%] Built target bx_runtime_veh
+[  8%] Building CXX object win32_bridge/CMakeFiles/ntuser_win_1_0.dir/empty_forwarder.cpp.obj
+[ 10%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-message-ansi-l1-1-0.dll
+[ 10%] Built target ntuser_msg_ansi_1_0
+[ 11%] Building CXX object win32_bridge/CMakeFiles/ntuser_win_ansi_1_0.dir/empty_forwarder.cpp.obj
+[ 13%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-window-l1-1-0.dll
+[ 13%] Built target ntuser_win_1_0
+[ 14%] Building CXX object xmem/CMakeFiles/xmem.dir/xmem.cpp.obj
+[ 15%] Linking CXX shared library ../bin/ext-ms-win-rtcore-ntuser-window-ansi-l1-1-0.dll
+[ 15%] Built target ntuser_win_ansi_1_0
+[ 17%] Building CXX object xcrdapi/CMakeFiles/xcrdapi.dir/xcrdapi.cpp.obj
+[ 18%] Building CXX object xmem/CMakeFiles/xmem.dir/physical_pages.cpp.obj
+[ 20%] Linking CXX shared library ../bin/XCRDAPI.dll
+[ 20%] Built target xcrdapi
+[ 21%] Building CXX object xg_xs/CMakeFiles/xg_xs.dir/xg_xs.cpp.obj
+[ 23%] Linking CXX shared library ../bin/xmem.dll
+[ 23%] Built target xmem
+[ 24%] Building CXX object xgameruntime/CMakeFiles/xgameruntime.dir/xgameruntime.cpp.obj
+[ 26%] Linking CXX shared library ../bin/xg_xs.dll
+[ 26%] Built target xg_xs
+[ 27%] Building CXX object gameinput/CMakeFiles/gameinput.dir/gameinput.cpp.obj
+[ 28%] Linking CXX shared library ../bin/GameInput.dll
+[ 28%] Built target gameinput
+[ 30%] Building CXX object xgameruntime/CMakeFiles/xgameruntime.dir/task_queue.cpp.obj
+[ 31%] Building CXX object xgameruntime/CMakeFiles/xgameruntime.dir/com_dispatch.cpp.obj
+[ 33%] Building CXX object audio/CMakeFiles/acphal.dir/acphal.cpp.obj
+[ 34%] Linking CXX shared library ../bin/xgameruntime.dll
+[ 34%] Built target xgameruntime
+[ 36%] Building CXX object audio/CMakeFiles/xapu.dir/xapu.cpp.obj
+[ 37%] Linking CXX shared library ../bin/AcpHal.dll
+[ 37%] Built target acphal
+[ 39%] Building CXX object audio/CMakeFiles/chad.dir/chad.cpp.obj
+[ 40%] Linking CXX shared library ../bin/xapu.dll
+[ 40%] Built target xapu
+[ 42%] Building CXX object conformance/test_d3dmetal_gpu_limits/CMakeFiles/test_d3dmetal_gpu_limits.dir/main.cpp.obj
+[ 43%] Linking CXX shared library ../bin/chad.dll
+[ 43%] Built target chad
+[ 44%] Building CXX object conformance/test_shim_exports/CMakeFiles/test_shim_exports.dir/main.cpp.obj
+[ 46%] Linking CXX executable ../../bin/test_shim_exports.exe
+[ 46%] Built target test_shim_exports
+[ 47%] Building CXX object conformance/test_system32_staging/CMakeFiles/test_system32_staging.dir/main.cpp.obj
+[ 49%] Linking CXX executable ../../bin/test_d3dmetal_gpu_limits.exe
+[ 49%] Built target test_d3dmetal_gpu_limits
+[ 50%] Building CXX object conformance/test_veh_clwb/CMakeFiles/test_veh_clwb.dir/main.cpp.obj
+[ 52%] Linking CXX executable ../../bin/test_system32_staging.exe
+[ 52%] Built target test_system32_staging
+[ 53%] Building CXX object conformance/test_veh_clwb/CMakeFiles/test_veh_unhandled.dir/main_unhandled.cpp.obj
+[ 55%] Linking CXX executable ../../bin/test_veh_clwb.exe
+[ 55%] Built target test_veh_clwb
+[ 56%] Building CXX object conformance/test_xcrdapi/CMakeFiles/test_xcrdapi.dir/main.cpp.obj
+[ 57%] Linking CXX executable ../../bin/test_veh_unhandled.exe
+[ 57%] Built target test_veh_unhandled
+[ 59%] Building CXX object conformance/test_xg_xs/CMakeFiles/test_xg_xs.dir/main.cpp.obj
+[ 60%] Linking CXX executable ../../bin/test_xcrdapi.exe
+[ 60%] Built target test_xcrdapi
+[ 62%] Building CXX object conformance/test_xgameruntime/CMakeFiles/test_xgameruntime.dir/main.cpp.obj
+[ 63%] Linking CXX executable ../../bin/test_xg_xs.exe
+[ 63%] Built target test_xg_xs
+[ 65%] Building CXX object conformance/test_xgameruntime/CMakeFiles/test_xgameruntime_unentitled.dir/main.cpp.obj
+[ 66%] Linking CXX executable ../../bin/test_xgameruntime.exe
+[ 66%] Built target test_xgameruntime
+[ 68%] Building CXX object conformance/test_xmem/CMakeFiles/test_xmem.dir/main.cpp.obj
+[ 69%] Linking CXX executable ../../bin/unentitled/test_xgameruntime.exe
+[ 69%] Built target test_xgameruntime_unentitled
+[ 71%] Building CXX object conformance/test_xmem_physical/CMakeFiles/test_xmem_physical.dir/main.cpp.obj
+[ 72%] Linking CXX executable ../../bin/test_xmem.exe
+[ 72%] Built target test_xmem
+[ 73%] Building CXX object win32_bridge/CMakeFiles/psm_appnotify_1_0.dir/psm_appnotify.cpp.obj
+[ 75%] Linking CXX executable ../../bin/test_xmem_physical.exe
+[ 75%] Built target test_xmem_physical
+[ 76%] Building CXX object win32_bridge/CMakeFiles/psm_appnotify_1_1.dir/psm_appnotify.cpp.obj
+[ 78%] Linking CXX shared library ../bin/api-ms-win-core-psm-appnotify-l1-1-0.dll
+[ 78%] Built target psm_appnotify_1_0
+[ 79%] Building CXX object d3d12_xs/CMakeFiles/d3d12_xs.dir/d3d12_xs.cpp.obj
+[ 81%] Linking CXX shared library ../bin/api-ms-win-core-psm-appnotify-l1-1-1.dll
+[ 81%] Built target psm_appnotify_1_1
+[ 82%] Building CXX object d3d12_xs/CMakeFiles/d3d12_xs.dir/proxy.cpp.obj
+[ 84%] Building CXX object d3d12_xs/CMakeFiles/d3d12_xs.dir/proxy_generated.cpp.obj
+[ 85%] Building CXX object conformance/test_audio_input/CMakeFiles/test_audio_input.dir/main.cpp.obj
+[ 86%] Linking CXX shared library ../bin/d3d12_xs.dll
+[ 86%] Built target d3d12_xs
+[ 88%] Building CXX object conformance/test_win32_bridge/CMakeFiles/test_win32_bridge.dir/main.cpp.obj
+[ 89%] Linking CXX executable ../../bin/test_audio_input.exe
+[ 89%] Built target test_audio_input
+[ 91%] Building CXX object conformance/test_apiset_resolution/CMakeFiles/test_apiset_resolution.dir/main.cpp.obj
+[ 92%] Linking CXX executable ../../bin/test_apiset_resolution.exe
+[ 92%] Built target test_apiset_resolution
+[ 94%] Building CXX object conformance/test_d3d12_xs/CMakeFiles/test_d3d12_xs.dir/main.cpp.obj
+[ 95%] Linking CXX executable ../../bin/test_win32_bridge.exe
+[ 95%] Built target test_win32_bridge
+[ 97%] Building CXX object conformance/test_integration_boot/CMakeFiles/test_integration_boot.dir/main.cpp.obj
+[ 98%] Linking CXX executable ../../bin/test_d3d12_xs.exe
+[ 98%] Built target test_d3d12_xs
+[100%] Linking CXX executable ../../bin/test_integration_boot.exe
+[100%] Built target test_integration_boot
+=== Verifying built PE32+ DLL Export Directories against abi/defs/*.def ===
+  OK AcpHal.dll (9 exact exports verified)
+  OK GameInput.dll (1 exact exports verified)
+  OK XCRDAPI.dll (1 exact exports verified)
+  OK api-ms-win-core-psm-appnotify-l1-1-0.dll (2 exact exports verified)
+  OK api-ms-win-core-psm-appnotify-l1-1-1.dll (2 exact exports verified)
+  OK bx_runtime_veh.dll (6 exact exports verified)
+  OK chad.dll (5 exact exports verified)
+  OK d3d12_xs.dll (4 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-message-ansi-l1-1-0.dll (2 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-message-l1-1-0.dll (1 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-window-ansi-l1-1-0.dll (3 exact exports verified)
+  OK ext-ms-win-rtcore-ntuser-window-l1-1-0.dll (1 exact exports verified)
+  OK xapu.dll (5 exact exports verified)
+  OK xg_xs.dll (2 exact exports verified)
+  OK xgameruntime.dll (49 exact exports verified)
+  OK xmem.dll (15 exact exports verified)
+Verified 16 PE32+ shim DLLs (108 exact exports, 0 extra, 0 forbidden MinGW imports) in <HOME>/betterxen-473-a/build-shims/bin

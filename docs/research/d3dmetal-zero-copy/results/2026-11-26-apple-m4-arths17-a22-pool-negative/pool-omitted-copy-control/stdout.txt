@@ -1,0 +1,36 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+TRACE mode=pooled seed=473 slab_bytes=33554432 slots=24 pre_setup_ms=0.000000 warmups=2 timed=10
+STAGE baseline cpu_ptr=0
+POOL_SETUP mode=pooled heap_ms=7.113700 reserved_bytes=33554432
+STAGE heap_ready cpu_ptr=0
+ALLOC iteration=-3 phase=0 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.039300 placement_ms=0.147900 map_ms=0.002000 warmup=1
+DELAYED_RETIRE target=1 before=0 withheld=1 after=1
+FREE iteration=-3 slot=0 resource_ms=0.014900 backing_or_freelist_ms=0.298200 retire_fence=1 completed=1
+ALLOC iteration=-2 phase=0 slot=0 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000400 placement_ms=0.010100 map_ms=0.000800 warmup=1
+ALLOC iteration=-2 phase=0 slot=1 bytes=262148 reserved=327680 offset=131072 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002700 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=2 bytes=393220 reserved=458752 offset=458752 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001800 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=3 bytes=1048580 reserved=1114112 offset=917504 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.008700 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=4 bytes=65540 reserved=131072 offset=2031616 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.003300 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=5 bytes=65540 reserved=131072 offset=2162688 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002800 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=6 bytes=262148 reserved=327680 offset=2293760 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.004800 map_ms=0.000600 warmup=1
+ALLOC iteration=-2 phase=0 slot=7 bytes=1048580 reserved=1114112 offset=2621440 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.014700 map_ms=0.002300 warmup=1
+ALLOC iteration=-2 phase=0 slot=8 bytes=1048580 reserved=1114112 offset=3735552 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001800 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=9 bytes=65540 reserved=131072 offset=4849664 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.003300 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=10 bytes=393220 reserved=458752 offset=4980736 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=11 bytes=393220 reserved=458752 offset=5439488 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002600 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=12 bytes=65540 reserved=131072 offset=5898240 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.002900 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=13 bytes=1048580 reserved=1114112 offset=6029312 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.009400 map_ms=0.000600 warmup=1
+ALLOC iteration=-2 phase=0 slot=14 bytes=262148 reserved=327680 offset=7143424 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001700 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=15 bytes=1048580 reserved=1114112 offset=7471104 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=16 bytes=262148 reserved=327680 offset=8585216 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002600 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=17 bytes=393220 reserved=458752 offset=8912896 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.004500 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=18 bytes=65540 reserved=131072 offset=9371648 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002900 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=19 bytes=1048580 reserved=1114112 offset=9502720 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=20 bytes=262148 reserved=327680 offset=10616832 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000400 warmup=1
+ALLOC iteration=-2 phase=0 slot=21 bytes=65540 reserved=131072 offset=10944512 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=22 bytes=65540 reserved=131072 offset=11075584 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002200 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=23 bytes=65540 reserved=131072 offset=11206656 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002200 map_ms=0.000200 warmup=1
+FRAGMENT iteration=-2 phase=full live_payload=9764960 live_reserved=11337728 backing_reserved=33554432 alignment_waste=1572768 total_free=22216704 largest_free=22216704 free_span_count=1
+READBACK iteration=-2 phase=0 matches=0/1152 fence=2 completed=2
+END failure reason=trace guard/interior mismatch

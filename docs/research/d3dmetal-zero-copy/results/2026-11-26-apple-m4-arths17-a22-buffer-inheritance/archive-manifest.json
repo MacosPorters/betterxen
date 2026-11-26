@@ -1,0 +1,251 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "alias-s0/baseline-footprint.json",
+      "bytes": 3956,
+      "original_sha256": "e8aa96dd42f8f0025d3dc65abae71af499784a18b9504030166559dbb5965917",
+      "archived_sha256": "e8aa96dd42f8f0025d3dc65abae71af499784a18b9504030166559dbb5965917",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "c7935efa2efb9063c04ee9a47e18a4b94feaf895ad73d7a1df244da8be378afa",
+      "archived_sha256": "c7935efa2efb9063c04ee9a47e18a4b94feaf895ad73d7a1df244da8be378afa",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "148b096fe6691ddce195326cc613072b54329d1baba8995b8b902889249cc0b7",
+      "archived_sha256": "148b096fe6691ddce195326cc613072b54329d1baba8995b8b902889249cc0b7",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/baseline-swap.json",
+      "bytes": 215,
+      "original_sha256": "d5cd06df77dcad12e167154515e6a8d4723c84190133fa96ec4c62afffb03dfb",
+      "archived_sha256": "d5cd06df77dcad12e167154515e6a8d4723c84190133fa96ec4c62afffb03dfb",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/baseline-vmmap.json",
+      "bytes": 8157,
+      "original_sha256": "7287106ad90ba20aae6229a866d9a2b601599505b87fe1616c417371c51a5d17",
+      "archived_sha256": "7287106ad90ba20aae6229a866d9a2b601599505b87fe1616c417371c51a5d17",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "f35dd356416002156eedf4f5cf6fb285992221ee1c1f07e81bb78fa240995e80",
+      "archived_sha256": "f35dd356416002156eedf4f5cf6fb285992221ee1c1f07e81bb78fa240995e80",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/case.json",
+      "bytes": 14415,
+      "original_sha256": "75e1c78455e099de979922369a6975c0be9e0fd00c20f61206606083fd5ccf28",
+      "archived_sha256": "75e1c78455e099de979922369a6975c0be9e0fd00c20f61206606083fd5ccf28",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/gpu_complete-footprint.json",
+      "bytes": 3993,
+      "original_sha256": "0955899fd2b3591ea01811d49eedee5084a03d000ea1fe79d84f30e7d599eb71",
+      "archived_sha256": "0955899fd2b3591ea01811d49eedee5084a03d000ea1fe79d84f30e7d599eb71",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/gpu_complete-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "46739c375013fe1a2d1bca4ea4d5af64f44694d9b958d073e6c9c2f5eb3e693f",
+      "archived_sha256": "46739c375013fe1a2d1bca4ea4d5af64f44694d9b958d073e6c9c2f5eb3e693f",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/gpu_complete-pressure.json",
+      "bytes": 248,
+      "original_sha256": "640eccc303eeae5cb920eec9008a5c1e54d388d73d5fb2fc89d76e435bbe49d3",
+      "archived_sha256": "640eccc303eeae5cb920eec9008a5c1e54d388d73d5fb2fc89d76e435bbe49d3",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/gpu_complete-swap.json",
+      "bytes": 215,
+      "original_sha256": "406ff3c8677329278f47d296e7c87ae471c0e4ebbd947809f4f985a40bca745b",
+      "archived_sha256": "406ff3c8677329278f47d296e7c87ae471c0e4ebbd947809f4f985a40bca745b",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/gpu_complete-vmmap.json",
+      "bytes": 8054,
+      "original_sha256": "5e9f1b9acfee31b3cb7c610cc7aa3e78d269de68841eefde0b5d7cf01e73dc2e",
+      "archived_sha256": "5e9f1b9acfee31b3cb7c610cc7aa3e78d269de68841eefde0b5d7cf01e73dc2e",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/gpu_complete-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "ca7d1058ad6669dd404fdd9e91b5e1ffc0035c846ccc16aa7a0d453c5d83d320",
+      "archived_sha256": "ca7d1058ad6669dd404fdd9e91b5e1ffc0035c846ccc16aa7a0d453c5d83d320",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "alias-s0/stdout.txt",
+      "bytes": 990,
+      "original_sha256": "1d0765633ae963b59d2b19de67b2abe7f6eac255d3cad04dda50e816da16eaae",
+      "archived_sha256": "1d0765633ae963b59d2b19de67b2abe7f6eac255d3cad04dda50e816da16eaae",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/baseline-footprint.json",
+      "bytes": 3874,
+      "original_sha256": "ccf19429cf1c6910531e38a06583f1b40349f65057580261b717ba74ec2e5db5",
+      "archived_sha256": "ccf19429cf1c6910531e38a06583f1b40349f65057580261b717ba74ec2e5db5",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "3a3e94c5dee4e1371a8f264c9f98ab6d804241b5ed83249bd49821810ea77886",
+      "archived_sha256": "3a3e94c5dee4e1371a8f264c9f98ab6d804241b5ed83249bd49821810ea77886",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/baseline-pressure.json",
+      "bytes": 247,
+      "original_sha256": "ddc90d1b0609dec495fed161d3ff90723ac68404709370b473cc902754777816",
+      "archived_sha256": "ddc90d1b0609dec495fed161d3ff90723ac68404709370b473cc902754777816",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "f52a01852ca2c079f002cebab0241f6d59e16ba84386bf1725244188cac00060",
+      "archived_sha256": "f52a01852ca2c079f002cebab0241f6d59e16ba84386bf1725244188cac00060",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/baseline-vmmap.json",
+      "bytes": 8190,
+      "original_sha256": "d6551836f932024f06eca1e693f5c48394d953c7a92f74d498e1bacc902f2c3f",
+      "archived_sha256": "d6551836f932024f06eca1e693f5c48394d953c7a92f74d498e1bacc902f2c3f",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "4888aa29457145f022dc141616e45be31b9405ea834326a00beaef79da7812da",
+      "archived_sha256": "4888aa29457145f022dc141616e45be31b9405ea834326a00beaef79da7812da",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/case.json",
+      "bytes": 14393,
+      "original_sha256": "3ab43b72a53adee57c697fb46fb9146260edee5d3278e361570e9ba01ffc612d",
+      "archived_sha256": "3ab43b72a53adee57c697fb46fb9146260edee5d3278e361570e9ba01ffc612d",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/gpu_complete-footprint.json",
+      "bytes": 3993,
+      "original_sha256": "6b62ba037ef6e2c9225dfce6a8db0d8bf7b788796b9073aef1bdcd5db22406f3",
+      "archived_sha256": "6b62ba037ef6e2c9225dfce6a8db0d8bf7b788796b9073aef1bdcd5db22406f3",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "8658b19aa0ada8883e7f0fef5f55d75cb71be294ff393f77c6c6657d88dfa778",
+      "archived_sha256": "8658b19aa0ada8883e7f0fef5f55d75cb71be294ff393f77c6c6657d88dfa778",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/gpu_complete-pressure.json",
+      "bytes": 248,
+      "original_sha256": "0a391007a5e1f4447c83dc1d876a5758c32bbfbbd3df4b2a2d0e07c693950b6d",
+      "archived_sha256": "0a391007a5e1f4447c83dc1d876a5758c32bbfbbd3df4b2a2d0e07c693950b6d",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/gpu_complete-swap.json",
+      "bytes": 215,
+      "original_sha256": "6b4332f4f3f902d0cacd5e20e9098cf773a74fc90fce245e8a6c66233f03fed6",
+      "archived_sha256": "6b4332f4f3f902d0cacd5e20e9098cf773a74fc90fce245e8a6c66233f03fed6",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/gpu_complete-vmmap.json",
+      "bytes": 8191,
+      "original_sha256": "c0ee110a7717f15a5ed9c1beec0d6c2a0ce4e9918de65a2bfe5bd8e09d548623",
+      "archived_sha256": "c0ee110a7717f15a5ed9c1beec0d6c2a0ce4e9918de65a2bfe5bd8e09d548623",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/gpu_complete-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "e5fc6cd59b8b2706dd71b44a53e1c977f61c22a9810089d2439590128b0b0b02",
+      "archived_sha256": "e5fc6cd59b8b2706dd71b44a53e1c977f61c22a9810089d2439590128b0b0b02",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "alias-s1/stdout.txt",
+      "bytes": 990,
+      "original_sha256": "8d967be294a0e2bdaa9995db71ef9de0f9108294361c77e72c15b34dd08955e5",
+      "archived_sha256": "8d967be294a0e2bdaa9995db71ef9de0f9108294361c77e72c15b34dd08955e5",
+      "redacted": false
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 98323,
+      "original_sha256": "fcfc1f8d78fa115128421c79175f857edc9b42800152d9cde191a1e94c5072a7",
+      "archived_sha256": "bab43ae99fa001f66c948528fb48ed9f820b625c37f99a1bb3168eff93a9fa83",
+      "redacted": true
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "original_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "archived_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16030,
+      "original_sha256": "8faf3021c055db45ca26676c9a2bf298085b96ff1ffb302af86d0b58921a58a8",
+      "archived_sha256": "8faf3021c055db45ca26676c9a2bf298085b96ff1ffb302af86d0b58921a58a8",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "original_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "archived_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/alias.cpp",
+      "bytes": 5486,
+      "original_sha256": "4034866cc66761076ab0ea87c7928b9d4f17bcb244adfae79c95078e4dfb614e",
+      "archived_sha256": "4034866cc66761076ab0ea87c7928b9d4f17bcb244adfae79c95078e4dfb614e",
+      "redacted": false
+    }
+  ]
+}

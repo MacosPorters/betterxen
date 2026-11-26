@@ -1,0 +1,26 @@
+{
+  "name": "dirty-wb-16384-s0",
+  "args": [
+    "dirty",
+    "wb",
+    "16384",
+    "0"
+  ],
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/bx-uma-verify/p2-acceptance/bottle",
+    "--no-update",
+    "--no-gui",
+    "/private/tmp/bx-uma-verify/p2-acceptance/phase2.exe",
+    "dirty",
+    "wb",
+    "16384",
+    "0"
+  ],
+  "timeout_seconds": 90,
+  "snapshots": [],
+  "exit": 0,
+  "timed_out": false,
+  "elapsed_seconds": 0.7936798749724403
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "vmmap",
+    "-w",
+    "51568",
+    "0x0000000215c74000"
+  ],
+  "exit": 0,
+  "stdout": "0x215c74000 is in 0x215c14000-0x225c14000;  bytes after start: 393216  bytes before end: 268042239\n\n      REGION TYPE                    START - END         [ VSIZE  RSDNT  DIRTY   SWAP] PRT/MAX SHRMOD PURGE    REGION DETAIL\n      mapped file                 213f46000-215c12000    [ 28.8M   160K     0K     0K] r--/rwx SM=COW          /System/Library/Extensions/AGXMetalG16G_B0.bundle/Contents/Resources/ds.binary.metallib.g16g-b0\n      GAP OF 0x2000 BYTES\n--->  IOAccelerator               215c14000-225c14000    [256.0M  64.0M     0K     0K] rw-/rw- SM=SHM PURGE=N  \n      __TEXT                      225c14000-225d90000    [ 1520K   332K     0K     0K] r-x/rwx SM=COW          /Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/Resources/libdxilconv.dylib\n",
+  "stderr": "",
+  "seconds": 1.4324102500104345
+}

@@ -1,0 +1,975 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+TRACE mode=pooled seed=475 slab_bytes=33554432 slots=24 heap_setup_ms=0.000000 warmups=2 timed=10
+STAGE baseline cpu_ptr=0
+POOL_SETUP mode=pooled heap_ms=6.530300 reserved_bytes=33554432
+STAGE heap_ready cpu_ptr=0
+ALLOC iteration=-3 phase=0 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.038500 placement_ms=0.071500 map_ms=0.003400 warmup=1
+DELAYED_RETIRE target=1 before=0 withheld=1 after=1
+FREE iteration=-3 slot=0 resource_ms=0.017900 backing_or_freelist_ms=0.231100 retire_fence=1 completed=1
+ALLOC iteration=-2 phase=0 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.009200 map_ms=0.000900 warmup=1
+ALLOC iteration=-2 phase=0 slot=1 bytes=393220 reserved=458752 offset=1114112 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.003200 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=2 bytes=262148 reserved=327680 offset=1572864 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001200 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=3 bytes=65540 reserved=131072 offset=1900544 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=4 bytes=1048580 reserved=1114112 offset=2031616 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=5 bytes=1048580 reserved=1114112 offset=3145728 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002200 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=6 bytes=262148 reserved=327680 offset=4259840 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=7 bytes=393220 reserved=458752 offset=4587520 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001100 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=8 bytes=1048580 reserved=1114112 offset=5046272 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002600 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=9 bytes=393220 reserved=458752 offset=6160384 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.012500 map_ms=0.000900 warmup=1
+ALLOC iteration=-2 phase=0 slot=10 bytes=393220 reserved=458752 offset=6619136 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001700 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=11 bytes=262148 reserved=327680 offset=7077888 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=12 bytes=393220 reserved=458752 offset=7405568 alignment=65536 heap_or_suballoc_ms=0.000400 placement_ms=0.010100 map_ms=0.000500 warmup=1
+ALLOC iteration=-2 phase=0 slot=13 bytes=1048580 reserved=1114112 offset=7864320 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.010000 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=14 bytes=262148 reserved=327680 offset=8978432 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002400 map_ms=0.000400 warmup=1
+ALLOC iteration=-2 phase=0 slot=15 bytes=262148 reserved=327680 offset=9306112 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.004500 map_ms=0.000500 warmup=1
+ALLOC iteration=-2 phase=0 slot=16 bytes=262148 reserved=327680 offset=9633792 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001500 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=17 bytes=65540 reserved=131072 offset=9961472 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=0 slot=18 bytes=1048580 reserved=1114112 offset=10092544 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=19 bytes=262148 reserved=327680 offset=11206656 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=20 bytes=262148 reserved=327680 offset=11534336 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.005900 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=0 slot=21 bytes=1048580 reserved=1114112 offset=11862016 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001500 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=22 bytes=65540 reserved=131072 offset=12976128 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=0 slot=23 bytes=1048580 reserved=1114112 offset=13107200 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=1
+FRAGMENT iteration=-2 phase=full live_payload=12648544 live_reserved=14221312 backing_reserved=33554432 alignment_waste=1572768 total_free=19333120 largest_free=19333120 free_span_count=1
+READBACK iteration=-2 phase=0 matches=1152/1152 fence=2 completed=2
+FREE iteration=-2 slot=0 resource_ms=0.006500 backing_or_freelist_ms=0.006800 retire_fence=2 completed=2
+FREE iteration=-2 slot=2 resource_ms=0.001400 backing_or_freelist_ms=0.000600 retire_fence=2 completed=2
+FREE iteration=-2 slot=4 resource_ms=0.001300 backing_or_freelist_ms=0.000600 retire_fence=2 completed=2
+FREE iteration=-2 slot=6 resource_ms=0.001000 backing_or_freelist_ms=0.003000 retire_fence=2 completed=2
+FREE iteration=-2 slot=8 resource_ms=0.001100 backing_or_freelist_ms=0.000600 retire_fence=2 completed=2
+FREE iteration=-2 slot=10 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=2 completed=2
+FREE iteration=-2 slot=12 resource_ms=0.001200 backing_or_freelist_ms=0.000500 retire_fence=2 completed=2
+FREE iteration=-2 slot=14 resource_ms=0.000700 backing_or_freelist_ms=0.000900 retire_fence=2 completed=2
+FREE iteration=-2 slot=16 resource_ms=0.000900 backing_or_freelist_ms=0.000700 retire_fence=2 completed=2
+FREE iteration=-2 slot=18 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=2 completed=2
+FREE iteration=-2 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000600 retire_fence=2 completed=2
+FREE iteration=-2 slot=22 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=2 completed=2
+FRAGMENT iteration=-2 phase=holes live_payload=6291504 live_reserved=7077888 backing_reserved=33554432 alignment_waste=786384 total_free=26476544 largest_free=19333120 free_span_count=13
+RETIRE_POLICY future=3 completed=2 withheld=1
+ALLOC iteration=-2 phase=1 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.008000 placement_ms=0.002700 map_ms=0.000300 warmup=1
+ALLOC iteration=-2 phase=1 slot=2 bytes=1048580 reserved=1114112 offset=2031616 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=4 bytes=1048580 reserved=1114112 offset=5046272 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=6 bytes=262148 reserved=327680 offset=1572864 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=8 bytes=65540 reserved=131072 offset=4259840 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.004400 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=10 bytes=1048580 reserved=1114112 offset=10092544 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=1 slot=12 bytes=65540 reserved=131072 offset=6619136 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=14 bytes=65540 reserved=131072 offset=7405568 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000700 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=16 bytes=65540 reserved=131072 offset=8978432 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002000 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=18 bytes=65540 reserved=131072 offset=9633792 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=1
+ALLOC iteration=-2 phase=1 slot=20 bytes=393220 reserved=458752 offset=14221312 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=1
+ALLOC iteration=-2 phase=1 slot=22 bytes=65540 reserved=131072 offset=11534336 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003700 map_ms=0.000300 warmup=1
+FRAGMENT iteration=-2 phase=refill live_payload=10748000 live_reserved=12320768 backing_reserved=33554432 alignment_waste=1572768 total_free=21233664 largest_free=18874368 free_span_count=9
+READBACK iteration=-2 phase=1 matches=1152/1152 fence=3 completed=3
+FREE iteration=-2 slot=0 resource_ms=0.003400 backing_or_freelist_ms=0.004800 retire_fence=3 completed=3
+FREE iteration=-2 slot=1 resource_ms=0.001200 backing_or_freelist_ms=0.000900 retire_fence=3 completed=3
+FREE iteration=-2 slot=2 resource_ms=0.000700 backing_or_freelist_ms=0.000700 retire_fence=3 completed=3
+FREE iteration=-2 slot=3 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=3 completed=3
+FREE iteration=-2 slot=4 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=5 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=3 completed=3
+FREE iteration=-2 slot=6 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=7 resource_ms=0.000600 backing_or_freelist_ms=0.000600 retire_fence=3 completed=3
+FREE iteration=-2 slot=8 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=9 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=10 resource_ms=0.000700 backing_or_freelist_ms=0.000600 retire_fence=3 completed=3
+FREE iteration=-2 slot=11 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=3 completed=3
+FREE iteration=-2 slot=12 resource_ms=0.000500 backing_or_freelist_ms=0.000300 retire_fence=3 completed=3
+FREE iteration=-2 slot=13 resource_ms=0.001100 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=14 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=15 resource_ms=0.000900 backing_or_freelist_ms=0.000700 retire_fence=3 completed=3
+FREE iteration=-2 slot=16 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=17 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=3 completed=3
+FREE iteration=-2 slot=18 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=3 completed=3
+FREE iteration=-2 slot=19 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=3 completed=3
+FREE iteration=-2 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=3 completed=3
+FREE iteration=-2 slot=21 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=3 completed=3
+FREE iteration=-2 slot=22 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=3 completed=3
+FREE iteration=-2 slot=23 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=3 completed=3
+FRAGMENT iteration=-2 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=-2 ms=13.146100 warmup=1
+ALLOC iteration=-1 phase=0 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.002100 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=1 bytes=65540 reserved=131072 offset=327680 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001800 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=2 bytes=393220 reserved=458752 offset=458752 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001700 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=3 bytes=262148 reserved=327680 offset=917504 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=4 bytes=65540 reserved=131072 offset=1245184 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=5 bytes=393220 reserved=458752 offset=1376256 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003500 map_ms=0.000300 warmup=1
+ALLOC iteration=-1 phase=0 slot=6 bytes=65540 reserved=131072 offset=1835008 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=7 bytes=262148 reserved=327680 offset=1966080 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001300 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=8 bytes=65540 reserved=131072 offset=2293760 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.004500 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=9 bytes=65540 reserved=131072 offset=2424832 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=10 bytes=65540 reserved=131072 offset=2555904 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003700 map_ms=0.000300 warmup=1
+ALLOC iteration=-1 phase=0 slot=11 bytes=65540 reserved=131072 offset=2686976 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000300 warmup=1
+ALLOC iteration=-1 phase=0 slot=12 bytes=65540 reserved=131072 offset=2818048 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=13 bytes=65540 reserved=131072 offset=2949120 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=14 bytes=1048580 reserved=1114112 offset=3080192 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=15 bytes=65540 reserved=131072 offset=4194304 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=16 bytes=1048580 reserved=1114112 offset=4325376 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=17 bytes=262148 reserved=327680 offset=5439488 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002400 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=18 bytes=393220 reserved=458752 offset=5767168 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.004900 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=0 slot=19 bytes=393220 reserved=458752 offset=6225920 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=20 bytes=262148 reserved=327680 offset=6684672 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001800 map_ms=0.000300 warmup=1
+ALLOC iteration=-1 phase=0 slot=21 bytes=1048580 reserved=1114112 offset=7012352 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003700 map_ms=0.000500 warmup=1
+ALLOC iteration=-1 phase=0 slot=22 bytes=393220 reserved=458752 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=0 slot=23 bytes=65540 reserved=131072 offset=8585216 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.005500 map_ms=0.000300 warmup=1
+FRAGMENT iteration=-1 phase=full live_payload=7143520 live_reserved=8716288 backing_reserved=33554432 alignment_waste=1572768 total_free=24838144 largest_free=24838144 free_span_count=1
+READBACK iteration=-1 phase=0 matches=1152/1152 fence=4 completed=4
+FREE iteration=-1 slot=0 resource_ms=0.006000 backing_or_freelist_ms=0.005900 retire_fence=4 completed=4
+FREE iteration=-1 slot=2 resource_ms=0.001100 backing_or_freelist_ms=0.000600 retire_fence=4 completed=4
+FREE iteration=-1 slot=4 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=4 completed=4
+FREE iteration=-1 slot=6 resource_ms=0.001000 backing_or_freelist_ms=0.002900 retire_fence=4 completed=4
+FREE iteration=-1 slot=8 resource_ms=0.000700 backing_or_freelist_ms=0.000600 retire_fence=4 completed=4
+FREE iteration=-1 slot=10 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=4 completed=4
+FREE iteration=-1 slot=12 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=4 completed=4
+FREE iteration=-1 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.001300 retire_fence=4 completed=4
+FREE iteration=-1 slot=16 resource_ms=0.000500 backing_or_freelist_ms=0.000600 retire_fence=4 completed=4
+FREE iteration=-1 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=4 completed=4
+FREE iteration=-1 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=4 completed=4
+FREE iteration=-1 slot=22 resource_ms=0.001200 backing_or_freelist_ms=0.001300 retire_fence=4 completed=4
+FRAGMENT iteration=-1 phase=holes live_payload=3014704 live_reserved=3801088 backing_reserved=33554432 alignment_waste=786384 total_free=29753344 largest_free=24838144 free_span_count=13
+RETIRE_POLICY future=5 completed=4 withheld=1
+ALLOC iteration=-1 phase=1 slot=0 bytes=393220 reserved=458752 offset=458752 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.001800 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=1 slot=2 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.001900 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=1 slot=4 bytes=65540 reserved=131072 offset=1245184 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=1 slot=6 bytes=393220 reserved=458752 offset=3080192 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=1 slot=8 bytes=65540 reserved=131072 offset=1835008 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=1 slot=10 bytes=65540 reserved=131072 offset=2293760 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=1 slot=12 bytes=393220 reserved=458752 offset=4325376 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=1 slot=14 bytes=65540 reserved=131072 offset=2555904 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.003400 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=1 slot=16 bytes=1048580 reserved=1114112 offset=8716288 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001400 map_ms=0.000200 warmup=1
+ALLOC iteration=-1 phase=1 slot=18 bytes=393220 reserved=458752 offset=5767168 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=1 slot=20 bytes=393220 reserved=458752 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000100 warmup=1
+ALLOC iteration=-1 phase=1 slot=22 bytes=262148 reserved=327680 offset=6684672 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001300 map_ms=0.000200 warmup=1
+FRAGMENT iteration=-1 phase=refill live_payload=6619232 live_reserved=8192000 backing_reserved=33554432 alignment_waste=1572768 total_free=25362432 largest_free=23724032 free_span_count=5
+READBACK iteration=-1 phase=1 matches=1152/1152 fence=5 completed=5
+FREE iteration=-1 slot=0 resource_ms=0.003100 backing_or_freelist_ms=0.003900 retire_fence=5 completed=5
+FREE iteration=-1 slot=1 resource_ms=0.003600 backing_or_freelist_ms=0.002400 retire_fence=5 completed=5
+FREE iteration=-1 slot=2 resource_ms=0.001600 backing_or_freelist_ms=0.001200 retire_fence=5 completed=5
+FREE iteration=-1 slot=3 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=5 completed=5
+FREE iteration=-1 slot=4 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=5 completed=5
+FREE iteration=-1 slot=5 resource_ms=0.001000 backing_or_freelist_ms=0.000500 retire_fence=5 completed=5
+FREE iteration=-1 slot=6 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=5 completed=5
+FREE iteration=-1 slot=7 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=5 completed=5
+FREE iteration=-1 slot=8 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=5 completed=5
+FREE iteration=-1 slot=9 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=5 completed=5
+FREE iteration=-1 slot=10 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=5 completed=5
+FREE iteration=-1 slot=11 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=5 completed=5
+FREE iteration=-1 slot=12 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=5 completed=5
+FREE iteration=-1 slot=13 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=5 completed=5
+FREE iteration=-1 slot=14 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=5 completed=5
+FREE iteration=-1 slot=15 resource_ms=0.000700 backing_or_freelist_ms=0.000200 retire_fence=5 completed=5
+FREE iteration=-1 slot=16 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=5 completed=5
+FREE iteration=-1 slot=17 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=5 completed=5
+FREE iteration=-1 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000100 retire_fence=5 completed=5
+FREE iteration=-1 slot=19 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=5 completed=5
+FREE iteration=-1 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=5 completed=5
+FREE iteration=-1 slot=21 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=5 completed=5
+FREE iteration=-1 slot=22 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=5 completed=5
+FREE iteration=-1 slot=23 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=5 completed=5
+FRAGMENT iteration=-1 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=-1 ms=11.506700 warmup=1
+ALLOC iteration=0 phase=0 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002600 map_ms=0.000400 warmup=0
+ALLOC iteration=0 phase=0 slot=1 bytes=65540 reserved=131072 offset=1114112 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=2 bytes=1048580 reserved=1114112 offset=1245184 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=3 bytes=65540 reserved=131072 offset=2359296 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=4 bytes=393220 reserved=458752 offset=2490368 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.003100 map_ms=0.000300 warmup=0
+ALLOC iteration=0 phase=0 slot=5 bytes=262148 reserved=327680 offset=2949120 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000300 warmup=0
+ALLOC iteration=0 phase=0 slot=6 bytes=393220 reserved=458752 offset=3276800 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=0 slot=7 bytes=65540 reserved=131072 offset=3735552 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000600 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=8 bytes=262148 reserved=327680 offset=3866624 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=0 slot=9 bytes=393220 reserved=458752 offset=4194304 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=0 slot=10 bytes=65540 reserved=131072 offset=4653056 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=11 bytes=393220 reserved=458752 offset=4784128 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000300 warmup=0
+ALLOC iteration=0 phase=0 slot=12 bytes=393220 reserved=458752 offset=5242880 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002100 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=13 bytes=65540 reserved=131072 offset=5701632 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001800 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=14 bytes=393220 reserved=458752 offset=5832704 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=0 slot=15 bytes=1048580 reserved=1114112 offset=6291456 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=0 slot=16 bytes=262148 reserved=327680 offset=7405568 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001800 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=17 bytes=393220 reserved=458752 offset=7733248 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=18 bytes=65540 reserved=131072 offset=8192000 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002600 map_ms=0.000300 warmup=0
+ALLOC iteration=0 phase=0 slot=19 bytes=393220 reserved=458752 offset=8323072 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=20 bytes=1048580 reserved=1114112 offset=8781824 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003200 map_ms=0.000400 warmup=0
+ALLOC iteration=0 phase=0 slot=21 bytes=393220 reserved=458752 offset=9895936 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001400 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=22 bytes=1048580 reserved=1114112 offset=10354688 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002200 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=0 slot=23 bytes=262148 reserved=327680 offset=11468800 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+FRAGMENT iteration=0 phase=full live_payload=10223712 live_reserved=11796480 backing_reserved=33554432 alignment_waste=1572768 total_free=21757952 largest_free=21757952 free_span_count=1
+READBACK iteration=0 phase=0 matches=1152/1152 fence=6 completed=6
+FREE iteration=0 slot=0 resource_ms=0.005000 backing_or_freelist_ms=0.004200 retire_fence=6 completed=6
+FREE iteration=0 slot=2 resource_ms=0.001200 backing_or_freelist_ms=0.000500 retire_fence=6 completed=6
+FREE iteration=0 slot=4 resource_ms=0.001200 backing_or_freelist_ms=0.000500 retire_fence=6 completed=6
+FREE iteration=0 slot=6 resource_ms=0.000800 backing_or_freelist_ms=0.002400 retire_fence=6 completed=6
+FREE iteration=0 slot=8 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=6 completed=6
+FREE iteration=0 slot=10 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=6 completed=6
+FREE iteration=0 slot=12 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=6 completed=6
+FREE iteration=0 slot=14 resource_ms=0.001000 backing_or_freelist_ms=0.001400 retire_fence=6 completed=6
+FREE iteration=0 slot=16 resource_ms=0.000900 backing_or_freelist_ms=0.000600 retire_fence=6 completed=6
+FREE iteration=0 slot=18 resource_ms=0.000700 backing_or_freelist_ms=0.000700 retire_fence=6 completed=6
+FREE iteration=0 slot=20 resource_ms=0.000800 backing_or_freelist_ms=0.000600 retire_fence=6 completed=6
+FREE iteration=0 slot=22 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=6 completed=6
+FRAGMENT iteration=0 phase=holes live_payload=3801136 live_reserved=4587520 backing_reserved=33554432 alignment_waste=786384 total_free=28966912 largest_free=21757952 free_span_count=13
+RETIRE_POLICY future=7 completed=6 withheld=1
+ALLOC iteration=0 phase=1 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.000500 placement_ms=0.002000 map_ms=0.000300 warmup=0
+ALLOC iteration=0 phase=1 slot=2 bytes=1048580 reserved=1114112 offset=1245184 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001400 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=1 slot=4 bytes=393220 reserved=458752 offset=2490368 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=1 slot=6 bytes=262148 reserved=327680 offset=3276800 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=1 slot=8 bytes=65540 reserved=131072 offset=3866624 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=1 slot=10 bytes=393220 reserved=458752 offset=5242880 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=1 slot=12 bytes=393220 reserved=458752 offset=5832704 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001800 map_ms=0.000300 warmup=0
+ALLOC iteration=0 phase=1 slot=14 bytes=1048580 reserved=1114112 offset=8781824 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=1 slot=16 bytes=1048580 reserved=1114112 offset=10354688 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=0 phase=1 slot=18 bytes=262148 reserved=327680 offset=7405568 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001600 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=1 slot=20 bytes=1048580 reserved=1114112 offset=11796480 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001300 map_ms=0.000200 warmup=0
+ALLOC iteration=0 phase=1 slot=22 bytes=262148 reserved=327680 offset=327680 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+FRAGMENT iteration=0 phase=refill live_payload=10289248 live_reserved=11862016 backing_reserved=33554432 alignment_waste=1572768 total_free=21692416 largest_free=20643840 free_span_count=6
+READBACK iteration=0 phase=1 matches=1152/1152 fence=7 completed=7
+STAGE live cpu_ptr=0
+FREE iteration=0 slot=0 resource_ms=0.022000 backing_or_freelist_ms=0.009500 retire_fence=7 completed=7
+FREE iteration=0 slot=1 resource_ms=0.002200 backing_or_freelist_ms=0.001000 retire_fence=7 completed=7
+FREE iteration=0 slot=2 resource_ms=0.001300 backing_or_freelist_ms=0.000600 retire_fence=7 completed=7
+FREE iteration=0 slot=3 resource_ms=0.001200 backing_or_freelist_ms=0.000500 retire_fence=7 completed=7
+FREE iteration=0 slot=4 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=5 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=6 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=7 resource_ms=0.001000 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=8 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=9 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=10 resource_ms=0.001200 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=11 resource_ms=0.001000 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=12 resource_ms=0.001400 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=13 resource_ms=0.001300 backing_or_freelist_ms=0.000200 retire_fence=7 completed=7
+FREE iteration=0 slot=14 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=15 resource_ms=0.001100 backing_or_freelist_ms=0.000400 retire_fence=7 completed=7
+FREE iteration=0 slot=16 resource_ms=0.003000 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=17 resource_ms=0.001000 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=18 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000200 retire_fence=7 completed=7
+FREE iteration=0 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=7 completed=7
+FREE iteration=0 slot=21 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=22 resource_ms=0.001000 backing_or_freelist_ms=0.000300 retire_fence=7 completed=7
+FREE iteration=0 slot=23 resource_ms=0.000700 backing_or_freelist_ms=0.000200 retire_fence=7 completed=7
+FRAGMENT iteration=0 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=0 ms=12.278900 warmup=0
+ALLOC iteration=1 phase=0 slot=0 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000600 placement_ms=0.015400 map_ms=0.001300 warmup=0
+ALLOC iteration=1 phase=0 slot=1 bytes=393220 reserved=458752 offset=131072 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=0 slot=2 bytes=393220 reserved=458752 offset=589824 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=0 slot=3 bytes=65540 reserved=131072 offset=1048576 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=4 bytes=262148 reserved=327680 offset=1179648 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=0 slot=5 bytes=1048580 reserved=1114112 offset=1507328 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001600 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=6 bytes=1048580 reserved=1114112 offset=2621440 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=7 bytes=393220 reserved=458752 offset=3735552 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=0 slot=8 bytes=1048580 reserved=1114112 offset=4194304 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=0 slot=9 bytes=1048580 reserved=1114112 offset=5308416 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=10 bytes=65540 reserved=131072 offset=6422528 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=11 bytes=65540 reserved=131072 offset=6553600 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=0 slot=12 bytes=65540 reserved=131072 offset=6684672 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=13 bytes=393220 reserved=458752 offset=6815744 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000300 warmup=0
+ALLOC iteration=1 phase=0 slot=14 bytes=65540 reserved=131072 offset=7274496 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=15 bytes=1048580 reserved=1114112 offset=7405568 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.012500 map_ms=0.001300 warmup=0
+ALLOC iteration=1 phase=0 slot=16 bytes=1048580 reserved=1114112 offset=8519680 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.006200 map_ms=0.000700 warmup=0
+ALLOC iteration=1 phase=0 slot=17 bytes=393220 reserved=458752 offset=9633792 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.006000 map_ms=0.000600 warmup=0
+ALLOC iteration=1 phase=0 slot=18 bytes=1048580 reserved=1114112 offset=10092544 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001500 map_ms=0.000400 warmup=0
+ALLOC iteration=1 phase=0 slot=19 bytes=262148 reserved=327680 offset=11206656 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=20 bytes=262148 reserved=327680 offset=11534336 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=21 bytes=393220 reserved=458752 offset=11862016 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=0 slot=22 bytes=1048580 reserved=1114112 offset=12320768 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003900 map_ms=0.000400 warmup=0
+ALLOC iteration=1 phase=0 slot=23 bytes=1048580 reserved=1114112 offset=13434880 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001700 map_ms=0.000200 warmup=0
+FRAGMENT iteration=1 phase=full live_payload=12976224 live_reserved=14548992 backing_reserved=33554432 alignment_waste=1572768 total_free=19005440 largest_free=19005440 free_span_count=1
+READBACK iteration=1 phase=0 matches=1152/1152 fence=8 completed=8
+FREE iteration=1 slot=0 resource_ms=0.011400 backing_or_freelist_ms=0.006500 retire_fence=8 completed=8
+FREE iteration=1 slot=2 resource_ms=0.001800 backing_or_freelist_ms=0.000700 retire_fence=8 completed=8
+FREE iteration=1 slot=4 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=8 completed=8
+FREE iteration=1 slot=6 resource_ms=0.000800 backing_or_freelist_ms=0.002600 retire_fence=8 completed=8
+FREE iteration=1 slot=8 resource_ms=0.001100 backing_or_freelist_ms=0.000600 retire_fence=8 completed=8
+FREE iteration=1 slot=10 resource_ms=0.001100 backing_or_freelist_ms=0.001000 retire_fence=8 completed=8
+FREE iteration=1 slot=12 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=8 completed=8
+FREE iteration=1 slot=14 resource_ms=0.001100 backing_or_freelist_ms=0.001500 retire_fence=8 completed=8
+FREE iteration=1 slot=16 resource_ms=0.001400 backing_or_freelist_ms=0.000700 retire_fence=8 completed=8
+FREE iteration=1 slot=18 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=8 completed=8
+FREE iteration=1 slot=20 resource_ms=0.000900 backing_or_freelist_ms=0.000700 retire_fence=8 completed=8
+FREE iteration=1 slot=22 resource_ms=0.001000 backing_or_freelist_ms=0.000600 retire_fence=8 completed=8
+FRAGMENT iteration=1 phase=holes live_payload=6553648 live_reserved=7340032 backing_reserved=33554432 alignment_waste=786384 total_free=26214400 largest_free=19005440 free_span_count=13
+RETIRE_POLICY future=9 completed=8 withheld=1
+ALLOC iteration=1 phase=1 slot=0 bytes=1048580 reserved=1114112 offset=2621440 alignment=65536 heap_or_suballoc_ms=0.000700 placement_ms=0.007600 map_ms=0.000600 warmup=0
+ALLOC iteration=1 phase=1 slot=2 bytes=393220 reserved=458752 offset=589824 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001400 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=1 slot=4 bytes=393220 reserved=458752 offset=4194304 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001400 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=1 slot=6 bytes=393220 reserved=458752 offset=8519680 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=1 slot=8 bytes=262148 reserved=327680 offset=1179648 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=1 slot=10 bytes=393220 reserved=458752 offset=10092544 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=1 slot=12 bytes=1048580 reserved=1114112 offset=12320768 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=1 slot=14 bytes=262148 reserved=327680 offset=11534336 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=1 slot=16 bytes=1048580 reserved=1114112 offset=14548992 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=1 phase=1 slot=18 bytes=1048580 reserved=1114112 offset=15663104 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=1 slot=20 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=1 phase=1 slot=22 bytes=1048580 reserved=1114112 offset=16777216 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+FRAGMENT iteration=1 phase=refill live_payload=13959264 live_reserved=15532032 backing_reserved=33554432 alignment_waste=1572768 total_free=18022400 largest_free=15663104 free_span_count=7
+READBACK iteration=1 phase=1 matches=1152/1152 fence=9 completed=9
+FREE iteration=1 slot=0 resource_ms=0.006800 backing_or_freelist_ms=0.008500 retire_fence=9 completed=9
+FREE iteration=1 slot=1 resource_ms=0.001500 backing_or_freelist_ms=0.001400 retire_fence=9 completed=9
+FREE iteration=1 slot=2 resource_ms=0.000800 backing_or_freelist_ms=0.000800 retire_fence=9 completed=9
+FREE iteration=1 slot=3 resource_ms=0.000700 backing_or_freelist_ms=0.000600 retire_fence=9 completed=9
+FREE iteration=1 slot=4 resource_ms=0.000900 backing_or_freelist_ms=0.000600 retire_fence=9 completed=9
+FREE iteration=1 slot=5 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=9 completed=9
+FREE iteration=1 slot=6 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=9 completed=9
+FREE iteration=1 slot=7 resource_ms=0.001500 backing_or_freelist_ms=0.001100 retire_fence=9 completed=9
+FREE iteration=1 slot=8 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=9 completed=9
+FREE iteration=1 slot=9 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=9 completed=9
+FREE iteration=1 slot=10 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=9 completed=9
+FREE iteration=1 slot=11 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=9 completed=9
+FREE iteration=1 slot=12 resource_ms=0.001100 backing_or_freelist_ms=0.000400 retire_fence=9 completed=9
+FREE iteration=1 slot=13 resource_ms=0.002100 backing_or_freelist_ms=0.003100 retire_fence=9 completed=9
+FREE iteration=1 slot=14 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=9 completed=9
+FREE iteration=1 slot=15 resource_ms=0.001500 backing_or_freelist_ms=0.000400 retire_fence=9 completed=9
+FREE iteration=1 slot=16 resource_ms=0.003000 backing_or_freelist_ms=0.001300 retire_fence=9 completed=9
+FREE iteration=1 slot=17 resource_ms=0.001400 backing_or_freelist_ms=0.000600 retire_fence=9 completed=9
+FREE iteration=1 slot=18 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=9 completed=9
+FREE iteration=1 slot=19 resource_ms=0.004000 backing_or_freelist_ms=0.001500 retire_fence=9 completed=9
+FREE iteration=1 slot=20 resource_ms=0.001400 backing_or_freelist_ms=0.000700 retire_fence=9 completed=9
+FREE iteration=1 slot=21 resource_ms=0.001300 backing_or_freelist_ms=0.000400 retire_fence=9 completed=9
+FREE iteration=1 slot=22 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=9 completed=9
+FREE iteration=1 slot=23 resource_ms=0.001300 backing_or_freelist_ms=0.000200 retire_fence=9 completed=9
+FRAGMENT iteration=1 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=1 ms=17.356100 warmup=0
+ALLOC iteration=2 phase=0 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.009100 map_ms=0.000700 warmup=0
+ALLOC iteration=2 phase=0 slot=1 bytes=65540 reserved=131072 offset=327680 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=2 bytes=1048580 reserved=1114112 offset=458752 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=3 bytes=393220 reserved=458752 offset=1572864 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=4 bytes=65540 reserved=131072 offset=2031616 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=5 bytes=65540 reserved=131072 offset=2162688 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=6 bytes=65540 reserved=131072 offset=2293760 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=7 bytes=1048580 reserved=1114112 offset=2424832 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=8 bytes=65540 reserved=131072 offset=3538944 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=9 bytes=1048580 reserved=1114112 offset=3670016 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=10 bytes=393220 reserved=458752 offset=4784128 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=11 bytes=262148 reserved=327680 offset=5242880 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=12 bytes=262148 reserved=327680 offset=5570560 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001800 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=13 bytes=1048580 reserved=1114112 offset=5898240 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=14 bytes=262148 reserved=327680 offset=7012352 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=15 bytes=262148 reserved=327680 offset=7340032 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=16 bytes=65540 reserved=131072 offset=7667712 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=17 bytes=262148 reserved=327680 offset=7798784 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.008600 map_ms=0.000400 warmup=0
+ALLOC iteration=2 phase=0 slot=18 bytes=262148 reserved=327680 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001400 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=19 bytes=262148 reserved=327680 offset=8454144 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000800 map_ms=0.000300 warmup=0
+ALLOC iteration=2 phase=0 slot=20 bytes=1048580 reserved=1114112 offset=8781824 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=0 slot=21 bytes=1048580 reserved=1114112 offset=9895936 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=22 bytes=262148 reserved=327680 offset=11010048 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001900 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=0 slot=23 bytes=1048580 reserved=1114112 offset=11337728 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+FRAGMENT iteration=2 phase=full live_payload=10879072 live_reserved=12451840 backing_reserved=33554432 alignment_waste=1572768 total_free=21102592 largest_free=21102592 free_span_count=1
+READBACK iteration=2 phase=0 matches=1152/1152 fence=10 completed=10
+FREE iteration=2 slot=0 resource_ms=0.004900 backing_or_freelist_ms=0.003700 retire_fence=10 completed=10
+FREE iteration=2 slot=2 resource_ms=0.001500 backing_or_freelist_ms=0.000700 retire_fence=10 completed=10
+FREE iteration=2 slot=4 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=10 completed=10
+FREE iteration=2 slot=6 resource_ms=0.000700 backing_or_freelist_ms=0.002400 retire_fence=10 completed=10
+FREE iteration=2 slot=8 resource_ms=0.000700 backing_or_freelist_ms=0.000600 retire_fence=10 completed=10
+FREE iteration=2 slot=10 resource_ms=0.000800 backing_or_freelist_ms=0.000900 retire_fence=10 completed=10
+FREE iteration=2 slot=12 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=10 completed=10
+FREE iteration=2 slot=14 resource_ms=0.000900 backing_or_freelist_ms=0.001400 retire_fence=10 completed=10
+FREE iteration=2 slot=16 resource_ms=0.000900 backing_or_freelist_ms=0.001100 retire_fence=10 completed=10
+FREE iteration=2 slot=18 resource_ms=0.000800 backing_or_freelist_ms=0.000600 retire_fence=10 completed=10
+FREE iteration=2 slot=20 resource_ms=0.001800 backing_or_freelist_ms=0.002400 retire_fence=10 completed=10
+FREE iteration=2 slot=22 resource_ms=0.000700 backing_or_freelist_ms=0.000900 retire_fence=10 completed=10
+FRAGMENT iteration=2 phase=holes live_payload=6815792 live_reserved=7602176 backing_reserved=33554432 alignment_waste=786384 total_free=25952256 largest_free=21102592 free_span_count=13
+RETIRE_POLICY future=11 completed=10 withheld=1
+ALLOC iteration=2 phase=1 slot=0 bytes=1048580 reserved=1114112 offset=458752 alignment=65536 heap_or_suballoc_ms=0.000400 placement_ms=0.005000 map_ms=0.000600 warmup=0
+ALLOC iteration=2 phase=1 slot=2 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001600 map_ms=0.000300 warmup=0
+ALLOC iteration=2 phase=1 slot=4 bytes=262148 reserved=327680 offset=4784128 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.002300 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=1 slot=6 bytes=65540 reserved=131072 offset=2031616 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=1 slot=8 bytes=65540 reserved=131072 offset=2293760 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=2 phase=1 slot=10 bytes=262148 reserved=327680 offset=5570560 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000600 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=1 slot=12 bytes=65540 reserved=131072 offset=3538944 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=1 slot=14 bytes=1048580 reserved=1114112 offset=8781824 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000600 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=1 slot=16 bytes=65540 reserved=131072 offset=7012352 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=2 phase=1 slot=18 bytes=65540 reserved=131072 offset=7667712 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.003200 map_ms=0.000300 warmup=0
+ALLOC iteration=2 phase=1 slot=20 bytes=262148 reserved=327680 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000300 warmup=0
+ALLOC iteration=2 phase=1 slot=22 bytes=393220 reserved=458752 offset=12451840 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000200 warmup=0
+FRAGMENT iteration=2 phase=refill live_payload=10682464 live_reserved=12255232 backing_reserved=33554432 alignment_waste=1572768 total_free=21299200 largest_free=20643840 free_span_count=4
+READBACK iteration=2 phase=1 matches=1152/1152 fence=11 completed=11
+FREE iteration=2 slot=0 resource_ms=0.003400 backing_or_freelist_ms=0.003600 retire_fence=11 completed=11
+FREE iteration=2 slot=1 resource_ms=0.001200 backing_or_freelist_ms=0.000600 retire_fence=11 completed=11
+FREE iteration=2 slot=2 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=11 completed=11
+FREE iteration=2 slot=3 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=11 completed=11
+FREE iteration=2 slot=4 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=11 completed=11
+FREE iteration=2 slot=5 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=6 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=7 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=8 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=11 completed=11
+FREE iteration=2 slot=9 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=10 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=11 completed=11
+FREE iteration=2 slot=11 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=12 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=13 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=15 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=11 completed=11
+FREE iteration=2 slot=16 resource_ms=0.000800 backing_or_freelist_ms=0.000200 retire_fence=11 completed=11
+FREE iteration=2 slot=17 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=11 completed=11
+FREE iteration=2 slot=18 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=20 resource_ms=0.001900 backing_or_freelist_ms=0.000700 retire_fence=11 completed=11
+FREE iteration=2 slot=21 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=22 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=11 completed=11
+FREE iteration=2 slot=23 resource_ms=0.001000 backing_or_freelist_ms=0.000100 retire_fence=11 completed=11
+FRAGMENT iteration=2 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=2 ms=11.876200 warmup=0
+ALLOC iteration=3 phase=0 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003200 map_ms=0.000300 warmup=0
+ALLOC iteration=3 phase=0 slot=1 bytes=262148 reserved=327680 offset=1114112 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=2 bytes=393220 reserved=458752 offset=1441792 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002100 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=3 bytes=1048580 reserved=1114112 offset=1900544 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003500 map_ms=0.000300 warmup=0
+ALLOC iteration=3 phase=0 slot=4 bytes=393220 reserved=458752 offset=3014656 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=5 bytes=393220 reserved=458752 offset=3473408 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=6 bytes=262148 reserved=327680 offset=3932160 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=7 bytes=65540 reserved=131072 offset=4259840 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=8 bytes=262148 reserved=327680 offset=4390912 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.004200 map_ms=0.000300 warmup=0
+ALLOC iteration=3 phase=0 slot=9 bytes=65540 reserved=131072 offset=4718592 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=10 bytes=262148 reserved=327680 offset=4849664 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=11 bytes=65540 reserved=131072 offset=5177344 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=12 bytes=262148 reserved=327680 offset=5308416 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=13 bytes=65540 reserved=131072 offset=5636096 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=14 bytes=393220 reserved=458752 offset=5767168 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=15 bytes=1048580 reserved=1114112 offset=6225920 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001400 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=16 bytes=65540 reserved=131072 offset=7340032 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001300 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=17 bytes=65540 reserved=131072 offset=7471104 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001600 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=18 bytes=65540 reserved=131072 offset=7602176 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.007000 map_ms=0.000700 warmup=0
+ALLOC iteration=3 phase=0 slot=19 bytes=393220 reserved=458752 offset=7733248 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=20 bytes=262148 reserved=327680 offset=8192000 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=0 slot=21 bytes=262148 reserved=327680 offset=8519680 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=22 bytes=393220 reserved=458752 offset=8847360 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=0 slot=23 bytes=393220 reserved=458752 offset=9306112 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+FRAGMENT iteration=3 phase=full live_payload=8192096 live_reserved=9764864 backing_reserved=33554432 alignment_waste=1572768 total_free=23789568 largest_free=23789568 free_span_count=1
+READBACK iteration=3 phase=0 matches=1152/1152 fence=12 completed=12
+FREE iteration=3 slot=0 resource_ms=0.004400 backing_or_freelist_ms=0.003600 retire_fence=12 completed=12
+FREE iteration=3 slot=2 resource_ms=0.001200 backing_or_freelist_ms=0.000600 retire_fence=12 completed=12
+FREE iteration=3 slot=4 resource_ms=0.001400 backing_or_freelist_ms=0.000400 retire_fence=12 completed=12
+FREE iteration=3 slot=6 resource_ms=0.000800 backing_or_freelist_ms=0.001400 retire_fence=12 completed=12
+FREE iteration=3 slot=8 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=12 completed=12
+FREE iteration=3 slot=10 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=12 completed=12
+FREE iteration=3 slot=12 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=12 completed=12
+FREE iteration=3 slot=14 resource_ms=0.000800 backing_or_freelist_ms=0.001600 retire_fence=12 completed=12
+FREE iteration=3 slot=16 resource_ms=0.000600 backing_or_freelist_ms=0.000700 retire_fence=12 completed=12
+FREE iteration=3 slot=18 resource_ms=0.002300 backing_or_freelist_ms=0.002400 retire_fence=12 completed=12
+FREE iteration=3 slot=20 resource_ms=0.000800 backing_or_freelist_ms=0.000600 retire_fence=12 completed=12
+FREE iteration=3 slot=22 resource_ms=0.001000 backing_or_freelist_ms=0.000700 retire_fence=12 completed=12
+FRAGMENT iteration=3 phase=holes live_payload=4128816 live_reserved=4915200 backing_reserved=33554432 alignment_waste=786384 total_free=28639232 largest_free=23789568 free_span_count=13
+RETIRE_POLICY future=13 completed=12 withheld=1
+ALLOC iteration=3 phase=1 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.003100 map_ms=0.000500 warmup=0
+ALLOC iteration=3 phase=1 slot=2 bytes=393220 reserved=458752 offset=1441792 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=1 slot=4 bytes=393220 reserved=458752 offset=3014656 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002400 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=1 slot=6 bytes=65540 reserved=131072 offset=3932160 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=1 slot=8 bytes=262148 reserved=327680 offset=4390912 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=1 slot=10 bytes=65540 reserved=131072 offset=4849664 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=1 slot=12 bytes=1048580 reserved=1114112 offset=9764864 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=1 slot=14 bytes=65540 reserved=131072 offset=5308416 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=1 slot=16 bytes=1048580 reserved=1114112 offset=10878976 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=1 slot=18 bytes=1048580 reserved=1114112 offset=11993088 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=3 phase=1 slot=20 bytes=65540 reserved=131072 offset=5767168 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=3 phase=1 slot=22 bytes=262148 reserved=327680 offset=8192000 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000200 warmup=0
+FRAGMENT iteration=3 phase=refill live_payload=9109600 live_reserved=10682368 backing_reserved=33554432 alignment_waste=1572768 total_free=22872064 largest_free=20447232 free_span_count=9
+READBACK iteration=3 phase=1 matches=1152/1152 fence=13 completed=13
+FREE iteration=3 slot=0 resource_ms=0.004200 backing_or_freelist_ms=0.005300 retire_fence=13 completed=13
+FREE iteration=3 slot=1 resource_ms=0.001500 backing_or_freelist_ms=0.002000 retire_fence=13 completed=13
+FREE iteration=3 slot=2 resource_ms=0.000800 backing_or_freelist_ms=0.000800 retire_fence=13 completed=13
+FREE iteration=3 slot=3 resource_ms=0.001000 backing_or_freelist_ms=0.000600 retire_fence=13 completed=13
+FREE iteration=3 slot=4 resource_ms=0.000700 backing_or_freelist_ms=0.000600 retire_fence=13 completed=13
+FREE iteration=3 slot=5 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=13 completed=13
+FREE iteration=3 slot=6 resource_ms=0.000600 backing_or_freelist_ms=0.000600 retire_fence=13 completed=13
+FREE iteration=3 slot=7 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=13 completed=13
+FREE iteration=3 slot=8 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=13 completed=13
+FREE iteration=3 slot=9 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=13 completed=13
+FREE iteration=3 slot=10 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=13 completed=13
+FREE iteration=3 slot=11 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=13 completed=13
+FREE iteration=3 slot=12 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=13 completed=13
+FREE iteration=3 slot=13 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=13 completed=13
+FREE iteration=3 slot=14 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=13 completed=13
+FREE iteration=3 slot=15 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=13 completed=13
+FREE iteration=3 slot=16 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=13 completed=13
+FREE iteration=3 slot=17 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=13 completed=13
+FREE iteration=3 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=13 completed=13
+FREE iteration=3 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=13 completed=13
+FREE iteration=3 slot=20 resource_ms=0.000500 backing_or_freelist_ms=0.000300 retire_fence=13 completed=13
+FREE iteration=3 slot=21 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=13 completed=13
+FREE iteration=3 slot=22 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=13 completed=13
+FREE iteration=3 slot=23 resource_ms=0.000700 backing_or_freelist_ms=0.000100 retire_fence=13 completed=13
+FRAGMENT iteration=3 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=3 ms=12.621500 warmup=0
+ALLOC iteration=4 phase=0 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002100 map_ms=0.000300 warmup=0
+ALLOC iteration=4 phase=0 slot=1 bytes=393220 reserved=458752 offset=1114112 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=2 bytes=65540 reserved=131072 offset=1572864 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=3 bytes=65540 reserved=131072 offset=1703936 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=4 bytes=1048580 reserved=1114112 offset=1835008 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=5 bytes=393220 reserved=458752 offset=2949120 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=6 bytes=393220 reserved=458752 offset=3407872 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=7 bytes=393220 reserved=458752 offset=3866624 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=8 bytes=65540 reserved=131072 offset=4325376 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=9 bytes=262148 reserved=327680 offset=4456448 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002200 map_ms=0.000300 warmup=0
+ALLOC iteration=4 phase=0 slot=10 bytes=1048580 reserved=1114112 offset=4784128 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=11 bytes=393220 reserved=458752 offset=5898240 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=12 bytes=65540 reserved=131072 offset=6356992 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001400 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=13 bytes=65540 reserved=131072 offset=6488064 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=14 bytes=393220 reserved=458752 offset=6619136 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=15 bytes=65540 reserved=131072 offset=7077888 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=16 bytes=262148 reserved=327680 offset=7208960 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=17 bytes=393220 reserved=458752 offset=7536640 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=0 slot=18 bytes=262148 reserved=327680 offset=7995392 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=19 bytes=65540 reserved=131072 offset=8323072 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000300 warmup=0
+ALLOC iteration=4 phase=0 slot=20 bytes=262148 reserved=327680 offset=8454144 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=21 bytes=1048580 reserved=1114112 offset=8781824 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003600 map_ms=0.000500 warmup=0
+ALLOC iteration=4 phase=0 slot=22 bytes=262148 reserved=327680 offset=9895936 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=0 slot=23 bytes=1048580 reserved=1114112 offset=10223616 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+FRAGMENT iteration=4 phase=full live_payload=9764960 live_reserved=11337728 backing_reserved=33554432 alignment_waste=1572768 total_free=22216704 largest_free=22216704 free_span_count=1
+READBACK iteration=4 phase=0 matches=1152/1152 fence=14 completed=14
+FREE iteration=4 slot=0 resource_ms=0.002900 backing_or_freelist_ms=0.002500 retire_fence=14 completed=14
+FREE iteration=4 slot=2 resource_ms=0.001000 backing_or_freelist_ms=0.000500 retire_fence=14 completed=14
+FREE iteration=4 slot=4 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=14 completed=14
+FREE iteration=4 slot=6 resource_ms=0.000700 backing_or_freelist_ms=0.001200 retire_fence=14 completed=14
+FREE iteration=4 slot=8 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=14 completed=14
+FREE iteration=4 slot=10 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=14 completed=14
+FREE iteration=4 slot=12 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=14 completed=14
+FREE iteration=4 slot=14 resource_ms=0.000500 backing_or_freelist_ms=0.001000 retire_fence=14 completed=14
+FREE iteration=4 slot=16 resource_ms=0.000600 backing_or_freelist_ms=0.000700 retire_fence=14 completed=14
+FREE iteration=4 slot=18 resource_ms=0.000500 backing_or_freelist_ms=0.000500 retire_fence=14 completed=14
+FREE iteration=4 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=14 completed=14
+FREE iteration=4 slot=22 resource_ms=0.002000 backing_or_freelist_ms=0.001500 retire_fence=14 completed=14
+FRAGMENT iteration=4 phase=holes live_payload=4587568 live_reserved=5373952 backing_reserved=33554432 alignment_waste=786384 total_free=28180480 largest_free=22216704 free_span_count=13
+RETIRE_POLICY future=15 completed=14 withheld=1
+ALLOC iteration=4 phase=1 slot=0 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001900 map_ms=0.000300 warmup=0
+ALLOC iteration=4 phase=1 slot=2 bytes=262148 reserved=327680 offset=1835008 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001600 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=1 slot=4 bytes=65540 reserved=131072 offset=1572864 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=1 slot=6 bytes=1048580 reserved=1114112 offset=4784128 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=1 slot=8 bytes=262148 reserved=327680 offset=3407872 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=1 slot=10 bytes=1048580 reserved=1114112 offset=11337728 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=1 slot=12 bytes=393220 reserved=458752 offset=6619136 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=1 slot=14 bytes=1048580 reserved=1114112 offset=12451840 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=1 slot=16 bytes=1048580 reserved=1114112 offset=13565952 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=4 phase=1 slot=18 bytes=1048580 reserved=1114112 offset=14680064 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=1 slot=20 bytes=65540 reserved=131072 offset=4325376 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=4 phase=1 slot=22 bytes=393220 reserved=458752 offset=131072 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+FRAGMENT iteration=4 phase=refill live_payload=11337824 live_reserved=12910592 backing_reserved=33554432 alignment_waste=1572768 total_free=20643840 largest_free=17760256 free_span_count=9
+READBACK iteration=4 phase=1 matches=1152/1152 fence=15 completed=15
+FREE iteration=4 slot=0 resource_ms=0.002200 backing_or_freelist_ms=0.002600 retire_fence=15 completed=15
+FREE iteration=4 slot=1 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=15 completed=15
+FREE iteration=4 slot=2 resource_ms=0.000600 backing_or_freelist_ms=0.000600 retire_fence=15 completed=15
+FREE iteration=4 slot=3 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=4 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=5 resource_ms=0.000800 backing_or_freelist_ms=0.000800 retire_fence=15 completed=15
+FREE iteration=4 slot=6 resource_ms=0.000500 backing_or_freelist_ms=0.000500 retire_fence=15 completed=15
+FREE iteration=4 slot=7 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=15 completed=15
+FREE iteration=4 slot=8 resource_ms=0.000600 backing_or_freelist_ms=0.000600 retire_fence=15 completed=15
+FREE iteration=4 slot=9 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=10 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=11 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=15 completed=15
+FREE iteration=4 slot=12 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=13 resource_ms=0.001000 backing_or_freelist_ms=0.000500 retire_fence=15 completed=15
+FREE iteration=4 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=15 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=15 completed=15
+FREE iteration=4 slot=16 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=17 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=15 completed=15
+FREE iteration=4 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=15 completed=15
+FREE iteration=4 slot=20 resource_ms=0.000700 backing_or_freelist_ms=0.000200 retire_fence=15 completed=15
+FREE iteration=4 slot=21 resource_ms=0.001100 backing_or_freelist_ms=0.000300 retire_fence=15 completed=15
+FREE iteration=4 slot=22 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=15 completed=15
+FREE iteration=4 slot=23 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=15 completed=15
+FRAGMENT iteration=4 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=4 ms=12.332100 warmup=0
+ALLOC iteration=5 phase=0 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002500 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=0 slot=1 bytes=1048580 reserved=1114112 offset=327680 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001600 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=2 bytes=65540 reserved=131072 offset=1441792 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=3 bytes=65540 reserved=131072 offset=1572864 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=4 bytes=1048580 reserved=1114112 offset=1703936 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=0 slot=5 bytes=65540 reserved=131072 offset=2818048 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002000 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=0 slot=6 bytes=262148 reserved=327680 offset=2949120 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=0 slot=7 bytes=393220 reserved=458752 offset=3276800 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=8 bytes=65540 reserved=131072 offset=3735552 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=9 bytes=1048580 reserved=1114112 offset=3866624 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=10 bytes=393220 reserved=458752 offset=4980736 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.004300 map_ms=0.000500 warmup=0
+ALLOC iteration=5 phase=0 slot=11 bytes=1048580 reserved=1114112 offset=5439488 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001700 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=0 slot=12 bytes=1048580 reserved=1114112 offset=6553600 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001700 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=0 slot=13 bytes=65540 reserved=131072 offset=7667712 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=0 slot=14 bytes=1048580 reserved=1114112 offset=7798784 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003100 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=0 slot=15 bytes=1048580 reserved=1114112 offset=8912896 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=16 bytes=262148 reserved=327680 offset=10027008 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=17 bytes=393220 reserved=458752 offset=10354688 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001700 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=0 slot=18 bytes=393220 reserved=458752 offset=10813440 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=19 bytes=262148 reserved=327680 offset=11272192 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=20 bytes=262148 reserved=327680 offset=11599872 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=21 bytes=262148 reserved=327680 offset=11927552 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=0 slot=22 bytes=1048580 reserved=1114112 offset=12255232 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=0 slot=23 bytes=65540 reserved=131072 offset=13369344 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+FRAGMENT iteration=5 phase=full live_payload=11927648 live_reserved=13500416 backing_reserved=33554432 alignment_waste=1572768 total_free=20054016 largest_free=20054016 free_span_count=1
+READBACK iteration=5 phase=0 matches=1152/1152 fence=16 completed=16
+FREE iteration=5 slot=0 resource_ms=0.003700 backing_or_freelist_ms=0.003200 retire_fence=16 completed=16
+FREE iteration=5 slot=2 resource_ms=0.001900 backing_or_freelist_ms=0.001000 retire_fence=16 completed=16
+FREE iteration=5 slot=4 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=16 completed=16
+FREE iteration=5 slot=6 resource_ms=0.000800 backing_or_freelist_ms=0.001800 retire_fence=16 completed=16
+FREE iteration=5 slot=8 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=16 completed=16
+FREE iteration=5 slot=10 resource_ms=0.001100 backing_or_freelist_ms=0.000600 retire_fence=16 completed=16
+FREE iteration=5 slot=12 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=16 completed=16
+FREE iteration=5 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.001300 retire_fence=16 completed=16
+FREE iteration=5 slot=16 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=16 completed=16
+FREE iteration=5 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=16 completed=16
+FREE iteration=5 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=16 completed=16
+FREE iteration=5 slot=22 resource_ms=0.000800 backing_or_freelist_ms=0.000800 retire_fence=16 completed=16
+FRAGMENT iteration=5 phase=holes live_payload=5767216 live_reserved=6553600 backing_reserved=33554432 alignment_waste=786384 total_free=27000832 largest_free=20054016 free_span_count=13
+RETIRE_POLICY future=17 completed=16 withheld=1
+ALLOC iteration=5 phase=1 slot=0 bytes=262148 reserved=327680 offset=0 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.001800 map_ms=0.000300 warmup=0
+ALLOC iteration=5 phase=1 slot=2 bytes=262148 reserved=327680 offset=1703936 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=1 slot=4 bytes=393220 reserved=458752 offset=4980736 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=1 slot=6 bytes=393220 reserved=458752 offset=6553600 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=1 slot=8 bytes=393220 reserved=458752 offset=7798784 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=1 slot=10 bytes=393220 reserved=458752 offset=10813440 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=1 slot=12 bytes=65540 reserved=131072 offset=1441792 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=1 slot=14 bytes=1048580 reserved=1114112 offset=12255232 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=1 slot=16 bytes=65540 reserved=131072 offset=2949120 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=1 slot=18 bytes=262148 reserved=327680 offset=10027008 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=5 phase=1 slot=20 bytes=65540 reserved=131072 offset=3735552 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=5 phase=1 slot=22 bytes=65540 reserved=131072 offset=11599872 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000100 warmup=0
+FRAGMENT iteration=5 phase=refill live_payload=9437280 live_reserved=11010048 backing_reserved=33554432 alignment_waste=1572768 total_free=22544384 largest_free=20054016 free_span_count=6
+READBACK iteration=5 phase=1 matches=1152/1152 fence=17 completed=17
+FREE iteration=5 slot=0 resource_ms=0.002000 backing_or_freelist_ms=0.003100 retire_fence=17 completed=17
+FREE iteration=5 slot=1 resource_ms=0.001100 backing_or_freelist_ms=0.000500 retire_fence=17 completed=17
+FREE iteration=5 slot=2 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=3 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=4 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=5 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=6 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=7 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=17 completed=17
+FREE iteration=5 slot=8 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=9 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=10 resource_ms=0.000700 backing_or_freelist_ms=0.001000 retire_fence=17 completed=17
+FREE iteration=5 slot=11 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=17 completed=17
+FREE iteration=5 slot=12 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=17 completed=17
+FREE iteration=5 slot=13 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=17 completed=17
+FREE iteration=5 slot=15 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=16 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=17 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=19 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=17 completed=17
+FREE iteration=5 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=17 completed=17
+FREE iteration=5 slot=21 resource_ms=0.000500 backing_or_freelist_ms=0.000200 retire_fence=17 completed=17
+FREE iteration=5 slot=22 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=17 completed=17
+FREE iteration=5 slot=23 resource_ms=0.000700 backing_or_freelist_ms=0.000200 retire_fence=17 completed=17
+FRAGMENT iteration=5 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=5 ms=11.827300 warmup=0
+ALLOC iteration=6 phase=0 slot=0 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002500 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=1 bytes=393220 reserved=458752 offset=131072 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=2 bytes=262148 reserved=327680 offset=589824 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=3 bytes=262148 reserved=327680 offset=917504 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=4 bytes=1048580 reserved=1114112 offset=1245184 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=5 bytes=393220 reserved=458752 offset=2359296 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=6 bytes=262148 reserved=327680 offset=2818048 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=7 bytes=65540 reserved=131072 offset=3145728 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=8 bytes=393220 reserved=458752 offset=3276800 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=9 bytes=1048580 reserved=1114112 offset=3735552 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=10 bytes=1048580 reserved=1114112 offset=4849664 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=11 bytes=65540 reserved=131072 offset=5963776 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=12 bytes=393220 reserved=458752 offset=6094848 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=13 bytes=1048580 reserved=1114112 offset=6553600 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=14 bytes=262148 reserved=327680 offset=7667712 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=15 bytes=65540 reserved=131072 offset=7995392 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.005600 map_ms=0.000600 warmup=0
+ALLOC iteration=6 phase=0 slot=16 bytes=393220 reserved=458752 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002600 map_ms=0.000400 warmup=0
+ALLOC iteration=6 phase=0 slot=17 bytes=393220 reserved=458752 offset=8585216 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002400 map_ms=0.000300 warmup=0
+ALLOC iteration=6 phase=0 slot=18 bytes=1048580 reserved=1114112 offset=9043968 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001700 map_ms=0.000300 warmup=0
+ALLOC iteration=6 phase=0 slot=19 bytes=1048580 reserved=1114112 offset=10158080 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=20 bytes=393220 reserved=458752 offset=11272192 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=21 bytes=65540 reserved=131072 offset=11730944 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=0 slot=22 bytes=1048580 reserved=1114112 offset=11862016 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=0 slot=23 bytes=393220 reserved=458752 offset=12976128 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+FRAGMENT iteration=6 phase=full live_payload=11862112 live_reserved=13434880 backing_reserved=33554432 alignment_waste=1572768 total_free=20119552 largest_free=20119552 free_span_count=1
+READBACK iteration=6 phase=0 matches=1152/1152 fence=18 completed=18
+FREE iteration=6 slot=0 resource_ms=0.003800 backing_or_freelist_ms=0.002700 retire_fence=18 completed=18
+FREE iteration=6 slot=2 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=18 completed=18
+FREE iteration=6 slot=4 resource_ms=0.000700 backing_or_freelist_ms=0.000200 retire_fence=18 completed=18
+FREE iteration=6 slot=6 resource_ms=0.000600 backing_or_freelist_ms=0.001600 retire_fence=18 completed=18
+FREE iteration=6 slot=8 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=18 completed=18
+FREE iteration=6 slot=10 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=18 completed=18
+FREE iteration=6 slot=12 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=18 completed=18
+FREE iteration=6 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.001000 retire_fence=18 completed=18
+FREE iteration=6 slot=16 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=18 completed=18
+FREE iteration=6 slot=18 resource_ms=0.000900 backing_or_freelist_ms=0.000700 retire_fence=18 completed=18
+FREE iteration=6 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=18 completed=18
+FREE iteration=6 slot=22 resource_ms=0.001100 backing_or_freelist_ms=0.001000 retire_fence=18 completed=18
+FRAGMENT iteration=6 phase=holes live_payload=5242928 live_reserved=6029312 backing_reserved=33554432 alignment_waste=786384 total_free=27525120 largest_free=20119552 free_span_count=13
+RETIRE_POLICY future=19 completed=18 withheld=1
+ALLOC iteration=6 phase=1 slot=0 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000600 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=1 slot=2 bytes=65540 reserved=131072 offset=589824 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.003100 map_ms=0.000400 warmup=0
+ALLOC iteration=6 phase=1 slot=4 bytes=393220 reserved=458752 offset=1245184 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000300 warmup=0
+ALLOC iteration=6 phase=1 slot=6 bytes=1048580 reserved=1114112 offset=4849664 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=1 slot=8 bytes=1048580 reserved=1114112 offset=9043968 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=1 slot=10 bytes=393220 reserved=458752 offset=3276800 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=1 slot=12 bytes=1048580 reserved=1114112 offset=11862016 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=1 slot=14 bytes=65540 reserved=131072 offset=2818048 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=1 slot=16 bytes=393220 reserved=458752 offset=6094848 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=1 slot=18 bytes=65540 reserved=131072 offset=7667712 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=6 phase=1 slot=20 bytes=65540 reserved=131072 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=6 phase=1 slot=22 bytes=1048580 reserved=1114112 offset=13434880 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001900 map_ms=0.000200 warmup=0
+FRAGMENT iteration=6 phase=refill live_payload=10944608 live_reserved=12517376 backing_reserved=33554432 alignment_waste=1572768 total_free=21037056 largest_free=19005440 free_span_count=7
+READBACK iteration=6 phase=1 matches=1152/1152 fence=19 completed=19
+FREE iteration=6 slot=0 resource_ms=0.002700 backing_or_freelist_ms=0.003300 retire_fence=19 completed=19
+FREE iteration=6 slot=1 resource_ms=0.001100 backing_or_freelist_ms=0.000500 retire_fence=19 completed=19
+FREE iteration=6 slot=2 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=19 completed=19
+FREE iteration=6 slot=3 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=19 completed=19
+FREE iteration=6 slot=4 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=5 resource_ms=0.000900 backing_or_freelist_ms=0.000300 retire_fence=19 completed=19
+FREE iteration=6 slot=6 resource_ms=0.002300 backing_or_freelist_ms=0.001300 retire_fence=19 completed=19
+FREE iteration=6 slot=7 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=8 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=9 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=10 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=11 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=12 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=13 resource_ms=0.000700 backing_or_freelist_ms=0.001100 retire_fence=19 completed=19
+FREE iteration=6 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=15 resource_ms=0.001200 backing_or_freelist_ms=0.000300 retire_fence=19 completed=19
+FREE iteration=6 slot=16 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=19 completed=19
+FREE iteration=6 slot=17 resource_ms=0.002900 backing_or_freelist_ms=0.001500 retire_fence=19 completed=19
+FREE iteration=6 slot=18 resource_ms=0.001300 backing_or_freelist_ms=0.000800 retire_fence=19 completed=19
+FREE iteration=6 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=20 resource_ms=0.001100 backing_or_freelist_ms=0.000400 retire_fence=19 completed=19
+FREE iteration=6 slot=21 resource_ms=0.001000 backing_or_freelist_ms=0.000300 retire_fence=19 completed=19
+FREE iteration=6 slot=22 resource_ms=0.000800 backing_or_freelist_ms=0.000200 retire_fence=19 completed=19
+FREE iteration=6 slot=23 resource_ms=0.000800 backing_or_freelist_ms=0.000200 retire_fence=19 completed=19
+FRAGMENT iteration=6 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=6 ms=12.446200 warmup=0
+ALLOC iteration=7 phase=0 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.002600 map_ms=0.000500 warmup=0
+ALLOC iteration=7 phase=0 slot=1 bytes=1048580 reserved=1114112 offset=1114112 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=2 bytes=393220 reserved=458752 offset=2228224 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=3 bytes=393220 reserved=458752 offset=2686976 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001300 map_ms=0.000300 warmup=0
+ALLOC iteration=7 phase=0 slot=4 bytes=1048580 reserved=1114112 offset=3145728 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=5 bytes=1048580 reserved=1114112 offset=4259840 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=6 bytes=65540 reserved=131072 offset=5373952 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=7 bytes=393220 reserved=458752 offset=5505024 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=8 bytes=262148 reserved=327680 offset=5963776 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=9 bytes=65540 reserved=131072 offset=6291456 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000600 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=10 bytes=393220 reserved=458752 offset=6422528 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=11 bytes=262148 reserved=327680 offset=6881280 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=12 bytes=65540 reserved=131072 offset=7208960 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=13 bytes=262148 reserved=327680 offset=7340032 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=14 bytes=262148 reserved=327680 offset=7667712 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=15 bytes=65540 reserved=131072 offset=7995392 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000600 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=16 bytes=393220 reserved=458752 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=17 bytes=65540 reserved=131072 offset=8585216 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=18 bytes=1048580 reserved=1114112 offset=8716288 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=19 bytes=393220 reserved=458752 offset=9830400 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=20 bytes=262148 reserved=327680 offset=10289152 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=0 slot=21 bytes=65540 reserved=131072 offset=10616832 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=0 slot=22 bytes=1048580 reserved=1114112 offset=10747904 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003200 map_ms=0.000400 warmup=0
+ALLOC iteration=7 phase=0 slot=23 bytes=262148 reserved=327680 offset=11862016 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.003300 map_ms=0.000400 warmup=0
+FRAGMENT iteration=7 phase=full live_payload=10616928 live_reserved=12189696 backing_reserved=33554432 alignment_waste=1572768 total_free=21364736 largest_free=21364736 free_span_count=1
+READBACK iteration=7 phase=0 matches=1152/1152 fence=20 completed=20
+FREE iteration=7 slot=0 resource_ms=0.003800 backing_or_freelist_ms=0.002400 retire_fence=20 completed=20
+FREE iteration=7 slot=2 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=20 completed=20
+FREE iteration=7 slot=4 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=20 completed=20
+FREE iteration=7 slot=6 resource_ms=0.000600 backing_or_freelist_ms=0.001200 retire_fence=20 completed=20
+FREE iteration=7 slot=8 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=20 completed=20
+FREE iteration=7 slot=10 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=20 completed=20
+FREE iteration=7 slot=12 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=20 completed=20
+FREE iteration=7 slot=14 resource_ms=0.000600 backing_or_freelist_ms=0.001200 retire_fence=20 completed=20
+FREE iteration=7 slot=16 resource_ms=0.000500 backing_or_freelist_ms=0.000500 retire_fence=20 completed=20
+FREE iteration=7 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=20 completed=20
+FREE iteration=7 slot=20 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=20 completed=20
+FREE iteration=7 slot=22 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=20 completed=20
+FRAGMENT iteration=7 phase=holes live_payload=4325424 live_reserved=5111808 backing_reserved=33554432 alignment_waste=786384 total_free=28442624 largest_free=21364736 free_span_count=13
+RETIRE_POLICY future=21 completed=20 withheld=1
+ALLOC iteration=7 phase=1 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.001700 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=1 slot=2 bytes=1048580 reserved=1114112 offset=3145728 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.001000 map_ms=0.000300 warmup=0
+ALLOC iteration=7 phase=1 slot=4 bytes=393220 reserved=458752 offset=2228224 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002500 map_ms=0.000300 warmup=0
+ALLOC iteration=7 phase=1 slot=6 bytes=65540 reserved=131072 offset=5373952 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=1 slot=8 bytes=1048580 reserved=1114112 offset=8716288 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=1 slot=10 bytes=1048580 reserved=1114112 offset=10747904 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001100 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=1 slot=12 bytes=1048580 reserved=1114112 offset=12189696 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001800 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=1 slot=14 bytes=65540 reserved=131072 offset=5963776 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=1 slot=16 bytes=262148 reserved=327680 offset=6422528 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=1 slot=18 bytes=1048580 reserved=1114112 offset=13303808 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=7 phase=1 slot=20 bytes=393220 reserved=458752 offset=8126464 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=7 phase=1 slot=22 bytes=65540 reserved=131072 offset=7208960 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001500 map_ms=0.000100 warmup=0
+FRAGMENT iteration=7 phase=refill live_payload=11862112 live_reserved=13434880 backing_reserved=33554432 alignment_waste=1572768 total_free=20119552 largest_free=19136512 free_span_count=5
+READBACK iteration=7 phase=1 matches=1152/1152 fence=21 completed=21
+FREE iteration=7 slot=0 resource_ms=0.003300 backing_or_freelist_ms=0.003800 retire_fence=21 completed=21
+FREE iteration=7 slot=1 resource_ms=0.001300 backing_or_freelist_ms=0.000600 retire_fence=21 completed=21
+FREE iteration=7 slot=2 resource_ms=0.001100 backing_or_freelist_ms=0.000600 retire_fence=21 completed=21
+FREE iteration=7 slot=3 resource_ms=0.001200 backing_or_freelist_ms=0.000700 retire_fence=21 completed=21
+FREE iteration=7 slot=4 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=5 resource_ms=0.000900 backing_or_freelist_ms=0.000600 retire_fence=21 completed=21
+FREE iteration=7 slot=6 resource_ms=0.001000 backing_or_freelist_ms=0.000500 retire_fence=21 completed=21
+FREE iteration=7 slot=7 resource_ms=0.001100 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=8 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=9 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=10 resource_ms=0.000900 backing_or_freelist_ms=0.000500 retire_fence=21 completed=21
+FREE iteration=7 slot=11 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=12 resource_ms=0.000500 backing_or_freelist_ms=0.001100 retire_fence=21 completed=21
+FREE iteration=7 slot=13 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=21 completed=21
+FREE iteration=7 slot=14 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=15 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=21 completed=21
+FREE iteration=7 slot=16 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=21 completed=21
+FREE iteration=7 slot=17 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=21 completed=21
+FREE iteration=7 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=21 completed=21
+FREE iteration=7 slot=20 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=21 completed=21
+FREE iteration=7 slot=21 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=21 completed=21
+FREE iteration=7 slot=22 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=21 completed=21
+FREE iteration=7 slot=23 resource_ms=0.000800 backing_or_freelist_ms=0.000200 retire_fence=21 completed=21
+FRAGMENT iteration=7 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=7 ms=12.328700 warmup=0
+ALLOC iteration=8 phase=0 slot=0 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.004000 map_ms=0.000600 warmup=0
+ALLOC iteration=8 phase=0 slot=1 bytes=65540 reserved=131072 offset=131072 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=2 bytes=65540 reserved=131072 offset=262144 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=3 bytes=393220 reserved=458752 offset=393216 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000600 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=4 bytes=262148 reserved=327680 offset=851968 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000700 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=5 bytes=393220 reserved=458752 offset=1179648 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=6 bytes=262148 reserved=327680 offset=1638400 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=7 bytes=65540 reserved=131072 offset=1966080 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=8 bytes=262148 reserved=327680 offset=2097152 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=9 bytes=393220 reserved=458752 offset=2424832 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=10 bytes=262148 reserved=327680 offset=2883584 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=11 bytes=1048580 reserved=1114112 offset=3211264 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=12 bytes=1048580 reserved=1114112 offset=4325376 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=13 bytes=262148 reserved=327680 offset=5439488 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=14 bytes=393220 reserved=458752 offset=5767168 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=15 bytes=65540 reserved=131072 offset=6225920 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=16 bytes=262148 reserved=327680 offset=6356992 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=17 bytes=262148 reserved=327680 offset=6684672 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.007900 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=18 bytes=393220 reserved=458752 offset=7012352 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=19 bytes=65540 reserved=131072 offset=7471104 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000300 warmup=0
+ALLOC iteration=8 phase=0 slot=20 bytes=262148 reserved=327680 offset=7602176 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=8 phase=0 slot=21 bytes=262148 reserved=327680 offset=7929856 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.005200 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=22 bytes=1048580 reserved=1114112 offset=8257536 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=0 slot=23 bytes=1048580 reserved=1114112 offset=9371648 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+FRAGMENT iteration=8 phase=full live_payload=8912992 live_reserved=10485760 backing_reserved=33554432 alignment_waste=1572768 total_free=23068672 largest_free=23068672 free_span_count=1
+READBACK iteration=8 phase=0 matches=1152/1152 fence=22 completed=22
+FREE iteration=8 slot=0 resource_ms=0.003400 backing_or_freelist_ms=0.003500 retire_fence=22 completed=22
+FREE iteration=8 slot=2 resource_ms=0.001600 backing_or_freelist_ms=0.001200 retire_fence=22 completed=22
+FREE iteration=8 slot=4 resource_ms=0.001300 backing_or_freelist_ms=0.000600 retire_fence=22 completed=22
+FREE iteration=8 slot=6 resource_ms=0.000800 backing_or_freelist_ms=0.002400 retire_fence=22 completed=22
+FREE iteration=8 slot=8 resource_ms=0.002000 backing_or_freelist_ms=0.001200 retire_fence=22 completed=22
+FREE iteration=8 slot=10 resource_ms=0.000900 backing_or_freelist_ms=0.000600 retire_fence=22 completed=22
+FREE iteration=8 slot=12 resource_ms=0.001700 backing_or_freelist_ms=0.001000 retire_fence=22 completed=22
+FREE iteration=8 slot=14 resource_ms=0.000800 backing_or_freelist_ms=0.001100 retire_fence=22 completed=22
+FREE iteration=8 slot=16 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=22 completed=22
+FREE iteration=8 slot=18 resource_ms=0.000700 backing_or_freelist_ms=0.000600 retire_fence=22 completed=22
+FREE iteration=8 slot=20 resource_ms=0.001100 backing_or_freelist_ms=0.000800 retire_fence=22 completed=22
+FREE iteration=8 slot=22 resource_ms=0.000700 backing_or_freelist_ms=0.000600 retire_fence=22 completed=22
+FRAGMENT iteration=8 phase=holes live_payload=4325424 live_reserved=5111808 backing_reserved=33554432 alignment_waste=786384 total_free=28442624 largest_free=23068672 free_span_count=13
+RETIRE_POLICY future=23 completed=22 withheld=1
+ALLOC iteration=8 phase=1 slot=0 bytes=1048580 reserved=1114112 offset=4325376 alignment=65536 heap_or_suballoc_ms=0.000400 placement_ms=0.003300 map_ms=0.000400 warmup=0
+ALLOC iteration=8 phase=1 slot=2 bytes=1048580 reserved=1114112 offset=8257536 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001400 map_ms=0.000300 warmup=0
+ALLOC iteration=8 phase=1 slot=4 bytes=1048580 reserved=1114112 offset=10485760 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=1 slot=6 bytes=262148 reserved=327680 offset=851968 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=1 slot=8 bytes=262148 reserved=327680 offset=1638400 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=1 slot=10 bytes=1048580 reserved=1114112 offset=11599872 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001300 map_ms=0.000300 warmup=0
+ALLOC iteration=8 phase=1 slot=12 bytes=65540 reserved=131072 offset=0 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=1 slot=14 bytes=65540 reserved=131072 offset=262144 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.003900 map_ms=0.000500 warmup=0
+ALLOC iteration=8 phase=1 slot=16 bytes=65540 reserved=131072 offset=2097152 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001600 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=1 slot=18 bytes=393220 reserved=458752 offset=5767168 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002900 map_ms=0.000400 warmup=0
+ALLOC iteration=8 phase=1 slot=20 bytes=262148 reserved=327680 offset=2883584 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001200 map_ms=0.000200 warmup=0
+ALLOC iteration=8 phase=1 slot=22 bytes=262148 reserved=327680 offset=6356992 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.000800 map_ms=0.000200 warmup=0
+FRAGMENT iteration=8 phase=refill live_payload=10158176 live_reserved=11730944 backing_reserved=33554432 alignment_waste=1572768 total_free=21823488 largest_free=20840448 free_span_count=4
+READBACK iteration=8 phase=1 matches=1152/1152 fence=23 completed=23
+FREE iteration=8 slot=0 resource_ms=0.001700 backing_or_freelist_ms=0.001900 retire_fence=23 completed=23
+FREE iteration=8 slot=1 resource_ms=0.001000 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=2 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=3 resource_ms=0.002200 backing_or_freelist_ms=0.001100 retire_fence=23 completed=23
+FREE iteration=8 slot=4 resource_ms=0.000800 backing_or_freelist_ms=0.000900 retire_fence=23 completed=23
+FREE iteration=8 slot=5 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=23 completed=23
+FREE iteration=8 slot=6 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=23 completed=23
+FREE iteration=8 slot=7 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=8 resource_ms=0.000800 backing_or_freelist_ms=0.000600 retire_fence=23 completed=23
+FREE iteration=8 slot=9 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=10 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=11 resource_ms=0.001200 backing_or_freelist_ms=0.000600 retire_fence=23 completed=23
+FREE iteration=8 slot=12 resource_ms=0.000600 backing_or_freelist_ms=0.000500 retire_fence=23 completed=23
+FREE iteration=8 slot=13 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=23 completed=23
+FREE iteration=8 slot=14 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=15 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=16 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=23 completed=23
+FREE iteration=8 slot=17 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=18 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=23 completed=23
+FREE iteration=8 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=23 completed=23
+FREE iteration=8 slot=20 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=23 completed=23
+FREE iteration=8 slot=21 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=23 completed=23
+FREE iteration=8 slot=22 resource_ms=0.000500 backing_or_freelist_ms=0.000300 retire_fence=23 completed=23
+FREE iteration=8 slot=23 resource_ms=0.000600 backing_or_freelist_ms=0.000200 retire_fence=23 completed=23
+FRAGMENT iteration=8 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=8 ms=11.966200 warmup=0
+ALLOC iteration=9 phase=0 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001500 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=1 bytes=262148 reserved=327680 offset=1114112 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=2 bytes=65540 reserved=131072 offset=1441792 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000500 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=3 bytes=1048580 reserved=1114112 offset=1572864 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000700 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=4 bytes=1048580 reserved=1114112 offset=2686976 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=5 bytes=1048580 reserved=1114112 offset=3801088 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=6 bytes=262148 reserved=327680 offset=4915200 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=7 bytes=393220 reserved=458752 offset=5242880 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=8 bytes=262148 reserved=327680 offset=5701632 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=9 bytes=1048580 reserved=1114112 offset=6029312 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.001100 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=10 bytes=393220 reserved=458752 offset=7143424 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002200 map_ms=0.000300 warmup=0
+ALLOC iteration=9 phase=0 slot=11 bytes=1048580 reserved=1114112 offset=7602176 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=12 bytes=1048580 reserved=1114112 offset=8716288 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=13 bytes=65540 reserved=131072 offset=9830400 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001200 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=14 bytes=393220 reserved=458752 offset=9961472 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=15 bytes=1048580 reserved=1114112 offset=10420224 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=16 bytes=1048580 reserved=1114112 offset=11534336 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000300 warmup=0
+ALLOC iteration=9 phase=0 slot=17 bytes=1048580 reserved=1114112 offset=12648448 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=18 bytes=65540 reserved=131072 offset=13762560 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001600 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=19 bytes=393220 reserved=458752 offset=13893632 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000800 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=20 bytes=65540 reserved=131072 offset=14352384 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=0 slot=21 bytes=1048580 reserved=1114112 offset=14483456 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000800 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=22 bytes=65540 reserved=131072 offset=15597568 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=0 slot=23 bytes=1048580 reserved=1114112 offset=15728640 alignment=65536 heap_or_suballoc_ms=0.000000 placement_ms=0.000700 map_ms=0.000100 warmup=0
+FRAGMENT iteration=9 phase=full live_payload=15269984 live_reserved=16842752 backing_reserved=33554432 alignment_waste=1572768 total_free=16711680 largest_free=16711680 free_span_count=1
+READBACK iteration=9 phase=0 matches=1152/1152 fence=24 completed=24
+FREE iteration=9 slot=0 resource_ms=0.002500 backing_or_freelist_ms=0.001800 retire_fence=24 completed=24
+FREE iteration=9 slot=2 resource_ms=0.001500 backing_or_freelist_ms=0.000700 retire_fence=24 completed=24
+FREE iteration=9 slot=4 resource_ms=0.001000 backing_or_freelist_ms=0.000200 retire_fence=24 completed=24
+FREE iteration=9 slot=6 resource_ms=0.000600 backing_or_freelist_ms=0.001300 retire_fence=24 completed=24
+FREE iteration=9 slot=8 resource_ms=0.002200 backing_or_freelist_ms=0.001300 retire_fence=24 completed=24
+FREE iteration=9 slot=10 resource_ms=0.001200 backing_or_freelist_ms=0.000500 retire_fence=24 completed=24
+FREE iteration=9 slot=12 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=24 completed=24
+FREE iteration=9 slot=14 resource_ms=0.000800 backing_or_freelist_ms=0.001600 retire_fence=24 completed=24
+FREE iteration=9 slot=16 resource_ms=0.000800 backing_or_freelist_ms=0.000700 retire_fence=24 completed=24
+FREE iteration=9 slot=18 resource_ms=0.000900 backing_or_freelist_ms=0.000600 retire_fence=24 completed=24
+FREE iteration=9 slot=20 resource_ms=0.000700 backing_or_freelist_ms=0.000700 retire_fence=24 completed=24
+FREE iteration=9 slot=22 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=24 completed=24
+FRAGMENT iteration=9 phase=holes live_payload=9502768 live_reserved=10289152 backing_reserved=33554432 alignment_waste=786384 total_free=23265280 largest_free=16711680 free_span_count=13
+RETIRE_POLICY future=25 completed=24 withheld=1
+ALLOC iteration=9 phase=1 slot=0 bytes=1048580 reserved=1114112 offset=0 alignment=65536 heap_or_suballoc_ms=0.000300 placement_ms=0.003700 map_ms=0.000300 warmup=0
+ALLOC iteration=9 phase=1 slot=2 bytes=393220 reserved=458752 offset=2686976 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001600 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=1 slot=4 bytes=65540 reserved=131072 offset=1441792 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001600 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=1 slot=6 bytes=1048580 reserved=1114112 offset=8716288 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=1 slot=8 bytes=262148 reserved=327680 offset=4915200 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000400 warmup=0
+ALLOC iteration=9 phase=1 slot=10 bytes=262148 reserved=327680 offset=5701632 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002500 map_ms=0.000300 warmup=0
+ALLOC iteration=9 phase=1 slot=12 bytes=1048580 reserved=1114112 offset=11534336 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001300 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=1 slot=14 bytes=1048580 reserved=1114112 offset=16842752 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001000 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=1 slot=16 bytes=393220 reserved=458752 offset=7143424 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.000900 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=1 slot=18 bytes=393220 reserved=458752 offset=9961472 alignment=65536 heap_or_suballoc_ms=0.000100 placement_ms=0.001400 map_ms=0.000100 warmup=0
+ALLOC iteration=9 phase=1 slot=20 bytes=393220 reserved=458752 offset=3145728 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.001000 map_ms=0.000200 warmup=0
+ALLOC iteration=9 phase=1 slot=22 bytes=65540 reserved=131072 offset=13762560 alignment=65536 heap_or_suballoc_ms=0.000200 placement_ms=0.002200 map_ms=0.000200 warmup=0
+FRAGMENT iteration=9 phase=refill live_payload=15925344 live_reserved=17498112 backing_reserved=33554432 alignment_waste=1572768 total_free=16056320 largest_free=15597568 free_span_count=4
+READBACK iteration=9 phase=1 matches=1152/1152 fence=25 completed=25
+FREE iteration=9 slot=0 resource_ms=0.001900 backing_or_freelist_ms=0.002300 retire_fence=25 completed=25
+FREE iteration=9 slot=1 resource_ms=0.001100 backing_or_freelist_ms=0.000600 retire_fence=25 completed=25
+FREE iteration=9 slot=2 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=3 resource_ms=0.000800 backing_or_freelist_ms=0.000600 retire_fence=25 completed=25
+FREE iteration=9 slot=4 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=5 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=6 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=25 completed=25
+FREE iteration=9 slot=7 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=25 completed=25
+FREE iteration=9 slot=8 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=9 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=10 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=11 resource_ms=0.000700 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=12 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=13 resource_ms=0.000600 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=14 resource_ms=0.000500 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=15 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=16 resource_ms=0.000600 backing_or_freelist_ms=0.000300 retire_fence=25 completed=25
+FREE iteration=9 slot=17 resource_ms=0.000800 backing_or_freelist_ms=0.000500 retire_fence=25 completed=25
+FREE iteration=9 slot=18 resource_ms=0.000700 backing_or_freelist_ms=0.000500 retire_fence=25 completed=25
+FREE iteration=9 slot=19 resource_ms=0.000800 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=20 resource_ms=0.000900 backing_or_freelist_ms=0.000400 retire_fence=25 completed=25
+FREE iteration=9 slot=21 resource_ms=0.000800 backing_or_freelist_ms=0.000300 retire_fence=25 completed=25
+FREE iteration=9 slot=22 resource_ms=0.000700 backing_or_freelist_ms=0.000200 retire_fence=25 completed=25
+FREE iteration=9 slot=23 resource_ms=0.000700 backing_or_freelist_ms=0.000300 retire_fence=25 completed=25
+FRAGMENT iteration=9 phase=empty live_payload=0 live_reserved=0 backing_reserved=33554432 alignment_waste=0 total_free=33554432 largest_free=33554432 free_span_count=1
+CYCLE iteration=9 ms=13.159200 warmup=0
+STAGE resources_released cpu_ptr=0
+STAGE commands_retired cpu_ptr=0
+STAGE retired_settled cpu_ptr=0
+TRACE_END peak_logical_live=15925344 peak_reserved=33554432
+END success

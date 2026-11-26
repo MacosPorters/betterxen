@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Added
+- Added Workstream A research for #473: hashed historical evidence, corrected M4 footprint/retirement probes, matched pooling traces, texture/alias readbacks and an ownership feasibility matrix. Urgent-pressure stops and accepted invalid placement calls remain explicit failures/limitations. Pooling reduced measured allocation-call cost but did not establish a general application benefit; physical zero-copy and independent acceptance remain unestablished. Production shims, ABI and #464 are unchanged.
 - Added the collaborative D3DMetal memory research workspace for #473, with an original six-check standalone probe, an isolated CrossOver runner and two raw Apple M4 run records. This host returned E_NOTIMPL for both existing-memory heap opens, while custom L0 heaps and fence-synchronized persistent-map buffer readback matched. Physical zero-copy, memory overhead, other Apple Silicon generations and independent acceptance remain unverified; #464 production implementation is unchanged.
 - Added `docs/research/d3dmetal-gpu-limits.md` and `tests/conformance/test_d3dmetal_gpu_limits/` (#453). The fixture is an original D3D12 compute test that loads the host `d3d12.dll` directly, with four original HLSL kernels and committed DXC 1.9.2609 output (`shaders/compile.sh` regenerates them). It skips with exit 77 below shader model 6.6. Required checks:
   - a kernel without `WaveSize` runs, and its lane indices form a permutation within each wave;

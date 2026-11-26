@@ -1,0 +1,9 @@
+{
+  "command": [
+    "vm_stat"
+  ],
+  "exit": 0,
+  "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   104629.\nPages active:                                 512186.\nPages inactive:                               510957.\nPages speculative:                               888.\nPages throttled:                                   0.\nPages wired down:                             170486.\nPages purgeable:                               14891.\n\"Translation faults\":                     2144609831.\nPages copy-on-write:                        96270471.\nPages zero filled:                        1644563216.\nPages reactivated:                         180301258.\nPages purged:                               18843676.\nFile-backed pages:                            384688.\nAnonymous pages:                              639343.\nPages stored in compressor:                   688213.\nPages occupied by compressor:                 235005.\nDecompressions:                            137927285.\nCompressions:                              173391811.\nPageins:                                    45251998.\nPageouts:                                     920566.\nSwapins:                                     1051067.\nSwapouts:                                    2020208.\n",
+  "stderr": "",
+  "elapsed_seconds": 0.0024400000111199915
+}

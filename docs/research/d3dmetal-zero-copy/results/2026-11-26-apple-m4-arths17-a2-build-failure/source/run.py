@@ -1,0 +1,194 @@
+#!/usr/bin/env python3
+# SPDX-License-Identifier: GPL-3.0-or-later
+"""Workstream A local harness, version 2. Does not change shared protocols."""
+import argparse
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import plistlib
+import re
+import shutil
+import signal
+import subprocess
+import threading
+import time
+from datetime import datetime, timezone
+
+
+def sha(p):
+    return hashlib.sha256(p.read_bytes()).hexdigest()
+
+
+def capture(cmd, env, cwd, timeout=20):
+    start = time.monotonic()
+    try:
+        p = subprocess.run([str(v) for v in cmd], env=env, cwd=cwd,
+                           capture_output=True, timeout=timeout)
+        return dict(command=[str(v) for v in cmd], exit=p.returncode,
+                    stdout=p.stdout.decode(errors='replace'),
+                    stderr=p.stderr.decode(errors='replace'), seconds=time.monotonic()-start)
+    except OSError as e:
+        return dict(command=[str(v) for v in cmd], exit=127, stdout='', stderr=str(e))
+    except subprocess.TimeoutExpired as e:
+        return dict(command=[str(v) for v in cmd], exit=124, timeout=True,
+                    stdout=(e.stdout or b'').decode(errors='replace'),
+                    stderr=(e.stderr or b'').decode(errors='replace'))
+
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('--bottle', required=True, type=Path)
+    ap.add_argument('--scratch', required=True, type=Path)
+    ap.add_argument('--suite', choices=['memory', 'pool', 'texture'], required=True)
+    ap.add_argument('--smoke', action='store_true')
+    args = ap.parse_args()
+    src = Path(__file__).resolve().parent
+    repo = src.parents[3]
+    base = args.scratch.expanduser().resolve()
+    if base.exists() or base == repo or repo in base.parents:
+        ap.error('scratch must be new and outside checkout')
+    bottle = args.bottle.expanduser().resolve()
+    original = (bottle/'cxbottle.conf').read_bytes()
+    if b'"WineArch" = "win64"' not in original:
+        ap.error('requires win64 bottle')
+    lock = open('/tmp/betterxen-473-gpu.lock', 'a')
+    try:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+    except BlockingIOError:
+        ap.error('another Workstream A GPU batch owns the lock')
+    base.mkdir(mode=0o700)
+    env = {k: os.environ[k] for k in ['HOME', 'USER', 'LOGNAME', 'PATH', 'LANG', 'LC_ALL'] if k in os.environ}
+    env.update(TMPDIR=str(base)+'/', ROSETTA_ADVERTISE_AVX='1', CX_GRAPHICS_BACKEND='d3dmetal', WINEDEBUG='-all')
+    cx = Path('/Applications/CrossOver.app/Contents/SharedSupport/CrossOver')
+    wine = cx/'bin/wine'
+    source = src/(args.suite+'.cpp') if args.suite != 'texture' else src.parent/'gpu-correctness/textures-and-resources/probe.cpp'
+    exe, observer = base/'a-probe.exe', base/'observe'
+    receipt = dict(protocol='A-local-2', suite=args.suite, utc=datetime.now(timezone.utc).isoformat(),
+                   independent_review='pending', environment={k: env[k] for k in ['ROSETTA_ADVERTISE_AVX', 'CX_GRAPHICS_BACKEND', 'WINEDEBUG']},
+                   sources={str(p.relative_to(repo)): sha(p) for p in [source, src/'support.h', src/'observe.cpp', Path(__file__)]},
+                   baseline_sha256=sha(src.parent/'probe.cpp'), tools={}, cases=[])
+    snapshot=base/'source';snapshot.mkdir()
+    for source_path in [source, src/'support.h', src/'observe.cpp', Path(__file__)]:
+        shutil.copy2(source_path, snapshot/source_path.name)
+    def save():
+        (base/'receipt.json').write_text(json.dumps(receipt, indent=2)+'\n')
+    cmds = {
+        'chip': ['sysctl','-n','machdep.cpu.brand_string'], 'ram':['sysctl','-n','hw.memsize'],
+        'host':['uname','-m'], 'macos':['sw_vers'], 'page':['sysctl','-n','hw.pagesize'],
+        'swap_before':['sysctl','vm.swapusage'], 'pressure_before':['memory_pressure','-Q'], 'vm_before':['vm_stat'],
+        'load_before':['ps','-axo','pid,pcpu,comm'], 'wine_version':[wine,'--version'],
+        'wine_build':[cx/'bin/wine64','--version'],
+        'rosetta':['pkgutil','--pkg-info','com.apple.pkg.RosettaUpdateAuto'],
+        'gcc':['x86_64-w64-mingw32-g++','--version'], 'clang':['xcrun','clang++','--version'],
+        'sdk':['xcrun','--show-sdk-version'], 'python':['python3','--version'],
+        'compiler_arch':['file',str(Path(shutil.which('x86_64-w64-mingw32-g++')).resolve())],
+        'build_pe':['x86_64-w64-mingw32-g++','-std=c++20','-O2','-static','-static-libgcc','-static-libstdc++','-Wall','-Wextra','-Werror',source,'-o',exe,'-lkernel32'],
+        'build_observer':['xcrun','clang++','-std=c++20','-O2','-arch','arm64','-Wall','-Wextra','-Werror',src/'observe.cpp','-o',observer],
+        'formats':['file',exe,observer], 'observer_arch':['lipo','-archs',observer], 'observer_links':['otool','-L',observer],
+    }
+    for name, cmd in cmds.items():
+        receipt['tools'][name]=capture(cmd,env,base,60)
+        save()
+        if name.startswith('build_') and receipt['tools'][name]['exit']:
+            raise RuntimeError(receipt['tools'][name])
+    receipt['binaries']={p.name:sha(p) for p in [exe,observer]}
+    resources=cx/'lib64/apple_gptk/external/D3DMetal.framework/Versions/A/Resources'
+    receipt['framework']={p.name:plistlib.loads(p.read_bytes()) for p in resources.glob('*.plist')}
+    receipt['runtime_hashes']={str(p):sha(p) for p in [cx/'lib64/apple_gptk/wine/x86_64-windows/d3d12.dll', cx/'lib/wine/x86_64-windows/d3dcompiler_47.dll']}
+    temp=base/'bottle'
+    shutil.copytree(bottle,temp,symlinks=True)
+    conf=original.decode().replace('[Bottle]','[Bottle]\n"AllowUntrusted" = "1"',1)
+    conf+='\n[EnvironmentVariables]\n"CX_GRAPHICS_BACKEND" = "d3dmetal"\n[CrossOver]\n"AntiVirusScan" = "untrusted"\n'
+    (temp/'cxbottle.conf').write_text(conf)
+    receipt['bottle_original_sha256']=hashlib.sha256(original).hexdigest()
+    receipt['bottle_settings']=[line.strip() for line in conf.splitlines() if re.match(r'"(WineArch|Template|WindowsVersion|Version|CX_GRAPHICS_BACKEND|AllowUntrusted|AntiVirusScan)"',line)]
+    common=[str(wine),'--bottle',str(temp),'--no-update','--no-gui',str(exe)]
+
+    def run(name, argv):
+        pressure=capture(['memory_pressure','-Q'],env,base)
+        match=re.search(r'free percentage: (\d+)%',pressure['stdout'])
+        if pressure['exit'] or not match or int(match[1])<30:
+            receipt['stop_reason']={'pressure_gate_before':name,'reading':pressure};save()
+            raise RuntimeError('memory pressure headroom below 30% or unreadable')
+        case=base/name;case.mkdir()
+        metadata=dict(name=name,args=argv,command=common+argv,timeout_seconds=240,pressure_before=pressure,snapshots=[])
+        receipt['cases'].append(metadata);save()
+        expired=threading.Event()
+        start=time.monotonic()
+        with (case/'stdout.txt').open('wb') as out,(case/'stderr.txt').open('wb') as err:
+            p=subprocess.Popen(common+argv,env=env,cwd=case,stdout=subprocess.PIPE,stderr=err,stdin=subprocess.PIPE,start_new_session=True)
+            def kill():
+                try: os.killpg(p.pid,signal.SIGKILL)
+                except ProcessLookupError: pass
+            def expire():
+                expired.set();kill()
+            timer=threading.Timer(240,expire);timer.start()
+            pid=None
+            try:
+                for line in p.stdout:
+                    out.write(line);out.flush()
+                    if not line.startswith(b'STAGE '):continue
+                    if pid is None:
+                        found=capture(['lsof','-t','-a','-c','a-probe.exe',str(exe)],env,base)
+                        candidates=sorted({int(x) for x in found['stdout'].split() if x.isdigit()})
+                        if len(candidates)!=1:raise RuntimeError('ambiguous PE PID: '+repr(found))
+                        pid=candidates[0];metadata['host_pid']=pid
+                        libs=capture(['lsof','-n','-p',str(pid)],env,base)
+                        metadata['backend_paths_excerpt']=[line.split('/',1)[-1] for line in libs['stdout'].splitlines() if any(x in line for x in ['apple_gptk/wine/x86_64-windows/d3d12.dll','D3DMetal.framework/Versions/A/D3DMetal','/rosetta/runtime'])]
+                        metadata['backend_lsof_exit']=libs['exit']
+                    phase=line.decode().split()[1]
+                    snap=dict(phase=phase,marker=line.decode().strip(),samples=[])
+                    for _ in range(3):
+                        result=capture([observer,str(pid)],env,base)
+                        if not result['exit']:result['data']=json.loads(result['stdout'])
+                        snap['samples'].append(result)
+                    commands={'footprint':['footprint','-p',str(pid),'-f','bytes','--swapped'],
+                              'vmmap':['vmmap','-summary',str(pid)], 'vmstat':['vm_stat'],
+                              'pressure':['memory_pressure','-Q'],'swap':['sysctl','vm.swapusage']}
+                    ptr=re.search(rb'cpu_ptr=([0-9A-Fa-f]+)',line)
+                    if ptr and int(ptr[1],16):commands['pointer_vmmap']=['vmmap','-w',str(pid),'0x'+ptr[1].decode()]
+                    for tool,cmd in commands.items():
+                        result=capture(cmd,env,base,15)
+                        filename=f'{phase}-{tool}.json';(case/filename).write_text(json.dumps(result,indent=2)+'\n')
+                        snap[tool]=dict(exit=result['exit'],file=filename)
+                        if tool=='pressure':
+                            m=re.search(r'free percentage: (\d+)%',result['stdout'])
+                            if result['exit'] or not m or int(m[1])<25:raise RuntimeError('stage pressure safety stop')
+                    metadata['snapshots'].append(snap);save()
+                    p.stdin.write(b'\n');p.stdin.flush()
+                p.wait()
+            except BaseException as e:
+                metadata['harness_error']=repr(e);kill();p.wait();raise
+            finally:
+                timer.cancel();metadata.update(exit=p.returncode,timed_out=expired.is_set(),seconds=time.monotonic()-start)
+                metadata['outputs']={f.name:sha(f) for f in case.iterdir() if f.is_file()}
+                (case/'case.json').write_text(json.dumps(metadata,indent=2)+'\n');save()
+        print(name,'exit',metadata['exit'],'timeout',metadata['timed_out'],flush=True)
+        if metadata['exit'] or metadata['timed_out']:raise RuntimeError('case failed: '+name)
+    try:
+        if args.suite=='memory':
+            for repeat in range(1 if args.smoke else 2):
+                sizes=[64] if args.smoke else [64,256,1024]
+                types=['wb'] if args.smoke else ['cpu-plain','cpu','wb','upload']
+                if repeat%2:types.reverse();sizes.reverse()
+                for size in sizes:
+                    for typ in types:run(f'memory-{typ}-{size}MiB-r{repeat}',[typ,str(size*1024**2)])
+        elif args.suite=='pool':
+            for session in range(1 if args.smoke else 3):
+                modes=['individual','pooled'] if session%2==0 else ['pooled','individual']
+                for mode in modes:run(f'pool-{mode}-s{session}',[mode,str(473+session)])
+        else:
+            for session in range(1 if args.smoke else 2):run(f'texture-s{session}',[str(session)])
+    finally:
+        for name,cmd in {'pressure_after':['memory_pressure','-Q'],'vm_after':['vm_stat'],'swap_after':['sysctl','vm.swapusage']}.items():receipt['tools'][name]=capture(cmd,env,base)
+        stop=dict(env,WINEPREFIX=str(temp))
+        receipt['server_stop']=capture([cx/'bin/wineserver','-k'],stop,base)
+        receipt['server_wait']=capture([cx/'bin/wineserver','-w'],stop,base)
+        receipt['source_bottle_unchanged']=(bottle/'cxbottle.conf').read_bytes()==original
+        shutil.rmtree(temp);save()
+    return 0
+
+if __name__=='__main__':
+    raise SystemExit(main())

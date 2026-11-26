@@ -1,0 +1,45 @@
+{
+  "utc": "2026-11-26T20:59:11.067328+00:00",
+  "scope": "unchanged baseline CPU-only conformance; not GPU or Workstream A independent acceptance",
+  "cases": [
+    {
+      "name": "test_veh_clwb",
+      "command": [
+        "<HOME>/betterxen-473-a/target/debug/bx-cli",
+        "run",
+        "--prefix",
+        "/tmp/bx473-cpu-conformance/prefix",
+        "--shims",
+        "<HOME>/betterxen-473-a/build-shims/bin",
+        "--timeout",
+        "30",
+        "--log",
+        "/tmp/bx473-cpu-conformance/test_veh_clwb.jsonl",
+        "--exe",
+        "<HOME>/betterxen-473-a/build-shims/bin/test_veh_clwb.exe"
+      ],
+      "exit": 0
+    },
+    {
+      "name": "test_shim_exports",
+      "command": [
+        "<HOME>/betterxen-473-a/target/debug/bx-cli",
+        "run",
+        "--prefix",
+        "/tmp/bx473-cpu-conformance/prefix",
+        "--shims",
+        "<HOME>/betterxen-473-a/build-shims/bin",
+        "--timeout",
+        "30",
+        "--log",
+        "/tmp/bx473-cpu-conformance/test_shim_exports.jsonl",
+        "--exe",
+        "<HOME>/betterxen-473-a/build-shims/bin/test_shim_exports.exe"
+      ],
+      "exit": 0
+    }
+  ],
+  "stop_exit": 1,
+  "wait_exit": 0,
+  "source_bottle_config_unchanged": true
+}

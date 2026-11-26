@@ -1,0 +1,11 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+STAGE baseline cpu_ptr=0
+ALIAS_RESOURCE index=0 heap_offset=0 cpu_ptr=0000000215c94000 gpu_va=1099513200640
+ALIAS_RESOURCE index=1 heap_offset=0 cpu_ptr=0000000215c94000 gpu_va=1099513200640
+ALIAS_RESOURCE index=2 heap_offset=65536 cpu_ptr=0000000215ca4000 gpu_va=1099513266176
+BUFFER_INHERIT session=0 round=0 from=0 to=1 source_matches=16384/16384 inherited_matches=16384/16384 disjoint_guard_matches=16384/16384 first_source=13579BDF first_inherited=13579BDF expected=13579BDF
+BUFFER_INHERIT session=0 round=1 from=1 to=0 source_matches=16384/16384 inherited_matches=16384/16384 disjoint_guard_matches=16384/16384 first_source=13579CE0 first_inherited=13579CE0 expected=13579CE0
+BUFFER_INHERIT session=0 round=2 from=0 to=1 source_matches=16384/16384 inherited_matches=16384/16384 disjoint_guard_matches=16384/16384 first_source=13579DE1 first_inherited=13579DE1 expected=13579DE1
+STAGE gpu_complete cpu_ptr=0
+END success

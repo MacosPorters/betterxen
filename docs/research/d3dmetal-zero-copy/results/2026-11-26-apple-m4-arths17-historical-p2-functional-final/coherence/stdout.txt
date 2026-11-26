@@ -1,0 +1,12 @@
+PHASE2 protocol=1 mode=coherence guest_pid=304
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+SHADER_COMPILER C:\windows\system32\d3dcompiler_47.dll
+SHADER_BYTECODE bytes=1384 magic=DXBC
+VERIFY direct_shader_same_cpu_pointer matches=256/256 first_actual=6D7036B2 first_expected=6D7036B2
+COHERENCE_ROUND 0 input_ptr=0000000215c44000 output_ptr=0000000215c64000 shader_read_words=16384 shader_written_words=256
+VERIFY direct_shader_same_cpu_pointer matches=256/256 first_actual=FE439E1B first_expected=FE439E1B
+COHERENCE_ROUND 1 input_ptr=0000000215c44000 output_ptr=0000000215c64000 shader_read_words=16384 shader_written_words=256
+VERIFY direct_shader_same_cpu_pointer matches=256/256 first_actual=E0FE2A7B first_expected=E0FE2A7B
+COHERENCE_ROUND 2 input_ptr=0000000215c44000 output_ptr=0000000215c64000 shader_read_words=16384 shader_written_words=256
+END success

@@ -1,0 +1,2 @@
+docs hygiene: 2706 tracked files checked, 0 problem(s)
+Validated candidate with temporary index; real index untouched.

@@ -1,0 +1,5 @@
+target/debug/bx-cli: Mach-O 64-bit executable arm64
+arm64
+target/debug/bx-cli:
+	/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)
+	/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)

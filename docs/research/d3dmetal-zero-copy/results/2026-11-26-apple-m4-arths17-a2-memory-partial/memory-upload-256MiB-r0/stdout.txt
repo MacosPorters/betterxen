@@ -1,0 +1,17 @@
+MEMORY_A protocol=2 type=upload bytes=268435456
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+SHADER_COMPILER C:\windows\system32\d3dcompiler_47.dll
+SHADER_BYTECODE bytes=1384 magic=DXBC
+STAGE warm_baseline cpu_ptr=0000000000000000
+STAGE baseline cpu_ptr=0000000000000000
+STAGE created cpu_ptr=0000000000000000
+STAGE mapped cpu_ptr=0000000225fcc000
+STAGE fully_initialized cpu_ptr=0000000225fcc000
+VERIFY full_consumption checksum_matches=256/256 words=67108864
+STAGE gpu_complete cpu_ptr=0000000225fcc000
+STAGE resources_released cpu_ptr=0000000000000000
+STAGE commands_retired cpu_ptr=0000000000000000
+STAGE retired_settled cpu_ptr=0000000000000000
+STAGE device_released cpu_ptr=0000000000000000
+END success

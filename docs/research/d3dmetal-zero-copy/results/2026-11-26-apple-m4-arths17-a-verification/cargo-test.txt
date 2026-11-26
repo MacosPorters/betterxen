@@ -1,0 +1,142 @@
+   Compiling dxbc-accc v0.2.0 (<HOME>/betterxen-473-a/shader-transpiler/crates/dxbc-accc)
+   Compiling d3dmetal-harness v0.2.0 (<HOME>/betterxen-473-a/shader-transpiler/crates/d3dmetal-harness)
+   Compiling bx-telemetry v0.2.0 (<HOME>/betterxen-473-a/launcher/crates/bx-telemetry)
+   Compiling bx-probe v0.2.0 (<HOME>/betterxen-473-a/launcher/crates/bx-probe)
+   Compiling libc v0.2.191
+   Compiling bx-cli v0.2.0 (<HOME>/betterxen-473-a/launcher/crates/bx-cli)
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 2.81s
+     Running unittests src/main.rs (target/debug/deps/bx_cli-2151914d755a0d54)
+
+running 18 tests
+test stage::tests::system32_is_under_drive_c ... ok
+test stage::tests::closure_follows_shim_imports_only ... ok
+test stage::tests::uninitialized_prefix_is_an_error_not_a_skip ... ok
+test stage::tests::copies_then_leaves_identical_copy_alone ... ok
+test tests::bottle_mode_passes_overrides_and_backend_as_launcher_options ... ok
+test tests::converts_unix_path_to_wine_z_drive ... ok
+test tests::formats_clwb_summary_lines ... ok
+test tests::isolated_env_strips_secrets_and_pins_path ... ok
+test tests::parses_run_arguments ... ok
+test stage::tests::missing_shim_is_reported_and_nothing_is_staged ... ok
+test stage::tests::writes_only_inside_system32 ... ok
+test stage::tests::stages_the_runtime_and_its_shim_dependency ... ok
+test stage::tests::replaces_an_older_copy ... ok
+test supervise::tests::classifies_exit_timeout_and_signal ... ok
+test tests::a_timeout_cleans_up_a_bottle_outside_the_default_directory ... ok
+test supervise::tests::an_idle_server_is_accepted_only_when_the_wait_succeeds ... ok
+test supervise::tests::a_timeout_stops_children_that_ignore_sigterm ... ok
+test tests::a_timeout_cleans_up_a_managed_bottle_private_stub_created_on_first_launch ... ok
+
+test result: ok. 18 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.65s
+
+     Running unittests src/lib.rs (target/debug/deps/bx_probe-395eaa3c3f91592a)
+
+running 1 test
+test tests::classifies_tracks_accurately ... ok
+
+test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/bx_telemetry-314c6b3d802f702b)
+
+running 4 tests
+test tests::aggregates_stub_and_veh_events ... ok
+test tests::uses_highest_counter_from_sampled_clwb_records ... ok
+test tests::preserves_clwb_record_count_without_valid_counters ... ok
+test tests::collects_unhandled_exceptions_in_log_order ... ok
+
+test result: ok. 4 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/d3dmetal_harness-be2050e4ff5342c1)
+
+running 22 tests
+test kernel::tests::no_expected_word_equals_the_sentinel ... ok
+test framework::tests::environment_wins_over_crossover ... ok
+test framework::tests::resolves_directory_or_binary ... ok
+test macho::tests::rejects_unknown_truncated_and_oversized_headers ... ok
+test framework::tests::unresolved_request_does_not_fall_back ... ok
+test framework::tests::crossover_default_then_absent ... ok
+test macho::tests::universal_32_and_64_bit_entries ... ok
+test kernel::tests::matches_independently_computed_values ... ok
+test framework::tests::explicit_path_wins_over_environment_and_crossover ... ok
+test macho::tests::thin_x86_64_and_arm64 ... ok
+test report::tests::device_removal_is_reported_with_its_reason ... ok
+test report::tests::init_failure_and_failed_steps_take_precedence ... ok
+test report::tests::rejects_malformed_and_unversioned_output ... ok
+test report::tests::parses_a_complete_report ... ok
+test report::tests::reports_every_mismatch_and_the_first_one ... ok
+test report::tests::untouched_sentinel_means_the_kernel_did_not_run ... ok
+test report::tests::unfinished_or_foreign_dispatch_is_incomplete ... ok
+test tests::rejects_a_framework_without_an_x86_64_slice ... ok
+test tests::embedded_kernel_is_an_sm_6_6_compute_dxil_container ... ok
+test runner::tests::passes_the_framework_and_only_allowlisted_environment ... ok
+test runner::tests::kills_a_probe_that_exceeds_the_timeout ... ok
+test runner::tests::a_descendant_holding_the_pipes_cannot_outlast_the_deadline ... ok
+
+test result: ok. 22 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.51s
+
+     Running unittests src/main.rs (target/debug/deps/bx_d3dmetal_harness-11f25afb9b566af7)
+
+running 2 tests
+test tests::parses_run_options ... ok
+test tests::rejects_bad_options ... ok
+
+test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/live_d3dmetal.rs (target/debug/deps/live_d3dmetal-6d63df8591429451)
+
+running 1 test
+test sm_6_6_compute_readback_matches_host_values ... ignored, needs a user-supplied D3DMetal.framework and BX_D3DMETAL_PROBE
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running unittests src/lib.rs (target/debug/deps/dxbc_accc-919debdd3ca67e95)
+
+running 19 tests
+bx-shader event=prepare status=unsupported detail=no_dxil_passthrough kind=accc_only(3) stage=compute(6) sm_major=6 sm_minor=0 container_size=148 dxil_chunk_size=0 accc_chunk_size=104 has_root_signature=0 digest=abababababababababababababababab fspx=1 fspx_version=1 sections=0@64+8,1@72+12,6@84+16,7@100+4 rdna_off=84 rdna_size=16
+test tests::c_abi_legacy_is_unsupported_and_invalid_inputs_allocate_nothing ... ok
+test tests::classifies_synthetic_dxil_cs_6_6 ... ok
+test tests::c_abi_zero_bitcode_dxil_returns_invalid ... ok
+test tests::c_abi_inspect_and_passthrough_round_trip ... ok
+test tests::dxil_bitcode_offset_is_relative_to_bitcode_header ... ok
+test tests::classifies_synthetic_legacy_shdr ... ok
+bx-shader event=prepare status=unsupported detail=no_dxil_passthrough kind=accc_only(3) stage=compute(6) sm_major=6 sm_minor=0 container_size=112 dxil_chunk_size=0 accc_chunk_size=40 has_root_signature=0 digest=abababababababababababababababab fspx=1 fspx_version=1 sections=none rdna_off=none rdna_size=none
+test tests::classifies_synthetic_accc_fspx_magic_only ... ok
+test tests::c_abi_empty_dxil_chunk_returns_invalid ... ok
+test tests::dxil_stage_wins_over_fspx_stage_in_dual_container ... ok
+test tests::c_abi_accc_only_is_unsupported_and_logged ... ok
+test tests::extracts_synthetic_fspx_sections_stage_and_rdna_bounds ... ok
+test tests::prepare_copies_container_size_not_trailing_bytes ... ok
+test tests::prepare_passes_dxil_through_when_fspx_is_malformed ... ok
+test tests::rejects_invalid_magic_and_short_headers ... ok
+test tests::later_fspx_stage_is_used_when_earlier_table_has_none ... ok
+test tests::rejects_truncated_tables_and_chunk_bounds ... ok
+test tests::rejects_malformed_fspx_sections ... ok
+test tests::truncated_prefixes_do_not_panic ... ok
+test tests::fspx_section_count_is_bounded ... ok
+
+test result: ok. 19 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bx_probe
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests bx_telemetry
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests d3dmetal_harness
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+   Doc-tests dxbc_accc
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+

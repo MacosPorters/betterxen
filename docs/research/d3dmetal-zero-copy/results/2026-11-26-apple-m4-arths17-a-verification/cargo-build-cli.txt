@@ -1,0 +1,2 @@
+   Compiling bx-cli v0.2.0 (<HOME>/betterxen-473-a/launcher/crates/bx-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 0.42s

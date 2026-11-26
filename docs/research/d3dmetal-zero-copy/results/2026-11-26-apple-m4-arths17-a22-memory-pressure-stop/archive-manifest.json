@@ -1,0 +1,3345 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "memory-cpu-256MiB-r0/baseline-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "1fcb520479443293bcf4a945d55bdd0b521af3a1e51adbe7dfc1f5109a449392",
+      "archived_sha256": "1fcb520479443293bcf4a945d55bdd0b521af3a1e51adbe7dfc1f5109a449392",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/baseline-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "37de3c949500f09ea91ffcb4a13378bb56b0f59398aa5af2e464e5d08f402167",
+      "archived_sha256": "37de3c949500f09ea91ffcb4a13378bb56b0f59398aa5af2e464e5d08f402167",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "86e37d1605199cf8fcd8737d4db5f7e0bb409d972fe65a76ebc30054e19200e7",
+      "archived_sha256": "86e37d1605199cf8fcd8737d4db5f7e0bb409d972fe65a76ebc30054e19200e7",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "d28d10fce2b869f132758066574432a5b91b293d4911f865bb2fec193e292557",
+      "archived_sha256": "d28d10fce2b869f132758066574432a5b91b293d4911f865bb2fec193e292557",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/baseline-vmmap.json",
+      "bytes": 8194,
+      "original_sha256": "4f5644e0075f2947d04f164efdb218c2bfbad725506b7e71d5887a1ca4e46ea6",
+      "archived_sha256": "4f5644e0075f2947d04f164efdb218c2bfbad725506b7e71d5887a1ca4e46ea6",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "9c05ce43b9ba91538a24379775dce4a702348a1ef39daec818ce62555d20b8a0",
+      "archived_sha256": "9c05ce43b9ba91538a24379775dce4a702348a1ef39daec818ce62555d20b8a0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/case.json",
+      "bytes": 60256,
+      "original_sha256": "9c556891024a5c196e58c8f9c2159553628e1090ccca2b4b30a76d591e15df48",
+      "archived_sha256": "9c556891024a5c196e58c8f9c2159553628e1090ccca2b4b30a76d591e15df48",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/commands_retired-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "6e97b46b75f034a176f827eaab1d007cb40ee1e3ec88431b41d866c8b1cd4567",
+      "archived_sha256": "6e97b46b75f034a176f827eaab1d007cb40ee1e3ec88431b41d866c8b1cd4567",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/commands_retired-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "1db08ab2f589fb952350523c8e237c3b2a4e9f9ef9d0c89fdf3127196e4890b5",
+      "archived_sha256": "1db08ab2f589fb952350523c8e237c3b2a4e9f9ef9d0c89fdf3127196e4890b5",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/commands_retired-pressure.json",
+      "bytes": 248,
+      "original_sha256": "d1559422d415da32dbd18d595e79ac32df5a27b09100bcb608fa72ab561b09f8",
+      "archived_sha256": "d1559422d415da32dbd18d595e79ac32df5a27b09100bcb608fa72ab561b09f8",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/commands_retired-swap.json",
+      "bytes": 216,
+      "original_sha256": "6c45a24bd6a22e9419effda544daa58ffe1c7cdb6c9d6ef42a3d686b78b3ccf0",
+      "archived_sha256": "6c45a24bd6a22e9419effda544daa58ffe1c7cdb6c9d6ef42a3d686b78b3ccf0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/commands_retired-vmmap.json",
+      "bytes": 8197,
+      "original_sha256": "9bb2af768a2d68e67da606c3c4aac1e811240fa74eb4660c3e6eb87e91ae0da0",
+      "archived_sha256": "9bb2af768a2d68e67da606c3c4aac1e811240fa74eb4660c3e6eb87e91ae0da0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/commands_retired-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "08150337bae17dc57c42db6319779ca989831109901e6e0d0f7fa268f8d9605c",
+      "archived_sha256": "08150337bae17dc57c42db6319779ca989831109901e6e0d0f7fa268f8d9605c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/consumption.dxbc",
+      "bytes": 1384,
+      "original_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "archived_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/consumption.hlsl",
+      "bytes": 365,
+      "original_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "archived_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/created-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "f3c9ef58cc24a6998372a86b7c1726c01b75a19d68b6a725dbf03ebb769f24ab",
+      "archived_sha256": "f3c9ef58cc24a6998372a86b7c1726c01b75a19d68b6a725dbf03ebb769f24ab",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/created-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "f10354babb547a49e1fa88c795da366f98274ec92ef96e74780e1b47721b1d34",
+      "archived_sha256": "f10354babb547a49e1fa88c795da366f98274ec92ef96e74780e1b47721b1d34",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/created-pressure.json",
+      "bytes": 248,
+      "original_sha256": "eeba31dbef9046b1f4c174b52cc1a3f750f66b81996ddc026602969f13431b04",
+      "archived_sha256": "eeba31dbef9046b1f4c174b52cc1a3f750f66b81996ddc026602969f13431b04",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/created-swap.json",
+      "bytes": 216,
+      "original_sha256": "445bee735b2ad7b9db07f070ddbc8638704c567446cc31acddf97566e7417c79",
+      "archived_sha256": "445bee735b2ad7b9db07f070ddbc8638704c567446cc31acddf97566e7417c79",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/created-vmmap.json",
+      "bytes": 8196,
+      "original_sha256": "f5b4e67f55c6486b782ace013ca7d2d46db89f126b3ea55dbd0d226907ef1309",
+      "archived_sha256": "f5b4e67f55c6486b782ace013ca7d2d46db89f126b3ea55dbd0d226907ef1309",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/created-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "a8507db72e64b936d1e617eb932086b4103ebe0fd48284c51a70f206dc096481",
+      "archived_sha256": "a8507db72e64b936d1e617eb932086b4103ebe0fd48284c51a70f206dc096481",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/device_released-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "297ab4edbad8ab84e6d65a8b353c30b8ab562d8e7f9c93a03a7b176a2525d7e5",
+      "archived_sha256": "297ab4edbad8ab84e6d65a8b353c30b8ab562d8e7f9c93a03a7b176a2525d7e5",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/device_released-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "12eb6e6595acf53983035fad288c3b3763307b7215e964917c550f265b60167a",
+      "archived_sha256": "12eb6e6595acf53983035fad288c3b3763307b7215e964917c550f265b60167a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/device_released-pressure.json",
+      "bytes": 248,
+      "original_sha256": "cf872236b1036719ca8bd592a1cdfbde7cbb00b2b0fed57ab2e5163a2bd74a59",
+      "archived_sha256": "cf872236b1036719ca8bd592a1cdfbde7cbb00b2b0fed57ab2e5163a2bd74a59",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/device_released-swap.json",
+      "bytes": 215,
+      "original_sha256": "cd68b1670e314db73b3f874f78fdf2f66c22badc27fb6e0cb913e978faee8875",
+      "archived_sha256": "cd68b1670e314db73b3f874f78fdf2f66c22badc27fb6e0cb913e978faee8875",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/device_released-vmmap.json",
+      "bytes": 8196,
+      "original_sha256": "b076a7795e4e36ad95416a65834020670f86d85d8e5922ff39df7e47f7a23cac",
+      "archived_sha256": "b076a7795e4e36ad95416a65834020670f86d85d8e5922ff39df7e47f7a23cac",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/device_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "faba0795c61d81aa12b48239dc523801bbfc9b1d8878020fa6b873dfcd3f8401",
+      "archived_sha256": "faba0795c61d81aa12b48239dc523801bbfc9b1d8878020fa6b873dfcd3f8401",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/fully_initialized-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "73744f34ef4ebc4aff441036b06a1a6617f3ddacd4783c726e5918dffb0e4f40",
+      "archived_sha256": "73744f34ef4ebc4aff441036b06a1a6617f3ddacd4783c726e5918dffb0e4f40",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/fully_initialized-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "85cea4d599dba0a2166c62b3e647cb092da0e2d683f2710aa0c84cd6a4a1268b",
+      "archived_sha256": "85cea4d599dba0a2166c62b3e647cb092da0e2d683f2710aa0c84cd6a4a1268b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/fully_initialized-pointer_vmmap.json",
+      "bytes": 694,
+      "original_sha256": "b9c0494fc1989ce482379c576b6f06c0ee7eb9f5d4041cd38dd5bae61007a3ce",
+      "archived_sha256": "b9c0494fc1989ce482379c576b6f06c0ee7eb9f5d4041cd38dd5bae61007a3ce",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/fully_initialized-pressure.json",
+      "bytes": 248,
+      "original_sha256": "418138f813a25fc4f39bdae3ccab9d99833198ce5ed18fb362fb7ba1f9055fbc",
+      "archived_sha256": "418138f813a25fc4f39bdae3ccab9d99833198ce5ed18fb362fb7ba1f9055fbc",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/fully_initialized-swap.json",
+      "bytes": 216,
+      "original_sha256": "bd27e919e700db43db4c4e121ad25b8d582d9aee7263fb04b00ae515b6c9e4e4",
+      "archived_sha256": "bd27e919e700db43db4c4e121ad25b8d582d9aee7263fb04b00ae515b6c9e4e4",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/fully_initialized-vmmap.json",
+      "bytes": 8201,
+      "original_sha256": "110ce5c4c23599e9ba5219350c5853a54543796bc9b808d88ccb3d021a603895",
+      "archived_sha256": "110ce5c4c23599e9ba5219350c5853a54543796bc9b808d88ccb3d021a603895",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/fully_initialized-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "69329312c8dd5d4da81434bad4aabb2a0730b857669bed796175c0ceee28af1b",
+      "archived_sha256": "69329312c8dd5d4da81434bad4aabb2a0730b857669bed796175c0ceee28af1b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/gpu_complete-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "dd674319a95f2d91733fdf27d63ad83c457fbbc8e93297e9325f70772785ad7b",
+      "archived_sha256": "dd674319a95f2d91733fdf27d63ad83c457fbbc8e93297e9325f70772785ad7b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/gpu_complete-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "26f0977a653e7efa1956a3e9b87e133ea3289209e856b9f780c00f665fee2099",
+      "archived_sha256": "26f0977a653e7efa1956a3e9b87e133ea3289209e856b9f780c00f665fee2099",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/gpu_complete-pointer_vmmap.json",
+      "bytes": 694,
+      "original_sha256": "760e28a0af06dfca871fac666009cae148cde0205466fb63694b39dfc5d3231c",
+      "archived_sha256": "760e28a0af06dfca871fac666009cae148cde0205466fb63694b39dfc5d3231c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/gpu_complete-pressure.json",
+      "bytes": 247,
+      "original_sha256": "398ade596b4202808314a9e8482dea13b4119787acf466c2c89e4afd429db153",
+      "archived_sha256": "398ade596b4202808314a9e8482dea13b4119787acf466c2c89e4afd429db153",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/gpu_complete-swap.json",
+      "bytes": 216,
+      "original_sha256": "29d94fd615ff20ef8bd1064cc20465e87b8d4d1eaa7c3efb46d7fa1b29856439",
+      "archived_sha256": "29d94fd615ff20ef8bd1064cc20465e87b8d4d1eaa7c3efb46d7fa1b29856439",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/gpu_complete-vmmap.json",
+      "bytes": 8198,
+      "original_sha256": "1cac77fa0947fae59111e29d402c192b268718c9096c37c8e5a23d9648b13d60",
+      "archived_sha256": "1cac77fa0947fae59111e29d402c192b268718c9096c37c8e5a23d9648b13d60",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/gpu_complete-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "d721768284c9fa2333fb94ff66c4b1b6328404d7830dd60cebe91c35acd79972",
+      "archived_sha256": "d721768284c9fa2333fb94ff66c4b1b6328404d7830dd60cebe91c35acd79972",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/mapped-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "b8f2109f96f72bcb3ef6f8cd37ec7d2b22b2c966eef89fc58fafe1265bbf658c",
+      "archived_sha256": "b8f2109f96f72bcb3ef6f8cd37ec7d2b22b2c966eef89fc58fafe1265bbf658c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/mapped-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "bee780ad66fd1882f50b5aa3715cdebad15e9e0ed058387030899f4507a4a0af",
+      "archived_sha256": "bee780ad66fd1882f50b5aa3715cdebad15e9e0ed058387030899f4507a4a0af",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/mapped-pointer_vmmap.json",
+      "bytes": 788,
+      "original_sha256": "8f22272b248e929250ac34769a6a85aaf2c13a88589634fdfea7f33bca1d23df",
+      "archived_sha256": "8f22272b248e929250ac34769a6a85aaf2c13a88589634fdfea7f33bca1d23df",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/mapped-pressure.json",
+      "bytes": 248,
+      "original_sha256": "5360d0f60ffc666a46ac03e6c5ded5151566497b49eda665bc8a11e48592c431",
+      "archived_sha256": "5360d0f60ffc666a46ac03e6c5ded5151566497b49eda665bc8a11e48592c431",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/mapped-swap.json",
+      "bytes": 215,
+      "original_sha256": "1277623586403634b4e47aa838c967823f456a424ad4c68496f20d2fb3fe5b47",
+      "archived_sha256": "1277623586403634b4e47aa838c967823f456a424ad4c68496f20d2fb3fe5b47",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/mapped-vmmap.json",
+      "bytes": 8197,
+      "original_sha256": "28cf591cf3edd01ab6017a1f36c0c4c0de9104a880309952159eaea38d31e444",
+      "archived_sha256": "28cf591cf3edd01ab6017a1f36c0c4c0de9104a880309952159eaea38d31e444",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/mapped-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "a3af6aedb1464740ab95c4939f623856fa307917c363a466fb87de20a2d0685e",
+      "archived_sha256": "a3af6aedb1464740ab95c4939f623856fa307917c363a466fb87de20a2d0685e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/resources_released-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "565112d40e926f40ded6f1787b43a72b6088640492f7f9f493088dc3d867f845",
+      "archived_sha256": "565112d40e926f40ded6f1787b43a72b6088640492f7f9f493088dc3d867f845",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/resources_released-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "489f01d8e2fae4083aa43cad655f0ca5815cbe0021593d907c9c0b8bc8dd75f1",
+      "archived_sha256": "489f01d8e2fae4083aa43cad655f0ca5815cbe0021593d907c9c0b8bc8dd75f1",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/resources_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "d1081df7d75cd7c1636215db6ea48f66dd5c27085e784922050160de77b8b558",
+      "archived_sha256": "d1081df7d75cd7c1636215db6ea48f66dd5c27085e784922050160de77b8b558",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/resources_released-swap.json",
+      "bytes": 216,
+      "original_sha256": "df5de426c428a3f40d0b4d3960c0e89ac2657db3add233bedbe4c72a977d7d52",
+      "archived_sha256": "df5de426c428a3f40d0b4d3960c0e89ac2657db3add233bedbe4c72a977d7d52",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/resources_released-vmmap.json",
+      "bytes": 8197,
+      "original_sha256": "c25c61a4bc9a442b4223cefce74983128694eff07b63003b557b29c0142b5ef0",
+      "archived_sha256": "c25c61a4bc9a442b4223cefce74983128694eff07b63003b557b29c0142b5ef0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/resources_released-vmstat.json",
+      "bytes": 1388,
+      "original_sha256": "646a56b656ba64498d5a17512180ee2a3c267f2c6030cbf3404776fa80344a4c",
+      "archived_sha256": "646a56b656ba64498d5a17512180ee2a3c267f2c6030cbf3404776fa80344a4c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/retired_settled-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "b5b8d2150737e7ea1dcb246e1e203634aafb1680bc4ee284298bc4afa8efce7a",
+      "archived_sha256": "b5b8d2150737e7ea1dcb246e1e203634aafb1680bc4ee284298bc4afa8efce7a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/retired_settled-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "428d55c2c94b82711226b7641b75bcd9dc502d08bbb4a1c65bb3e623e4b9a7b7",
+      "archived_sha256": "428d55c2c94b82711226b7641b75bcd9dc502d08bbb4a1c65bb3e623e4b9a7b7",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/retired_settled-pressure.json",
+      "bytes": 248,
+      "original_sha256": "d0884386ecc219225abb43df467c31e29b0400776e1e188482e568c5e8635b5b",
+      "archived_sha256": "d0884386ecc219225abb43df467c31e29b0400776e1e188482e568c5e8635b5b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/retired_settled-swap.json",
+      "bytes": 216,
+      "original_sha256": "a1d99607304378c117243135ad40c519ee2afeff828e68e6977ef450eb80524d",
+      "archived_sha256": "a1d99607304378c117243135ad40c519ee2afeff828e68e6977ef450eb80524d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/retired_settled-vmmap.json",
+      "bytes": 8196,
+      "original_sha256": "511512277a111b8f11042f631fe23f77918407806ac275c67b87b9a8d9624747",
+      "archived_sha256": "511512277a111b8f11042f631fe23f77918407806ac275c67b87b9a8d9624747",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/retired_settled-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "bcd337dd78a809c7915ecb9818a39ed6185ed9cbca1cece1c9cd9acf8fb7ee72",
+      "archived_sha256": "bcd337dd78a809c7915ecb9818a39ed6185ed9cbca1cece1c9cd9acf8fb7ee72",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/stderr.txt",
+      "bytes": 57,
+      "original_sha256": "2cfc6ac13ec1c39822f9223bbca8f95b642457743913144776a8a495961308da",
+      "archived_sha256": "2cfc6ac13ec1c39822f9223bbca8f95b642457743913144776a8a495961308da",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/stdout.txt",
+      "bytes": 715,
+      "original_sha256": "cb71435464b89368459e3b837041198c0f67742220a4a5a91ed5739caaf2fc42",
+      "archived_sha256": "cb71435464b89368459e3b837041198c0f67742220a4a5a91ed5739caaf2fc42",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/warm_baseline-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "b54a94e6f08d24e03ffa5611c547c533c8f83ff6f14f43cde6c72d8925f086a2",
+      "archived_sha256": "b54a94e6f08d24e03ffa5611c547c533c8f83ff6f14f43cde6c72d8925f086a2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/warm_baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "76e97c47198c647794324e878eda9018bee2506289036779d850b98971dfcba0",
+      "archived_sha256": "76e97c47198c647794324e878eda9018bee2506289036779d850b98971dfcba0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/warm_baseline-pressure.json",
+      "bytes": 246,
+      "original_sha256": "6bb0d09b5647621ec21c8c7d95efcfe3ea12a918477300f5fd952c9feaeac9da",
+      "archived_sha256": "6bb0d09b5647621ec21c8c7d95efcfe3ea12a918477300f5fd952c9feaeac9da",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/warm_baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "fd2ecb8090d567c615a41adbd6a4521c0cb3204c40ed52e7b3efa4073a9cec5e",
+      "archived_sha256": "fd2ecb8090d567c615a41adbd6a4521c0cb3204c40ed52e7b3efa4073a9cec5e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/warm_baseline-vmmap.json",
+      "bytes": 8193,
+      "original_sha256": "9a50c06a4be48d16ec9fd341766863bd0c000a12f6537b9d16bd78954f41198c",
+      "archived_sha256": "9a50c06a4be48d16ec9fd341766863bd0c000a12f6537b9d16bd78954f41198c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-256MiB-r0/warm_baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "ac6e64fca6797050503e630a6a08df7191e718f309e2232ab4c4575b3fcdc373",
+      "archived_sha256": "ac6e64fca6797050503e630a6a08df7191e718f309e2232ab4c4575b3fcdc373",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/baseline-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "ef58a691599084c2e5bdef29146e414469716c7644cd2f0ccb0f52abaf185542",
+      "archived_sha256": "ef58a691599084c2e5bdef29146e414469716c7644cd2f0ccb0f52abaf185542",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "20b2f976f485b036349c3a59d7e6db64b787288768881c8ea3e5547bfaec18bd",
+      "archived_sha256": "20b2f976f485b036349c3a59d7e6db64b787288768881c8ea3e5547bfaec18bd",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "d4caa0b834bd52c9f72a621d8a5ad9cb79569af3f9ca3125e16bdb2ec759c52b",
+      "archived_sha256": "d4caa0b834bd52c9f72a621d8a5ad9cb79569af3f9ca3125e16bdb2ec759c52b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/baseline-swap.json",
+      "bytes": 215,
+      "original_sha256": "27438ad8824591468752c2f0fdf3d25197ade10fefb542a6d2f41919e1d03b18",
+      "archived_sha256": "27438ad8824591468752c2f0fdf3d25197ade10fefb542a6d2f41919e1d03b18",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/baseline-vmmap.json",
+      "bytes": 8054,
+      "original_sha256": "bc0d696aefa9c9f76e8715f47ce215450c010b8e4eddd118b4d8494173c55927",
+      "archived_sha256": "bc0d696aefa9c9f76e8715f47ce215450c010b8e4eddd118b4d8494173c55927",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "101389ffa502476911ab61a33154bfa3a872002e6563dfcacf457a8f61ab6852",
+      "archived_sha256": "101389ffa502476911ab61a33154bfa3a872002e6563dfcacf457a8f61ab6852",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/case.json",
+      "bytes": 60248,
+      "original_sha256": "df66470e75a5f46f4c42c7c39f1eb12229bfed1dc3097b7dcd2c7f0e27d842d8",
+      "archived_sha256": "df66470e75a5f46f4c42c7c39f1eb12229bfed1dc3097b7dcd2c7f0e27d842d8",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/commands_retired-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "1942da41b6aef6fccd30c5a2bad0a1af1a8ac2048433e315550740cdd695ecba",
+      "archived_sha256": "1942da41b6aef6fccd30c5a2bad0a1af1a8ac2048433e315550740cdd695ecba",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/commands_retired-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "10b2a6bffe44bd18b5c887c4f2d32a630ddec2ed1aae534c1ca5c790692d9d3e",
+      "archived_sha256": "10b2a6bffe44bd18b5c887c4f2d32a630ddec2ed1aae534c1ca5c790692d9d3e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/commands_retired-pressure.json",
+      "bytes": 247,
+      "original_sha256": "f15e8eeed139afd3b58988c1c60b7e1005a866774f3dec01e68f9a961da67450",
+      "archived_sha256": "f15e8eeed139afd3b58988c1c60b7e1005a866774f3dec01e68f9a961da67450",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/commands_retired-swap.json",
+      "bytes": 215,
+      "original_sha256": "dbbe0052eba7879db0cd66674f3b1a971d070ec0deafc640dd4cf3e971fdf01e",
+      "archived_sha256": "dbbe0052eba7879db0cd66674f3b1a971d070ec0deafc640dd4cf3e971fdf01e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/commands_retired-vmmap.json",
+      "bytes": 8057,
+      "original_sha256": "a44c2e38dcb310e371295ce523bc045db4d8497eba173cb262299303a2a204d2",
+      "archived_sha256": "a44c2e38dcb310e371295ce523bc045db4d8497eba173cb262299303a2a204d2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/commands_retired-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "0510e0be83b2be1060c7c4c23e9af10623c1366078df4ef9e2affaa01af29362",
+      "archived_sha256": "0510e0be83b2be1060c7c4c23e9af10623c1366078df4ef9e2affaa01af29362",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/consumption.dxbc",
+      "bytes": 1384,
+      "original_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "archived_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/consumption.hlsl",
+      "bytes": 365,
+      "original_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "archived_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/created-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "4321af3958c2644e7128556ccdb3318b64b21e937a1faedabf2cca52ba02d54b",
+      "archived_sha256": "4321af3958c2644e7128556ccdb3318b64b21e937a1faedabf2cca52ba02d54b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/created-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "04e7cb32988e3f79c0a2e1c139ee9f7b2dad5ad02e61c2049b209d4a53396fc5",
+      "archived_sha256": "04e7cb32988e3f79c0a2e1c139ee9f7b2dad5ad02e61c2049b209d4a53396fc5",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/created-pressure.json",
+      "bytes": 247,
+      "original_sha256": "d4fe15ef77705362e729f81d94d22a69e0ee86dec6eadec599fb1fb1242c53a0",
+      "archived_sha256": "d4fe15ef77705362e729f81d94d22a69e0ee86dec6eadec599fb1fb1242c53a0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/created-swap.json",
+      "bytes": 216,
+      "original_sha256": "cf0aefa61c08495574d5e1be48988ca7be7c0e3e852bf6fbb320671f5e7adae6",
+      "archived_sha256": "cf0aefa61c08495574d5e1be48988ca7be7c0e3e852bf6fbb320671f5e7adae6",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/created-vmmap.json",
+      "bytes": 8057,
+      "original_sha256": "2d484a32738bf5369a5713c2596677b2aefc01eed669aca72d7d8094d794af54",
+      "archived_sha256": "2d484a32738bf5369a5713c2596677b2aefc01eed669aca72d7d8094d794af54",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/created-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "899291c59c77f7e6b12eb1336911472afd7036998d4eefde5d22243593bd7403",
+      "archived_sha256": "899291c59c77f7e6b12eb1336911472afd7036998d4eefde5d22243593bd7403",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/device_released-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "a80a650f92a1561d9bcf53d46685955d6e18d85053b6eb8dbfbd14fcbb241676",
+      "archived_sha256": "a80a650f92a1561d9bcf53d46685955d6e18d85053b6eb8dbfbd14fcbb241676",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/device_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "f9494f95b82809a6d8e7a79e95c38daee7bf64e2a8ee70fa07ba03b6645e0a0d",
+      "archived_sha256": "f9494f95b82809a6d8e7a79e95c38daee7bf64e2a8ee70fa07ba03b6645e0a0d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/device_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "a3369fca229835e2094ce855de0ee6cc262d46b54be558ab5898e7df14a674e3",
+      "archived_sha256": "a3369fca229835e2094ce855de0ee6cc262d46b54be558ab5898e7df14a674e3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/device_released-swap.json",
+      "bytes": 216,
+      "original_sha256": "651dcfaa96f05d9fa08612781d9d1d0cb0e3bdac182c6348b398f067094c82f0",
+      "archived_sha256": "651dcfaa96f05d9fa08612781d9d1d0cb0e3bdac182c6348b398f067094c82f0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/device_released-vmmap.json",
+      "bytes": 8056,
+      "original_sha256": "c3b785d2affc4b53c318c6e46027f16de01fef51b01b3900bf482c1c24644cb9",
+      "archived_sha256": "c3b785d2affc4b53c318c6e46027f16de01fef51b01b3900bf482c1c24644cb9",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/device_released-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "b07463956e27a48a915973bfb5e80958de203002d38f446c606142f3e8a3bfb3",
+      "archived_sha256": "b07463956e27a48a915973bfb5e80958de203002d38f446c606142f3e8a3bfb3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/fully_initialized-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "9a4d083c2171afb4eb5855059b81ebbe017f759f60412d45a1305cc63b1fca68",
+      "archived_sha256": "9a4d083c2171afb4eb5855059b81ebbe017f759f60412d45a1305cc63b1fca68",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/fully_initialized-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "c68b1de6df92335ad2249349a5abada394804633601f8af1a4295bedb4aa6277",
+      "archived_sha256": "c68b1de6df92335ad2249349a5abada394804633601f8af1a4295bedb4aa6277",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/fully_initialized-pointer_vmmap.json",
+      "bytes": 693,
+      "original_sha256": "444ab746fba142c70d6e2c2c9c34239d7e4a621777d1cd181db96366f8144c67",
+      "archived_sha256": "444ab746fba142c70d6e2c2c9c34239d7e4a621777d1cd181db96366f8144c67",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/fully_initialized-pressure.json",
+      "bytes": 247,
+      "original_sha256": "d39c8dc622a9ff95f7e9ce5e842e37b8c9802911dbf7677643de337f74bd2c11",
+      "archived_sha256": "d39c8dc622a9ff95f7e9ce5e842e37b8c9802911dbf7677643de337f74bd2c11",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/fully_initialized-swap.json",
+      "bytes": 216,
+      "original_sha256": "a46cf8f14ea2ea13ad6842967538d1b2d3cbce9a3a80c4b6e764cc0d7cf733eb",
+      "archived_sha256": "a46cf8f14ea2ea13ad6842967538d1b2d3cbce9a3a80c4b6e764cc0d7cf733eb",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/fully_initialized-vmmap.json",
+      "bytes": 8058,
+      "original_sha256": "1eef9391edf96aa7c28c2512490668f6ea4679d875ba009197b4f9831f3d3a7e",
+      "archived_sha256": "1eef9391edf96aa7c28c2512490668f6ea4679d875ba009197b4f9831f3d3a7e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/fully_initialized-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "dc4be192c0662093a8f55c4c18d6d30c5c24e57dc1387fbd3d3180fc57ea979d",
+      "archived_sha256": "dc4be192c0662093a8f55c4c18d6d30c5c24e57dc1387fbd3d3180fc57ea979d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/gpu_complete-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "534f954258a3f08941d2e5e00b5d906a859c6e2dccb02921add6b799d90518d2",
+      "archived_sha256": "534f954258a3f08941d2e5e00b5d906a859c6e2dccb02921add6b799d90518d2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "24e76ec494a54bffdc58983b749e8794c93b2e874b397c855e8ba6992804b615",
+      "archived_sha256": "24e76ec494a54bffdc58983b749e8794c93b2e874b397c855e8ba6992804b615",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/gpu_complete-pointer_vmmap.json",
+      "bytes": 693,
+      "original_sha256": "737ec10c76db74d7f06919d6395d249df102692c08dfb02e5bf7d0e24fabb04b",
+      "archived_sha256": "737ec10c76db74d7f06919d6395d249df102692c08dfb02e5bf7d0e24fabb04b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/gpu_complete-pressure.json",
+      "bytes": 248,
+      "original_sha256": "cb1195d987e2f16b3873fcb480a5f17df66b1e38ce3bd9df16bf1dee8b869e84",
+      "archived_sha256": "cb1195d987e2f16b3873fcb480a5f17df66b1e38ce3bd9df16bf1dee8b869e84",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/gpu_complete-swap.json",
+      "bytes": 216,
+      "original_sha256": "0a5a988375a22778c6ebcc1e18b27f5aa1458445fcb2b8c20a7fc7c6b5ca0acd",
+      "archived_sha256": "0a5a988375a22778c6ebcc1e18b27f5aa1458445fcb2b8c20a7fc7c6b5ca0acd",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/gpu_complete-vmmap.json",
+      "bytes": 8057,
+      "original_sha256": "9659ee8f94cf40e68e287e5566d2f4f73f3e21e2645475c9e354fb4ab641753c",
+      "archived_sha256": "9659ee8f94cf40e68e287e5566d2f4f73f3e21e2645475c9e354fb4ab641753c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/gpu_complete-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "b2c1f6ae415ac34dbf2a8e4c25996c2ee984ac997ba9921e770e0cb51cecfab9",
+      "archived_sha256": "b2c1f6ae415ac34dbf2a8e4c25996c2ee984ac997ba9921e770e0cb51cecfab9",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/mapped-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "da64b4373e6c8c9d1f144addcb8f9d2862ac70fb017f50123b0022e9eb694e77",
+      "archived_sha256": "da64b4373e6c8c9d1f144addcb8f9d2862ac70fb017f50123b0022e9eb694e77",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/mapped-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "9f01a747abd728cb602f3d81a6f09d62b4eb2f5c52413089007609dd1bb5ddd0",
+      "archived_sha256": "9f01a747abd728cb602f3d81a6f09d62b4eb2f5c52413089007609dd1bb5ddd0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/mapped-pointer_vmmap.json",
+      "bytes": 739,
+      "original_sha256": "cb8be163f2d10778db5e7206fa9b283e22dfc243e76118771555156bb61b8d7a",
+      "archived_sha256": "cb8be163f2d10778db5e7206fa9b283e22dfc243e76118771555156bb61b8d7a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/mapped-pressure.json",
+      "bytes": 248,
+      "original_sha256": "8394a04af4ea1ab5b0e591bfa9404893457ac5b3723f861cd78721deb87491b3",
+      "archived_sha256": "8394a04af4ea1ab5b0e591bfa9404893457ac5b3723f861cd78721deb87491b3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/mapped-swap.json",
+      "bytes": 216,
+      "original_sha256": "6c1aaa2572853a92145de584482bab9e8479168cecce9685864f391bab30153c",
+      "archived_sha256": "6c1aaa2572853a92145de584482bab9e8479168cecce9685864f391bab30153c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/mapped-vmmap.json",
+      "bytes": 8057,
+      "original_sha256": "077230bf3daf44b1c50f5970b5c062dee8eef709fb7e4f7447430098a7d51853",
+      "archived_sha256": "077230bf3daf44b1c50f5970b5c062dee8eef709fb7e4f7447430098a7d51853",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/mapped-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "3753542faba84c43e4653b22998b249b1621489a02a700debe8253e7f5034079",
+      "archived_sha256": "3753542faba84c43e4653b22998b249b1621489a02a700debe8253e7f5034079",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/resources_released-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "c06b23b2f526bb19c35e9253c9db8455f9411b10e2c9f365560ce55353c070b3",
+      "archived_sha256": "c06b23b2f526bb19c35e9253c9db8455f9411b10e2c9f365560ce55353c070b3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/resources_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "355f3232d0f1204d9bf068bc17dfd49f95aae635420984db1f685af672305a7d",
+      "archived_sha256": "355f3232d0f1204d9bf068bc17dfd49f95aae635420984db1f685af672305a7d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/resources_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "7699908fcdaec2896d752ee6e7d221970ad07f4a2de551cf4d011b4547c3885b",
+      "archived_sha256": "7699908fcdaec2896d752ee6e7d221970ad07f4a2de551cf4d011b4547c3885b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/resources_released-swap.json",
+      "bytes": 216,
+      "original_sha256": "c5f47b6a9858d8c4cdc953b26d095bd258ca83e418769203096e9011972edbec",
+      "archived_sha256": "c5f47b6a9858d8c4cdc953b26d095bd258ca83e418769203096e9011972edbec",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/resources_released-vmmap.json",
+      "bytes": 8057,
+      "original_sha256": "c867bf52859109ffb111508b8c94f028254ed6bab31d9b3d466e26f447c75856",
+      "archived_sha256": "c867bf52859109ffb111508b8c94f028254ed6bab31d9b3d466e26f447c75856",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/resources_released-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "23ad35f7480c0fed66931fd87a6bd7739886d16377d22bf205dd09005c8d7112",
+      "archived_sha256": "23ad35f7480c0fed66931fd87a6bd7739886d16377d22bf205dd09005c8d7112",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/retired_settled-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "66acbed90ea187427c918cc203cd406ca14c1314f7e541acd1ba87f97d228aea",
+      "archived_sha256": "66acbed90ea187427c918cc203cd406ca14c1314f7e541acd1ba87f97d228aea",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/retired_settled-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "dc09312a29abc9365abf4c8b4ccf4e3065d8856ae516fc0d8513186d617c38a3",
+      "archived_sha256": "dc09312a29abc9365abf4c8b4ccf4e3065d8856ae516fc0d8513186d617c38a3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/retired_settled-pressure.json",
+      "bytes": 248,
+      "original_sha256": "1e93914a82f9ddf13bc756c1c964f0c4a6e76698dfb24986e65de5fc797cd9ab",
+      "archived_sha256": "1e93914a82f9ddf13bc756c1c964f0c4a6e76698dfb24986e65de5fc797cd9ab",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/retired_settled-swap.json",
+      "bytes": 216,
+      "original_sha256": "6aa8dd008fdcb61e14541b9043944850aabe7fc1f263b81a3e4282d2d676be9b",
+      "archived_sha256": "6aa8dd008fdcb61e14541b9043944850aabe7fc1f263b81a3e4282d2d676be9b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/retired_settled-vmmap.json",
+      "bytes": 8056,
+      "original_sha256": "588777e383c791680c31e13d71a35da5b7c4e7753abc746c00a98f6e3df46840",
+      "archived_sha256": "588777e383c791680c31e13d71a35da5b7c4e7753abc746c00a98f6e3df46840",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/retired_settled-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "ab0b6edc7238e65c2990b0e269619c76bb44dd1a6a90bebd38199e9282774362",
+      "archived_sha256": "ab0b6edc7238e65c2990b0e269619c76bb44dd1a6a90bebd38199e9282774362",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/stderr.txt",
+      "bytes": 57,
+      "original_sha256": "f7e45e5dd1b1210fc7fe77f69ca4bb2c1ef8c434b47ee1cd41fa2d128fb13238",
+      "archived_sha256": "f7e45e5dd1b1210fc7fe77f69ca4bb2c1ef8c434b47ee1cd41fa2d128fb13238",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/stdout.txt",
+      "bytes": 714,
+      "original_sha256": "6216f7a3425b49a8b3ff1db96e50f8024b287cc6054d3b3310a9d0c80478dc05",
+      "archived_sha256": "6216f7a3425b49a8b3ff1db96e50f8024b287cc6054d3b3310a9d0c80478dc05",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/warm_baseline-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "45626fec81e89d8e637974332f09d76bcb3758a8e61b8c09a88af905baf22aa0",
+      "archived_sha256": "45626fec81e89d8e637974332f09d76bcb3758a8e61b8c09a88af905baf22aa0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/warm_baseline-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "b17813c1dd71659bec88c49323d1a6fd413990cac5aac3ea59597abc82179ed1",
+      "archived_sha256": "b17813c1dd71659bec88c49323d1a6fd413990cac5aac3ea59597abc82179ed1",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/warm_baseline-pressure.json",
+      "bytes": 247,
+      "original_sha256": "86ae8e473112e99adff3ceff0ff0e6eb9a32d3c2bef90561f5f0e048149e01c4",
+      "archived_sha256": "86ae8e473112e99adff3ceff0ff0e6eb9a32d3c2bef90561f5f0e048149e01c4",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/warm_baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "98448f2198f41e02454e5437c5f51d7bad4c622a84e68ec6cd8e65e222757165",
+      "archived_sha256": "98448f2198f41e02454e5437c5f51d7bad4c622a84e68ec6cd8e65e222757165",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/warm_baseline-vmmap.json",
+      "bytes": 8052,
+      "original_sha256": "3016d54e7634f29079fd14076dfb2cb98f820ae3761cd85488a9a483767228d2",
+      "archived_sha256": "3016d54e7634f29079fd14076dfb2cb98f820ae3761cd85488a9a483767228d2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-64MiB-r0/warm_baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "24657d90ac96c9c81794d456d16a07b409a405196ab2429100c39d03d92e897e",
+      "archived_sha256": "24657d90ac96c9c81794d456d16a07b409a405196ab2429100c39d03d92e897e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/baseline-footprint.json",
+      "bytes": 3300,
+      "original_sha256": "260918502346bd03e3b941c6ea1d9e6304a7176ef1ec73168cf01095aa3a5c2b",
+      "archived_sha256": "260918502346bd03e3b941c6ea1d9e6304a7176ef1ec73168cf01095aa3a5c2b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "70676930ce93cf5b78f52330d19e6e165733b22256728098d42ec37a38310e01",
+      "archived_sha256": "70676930ce93cf5b78f52330d19e6e165733b22256728098d42ec37a38310e01",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/baseline-pressure.json",
+      "bytes": 247,
+      "original_sha256": "3441feea7692699e15cb3ce482e1908c2bb9b403371337daaeb802065630c60e",
+      "archived_sha256": "3441feea7692699e15cb3ce482e1908c2bb9b403371337daaeb802065630c60e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "0036edd675977cb42ffacbdae4344e713878cd7d2ea073b258af40d4320f330c",
+      "archived_sha256": "0036edd675977cb42ffacbdae4344e713878cd7d2ea073b258af40d4320f330c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/baseline-vmmap.json",
+      "bytes": 6867,
+      "original_sha256": "9273108542a8cdbdc7c1cc6b67c5cb3183041ec2779ac3e5fa4cb8eb493c4a39",
+      "archived_sha256": "9273108542a8cdbdc7c1cc6b67c5cb3183041ec2779ac3e5fa4cb8eb493c4a39",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "706d6306b11b78ef615f019a3da3a3e5552f956504521d37b4f55f3899f99d1a",
+      "archived_sha256": "706d6306b11b78ef615f019a3da3a3e5552f956504521d37b4f55f3899f99d1a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/case.json",
+      "bytes": 59608,
+      "original_sha256": "375aea455a649b02ac12a49d2435b9cbff03f7cba906d52d83df86f34a932bb8",
+      "archived_sha256": "375aea455a649b02ac12a49d2435b9cbff03f7cba906d52d83df86f34a932bb8",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/commands_retired-footprint.json",
+      "bytes": 3301,
+      "original_sha256": "063f0d9b2efb61a1ef3f402fef244099f2d6ffc50cf8da8fbe09e9675d94028f",
+      "archived_sha256": "063f0d9b2efb61a1ef3f402fef244099f2d6ffc50cf8da8fbe09e9675d94028f",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/commands_retired-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "26ab45ebd1d97df4832a47cd0649e77b303f8a63ad12140f0363612208a98588",
+      "archived_sha256": "26ab45ebd1d97df4832a47cd0649e77b303f8a63ad12140f0363612208a98588",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/commands_retired-pressure.json",
+      "bytes": 248,
+      "original_sha256": "c0ce4847f40e69e0064e95262b7f42826a4cafe28fae014e15a8f62c1cf01f8c",
+      "archived_sha256": "c0ce4847f40e69e0064e95262b7f42826a4cafe28fae014e15a8f62c1cf01f8c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/commands_retired-swap.json",
+      "bytes": 216,
+      "original_sha256": "623ce0608711a5534580d6eaa7d1fd6d04599d5968ce3b7570a7142af6008a7f",
+      "archived_sha256": "623ce0608711a5534580d6eaa7d1fd6d04599d5968ce3b7570a7142af6008a7f",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/commands_retired-vmmap.json",
+      "bytes": 6867,
+      "original_sha256": "c9a3db1c45b1f0e3b3a3dc4b1578f19acdeaa8f9ff535e688f4108592ff69112",
+      "archived_sha256": "c9a3db1c45b1f0e3b3a3dc4b1578f19acdeaa8f9ff535e688f4108592ff69112",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/commands_retired-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "0e7b47d79aa03c6c32959561e627c294922b5a68f80567cbc2a50ba3cf666fa6",
+      "archived_sha256": "0e7b47d79aa03c6c32959561e627c294922b5a68f80567cbc2a50ba3cf666fa6",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/created-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "5bf74da7bfcd7477c157aa07d57e459007cb48e9fc0d7d79f20e6a55619659c0",
+      "archived_sha256": "5bf74da7bfcd7477c157aa07d57e459007cb48e9fc0d7d79f20e6a55619659c0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/created-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "11682ce7ab480c05fd04f1ee1db48d02dee2765f5242997f80957d347c4d1457",
+      "archived_sha256": "11682ce7ab480c05fd04f1ee1db48d02dee2765f5242997f80957d347c4d1457",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/created-pressure.json",
+      "bytes": 247,
+      "original_sha256": "5c96f48074bacda4876cad90206bf0048500939059396e9ad6a383ba45650ef1",
+      "archived_sha256": "5c96f48074bacda4876cad90206bf0048500939059396e9ad6a383ba45650ef1",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/created-swap.json",
+      "bytes": 216,
+      "original_sha256": "b498274f19c8ddbdec050c3444b09cee299755ba4fa8832f74a61256bd34fa8b",
+      "archived_sha256": "b498274f19c8ddbdec050c3444b09cee299755ba4fa8832f74a61256bd34fa8b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/created-vmmap.json",
+      "bytes": 6866,
+      "original_sha256": "32851f6816ff32df3e731d90322d809a7056a8e250566f4cff0928e91d095ae2",
+      "archived_sha256": "32851f6816ff32df3e731d90322d809a7056a8e250566f4cff0928e91d095ae2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/created-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "88ff64f711a442640d2fcbd617fe4dd7e82a4cbb6cabf45a3c649c1e61974703",
+      "archived_sha256": "88ff64f711a442640d2fcbd617fe4dd7e82a4cbb6cabf45a3c649c1e61974703",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/device_released-footprint.json",
+      "bytes": 3300,
+      "original_sha256": "6f1d6104e614c8ffbba5c9dc702d07123a19074b0b2135898a73f482eb378592",
+      "archived_sha256": "6f1d6104e614c8ffbba5c9dc702d07123a19074b0b2135898a73f482eb378592",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/device_released-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "0cdba39861dd61cbcd9e1352f5197203596187bd09d671ded79a06808fc7de69",
+      "archived_sha256": "0cdba39861dd61cbcd9e1352f5197203596187bd09d671ded79a06808fc7de69",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/device_released-pressure.json",
+      "bytes": 248,
+      "original_sha256": "d728cacd51c5dcc622f7e0115bb8c0025fc6513d084b9cd9da577a36b95b5e71",
+      "archived_sha256": "d728cacd51c5dcc622f7e0115bb8c0025fc6513d084b9cd9da577a36b95b5e71",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/device_released-swap.json",
+      "bytes": 215,
+      "original_sha256": "c762a45120ed16d006bdb5e8cc843e881047e80d7f22bcaa3d2b69a4a5a2b60c",
+      "archived_sha256": "c762a45120ed16d006bdb5e8cc843e881047e80d7f22bcaa3d2b69a4a5a2b60c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/device_released-vmmap.json",
+      "bytes": 6868,
+      "original_sha256": "902ae746321900621033477b2701ce0ebd61545b67f98e6ecaea1939ba52d187",
+      "archived_sha256": "902ae746321900621033477b2701ce0ebd61545b67f98e6ecaea1939ba52d187",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/device_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "2b778b9f021de55455578fc5b0a0af37b2a5a29e20b4f8d73dbfafa32d104911",
+      "archived_sha256": "2b778b9f021de55455578fc5b0a0af37b2a5a29e20b4f8d73dbfafa32d104911",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/fully_initialized-footprint.json",
+      "bytes": 3303,
+      "original_sha256": "17a1c429e4e4d374311a4a4afe00d13c6491328338cb96ae0aff8cebf08c5976",
+      "archived_sha256": "17a1c429e4e4d374311a4a4afe00d13c6491328338cb96ae0aff8cebf08c5976",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/fully_initialized-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "22939c89b3d8797b3eb8db60ddde1ce6ccbc479255a1bc9c956061b0aa05e00b",
+      "archived_sha256": "22939c89b3d8797b3eb8db60ddde1ce6ccbc479255a1bc9c956061b0aa05e00b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/fully_initialized-pointer_vmmap.json",
+      "bytes": 692,
+      "original_sha256": "3197036398f1922e6700e6b44cbebe11f4b5bb473760eeea515179fe944c53b0",
+      "archived_sha256": "3197036398f1922e6700e6b44cbebe11f4b5bb473760eeea515179fe944c53b0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/fully_initialized-pressure.json",
+      "bytes": 248,
+      "original_sha256": "457d186a98755a92911b9f73b7cc6ab617255ac69ee6651af3f5e37daed4f5f8",
+      "archived_sha256": "457d186a98755a92911b9f73b7cc6ab617255ac69ee6651af3f5e37daed4f5f8",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/fully_initialized-swap.json",
+      "bytes": 216,
+      "original_sha256": "ecd5a98a12b92a3244e17a537cb984a4eb56de96cb323455216e6899c06112c9",
+      "archived_sha256": "ecd5a98a12b92a3244e17a537cb984a4eb56de96cb323455216e6899c06112c9",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/fully_initialized-vmmap.json",
+      "bytes": 6873,
+      "original_sha256": "a9bd627c2217a7c3004988f937afd392a5484881a967b0689fcbac50435c6fc2",
+      "archived_sha256": "a9bd627c2217a7c3004988f937afd392a5484881a967b0689fcbac50435c6fc2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/fully_initialized-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "09ae8278ce69b59a5a4dfae4df848b4de7d443d848bc25667ac8568ea8635ec0",
+      "archived_sha256": "09ae8278ce69b59a5a4dfae4df848b4de7d443d848bc25667ac8568ea8635ec0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/gpu_complete-footprint.json",
+      "bytes": 3303,
+      "original_sha256": "461e07a9769bf7733a5e2dd9e4da3dd24cfc43457f9ded23c65d9f33d5fdbcd6",
+      "archived_sha256": "461e07a9769bf7733a5e2dd9e4da3dd24cfc43457f9ded23c65d9f33d5fdbcd6",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "7d2d6bbcbf5a846de9a2c741b56f3964995ec970e967b4b2852e4b538448fef4",
+      "archived_sha256": "7d2d6bbcbf5a846de9a2c741b56f3964995ec970e967b4b2852e4b538448fef4",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/gpu_complete-pointer_vmmap.json",
+      "bytes": 692,
+      "original_sha256": "e9c89a1b54655a1328f4f20d910900d39052eff2495327e40ce8c4b10deec638",
+      "archived_sha256": "e9c89a1b54655a1328f4f20d910900d39052eff2495327e40ce8c4b10deec638",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/gpu_complete-pressure.json",
+      "bytes": 247,
+      "original_sha256": "d03949e16ea834f566cb52aab8308833e635136521556bb26906ae4e1655f606",
+      "archived_sha256": "d03949e16ea834f566cb52aab8308833e635136521556bb26906ae4e1655f606",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/gpu_complete-swap.json",
+      "bytes": 215,
+      "original_sha256": "d2af926b906bae3c6c4f3c70fe42a6bc709cb0a8b96dc99fbf0739903e948284",
+      "archived_sha256": "d2af926b906bae3c6c4f3c70fe42a6bc709cb0a8b96dc99fbf0739903e948284",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/gpu_complete-vmmap.json",
+      "bytes": 6872,
+      "original_sha256": "0d9e0d10c11fbe9a0d040d1effc69541048c04c22a19d8cb10f8d03d04ffa563",
+      "archived_sha256": "0d9e0d10c11fbe9a0d040d1effc69541048c04c22a19d8cb10f8d03d04ffa563",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/gpu_complete-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "a63bc0a76f239c62f48568eb6c429e140bcd50252ecd815ea2ef3d031e4d0948",
+      "archived_sha256": "a63bc0a76f239c62f48568eb6c429e140bcd50252ecd815ea2ef3d031e4d0948",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/mapped-footprint.json",
+      "bytes": 3300,
+      "original_sha256": "e273ff4abb760b4e7d3bcba0f05b47257c0c35480e1bdb6efd8a0b6b1c0c8d06",
+      "archived_sha256": "e273ff4abb760b4e7d3bcba0f05b47257c0c35480e1bdb6efd8a0b6b1c0c8d06",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/mapped-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "c110c328758659fe32cce4415d50446203b71ef80665e426cc874b824bc12afc",
+      "archived_sha256": "c110c328758659fe32cce4415d50446203b71ef80665e426cc874b824bc12afc",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/mapped-pointer_vmmap.json",
+      "bytes": 786,
+      "original_sha256": "b79573a2fce97c9c7316147c9ccb5a2e944de3cde6a0f44a3929b69b81352889",
+      "archived_sha256": "b79573a2fce97c9c7316147c9ccb5a2e944de3cde6a0f44a3929b69b81352889",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/mapped-pressure.json",
+      "bytes": 247,
+      "original_sha256": "5190b336d4785e5f9a5724253a6f22fb15fa1622c214c670352b05a355483e61",
+      "archived_sha256": "5190b336d4785e5f9a5724253a6f22fb15fa1622c214c670352b05a355483e61",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/mapped-swap.json",
+      "bytes": 216,
+      "original_sha256": "845e2fe73757a997e07ad58f44d3f9286164893fe8b585347a2f28e629ab396a",
+      "archived_sha256": "845e2fe73757a997e07ad58f44d3f9286164893fe8b585347a2f28e629ab396a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/mapped-vmmap.json",
+      "bytes": 6867,
+      "original_sha256": "b28a6c69de872a5af185408b33bcf53ebaf04bb58b33d3b17efb92e5a6d4b50d",
+      "archived_sha256": "b28a6c69de872a5af185408b33bcf53ebaf04bb58b33d3b17efb92e5a6d4b50d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/mapped-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "525f95c1a27ea2252b671680e123046240a2804dd98f403c1d1316afa3ead8c2",
+      "archived_sha256": "525f95c1a27ea2252b671680e123046240a2804dd98f403c1d1316afa3ead8c2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/resources_released-footprint.json",
+      "bytes": 3300,
+      "original_sha256": "c7c4cc410634185c14836c3295c135b9fd5ce1c32c57947131bae6528c5e8bdd",
+      "archived_sha256": "c7c4cc410634185c14836c3295c135b9fd5ce1c32c57947131bae6528c5e8bdd",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/resources_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "8351c90596a84a620f7016efcb0811d44e57323296db0b64c37850a8f7d19d64",
+      "archived_sha256": "8351c90596a84a620f7016efcb0811d44e57323296db0b64c37850a8f7d19d64",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/resources_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "c5c779166efa73182c8c5af51b41383258c9495bb5dabdad4c430f43fe5bf7d6",
+      "archived_sha256": "c5c779166efa73182c8c5af51b41383258c9495bb5dabdad4c430f43fe5bf7d6",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/resources_released-swap.json",
+      "bytes": 215,
+      "original_sha256": "89a36e58ab0fcc9801758b91526e8b38d5753f3a10cb40b8d536f6dffc1b0649",
+      "archived_sha256": "89a36e58ab0fcc9801758b91526e8b38d5753f3a10cb40b8d536f6dffc1b0649",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/resources_released-vmmap.json",
+      "bytes": 6867,
+      "original_sha256": "4bc1af1b03efce24bb8d328c35c83230579cf5c48f34e1687e1221668714e309",
+      "archived_sha256": "4bc1af1b03efce24bb8d328c35c83230579cf5c48f34e1687e1221668714e309",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/resources_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "8f0dc9703c8a7f6e79e932afd4f6c461e44037c7ddaf8aa3e723e3ba127cd3b6",
+      "archived_sha256": "8f0dc9703c8a7f6e79e932afd4f6c461e44037c7ddaf8aa3e723e3ba127cd3b6",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/retired_settled-footprint.json",
+      "bytes": 3301,
+      "original_sha256": "6ace07277709e0bd480bc19f372acdaecff8474b59cea6708004b0c8ec9688d2",
+      "archived_sha256": "6ace07277709e0bd480bc19f372acdaecff8474b59cea6708004b0c8ec9688d2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/retired_settled-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "61401afd954ee37748a8f987802244d73dbd87c543111d88c5579b2b4d08b51c",
+      "archived_sha256": "61401afd954ee37748a8f987802244d73dbd87c543111d88c5579b2b4d08b51c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/retired_settled-pressure.json",
+      "bytes": 248,
+      "original_sha256": "1a1197547c4ae7da575fda93c2753e6182c5bc2dfbf3c26f19b48785b51daed5",
+      "archived_sha256": "1a1197547c4ae7da575fda93c2753e6182c5bc2dfbf3c26f19b48785b51daed5",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/retired_settled-swap.json",
+      "bytes": 216,
+      "original_sha256": "081044a779d47afc2afd79c8bcb18a8cdb922a3b1c6dd3e1f0c4e38b670fa1c3",
+      "archived_sha256": "081044a779d47afc2afd79c8bcb18a8cdb922a3b1c6dd3e1f0c4e38b670fa1c3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/retired_settled-vmmap.json",
+      "bytes": 6867,
+      "original_sha256": "eb488cf3f6bcc02e52859c383e0b14c9ec8381b8b4b61e4cbed9ff51a0ba8d3d",
+      "archived_sha256": "eb488cf3f6bcc02e52859c383e0b14c9ec8381b8b4b61e4cbed9ff51a0ba8d3d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/retired_settled-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "fa49f9f7c536cb71e7fbd6be28e76a222ca63077a629e189edea8906ade57ffd",
+      "archived_sha256": "fa49f9f7c536cb71e7fbd6be28e76a222ca63077a629e189edea8906ade57ffd",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/stdout.txt",
+      "bytes": 570,
+      "original_sha256": "e0fed0095143a0bdcdd35f7b6e18363224b47b84731dc37793bb0650da2c18d3",
+      "archived_sha256": "e0fed0095143a0bdcdd35f7b6e18363224b47b84731dc37793bb0650da2c18d3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/warm_baseline-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "ebd39233c70ccecc9feec9bf0d5f7a1b768e60322bc42db383edb0b23d708b92",
+      "archived_sha256": "ebd39233c70ccecc9feec9bf0d5f7a1b768e60322bc42db383edb0b23d708b92",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/warm_baseline-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "3f11c00348d83fce9a6e478127c70e6cdff3691d19c55dab6777593f88954d9c",
+      "archived_sha256": "3f11c00348d83fce9a6e478127c70e6cdff3691d19c55dab6777593f88954d9c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/warm_baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "77fcbf5cbbc8a2d4977c7a1a3cc918aa8f0c19d126e6722b0277212633242fe1",
+      "archived_sha256": "77fcbf5cbbc8a2d4977c7a1a3cc918aa8f0c19d126e6722b0277212633242fe1",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/warm_baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "639573e98abc70a1706762abcaf1caab5614c149aa601d7ea7767db9020c1d6a",
+      "archived_sha256": "639573e98abc70a1706762abcaf1caab5614c149aa601d7ea7767db9020c1d6a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/warm_baseline-vmmap.json",
+      "bytes": 6867,
+      "original_sha256": "40c5c8640cf0b85ab6490cb9fa2cdbee49fa2c117f7b05963193d8e4d471b574",
+      "archived_sha256": "40c5c8640cf0b85ab6490cb9fa2cdbee49fa2c117f7b05963193d8e4d471b574",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-256MiB-r0/warm_baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "c6185cc091cd48befdfdb3154290f778f781906ac31a378f05823b3b0de4f567",
+      "archived_sha256": "c6185cc091cd48befdfdb3154290f778f781906ac31a378f05823b3b0de4f567",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/baseline-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "df76898f69de7587ed43d4c4664132548ae6230589c505e1b3709c968fec52fc",
+      "archived_sha256": "df76898f69de7587ed43d4c4664132548ae6230589c505e1b3709c968fec52fc",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "8d842361515d562a073bd3cfc1e38f2bde6b7dde187d8e9e61a859a0d8f4feec",
+      "archived_sha256": "8d842361515d562a073bd3cfc1e38f2bde6b7dde187d8e9e61a859a0d8f4feec",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/baseline-pressure.json",
+      "bytes": 247,
+      "original_sha256": "9f55c8c41d1c39f76d8dbf44b115b9d39dfa7c14aa90abdf0bc9fcf349262355",
+      "archived_sha256": "9f55c8c41d1c39f76d8dbf44b115b9d39dfa7c14aa90abdf0bc9fcf349262355",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "ceedd30fad20f3d8d4b076e0f6c42150aa1abeefe0d86a0aaf6b78fcb0692f37",
+      "archived_sha256": "ceedd30fad20f3d8d4b076e0f6c42150aa1abeefe0d86a0aaf6b78fcb0692f37",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/baseline-vmmap.json",
+      "bytes": 6723,
+      "original_sha256": "5fd01eda6c8b2ae0e0df71cbc8aff195e913fecf9137fc4814fc548ee5e1ad30",
+      "archived_sha256": "5fd01eda6c8b2ae0e0df71cbc8aff195e913fecf9137fc4814fc548ee5e1ad30",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "d21b2d17aea91b9c972d5320975c06a82976cb69cd6a8660187d5aaf0adbfd70",
+      "archived_sha256": "d21b2d17aea91b9c972d5320975c06a82976cb69cd6a8660187d5aaf0adbfd70",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/case.json",
+      "bytes": 59560,
+      "original_sha256": "2eea409ef224dfc9b11e6eaf2f95edb6dea32d43bb89d518c325c3afa0e51fbc",
+      "archived_sha256": "2eea409ef224dfc9b11e6eaf2f95edb6dea32d43bb89d518c325c3afa0e51fbc",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/commands_retired-footprint.json",
+      "bytes": 3298,
+      "original_sha256": "dc36f038f9bff16c0a20f71bd2dda5add6b595c5f17e90878b3605db6436e792",
+      "archived_sha256": "dc36f038f9bff16c0a20f71bd2dda5add6b595c5f17e90878b3605db6436e792",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/commands_retired-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "c6db3a864097f09f20e708866306660ae6111d4876dd6f450ca78ac032cd1efa",
+      "archived_sha256": "c6db3a864097f09f20e708866306660ae6111d4876dd6f450ca78ac032cd1efa",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/commands_retired-pressure.json",
+      "bytes": 247,
+      "original_sha256": "3286b745863ab2dfe9eff7e4b0dbb20319ec173afbf8bea0200c87681aef9173",
+      "archived_sha256": "3286b745863ab2dfe9eff7e4b0dbb20319ec173afbf8bea0200c87681aef9173",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/commands_retired-swap.json",
+      "bytes": 216,
+      "original_sha256": "a4cf5a2324563e9049708d95c432f456b36278d469671bb46eeed834a4582c0a",
+      "archived_sha256": "a4cf5a2324563e9049708d95c432f456b36278d469671bb46eeed834a4582c0a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/commands_retired-vmmap.json",
+      "bytes": 6726,
+      "original_sha256": "a25974a70a4ae54f64e6e385026effdb4d32629c3828448acaf9815f949aa026",
+      "archived_sha256": "a25974a70a4ae54f64e6e385026effdb4d32629c3828448acaf9815f949aa026",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/commands_retired-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "a7e754d50fd1cf69e131307163b03638a2e8798dfb951bfc360f7665134b9a2a",
+      "archived_sha256": "a7e754d50fd1cf69e131307163b03638a2e8798dfb951bfc360f7665134b9a2a",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/created-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "fa65fa10fe8cdab9990c776a9bfc6ff01d2471324c91e45d69965bd852f15906",
+      "archived_sha256": "fa65fa10fe8cdab9990c776a9bfc6ff01d2471324c91e45d69965bd852f15906",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/created-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "6a804aff60fefc6780de0ef39a40d9c9d23a5cd0797810eb5319401223151814",
+      "archived_sha256": "6a804aff60fefc6780de0ef39a40d9c9d23a5cd0797810eb5319401223151814",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/created-pressure.json",
+      "bytes": 247,
+      "original_sha256": "af56a431bdec0ec9cd6c4d9c0f05bed3e2799b342c4ac9770301abc6ae964ddd",
+      "archived_sha256": "af56a431bdec0ec9cd6c4d9c0f05bed3e2799b342c4ac9770301abc6ae964ddd",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/created-swap.json",
+      "bytes": 216,
+      "original_sha256": "e7607d795c4c233f49a0edb2a272aefcd83d98b4ef9c88da44afa86e1162890e",
+      "archived_sha256": "e7607d795c4c233f49a0edb2a272aefcd83d98b4ef9c88da44afa86e1162890e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/created-vmmap.json",
+      "bytes": 6723,
+      "original_sha256": "fad181e0076ec01f0f83634246ff172b5acdd50553e9fbf0753a3044f6458f8c",
+      "archived_sha256": "fad181e0076ec01f0f83634246ff172b5acdd50553e9fbf0753a3044f6458f8c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/created-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "5de4afde3536483ce784537a14666ae98f0bfe914b611829d669db0361ceb69d",
+      "archived_sha256": "5de4afde3536483ce784537a14666ae98f0bfe914b611829d669db0361ceb69d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/device_released-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "8d5da3f36e552d76e44a785c5fc3c447fb7b77e3199df17a1918569e7b4d81a5",
+      "archived_sha256": "8d5da3f36e552d76e44a785c5fc3c447fb7b77e3199df17a1918569e7b4d81a5",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/device_released-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "c02c5c845798d7fbc3c80971258b079cfdd5ec0b57ef5aff6820137b489e56ea",
+      "archived_sha256": "c02c5c845798d7fbc3c80971258b079cfdd5ec0b57ef5aff6820137b489e56ea",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/device_released-pressure.json",
+      "bytes": 248,
+      "original_sha256": "79141585c823b1a43812cfb569b2cd82036715485e9dbc9cdfd5c612f27aef5d",
+      "archived_sha256": "79141585c823b1a43812cfb569b2cd82036715485e9dbc9cdfd5c612f27aef5d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/device_released-swap.json",
+      "bytes": 216,
+      "original_sha256": "34067182fb3c9e7259db897bff46ff1a3c5020c6a086fb8ab9d7ba3d14a33ada",
+      "archived_sha256": "34067182fb3c9e7259db897bff46ff1a3c5020c6a086fb8ab9d7ba3d14a33ada",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/device_released-vmmap.json",
+      "bytes": 6726,
+      "original_sha256": "fe1489da8c3a26eea7788965c576006dd5f3c5a18015aae781a6f4ceacf82693",
+      "archived_sha256": "fe1489da8c3a26eea7788965c576006dd5f3c5a18015aae781a6f4ceacf82693",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/device_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "0bbaca93be0798e992a1ab88b074e09734dc7e100a9f2cdfeb9845001c0a49a4",
+      "archived_sha256": "0bbaca93be0798e992a1ab88b074e09734dc7e100a9f2cdfeb9845001c0a49a4",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/fully_initialized-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "beafedc01dfbbc52757b04c409e842a4820dbb6669212c1b8ac49f69020b568e",
+      "archived_sha256": "beafedc01dfbbc52757b04c409e842a4820dbb6669212c1b8ac49f69020b568e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/fully_initialized-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "ade15f232c6a6cb7b38dd2ff3090ce2460c4012f6291017531db9ba0ed41432d",
+      "archived_sha256": "ade15f232c6a6cb7b38dd2ff3090ce2460c4012f6291017531db9ba0ed41432d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/fully_initialized-pointer_vmmap.json",
+      "bytes": 691,
+      "original_sha256": "a4507e45f4bc2c7ff32aa86bbab8163fa0e215f98870e5fbb6010b6ee5abb500",
+      "archived_sha256": "a4507e45f4bc2c7ff32aa86bbab8163fa0e215f98870e5fbb6010b6ee5abb500",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/fully_initialized-pressure.json",
+      "bytes": 248,
+      "original_sha256": "dce92e2d2e05795446e4c98701378faa84b1eed4cdd501c8658fe3df313515ab",
+      "archived_sha256": "dce92e2d2e05795446e4c98701378faa84b1eed4cdd501c8658fe3df313515ab",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/fully_initialized-swap.json",
+      "bytes": 215,
+      "original_sha256": "2eb3cc0093fb9aea0eeda93027217897366fa8ad5b1738d97c7274deed6c68c3",
+      "archived_sha256": "2eb3cc0093fb9aea0eeda93027217897366fa8ad5b1738d97c7274deed6c68c3",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/fully_initialized-vmmap.json",
+      "bytes": 6724,
+      "original_sha256": "653f3f24682832239f0b0bf68e7f645466abc0a1349cf0827bc09a5e21278a35",
+      "archived_sha256": "653f3f24682832239f0b0bf68e7f645466abc0a1349cf0827bc09a5e21278a35",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/fully_initialized-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "400a38a27e315d35c2bd002f9d586cd8dd431702700e1fbd554b15bcaa2e4d28",
+      "archived_sha256": "400a38a27e315d35c2bd002f9d586cd8dd431702700e1fbd554b15bcaa2e4d28",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/gpu_complete-footprint.json",
+      "bytes": 3300,
+      "original_sha256": "b5b23862bc1dcd2ce712fabf418923e49ef1e547f5fb785ff250b536c8f5c99c",
+      "archived_sha256": "b5b23862bc1dcd2ce712fabf418923e49ef1e547f5fb785ff250b536c8f5c99c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "ebc491a03d6c3be7b5d373227dd49ab988e1cf160bf92203dbe196715a7e0520",
+      "archived_sha256": "ebc491a03d6c3be7b5d373227dd49ab988e1cf160bf92203dbe196715a7e0520",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/gpu_complete-pointer_vmmap.json",
+      "bytes": 691,
+      "original_sha256": "96f172e5255936134aac80f9f2c556147f841243b8e97df4c48b880e48ab69b7",
+      "archived_sha256": "96f172e5255936134aac80f9f2c556147f841243b8e97df4c48b880e48ab69b7",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/gpu_complete-pressure.json",
+      "bytes": 248,
+      "original_sha256": "4124f301121da2a5efe49b170f02aa38d476e0fddbbd044d2af8834ac639ab61",
+      "archived_sha256": "4124f301121da2a5efe49b170f02aa38d476e0fddbbd044d2af8834ac639ab61",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/gpu_complete-swap.json",
+      "bytes": 215,
+      "original_sha256": "c0ca03dbd98f2cf72d62c04eaacbe7eb5f51aadca066e8d648e9752a670aec6f",
+      "archived_sha256": "c0ca03dbd98f2cf72d62c04eaacbe7eb5f51aadca066e8d648e9752a670aec6f",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/gpu_complete-vmmap.json",
+      "bytes": 6727,
+      "original_sha256": "3b11a8bec1cf94d40d813e170121a91a758b359caf99f66558d7c1de936eab11",
+      "archived_sha256": "3b11a8bec1cf94d40d813e170121a91a758b359caf99f66558d7c1de936eab11",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/gpu_complete-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "f45a94181b5eec8459d1e20d2d73eb53988185cd0810ee8240f84d1c98a7cda4",
+      "archived_sha256": "f45a94181b5eec8459d1e20d2d73eb53988185cd0810ee8240f84d1c98a7cda4",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/mapped-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "2f3f932d0127de326264526f9af65e4e8de86bcbb9afa6aa03a53946d7865b82",
+      "archived_sha256": "2f3f932d0127de326264526f9af65e4e8de86bcbb9afa6aa03a53946d7865b82",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/mapped-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "b5ee6eade9b13e531a0466b6f064c5fb0ddb6e07afecad97988fb334f5a3e4ad",
+      "archived_sha256": "b5ee6eade9b13e531a0466b6f064c5fb0ddb6e07afecad97988fb334f5a3e4ad",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/mapped-pointer_vmmap.json",
+      "bytes": 738,
+      "original_sha256": "a88f7a019e69fb47ab7befdb3d3d8534e768e6993de50ded78ee9175cd16fbc4",
+      "archived_sha256": "a88f7a019e69fb47ab7befdb3d3d8534e768e6993de50ded78ee9175cd16fbc4",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/mapped-pressure.json",
+      "bytes": 248,
+      "original_sha256": "603f1b75a1be0c98928040edb9239fb6ece086fa557f9318f09f767dab84f0d0",
+      "archived_sha256": "603f1b75a1be0c98928040edb9239fb6ece086fa557f9318f09f767dab84f0d0",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/mapped-swap.json",
+      "bytes": 216,
+      "original_sha256": "9e407f53fa89ff946d0f7f485a10c9fcbaa68a32fcc4d20144630df1f38b4f01",
+      "archived_sha256": "9e407f53fa89ff946d0f7f485a10c9fcbaa68a32fcc4d20144630df1f38b4f01",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/mapped-vmmap.json",
+      "bytes": 6724,
+      "original_sha256": "923fd57e517d8231bbef694cc4bc7fa06eb7bc3cb835e74317ce6a996728d47c",
+      "archived_sha256": "923fd57e517d8231bbef694cc4bc7fa06eb7bc3cb835e74317ce6a996728d47c",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/mapped-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "e693cbadb27cf46a6d5c0a91789c82e58a4778e3af13002eafb5109ff0143ff2",
+      "archived_sha256": "e693cbadb27cf46a6d5c0a91789c82e58a4778e3af13002eafb5109ff0143ff2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/resources_released-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "ef65d6aec0529071a0ff4ff343a25e6e71fd8d43a89ff77a3853cccf8c1629f9",
+      "archived_sha256": "ef65d6aec0529071a0ff4ff343a25e6e71fd8d43a89ff77a3853cccf8c1629f9",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/resources_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "e8c9114470253942dfa9012ce0ff526cf3f45ca5986fc2bb8b2ae723c3fbdf5e",
+      "archived_sha256": "e8c9114470253942dfa9012ce0ff526cf3f45ca5986fc2bb8b2ae723c3fbdf5e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/resources_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "b7555602be1b75286f428c9e74c083752a6dba4d9919174095ef211e25f53bca",
+      "archived_sha256": "b7555602be1b75286f428c9e74c083752a6dba4d9919174095ef211e25f53bca",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/resources_released-swap.json",
+      "bytes": 215,
+      "original_sha256": "f3d5b7b2abc3e06620f699fb5774dd9f76d12ddb70615c945237d1f7a98328ea",
+      "archived_sha256": "f3d5b7b2abc3e06620f699fb5774dd9f76d12ddb70615c945237d1f7a98328ea",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/resources_released-vmmap.json",
+      "bytes": 6727,
+      "original_sha256": "c251e63c54e6ad36d2837ce158622d7c955a55ac32a71222c2efe9d57c07fcd7",
+      "archived_sha256": "c251e63c54e6ad36d2837ce158622d7c955a55ac32a71222c2efe9d57c07fcd7",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/resources_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "169652492a79eb40b3f7570d6654dda9087ddf0bcbc07a4c7989aecbee66e84b",
+      "archived_sha256": "169652492a79eb40b3f7570d6654dda9087ddf0bcbc07a4c7989aecbee66e84b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/retired_settled-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "2eb5c069a3b1d26faf7978a7e8c303999e9eecb9c880806e857e499f3b801c6b",
+      "archived_sha256": "2eb5c069a3b1d26faf7978a7e8c303999e9eecb9c880806e857e499f3b801c6b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/retired_settled-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "43720dbc6e848e8533244610cc9bc4cf6aa0d6e77e869535f77f213b39389987",
+      "archived_sha256": "43720dbc6e848e8533244610cc9bc4cf6aa0d6e77e869535f77f213b39389987",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/retired_settled-pressure.json",
+      "bytes": 247,
+      "original_sha256": "8a96ed51a2178d19515ae7f4f9d6c9b86f4804425a86ac5c897402c3458da95e",
+      "archived_sha256": "8a96ed51a2178d19515ae7f4f9d6c9b86f4804425a86ac5c897402c3458da95e",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/retired_settled-swap.json",
+      "bytes": 215,
+      "original_sha256": "6688fe027ea27a1f12d84e5d77e68a3d7ffe03a3bdab979199443790b71f78ad",
+      "archived_sha256": "6688fe027ea27a1f12d84e5d77e68a3d7ffe03a3bdab979199443790b71f78ad",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/retired_settled-vmmap.json",
+      "bytes": 6727,
+      "original_sha256": "4bcb593b258d79a3d6abeb2862c98dfef8da05daef3c103388c85b05c85d1727",
+      "archived_sha256": "4bcb593b258d79a3d6abeb2862c98dfef8da05daef3c103388c85b05c85d1727",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/retired_settled-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "7f239f0ffa02a8d0ef0545f890ea512c6d0c296d7423cc0493554ba580a9a91b",
+      "archived_sha256": "7f239f0ffa02a8d0ef0545f890ea512c6d0c296d7423cc0493554ba580a9a91b",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/stdout.txt",
+      "bytes": 569,
+      "original_sha256": "c08d02cf95d4daa2e5635fb5cf792c2960fbccf987ad5165091c052883130d52",
+      "archived_sha256": "c08d02cf95d4daa2e5635fb5cf792c2960fbccf987ad5165091c052883130d52",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/warm_baseline-footprint.json",
+      "bytes": 3299,
+      "original_sha256": "18bc2ff60aab3c263904d00cdf35cc960bca69616f32f8f67287571b7194aaf2",
+      "archived_sha256": "18bc2ff60aab3c263904d00cdf35cc960bca69616f32f8f67287571b7194aaf2",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/warm_baseline-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "9012858ac40a6fc0cc774f1c66d37794e5acae534b539d31288c26e75a3e05c4",
+      "archived_sha256": "9012858ac40a6fc0cc774f1c66d37794e5acae534b539d31288c26e75a3e05c4",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/warm_baseline-pressure.json",
+      "bytes": 247,
+      "original_sha256": "f9e4d5015556a7650b7480bff1269a1a68b02792002acb79498ac2d01b9d4ebd",
+      "archived_sha256": "f9e4d5015556a7650b7480bff1269a1a68b02792002acb79498ac2d01b9d4ebd",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/warm_baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "645a67b6fd459d58619a47e8f142cde0ac9cefbb7addb41901fa2bb542259e8d",
+      "archived_sha256": "645a67b6fd459d58619a47e8f142cde0ac9cefbb7addb41901fa2bb542259e8d",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/warm_baseline-vmmap.json",
+      "bytes": 6723,
+      "original_sha256": "de363a550455fa54a35c16ea8e065d8e3d2db7429538a6d7db2812f13ca81b39",
+      "archived_sha256": "de363a550455fa54a35c16ea8e065d8e3d2db7429538a6d7db2812f13ca81b39",
+      "redacted": false
+    },
+    {
+      "path": "memory-cpu-plain-64MiB-r0/warm_baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "18fb10222e0a43cb76bf6d52ff481c5a00fa1881d2eaf5d332ac50f3cb70020b",
+      "archived_sha256": "18fb10222e0a43cb76bf6d52ff481c5a00fa1881d2eaf5d332ac50f3cb70020b",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/baseline-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "9c48f3fb6c3ec717e9d12503388291e43d08d78bab8ebb31ab76f20e961a64ee",
+      "archived_sha256": "9c48f3fb6c3ec717e9d12503388291e43d08d78bab8ebb31ab76f20e961a64ee",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/baseline-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "c13df4c661b20f40c37da77ba87475840e1637fe565b5d9d5b16170903d8123f",
+      "archived_sha256": "c13df4c661b20f40c37da77ba87475840e1637fe565b5d9d5b16170903d8123f",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/baseline-pressure.json",
+      "bytes": 247,
+      "original_sha256": "749a811a78ac7e8c356307543ac0a3e838cf0226d3ebe53716b02b2e3c926e12",
+      "archived_sha256": "749a811a78ac7e8c356307543ac0a3e838cf0226d3ebe53716b02b2e3c926e12",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "46181f7ba0b2bf55ccfb79be6c1c88c75966d576a7504036e1914cda2758e2f7",
+      "archived_sha256": "46181f7ba0b2bf55ccfb79be6c1c88c75966d576a7504036e1914cda2758e2f7",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/baseline-vmmap.json",
+      "bytes": 8348,
+      "original_sha256": "69ea7b006bac82ed70f6a2a1bd9572e427721e1b1bc964df4b849dd34ab2967a",
+      "archived_sha256": "69ea7b006bac82ed70f6a2a1bd9572e427721e1b1bc964df4b849dd34ab2967a",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "31176523821c835d8418bf502cd4dcc0a89dc7ae18e8942364591b1ae1add4c0",
+      "archived_sha256": "31176523821c835d8418bf502cd4dcc0a89dc7ae18e8942364591b1ae1add4c0",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/case.json",
+      "bytes": 60188,
+      "original_sha256": "b70ccede4694b5341c1781b8367c091ee9eeac753809007aa8e193f7f0cf1a52",
+      "archived_sha256": "b70ccede4694b5341c1781b8367c091ee9eeac753809007aa8e193f7f0cf1a52",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/commands_retired-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "e19a9ca4da73c4c5b0ef3b52ebbd6b7997820856e4e38469f3a237550f3fddb5",
+      "archived_sha256": "e19a9ca4da73c4c5b0ef3b52ebbd6b7997820856e4e38469f3a237550f3fddb5",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/commands_retired-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "f816c4e8973a259e35ba734ce6819e9d46c0e157c39aa982288a4ff7342ac6e0",
+      "archived_sha256": "f816c4e8973a259e35ba734ce6819e9d46c0e157c39aa982288a4ff7342ac6e0",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/commands_retired-pressure.json",
+      "bytes": 248,
+      "original_sha256": "02f4ce8df312c2a4e14f1f8c9bb781250f5745bf863ab7aec9fb6c24c6e95c21",
+      "archived_sha256": "02f4ce8df312c2a4e14f1f8c9bb781250f5745bf863ab7aec9fb6c24c6e95c21",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/commands_retired-swap.json",
+      "bytes": 215,
+      "original_sha256": "a84df589e6395d8c8775564a5bb18fc01f74710af85a87c359074f1c361959fa",
+      "archived_sha256": "a84df589e6395d8c8775564a5bb18fc01f74710af85a87c359074f1c361959fa",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/commands_retired-vmmap.json",
+      "bytes": 8196,
+      "original_sha256": "291f0832edd98a2cb62434ac53d0542e41771c8fb63c537577c683ce80c13ecc",
+      "archived_sha256": "291f0832edd98a2cb62434ac53d0542e41771c8fb63c537577c683ce80c13ecc",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/commands_retired-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "c97b80a2d2602e62dae24037a7f88406cb7b02c7f75a8b2ab5d62b9080bdb696",
+      "archived_sha256": "c97b80a2d2602e62dae24037a7f88406cb7b02c7f75a8b2ab5d62b9080bdb696",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/consumption.dxbc",
+      "bytes": 1384,
+      "original_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "archived_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/consumption.hlsl",
+      "bytes": 365,
+      "original_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "archived_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/created-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "61747fa9fb4304bbfb3cdf8fe938274f3663bd1d8361542e6210631547f5866e",
+      "archived_sha256": "61747fa9fb4304bbfb3cdf8fe938274f3663bd1d8361542e6210631547f5866e",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/created-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "ef562344eea8b3c21212f9066c5b8023aac7676ecf2779e70baf28e42dc29d15",
+      "archived_sha256": "ef562344eea8b3c21212f9066c5b8023aac7676ecf2779e70baf28e42dc29d15",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/created-pressure.json",
+      "bytes": 247,
+      "original_sha256": "71d621cc2c672157e2da2b2c3d8721cadbfe083fbfb42c2f028f31db31d05a5a",
+      "archived_sha256": "71d621cc2c672157e2da2b2c3d8721cadbfe083fbfb42c2f028f31db31d05a5a",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/created-swap.json",
+      "bytes": 216,
+      "original_sha256": "fa9acc108ba50e327ba9d022102b055f73f0735798e4e197da78e484aea90bd3",
+      "archived_sha256": "fa9acc108ba50e327ba9d022102b055f73f0735798e4e197da78e484aea90bd3",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/created-vmmap.json",
+      "bytes": 8349,
+      "original_sha256": "e4e7613e4db04292e49b9dbf45cce999d7b902a1df1388dd69ff07209521550d",
+      "archived_sha256": "e4e7613e4db04292e49b9dbf45cce999d7b902a1df1388dd69ff07209521550d",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/created-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "50ea94efaa5fc527978b254ee1534d9c82cd38d4f20b3a0ce2534e516068c0d7",
+      "archived_sha256": "50ea94efaa5fc527978b254ee1534d9c82cd38d4f20b3a0ce2534e516068c0d7",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/device_released-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "811945c9bce729144ba9043af6a67d4745b57ee51f1b809d0eae0d3a29f8c6fb",
+      "archived_sha256": "811945c9bce729144ba9043af6a67d4745b57ee51f1b809d0eae0d3a29f8c6fb",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/device_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "782b54f8b6eba069da9478ded7c1a7227b7e70e6dbb325dd410d8ce97767e620",
+      "archived_sha256": "782b54f8b6eba069da9478ded7c1a7227b7e70e6dbb325dd410d8ce97767e620",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/device_released-pressure.json",
+      "bytes": 248,
+      "original_sha256": "f4ea9dc6402c631afd41aa4b20a39ea28505300567e1d70e414c1654a8a26479",
+      "archived_sha256": "f4ea9dc6402c631afd41aa4b20a39ea28505300567e1d70e414c1654a8a26479",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/device_released-swap.json",
+      "bytes": 216,
+      "original_sha256": "ae7c22406fffe68d6407d9ce95998156ff600c33a8b9ec0e3d989822f89eef6b",
+      "archived_sha256": "ae7c22406fffe68d6407d9ce95998156ff600c33a8b9ec0e3d989822f89eef6b",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/device_released-vmmap.json",
+      "bytes": 8196,
+      "original_sha256": "69f752be5a01ba1a27a6ed0add67d3b0fd7720be2c88a576a5ef2895df157c60",
+      "archived_sha256": "69f752be5a01ba1a27a6ed0add67d3b0fd7720be2c88a576a5ef2895df157c60",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/device_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "36a4e86e3ea81cbbb71d70561fde3ec2adc2e81a14a76dde0811e8bf8aa156b2",
+      "archived_sha256": "36a4e86e3ea81cbbb71d70561fde3ec2adc2e81a14a76dde0811e8bf8aa156b2",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/fully_initialized-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "0e1ad5039f05d6fd8f52db66db63fa3867d0a9ae114f11bc6f62d7734bd8998d",
+      "archived_sha256": "0e1ad5039f05d6fd8f52db66db63fa3867d0a9ae114f11bc6f62d7734bd8998d",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/fully_initialized-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "07765bf3a13cec016c2332fcc65da3156d190ced0d15f72b07b2eb7769d79f56",
+      "archived_sha256": "07765bf3a13cec016c2332fcc65da3156d190ced0d15f72b07b2eb7769d79f56",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/fully_initialized-pointer_vmmap.json",
+      "bytes": 890,
+      "original_sha256": "510f08364f4087705d926d90bb05cb567a4d85cf3e5010ad7e1972d2a26c862d",
+      "archived_sha256": "510f08364f4087705d926d90bb05cb567a4d85cf3e5010ad7e1972d2a26c862d",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/fully_initialized-pressure.json",
+      "bytes": 247,
+      "original_sha256": "159bae60ef57298f3bdbf0f89cb8eb7e64a70da90d771a29efc9a12e07877865",
+      "archived_sha256": "159bae60ef57298f3bdbf0f89cb8eb7e64a70da90d771a29efc9a12e07877865",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/fully_initialized-swap.json",
+      "bytes": 215,
+      "original_sha256": "8aa7c68cc519e15a109f3b5255c80b029605cc32841756ec61d5887e4b2d27ac",
+      "archived_sha256": "8aa7c68cc519e15a109f3b5255c80b029605cc32841756ec61d5887e4b2d27ac",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/fully_initialized-vmmap.json",
+      "bytes": 8348,
+      "original_sha256": "e0474ce43875bff4afbd41ac92a75714dd8fdcefd6b36a56fe61a2a5d7e75c01",
+      "archived_sha256": "e0474ce43875bff4afbd41ac92a75714dd8fdcefd6b36a56fe61a2a5d7e75c01",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/fully_initialized-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "dea5358ab20830d384921944d8af33ecdaf153e377b2c51e2015533bfc157990",
+      "archived_sha256": "dea5358ab20830d384921944d8af33ecdaf153e377b2c51e2015533bfc157990",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/gpu_complete-footprint.json",
+      "bytes": 3993,
+      "original_sha256": "91684f8374633b7f9107a8c04a13d94bf62b36def7923f082648dca13ceac6e0",
+      "archived_sha256": "91684f8374633b7f9107a8c04a13d94bf62b36def7923f082648dca13ceac6e0",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "a390d55395e48a0b2cf4859fec0de7e08b91d366665b161e515af5954cb32477",
+      "archived_sha256": "a390d55395e48a0b2cf4859fec0de7e08b91d366665b161e515af5954cb32477",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/gpu_complete-pointer_vmmap.json",
+      "bytes": 842,
+      "original_sha256": "d07eed4f316dff09cd48ab24bd279d158bf6bb4b75ff6a80a0081c798499bf35",
+      "archived_sha256": "d07eed4f316dff09cd48ab24bd279d158bf6bb4b75ff6a80a0081c798499bf35",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/gpu_complete-pressure.json",
+      "bytes": 248,
+      "original_sha256": "7619d76379c53d6133e71784ce381502492a5b190cdecdf83238af728da93b9a",
+      "archived_sha256": "7619d76379c53d6133e71784ce381502492a5b190cdecdf83238af728da93b9a",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/gpu_complete-swap.json",
+      "bytes": 216,
+      "original_sha256": "560abc6b5dc676002ee861327330381f425e7783a2b5b9c4cdd4720ecc98638f",
+      "archived_sha256": "560abc6b5dc676002ee861327330381f425e7783a2b5b9c4cdd4720ecc98638f",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/gpu_complete-vmmap.json",
+      "bytes": 8194,
+      "original_sha256": "01693674177917f5dac0b8e57685746ce09c929b32dc1d665430816e6f2cd13b",
+      "archived_sha256": "01693674177917f5dac0b8e57685746ce09c929b32dc1d665430816e6f2cd13b",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/gpu_complete-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "a9ecbf9349d25504e4dfd13a3e964f5b6d52887c5af3a835361006336c491d85",
+      "archived_sha256": "a9ecbf9349d25504e4dfd13a3e964f5b6d52887c5af3a835361006336c491d85",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/mapped-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "c4a2be5f03a48851460f8796b8651256a8b49870c62b3d103532692eea4b6044",
+      "archived_sha256": "c4a2be5f03a48851460f8796b8651256a8b49870c62b3d103532692eea4b6044",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/mapped-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "d05a80b84bfd94bf76acf5fefb02c206301e48a31979b09e55b1077ca42e3057",
+      "archived_sha256": "d05a80b84bfd94bf76acf5fefb02c206301e48a31979b09e55b1077ca42e3057",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/mapped-pointer_vmmap.json",
+      "bytes": 890,
+      "original_sha256": "1ef5ac6856930de244398389a8cd2140eb78877d66aad0e2517a7ac8ca095288",
+      "archived_sha256": "1ef5ac6856930de244398389a8cd2140eb78877d66aad0e2517a7ac8ca095288",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/mapped-pressure.json",
+      "bytes": 247,
+      "original_sha256": "959f6882d85229a03885313c1120a548c2145d325b62dcd48f41f779d838c021",
+      "archived_sha256": "959f6882d85229a03885313c1120a548c2145d325b62dcd48f41f779d838c021",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/mapped-swap.json",
+      "bytes": 215,
+      "original_sha256": "c370e1bbb6ad0f41e92c36b97950f9713f45940e9fdb5c1fbceb10cf1cf6a238",
+      "archived_sha256": "c370e1bbb6ad0f41e92c36b97950f9713f45940e9fdb5c1fbceb10cf1cf6a238",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/mapped-vmmap.json",
+      "bytes": 8348,
+      "original_sha256": "03c99c32fbf66a649554755eb0648e9baabd014f6e1520793d6a670ed506c4ac",
+      "archived_sha256": "03c99c32fbf66a649554755eb0648e9baabd014f6e1520793d6a670ed506c4ac",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/mapped-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "2177939f8c0d7fbe8d1d27464f6d04e245e53ba43ff4f76c064ed0392bb791cb",
+      "archived_sha256": "2177939f8c0d7fbe8d1d27464f6d04e245e53ba43ff4f76c064ed0392bb791cb",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/resources_released-footprint.json",
+      "bytes": 3993,
+      "original_sha256": "0f0a85e85369fef7385a309b9943d33f331004ee2d8a2bcbfed0c0fc1ee975e0",
+      "archived_sha256": "0f0a85e85369fef7385a309b9943d33f331004ee2d8a2bcbfed0c0fc1ee975e0",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/resources_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "9e5764b776fcfd1923ea501b63ed5f8df3ebc04f4d5075a76e488fb5276c5417",
+      "archived_sha256": "9e5764b776fcfd1923ea501b63ed5f8df3ebc04f4d5075a76e488fb5276c5417",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/resources_released-pressure.json",
+      "bytes": 248,
+      "original_sha256": "036bbcdbd3510c8f0a98e82586cd3f73256cdfeb58a0d868156af574c2149e55",
+      "archived_sha256": "036bbcdbd3510c8f0a98e82586cd3f73256cdfeb58a0d868156af574c2149e55",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/resources_released-swap.json",
+      "bytes": 214,
+      "original_sha256": "13fbf3c2a0de7aa7de7b6e1d051d6fa07de7e3abc90e9cff794f2e823a70e80a",
+      "archived_sha256": "13fbf3c2a0de7aa7de7b6e1d051d6fa07de7e3abc90e9cff794f2e823a70e80a",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/resources_released-vmmap.json",
+      "bytes": 8197,
+      "original_sha256": "4742f9ca60d296607f4562453211b36d289907ce2e71222203657ec751f41bca",
+      "archived_sha256": "4742f9ca60d296607f4562453211b36d289907ce2e71222203657ec751f41bca",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/resources_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "4e0e71160b2daf321b33f40c3642ae11cf074765b88dadd4f152757a1bdc68cb",
+      "archived_sha256": "4e0e71160b2daf321b33f40c3642ae11cf074765b88dadd4f152757a1bdc68cb",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/retired_settled-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "047d4d1ea405b2088cf2ce221a59697620e444f9bab233506c7d9e889d079a32",
+      "archived_sha256": "047d4d1ea405b2088cf2ce221a59697620e444f9bab233506c7d9e889d079a32",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/retired_settled-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "39fec8a0d0070738cb7df30f187eba80c6fea1eda71b4d9eac8fd9515509bd2c",
+      "archived_sha256": "39fec8a0d0070738cb7df30f187eba80c6fea1eda71b4d9eac8fd9515509bd2c",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/retired_settled-pressure.json",
+      "bytes": 247,
+      "original_sha256": "893fb6deacc41603d025a0bb75677800416eb04ac5dd85f9121d2eec97634c0f",
+      "archived_sha256": "893fb6deacc41603d025a0bb75677800416eb04ac5dd85f9121d2eec97634c0f",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/retired_settled-swap.json",
+      "bytes": 216,
+      "original_sha256": "052d960c49070d1d68a9819d39a2d57a8f45382fe662f532274517f86498798d",
+      "archived_sha256": "052d960c49070d1d68a9819d39a2d57a8f45382fe662f532274517f86498798d",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/retired_settled-vmmap.json",
+      "bytes": 8197,
+      "original_sha256": "2fcee4baff2087259453c0d421c343d0f7172bd0e7fa7dae37a4f94f41e5c1e8",
+      "archived_sha256": "2fcee4baff2087259453c0d421c343d0f7172bd0e7fa7dae37a4f94f41e5c1e8",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/retired_settled-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "0fe14f634333628d30164c0b448ba78e89feecd334044645f7276126e3c2710e",
+      "archived_sha256": "0fe14f634333628d30164c0b448ba78e89feecd334044645f7276126e3c2710e",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/stderr.txt",
+      "bytes": 57,
+      "original_sha256": "36e40620843f9c688b8911384f7e308955adef8be76c248e85ef83bca19c6930",
+      "archived_sha256": "36e40620843f9c688b8911384f7e308955adef8be76c248e85ef83bca19c6930",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/stdout.txt",
+      "bytes": 734,
+      "original_sha256": "70ba9e0f66062d3e9269784a0731919eb75ebffc9ef4c2b64b004dc5fa9efe28",
+      "archived_sha256": "70ba9e0f66062d3e9269784a0731919eb75ebffc9ef4c2b64b004dc5fa9efe28",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/warm_baseline-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "3d2defaf861abe4e2d523e873bde5697ed5ba0d7b3b451752f8d8a7f33bd2ff5",
+      "archived_sha256": "3d2defaf861abe4e2d523e873bde5697ed5ba0d7b3b451752f8d8a7f33bd2ff5",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/warm_baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "b4f2c2c9d3432837cdd518a11135c1e60d4e26ec518f23827e38d2694cdcb08f",
+      "archived_sha256": "b4f2c2c9d3432837cdd518a11135c1e60d4e26ec518f23827e38d2694cdcb08f",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/warm_baseline-pressure.json",
+      "bytes": 247,
+      "original_sha256": "fb2fdde8f434c5b86efd2317669e95c3e9b86b8b9508691939ece24f95c9d441",
+      "archived_sha256": "fb2fdde8f434c5b86efd2317669e95c3e9b86b8b9508691939ece24f95c9d441",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/warm_baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "7b1fccde90716dd21d26496a60acd7c524bd4e742f5705d95557ff074ea302a5",
+      "archived_sha256": "7b1fccde90716dd21d26496a60acd7c524bd4e742f5705d95557ff074ea302a5",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/warm_baseline-vmmap.json",
+      "bytes": 8347,
+      "original_sha256": "81f805b259eeed88af0ee7994671dc134c0a330920ff865e3485b12f8c628da7",
+      "archived_sha256": "81f805b259eeed88af0ee7994671dc134c0a330920ff865e3485b12f8c628da7",
+      "redacted": false
+    },
+    {
+      "path": "memory-upload-64MiB-r0/warm_baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "ba3957060d96d0103c26f1b1e648df2a454b1814ed404b101e7162d0512a7635",
+      "archived_sha256": "ba3957060d96d0103c26f1b1e648df2a454b1814ed404b101e7162d0512a7635",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/baseline-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "511207cd2a94ad4cc602a0bca408d949e6586f0692ae6a91ed5d859758514963",
+      "archived_sha256": "511207cd2a94ad4cc602a0bca408d949e6586f0692ae6a91ed5d859758514963",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "56fd9f57f8bd172c19a101ffdde0ce15998b0dd06ebe4ba2edee820d505b62a3",
+      "archived_sha256": "56fd9f57f8bd172c19a101ffdde0ce15998b0dd06ebe4ba2edee820d505b62a3",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/baseline-pressure.json",
+      "bytes": 245,
+      "original_sha256": "e7871293833b2c3a917e47a2585a5d7df5911c1dab7cd67e0ec9e9657b79684a",
+      "archived_sha256": "e7871293833b2c3a917e47a2585a5d7df5911c1dab7cd67e0ec9e9657b79684a",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/baseline-swap.json",
+      "bytes": 215,
+      "original_sha256": "64df4459b1cbc580da18db74cb3063636f329767aecf78f2bece6fbf583e9a0b",
+      "archived_sha256": "64df4459b1cbc580da18db74cb3063636f329767aecf78f2bece6fbf583e9a0b",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/baseline-vmmap.json",
+      "bytes": 8193,
+      "original_sha256": "a5a453edeb6b7ee54b598591a287b97e37d5dff05f9dc2da66ee156db57c20fc",
+      "archived_sha256": "a5a453edeb6b7ee54b598591a287b97e37d5dff05f9dc2da66ee156db57c20fc",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "bb874d08a9def432814956dab92c172eaaebd90842bafeaadf189c9c53f729ff",
+      "archived_sha256": "bb874d08a9def432814956dab92c172eaaebd90842bafeaadf189c9c53f729ff",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/case.json",
+      "bytes": 55304,
+      "original_sha256": "06f711c63155d3cc84c66526f2e093a87fdbdfb7da27049641e655f48fb0b814",
+      "archived_sha256": "06f711c63155d3cc84c66526f2e093a87fdbdfb7da27049641e655f48fb0b814",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/commands_retired-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "bf2ea84aaa7ffd3611246d84b5477786f42615190e1b49415844f3d4f758b58d",
+      "archived_sha256": "bf2ea84aaa7ffd3611246d84b5477786f42615190e1b49415844f3d4f758b58d",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/commands_retired-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "ede6b80ba3fb6927055bd3cd262672116507842c5c6995ddb47d38c9aeace00b",
+      "archived_sha256": "ede6b80ba3fb6927055bd3cd262672116507842c5c6995ddb47d38c9aeace00b",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/commands_retired-pressure.json",
+      "bytes": 248,
+      "original_sha256": "f43bd2a18b294fb966ce210da23f5a7ef2a1751315de40658d95a7fa341cebef",
+      "archived_sha256": "f43bd2a18b294fb966ce210da23f5a7ef2a1751315de40658d95a7fa341cebef",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/commands_retired-swap.json",
+      "bytes": 215,
+      "original_sha256": "fe8695c78830214e5739d71fc2dee369024e699bc8c612f7c511694c319181af",
+      "archived_sha256": "fe8695c78830214e5739d71fc2dee369024e699bc8c612f7c511694c319181af",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/commands_retired-vmmap.json",
+      "bytes": 8349,
+      "original_sha256": "3dca4e05dac21fc1dafa0ae00e1545c9ae025922c93f506a07765d4b68087719",
+      "archived_sha256": "3dca4e05dac21fc1dafa0ae00e1545c9ae025922c93f506a07765d4b68087719",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/commands_retired-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "81d879b55b4c859d86031966e340de97db1fadabf2bc40646d2e8a2763955be5",
+      "archived_sha256": "81d879b55b4c859d86031966e340de97db1fadabf2bc40646d2e8a2763955be5",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/consumption.dxbc",
+      "bytes": 1384,
+      "original_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "archived_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/consumption.hlsl",
+      "bytes": 365,
+      "original_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "archived_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/created-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "ede0e580dade52a9a6c66987844caa464dde9a1fa1a57c21af84ecba374b1751",
+      "archived_sha256": "ede0e580dade52a9a6c66987844caa464dde9a1fa1a57c21af84ecba374b1751",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/created-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "8d858429dcbdc390ec2b3db966ca5091d2f85f5071f8aa46e86bd8453f412696",
+      "archived_sha256": "8d858429dcbdc390ec2b3db966ca5091d2f85f5071f8aa46e86bd8453f412696",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/created-pressure.json",
+      "bytes": 248,
+      "original_sha256": "d7ee2205c26be1ec01cfd2257a4db2b0a17b006424b4cdbf3dc582413146e380",
+      "archived_sha256": "d7ee2205c26be1ec01cfd2257a4db2b0a17b006424b4cdbf3dc582413146e380",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/created-swap.json",
+      "bytes": 216,
+      "original_sha256": "92b9f9ec38ef0bd08efe9cf2b7356cc98b9343a8ac8cce65bff4b6f43f231b4f",
+      "archived_sha256": "92b9f9ec38ef0bd08efe9cf2b7356cc98b9343a8ac8cce65bff4b6f43f231b4f",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/created-vmmap.json",
+      "bytes": 8195,
+      "original_sha256": "ca56ac872e26754c6549afae5075057df38935489f7b66e4cfce40ddd22dd8d5",
+      "archived_sha256": "ca56ac872e26754c6549afae5075057df38935489f7b66e4cfce40ddd22dd8d5",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/created-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "9f53a1d4c22925c109273ef006c0a53ba28805f30505a7ffbb7d8fa40b66ece8",
+      "archived_sha256": "9f53a1d4c22925c109273ef006c0a53ba28805f30505a7ffbb7d8fa40b66ece8",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/device_released-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "6886fde630ad0d1a1d5e4499f52991ed32c6a4b8c8abf379425503483741cc75",
+      "archived_sha256": "6886fde630ad0d1a1d5e4499f52991ed32c6a4b8c8abf379425503483741cc75",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/device_released-kernel_pressure.json",
+      "bytes": 171,
+      "original_sha256": "5ffe4444e235e43d2efcfeca54bd4624192641bd38d3977996e83c34ef9ceb03",
+      "archived_sha256": "5ffe4444e235e43d2efcfeca54bd4624192641bd38d3977996e83c34ef9ceb03",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/device_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "e7e31200a62403956d9932034dabe0806bf172feb5811aa0043664e62c7a7129",
+      "archived_sha256": "e7e31200a62403956d9932034dabe0806bf172feb5811aa0043664e62c7a7129",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/device_released-swap.json",
+      "bytes": 215,
+      "original_sha256": "5f8b32aa3dea529d42b736db6c6be1cc684c02f7d632ac665bbbb8917b76ddd3",
+      "archived_sha256": "5f8b32aa3dea529d42b736db6c6be1cc684c02f7d632ac665bbbb8917b76ddd3",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/device_released-vmmap.json",
+      "bytes": 8348,
+      "original_sha256": "4459679907187ea9c60dbbc04c0c2f08bb5e7fda56cb5320ae56e5b377b4c4bf",
+      "archived_sha256": "4459679907187ea9c60dbbc04c0c2f08bb5e7fda56cb5320ae56e5b377b4c4bf",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/device_released-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "391626308a1dc3ebc60e84a4dc788c8bf43c172e3a7dd15b4c1a6a56da736fff",
+      "archived_sha256": "391626308a1dc3ebc60e84a4dc788c8bf43c172e3a7dd15b4c1a6a56da736fff",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/fully_initialized-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "498e66754d21689aa061a1326a610c269eca2cd683972ef1dafe2b5298aebb13",
+      "archived_sha256": "498e66754d21689aa061a1326a610c269eca2cd683972ef1dafe2b5298aebb13",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/fully_initialized-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "c76b951db3e9258f82c0f92b36c8733cf9901699426f7a6f7011d0d08bb9d91d",
+      "archived_sha256": "c76b951db3e9258f82c0f92b36c8733cf9901699426f7a6f7011d0d08bb9d91d",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/fully_initialized-pointer_vmmap.json",
+      "bytes": 787,
+      "original_sha256": "56ffaa7889c0bd03a188165afbe5956621860c92ba5cf504366809eb830adceb",
+      "archived_sha256": "56ffaa7889c0bd03a188165afbe5956621860c92ba5cf504366809eb830adceb",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/fully_initialized-pressure.json",
+      "bytes": 248,
+      "original_sha256": "6815d2479f485363c5bb870057b6a5e4834ad53fe1082420433c684c94608b62",
+      "archived_sha256": "6815d2479f485363c5bb870057b6a5e4834ad53fe1082420433c684c94608b62",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/fully_initialized-swap.json",
+      "bytes": 215,
+      "original_sha256": "3c64963dacfa2b9fe28feec38550031a5c347f07785d8c20385d9c29ea325318",
+      "archived_sha256": "3c64963dacfa2b9fe28feec38550031a5c347f07785d8c20385d9c29ea325318",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/fully_initialized-vmmap.json",
+      "bytes": 8197,
+      "original_sha256": "baec0adc4dc97d7d52d8ba36e22a0e139f84a3db77e3576de7d12910ef4d79cc",
+      "archived_sha256": "baec0adc4dc97d7d52d8ba36e22a0e139f84a3db77e3576de7d12910ef4d79cc",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/fully_initialized-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "36711a5acdf24f82c06317af74aca6b286dc66b9ff119a74d89eea49e02d2a3a",
+      "archived_sha256": "36711a5acdf24f82c06317af74aca6b286dc66b9ff119a74d89eea49e02d2a3a",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/gpu_complete-footprint.json",
+      "bytes": 3993,
+      "original_sha256": "6509ffee1307638bff78d049222648cc5fc80e189fb21c4bbbf96f772067dbe1",
+      "archived_sha256": "6509ffee1307638bff78d049222648cc5fc80e189fb21c4bbbf96f772067dbe1",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/gpu_complete-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "55821cce2b94c89360f21f03949526952f1b2ec678b3e1b4ab58ef9ede12402d",
+      "archived_sha256": "55821cce2b94c89360f21f03949526952f1b2ec678b3e1b4ab58ef9ede12402d",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/gpu_complete-pointer_vmmap.json",
+      "bytes": 740,
+      "original_sha256": "ffe2318eb7aa808aa33b99dbfa05d08661848acb5ba6276e4ca2216d4f2afd66",
+      "archived_sha256": "ffe2318eb7aa808aa33b99dbfa05d08661848acb5ba6276e4ca2216d4f2afd66",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/gpu_complete-pressure.json",
+      "bytes": 247,
+      "original_sha256": "16b16e9842af432eda8c8a726bd08b683507959b9a453124b1a5c74bf0abad1f",
+      "archived_sha256": "16b16e9842af432eda8c8a726bd08b683507959b9a453124b1a5c74bf0abad1f",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/gpu_complete-swap.json",
+      "bytes": 215,
+      "original_sha256": "fedf0d302d5de722715e076de6d06fedfe9236d2ae3b8cdf038edf44d0bde639",
+      "archived_sha256": "fedf0d302d5de722715e076de6d06fedfe9236d2ae3b8cdf038edf44d0bde639",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/gpu_complete-vmmap.json",
+      "bytes": 8347,
+      "original_sha256": "bc39a5afae0b334d7c73971c6102027241ff67b93f1ee7e421a353aa320b238a",
+      "archived_sha256": "bc39a5afae0b334d7c73971c6102027241ff67b93f1ee7e421a353aa320b238a",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/gpu_complete-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "cecb73fb34278e01db8a4378a7ae0b90b532207429b063db07ba05aba1a6dcb4",
+      "archived_sha256": "cecb73fb34278e01db8a4378a7ae0b90b532207429b063db07ba05aba1a6dcb4",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/mapped-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "69ebdf3dc4b8084baee19e223c730dd9d3606fb7840501a82cc9419dfc9674ba",
+      "archived_sha256": "69ebdf3dc4b8084baee19e223c730dd9d3606fb7840501a82cc9419dfc9674ba",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/mapped-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "d338b3fb55fa4031408b98839724a0f127531ab77ce1c07cffab1d804e653bb6",
+      "archived_sha256": "d338b3fb55fa4031408b98839724a0f127531ab77ce1c07cffab1d804e653bb6",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/mapped-pointer_vmmap.json",
+      "bytes": 787,
+      "original_sha256": "bece74d29c69cbb0f06a5b13591c1138e0089bf579b176e0430b2170357e5011",
+      "archived_sha256": "bece74d29c69cbb0f06a5b13591c1138e0089bf579b176e0430b2170357e5011",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/mapped-pressure.json",
+      "bytes": 247,
+      "original_sha256": "0c2eefcdcceeb3fde6585191fb6087f655a6101bb1bd8550b59b30d24274d7cd",
+      "archived_sha256": "0c2eefcdcceeb3fde6585191fb6087f655a6101bb1bd8550b59b30d24274d7cd",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/mapped-swap.json",
+      "bytes": 215,
+      "original_sha256": "9b373d29a93f359795857f375cbff518ed79eefa3b7fa6a337b2369954944c9e",
+      "archived_sha256": "9b373d29a93f359795857f375cbff518ed79eefa3b7fa6a337b2369954944c9e",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/mapped-vmmap.json",
+      "bytes": 8196,
+      "original_sha256": "edd06793eaff937ded7406a2e7a4c6f2129071e314637287ac9bdb98c1575062",
+      "archived_sha256": "edd06793eaff937ded7406a2e7a4c6f2129071e314637287ac9bdb98c1575062",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/mapped-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "7ec4e15c21c7db52c20447257bda4e8f86785c1170bf8dcb358e2dc5c5fb9f25",
+      "archived_sha256": "7ec4e15c21c7db52c20447257bda4e8f86785c1170bf8dcb358e2dc5c5fb9f25",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/resources_released-footprint.json",
+      "bytes": 3993,
+      "original_sha256": "5be8a886c7c5e045a43e37560af411104979762ff4721af4d00e7f2708c43399",
+      "archived_sha256": "5be8a886c7c5e045a43e37560af411104979762ff4721af4d00e7f2708c43399",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/resources_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "08390d76b5e4ae6b43b04f4cef917c697d4d21de43230da624c55f4c489301f4",
+      "archived_sha256": "08390d76b5e4ae6b43b04f4cef917c697d4d21de43230da624c55f4c489301f4",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/resources_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "80df517e8b444915cdcf24ea8b9fc12e8b299a5290a1f5940fe993cde6b68df5",
+      "archived_sha256": "80df517e8b444915cdcf24ea8b9fc12e8b299a5290a1f5940fe993cde6b68df5",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/resources_released-swap.json",
+      "bytes": 215,
+      "original_sha256": "0edd619f417d871582b89ea7e22a1cac9c5401831a8ec1c4a28bf6aaf6e3f4da",
+      "archived_sha256": "0edd619f417d871582b89ea7e22a1cac9c5401831a8ec1c4a28bf6aaf6e3f4da",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/resources_released-vmmap.json",
+      "bytes": 8349,
+      "original_sha256": "22224c532064da6d1328c7db46f150250c2b11fc4c284d41476f1c487c3fe5c9",
+      "archived_sha256": "22224c532064da6d1328c7db46f150250c2b11fc4c284d41476f1c487c3fe5c9",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/resources_released-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "339788d0219fe5ff5ed394255a76c2274d2a2b858491c1d257b9fff8fdf1c0b3",
+      "archived_sha256": "339788d0219fe5ff5ed394255a76c2274d2a2b858491c1d257b9fff8fdf1c0b3",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/retired_settled-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "a61c556910e6bea30c7df5eaa0e59cc787c04082ccef5427f0ea4052d6201405",
+      "archived_sha256": "a61c556910e6bea30c7df5eaa0e59cc787c04082ccef5427f0ea4052d6201405",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/retired_settled-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "a21823e251754aa01b4e905c95feb106406f9edf2d8e1ec5dddaeb818e8d9637",
+      "archived_sha256": "a21823e251754aa01b4e905c95feb106406f9edf2d8e1ec5dddaeb818e8d9637",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/retired_settled-pressure.json",
+      "bytes": 247,
+      "original_sha256": "300e0f5c137c8853d763d33b9c1ded26c4dd0fd541bc99aa8eebc8302d1e59f5",
+      "archived_sha256": "300e0f5c137c8853d763d33b9c1ded26c4dd0fd541bc99aa8eebc8302d1e59f5",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/retired_settled-swap.json",
+      "bytes": 215,
+      "original_sha256": "be9170a54526f01b3d5dd7e4dd62d0f458d56312c92653fddd36e6a09f695c9f",
+      "archived_sha256": "be9170a54526f01b3d5dd7e4dd62d0f458d56312c92653fddd36e6a09f695c9f",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/retired_settled-vmmap.json",
+      "bytes": 8349,
+      "original_sha256": "b01884c61418c9efff3e350777614ddd24eed9455afc240633ea5e28960a67b0",
+      "archived_sha256": "b01884c61418c9efff3e350777614ddd24eed9455afc240633ea5e28960a67b0",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/retired_settled-vmstat.json",
+      "bytes": 1388,
+      "original_sha256": "6c39d37c81d2bdad9975f051cd190d98b27ab04983a8a220030357561bac9b95",
+      "archived_sha256": "6c39d37c81d2bdad9975f051cd190d98b27ab04983a8a220030357561bac9b95",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/stderr.txt",
+      "bytes": 57,
+      "original_sha256": "628d8bcee22cea3d9a239a42c24c3d658747d1f3ab5abcd2af13fad15e82de9b",
+      "archived_sha256": "628d8bcee22cea3d9a239a42c24c3d658747d1f3ab5abcd2af13fad15e82de9b",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/stdout.txt",
+      "bytes": 718,
+      "original_sha256": "76c25c68957226a22ecc6603a46111fd2a93a3cc9b5bd619cc7de6132de34aee",
+      "archived_sha256": "76c25c68957226a22ecc6603a46111fd2a93a3cc9b5bd619cc7de6132de34aee",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/warm_baseline-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "3da8dba80b0c53b396bd59e8e556722b6d65df29c169291c9d415b3e1f42a9de",
+      "archived_sha256": "3da8dba80b0c53b396bd59e8e556722b6d65df29c169291c9d415b3e1f42a9de",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/warm_baseline-kernel_pressure.json",
+      "bytes": 170,
+      "original_sha256": "9aff88363351f43aa776e498feaed202408e228a02986b29aa3baa20fbf0343a",
+      "archived_sha256": "9aff88363351f43aa776e498feaed202408e228a02986b29aa3baa20fbf0343a",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/warm_baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "82f8d0ed587fb238e5b5f46b9620bc0a472423d8ddcba4bc78cdaea716920380",
+      "archived_sha256": "82f8d0ed587fb238e5b5f46b9620bc0a472423d8ddcba4bc78cdaea716920380",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/warm_baseline-swap.json",
+      "bytes": 215,
+      "original_sha256": "871b6ff2c2513494190051de8bff72856905a74447378e3440a9c2cb77020bff",
+      "archived_sha256": "871b6ff2c2513494190051de8bff72856905a74447378e3440a9c2cb77020bff",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/warm_baseline-vmmap.json",
+      "bytes": 8193,
+      "original_sha256": "43b5ca905e7584858549c27ccc717e091622dc9f2bab31db929cf981fb1e5497",
+      "archived_sha256": "43b5ca905e7584858549c27ccc717e091622dc9f2bab31db929cf981fb1e5497",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-256MiB-r0/warm_baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "7e6df80d43ca710d7113e1cf545ffaee219927cda3c3aaddac7c98e175020e0b",
+      "archived_sha256": "7e6df80d43ca710d7113e1cf545ffaee219927cda3c3aaddac7c98e175020e0b",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/baseline-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "5f19220f79e0f601d9994b5cb01ae4248c0271c03f901959bf0fe5c1a9e3f973",
+      "archived_sha256": "5f19220f79e0f601d9994b5cb01ae4248c0271c03f901959bf0fe5c1a9e3f973",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "bfbde0f95895282c073c39adeb5ed79d300ea43e340ef75cb8c7d1a9fc474ca9",
+      "archived_sha256": "bfbde0f95895282c073c39adeb5ed79d300ea43e340ef75cb8c7d1a9fc474ca9",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/baseline-pressure.json",
+      "bytes": 246,
+      "original_sha256": "07d59d62993aa8875c056b0045460d5e063b9263e2dc41bb347bc671fc2543ae",
+      "archived_sha256": "07d59d62993aa8875c056b0045460d5e063b9263e2dc41bb347bc671fc2543ae",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "38233401b7720db1c10f88a925c2923baa063d041f09703aa29404f0ab1b9386",
+      "archived_sha256": "38233401b7720db1c10f88a925c2923baa063d041f09703aa29404f0ab1b9386",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/baseline-vmmap.json",
+      "bytes": 7773,
+      "original_sha256": "f4adcf1479fdd0f5277b37e345c0f6bc4eade19c4109f06881f3e82484bba3bd",
+      "archived_sha256": "f4adcf1479fdd0f5277b37e345c0f6bc4eade19c4109f06881f3e82484bba3bd",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/baseline-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "44f24acd51d5d9f10b979b2e3c029ad53eb15cacdd105a949484659c136e879d",
+      "archived_sha256": "44f24acd51d5d9f10b979b2e3c029ad53eb15cacdd105a949484659c136e879d",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/case.json",
+      "bytes": 60192,
+      "original_sha256": "148b622adb3c338e5c01f51a058443ae780119f038a926a2bdfcfbe790a9dd44",
+      "archived_sha256": "148b622adb3c338e5c01f51a058443ae780119f038a926a2bdfcfbe790a9dd44",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/commands_retired-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "da1d6dd3f1ca2ba38bc182505cba691c9a7df0a3b318de2c1cf5af994b627c0d",
+      "archived_sha256": "da1d6dd3f1ca2ba38bc182505cba691c9a7df0a3b318de2c1cf5af994b627c0d",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/commands_retired-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "04bd24ef9ccbab56ce818b279305b828b56fab8eae873eaa77282caa42c9ff99",
+      "archived_sha256": "04bd24ef9ccbab56ce818b279305b828b56fab8eae873eaa77282caa42c9ff99",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/commands_retired-pressure.json",
+      "bytes": 247,
+      "original_sha256": "5034dd71f092f8408c68d9a08053cf739ddb96048d63b7d068e32bc8974df433",
+      "archived_sha256": "5034dd71f092f8408c68d9a08053cf739ddb96048d63b7d068e32bc8974df433",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/commands_retired-swap.json",
+      "bytes": 214,
+      "original_sha256": "e97d79c7fe9c79355fb5feda6f36aca7999f353dc9d1a4cb742ccc69b3e8b4ef",
+      "archived_sha256": "e97d79c7fe9c79355fb5feda6f36aca7999f353dc9d1a4cb742ccc69b3e8b4ef",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/commands_retired-vmmap.json",
+      "bytes": 7777,
+      "original_sha256": "3bee229f13d8df7c973a8181394e693eb5e86d91ff812c3bbe0130f716458f0e",
+      "archived_sha256": "3bee229f13d8df7c973a8181394e693eb5e86d91ff812c3bbe0130f716458f0e",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/commands_retired-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "8817b5da4f8e2274c915c9c534d9947c84338bb87974b35df4c38c63e4519244",
+      "archived_sha256": "8817b5da4f8e2274c915c9c534d9947c84338bb87974b35df4c38c63e4519244",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/consumption.dxbc",
+      "bytes": 1384,
+      "original_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "archived_sha256": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/consumption.hlsl",
+      "bytes": 365,
+      "original_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "archived_sha256": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/created-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "e9892559aab4feef3154edd21db94939f1ca150160754c1bdd50548db4373d44",
+      "archived_sha256": "e9892559aab4feef3154edd21db94939f1ca150160754c1bdd50548db4373d44",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/created-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "e50f98e6ded69d25f6a6399cde7edc1a6222321814d076fbb0a615e05bf8b36f",
+      "archived_sha256": "e50f98e6ded69d25f6a6399cde7edc1a6222321814d076fbb0a615e05bf8b36f",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/created-pressure.json",
+      "bytes": 248,
+      "original_sha256": "617cdd0fb2f55575516e8a684ddf647b1c3d4cb35efc5cec4758cf5f84c12c86",
+      "archived_sha256": "617cdd0fb2f55575516e8a684ddf647b1c3d4cb35efc5cec4758cf5f84c12c86",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/created-swap.json",
+      "bytes": 216,
+      "original_sha256": "135ec5b06e4ce2223bdefe09c20f6e9c2d059fd95432499da2595a93ea53a530",
+      "archived_sha256": "135ec5b06e4ce2223bdefe09c20f6e9c2d059fd95432499da2595a93ea53a530",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/created-vmmap.json",
+      "bytes": 7777,
+      "original_sha256": "4c6ff9f47b6f1d4454cd539674c7571ba75a50a107d7fe272705d8b2d5d0eaf9",
+      "archived_sha256": "4c6ff9f47b6f1d4454cd539674c7571ba75a50a107d7fe272705d8b2d5d0eaf9",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/created-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "4717bf2154a8debf9a6498696922ded9ba445c719d8cda9dc17364f5c877e654",
+      "archived_sha256": "4717bf2154a8debf9a6498696922ded9ba445c719d8cda9dc17364f5c877e654",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/device_released-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "105b960e534414c1d502a6cdd8113a24ff39a5dba5fe74fe78577cd1728d6f86",
+      "archived_sha256": "105b960e534414c1d502a6cdd8113a24ff39a5dba5fe74fe78577cd1728d6f86",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/device_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "f3a7dbb5c6a07a35b85cd75e401eadd0498ff0c497b4635b484fa631a03168a8",
+      "archived_sha256": "f3a7dbb5c6a07a35b85cd75e401eadd0498ff0c497b4635b484fa631a03168a8",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/device_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "b3374f84a1b183b7d2630a1d6e684c6a998a3ddb4ccd6177612cacac37bbdaa0",
+      "archived_sha256": "b3374f84a1b183b7d2630a1d6e684c6a998a3ddb4ccd6177612cacac37bbdaa0",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/device_released-swap.json",
+      "bytes": 216,
+      "original_sha256": "ed931ae9f13c69ee141e86b7291e4293cf7d412d71fbf4101101b52a47d8cb1b",
+      "archived_sha256": "ed931ae9f13c69ee141e86b7291e4293cf7d412d71fbf4101101b52a47d8cb1b",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/device_released-vmmap.json",
+      "bytes": 7776,
+      "original_sha256": "cd7a444ea82ce9396425fe30a7ef7bd3dd1d69e2a3649cacbab688b2fad727f0",
+      "archived_sha256": "cd7a444ea82ce9396425fe30a7ef7bd3dd1d69e2a3649cacbab688b2fad727f0",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/device_released-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "0331067986831a7a69d07ece9d95abfc23cec3ee6f73a4a6b86f6150a172d524",
+      "archived_sha256": "0331067986831a7a69d07ece9d95abfc23cec3ee6f73a4a6b86f6150a172d524",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/fully_initialized-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "4ed281b9ba2d24f9d9317e0d2559b03533777c06eb210a6dcc50ee708387038f",
+      "archived_sha256": "4ed281b9ba2d24f9d9317e0d2559b03533777c06eb210a6dcc50ee708387038f",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/fully_initialized-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "8ba2282572bba567d82633292a905fd343f35c4a1431032a6c0eaf922e3f0355",
+      "archived_sha256": "8ba2282572bba567d82633292a905fd343f35c4a1431032a6c0eaf922e3f0355",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/fully_initialized-pointer_vmmap.json",
+      "bytes": 889,
+      "original_sha256": "03a88046e0f16cd7ecf7242007bb8ed88418d872cf63df5d74d87c6a7a095958",
+      "archived_sha256": "03a88046e0f16cd7ecf7242007bb8ed88418d872cf63df5d74d87c6a7a095958",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/fully_initialized-pressure.json",
+      "bytes": 247,
+      "original_sha256": "7b72cdcb1690fecf3020f3a1d85fb9cc756dad454ea931f472c12a4b5b30e8c0",
+      "archived_sha256": "7b72cdcb1690fecf3020f3a1d85fb9cc756dad454ea931f472c12a4b5b30e8c0",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/fully_initialized-swap.json",
+      "bytes": 216,
+      "original_sha256": "0708d2fb236a3f4fdcd7f09eb934b78668416b05a254fe8256d91974ff7658d8",
+      "archived_sha256": "0708d2fb236a3f4fdcd7f09eb934b78668416b05a254fe8256d91974ff7658d8",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/fully_initialized-vmmap.json",
+      "bytes": 7777,
+      "original_sha256": "43728588dcc9eb5714eb872ed9bdf0bc25c8e8c6006c8bdf9a89388cc7b80182",
+      "archived_sha256": "43728588dcc9eb5714eb872ed9bdf0bc25c8e8c6006c8bdf9a89388cc7b80182",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/fully_initialized-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "d0a715e175c779ac741d636e5cd25727e6ba2a7c91e8375d3124f05c36ca5b4a",
+      "archived_sha256": "d0a715e175c779ac741d636e5cd25727e6ba2a7c91e8375d3124f05c36ca5b4a",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/gpu_complete-footprint.json",
+      "bytes": 3993,
+      "original_sha256": "b5183b326bb0d26fb046deed3c1c2c33f6ac9e44e6c7e5b531f3f3cc139818e0",
+      "archived_sha256": "b5183b326bb0d26fb046deed3c1c2c33f6ac9e44e6c7e5b531f3f3cc139818e0",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/gpu_complete-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "ac5d2325b7947042fb312470e0acdb335ea83152768c3e76f0bfbcf4e30584fe",
+      "archived_sha256": "ac5d2325b7947042fb312470e0acdb335ea83152768c3e76f0bfbcf4e30584fe",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/gpu_complete-pointer_vmmap.json",
+      "bytes": 843,
+      "original_sha256": "7a4f04106d2a0c6ad1eb5f0b70df8cd57b7c1e94f69757949b68b0aba7c37686",
+      "archived_sha256": "7a4f04106d2a0c6ad1eb5f0b70df8cd57b7c1e94f69757949b68b0aba7c37686",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/gpu_complete-pressure.json",
+      "bytes": 248,
+      "original_sha256": "213396c12d24c774b2475892e06c92b1c99566c65e31b35ee64ccdeda843287c",
+      "archived_sha256": "213396c12d24c774b2475892e06c92b1c99566c65e31b35ee64ccdeda843287c",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/gpu_complete-swap.json",
+      "bytes": 216,
+      "original_sha256": "5964ff7ed667c225898073d5de6d7cbd5a406ddeb7543908bf4041ec66ae8540",
+      "archived_sha256": "5964ff7ed667c225898073d5de6d7cbd5a406ddeb7543908bf4041ec66ae8540",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/gpu_complete-vmmap.json",
+      "bytes": 7775,
+      "original_sha256": "09396e6bf859dd657d54009d676dd0d286f4d7d5c7e3eedf75b8b2c83dc77426",
+      "archived_sha256": "09396e6bf859dd657d54009d676dd0d286f4d7d5c7e3eedf75b8b2c83dc77426",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/gpu_complete-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "5a657449e255e645d56e5a4178773e6ed8244f0d6551640eaa3656f614bb0531",
+      "archived_sha256": "5a657449e255e645d56e5a4178773e6ed8244f0d6551640eaa3656f614bb0531",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/mapped-footprint.json",
+      "bytes": 3876,
+      "original_sha256": "721f00c77c98f30602bbd87aed5ab962168ca4c0bb6adddb1ef3dabb309ddae5",
+      "archived_sha256": "721f00c77c98f30602bbd87aed5ab962168ca4c0bb6adddb1ef3dabb309ddae5",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/mapped-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "26c009678cafdf3a503b3c9635c69358edd54ead5b45cbe35e4bf1cf96349638",
+      "archived_sha256": "26c009678cafdf3a503b3c9635c69358edd54ead5b45cbe35e4bf1cf96349638",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/mapped-pointer_vmmap.json",
+      "bytes": 890,
+      "original_sha256": "760f623831207126df833670abce4781ab57cbaa691f4930f4fa82dba2968fa8",
+      "archived_sha256": "760f623831207126df833670abce4781ab57cbaa691f4930f4fa82dba2968fa8",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/mapped-pressure.json",
+      "bytes": 248,
+      "original_sha256": "b2c90bcfb4665b2432e81664b0b580bbdeed5f66f2729746bc795df4f8670a9f",
+      "archived_sha256": "b2c90bcfb4665b2432e81664b0b580bbdeed5f66f2729746bc795df4f8670a9f",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/mapped-swap.json",
+      "bytes": 215,
+      "original_sha256": "e3cafc88e3bba26eff7b3a740a44eba450c2f2d9c8f3124616366ad3881f553c",
+      "archived_sha256": "e3cafc88e3bba26eff7b3a740a44eba450c2f2d9c8f3124616366ad3881f553c",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/mapped-vmmap.json",
+      "bytes": 7776,
+      "original_sha256": "a303ecc06d4183c33e8a0355cd521019887b65028ef1af6abd56b48376b5a8af",
+      "archived_sha256": "a303ecc06d4183c33e8a0355cd521019887b65028ef1af6abd56b48376b5a8af",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/mapped-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "20652e8eda3ad5ab4cd2a90cbd3691fcb126c0619016377884105bea740c527f",
+      "archived_sha256": "20652e8eda3ad5ab4cd2a90cbd3691fcb126c0619016377884105bea740c527f",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/resources_released-footprint.json",
+      "bytes": 3994,
+      "original_sha256": "e965c5d72ee3b356a94c7b9e8cb300b954ffc925297bc0ad30fb02030b68ae8e",
+      "archived_sha256": "e965c5d72ee3b356a94c7b9e8cb300b954ffc925297bc0ad30fb02030b68ae8e",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/resources_released-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "c5f429ef9f4dbe74c9b58802047787e7281b5a561bb790b90d9cacfd65a90006",
+      "archived_sha256": "c5f429ef9f4dbe74c9b58802047787e7281b5a561bb790b90d9cacfd65a90006",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/resources_released-pressure.json",
+      "bytes": 247,
+      "original_sha256": "6d3177f2a719a6ddc58ab70fe5fe5d0b2e6fa2a96a9d00c22fd3bff2fe062578",
+      "archived_sha256": "6d3177f2a719a6ddc58ab70fe5fe5d0b2e6fa2a96a9d00c22fd3bff2fe062578",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/resources_released-swap.json",
+      "bytes": 216,
+      "original_sha256": "030b1d0005eb0acf3cb3db81c0ceed1d07073d2cb03586f4f742cda6df92daa3",
+      "archived_sha256": "030b1d0005eb0acf3cb3db81c0ceed1d07073d2cb03586f4f742cda6df92daa3",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/resources_released-vmmap.json",
+      "bytes": 7777,
+      "original_sha256": "299c602d30cff113f0208ce66e0ca3720e3cb633b48652202df2467f96cf36bc",
+      "archived_sha256": "299c602d30cff113f0208ce66e0ca3720e3cb633b48652202df2467f96cf36bc",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/resources_released-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "deab8468ca196db50d7510ea707cb508e064cdb8b2aaf5a11d3d9f75249b6ce4",
+      "archived_sha256": "deab8468ca196db50d7510ea707cb508e064cdb8b2aaf5a11d3d9f75249b6ce4",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/retired_settled-footprint.json",
+      "bytes": 3877,
+      "original_sha256": "36637746f21bbede1280b3f93a738ca5109aa9c99239d9c9254d47a9627cc4bc",
+      "archived_sha256": "36637746f21bbede1280b3f93a738ca5109aa9c99239d9c9254d47a9627cc4bc",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/retired_settled-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "f75dfc01af57245ad3b5a467bb84c8da0bdc8187373e8479435ea6b399ae84ce",
+      "archived_sha256": "f75dfc01af57245ad3b5a467bb84c8da0bdc8187373e8479435ea6b399ae84ce",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/retired_settled-pressure.json",
+      "bytes": 248,
+      "original_sha256": "476f6799596c6b718f7d71aa8b2600edbed6bc9ad8b3eb95a6d7baac0646ae6e",
+      "archived_sha256": "476f6799596c6b718f7d71aa8b2600edbed6bc9ad8b3eb95a6d7baac0646ae6e",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/retired_settled-swap.json",
+      "bytes": 216,
+      "original_sha256": "c349f872b7b1d107318c274acc13eeea9edc458cfb69f254096e448f3486fa7e",
+      "archived_sha256": "c349f872b7b1d107318c274acc13eeea9edc458cfb69f254096e448f3486fa7e",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/retired_settled-vmmap.json",
+      "bytes": 7776,
+      "original_sha256": "7b1cf3db5528b6eb1907c2ffed0e382856100c34e5cd663d7525f36a44d402a9",
+      "archived_sha256": "7b1cf3db5528b6eb1907c2ffed0e382856100c34e5cd663d7525f36a44d402a9",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/retired_settled-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "e9e48579ddf05c86b559e76cd9609817b322ec3e118e0d5e89c1cf3f278e213a",
+      "archived_sha256": "e9e48579ddf05c86b559e76cd9609817b322ec3e118e0d5e89c1cf3f278e213a",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/stderr.txt",
+      "bytes": 57,
+      "original_sha256": "fbbf6d0bc8c651e8fdda9484b3d93833ea04f9b4060d2a6fd93bb47c36da7eaf",
+      "archived_sha256": "fbbf6d0bc8c651e8fdda9484b3d93833ea04f9b4060d2a6fd93bb47c36da7eaf",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/stdout.txt",
+      "bytes": 730,
+      "original_sha256": "92f328b5f850109ff5f61e897b488fbee0b3fc3e688d323661089d3add270d1a",
+      "archived_sha256": "92f328b5f850109ff5f61e897b488fbee0b3fc3e688d323661089d3add270d1a",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/warm_baseline-footprint.json",
+      "bytes": 3878,
+      "original_sha256": "388293121331e312dc8a6dafc0f38598a4684a1ec0e94ee9dd21cdfaa2f27d67",
+      "archived_sha256": "388293121331e312dc8a6dafc0f38598a4684a1ec0e94ee9dd21cdfaa2f27d67",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/warm_baseline-kernel_pressure.json",
+      "bytes": 173,
+      "original_sha256": "ad97db0bd832b7627eaf8b53148d0e6641347c6fbf1e0411a19822d1cf921c73",
+      "archived_sha256": "ad97db0bd832b7627eaf8b53148d0e6641347c6fbf1e0411a19822d1cf921c73",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/warm_baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "954d9070ac35cd9e6d098311ccf4f59a3fdef4b938b63a21a5452fe0b548c538",
+      "archived_sha256": "954d9070ac35cd9e6d098311ccf4f59a3fdef4b938b63a21a5452fe0b548c538",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/warm_baseline-swap.json",
+      "bytes": 216,
+      "original_sha256": "9e4222db2abba3085954eebf4e79a311fffdb1dbdddd8a305cc79c7163a285f3",
+      "archived_sha256": "9e4222db2abba3085954eebf4e79a311fffdb1dbdddd8a305cc79c7163a285f3",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/warm_baseline-vmmap.json",
+      "bytes": 7773,
+      "original_sha256": "19d34084e8ca99df6f8f9edcea1b88eb21473131f882ba5e5b20844324a41515",
+      "archived_sha256": "19d34084e8ca99df6f8f9edcea1b88eb21473131f882ba5e5b20844324a41515",
+      "redacted": false
+    },
+    {
+      "path": "memory-wb-64MiB-r0/warm_baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "794b6fe45c90d0105188b4e2c58a7635961fe2c8f8a3bf086705e196170617b3",
+      "archived_sha256": "794b6fe45c90d0105188b4e2c58a7635961fe2c8f8a3bf086705e196170617b3",
+      "redacted": false
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 520205,
+      "original_sha256": "0cdba00dd58d93356d456da2dd9cf5fe8b6ff03f302ce8d86256c8477814e60b",
+      "archived_sha256": "237ebbc758256b0f591fe448ecee96cc7d9d90b7e5f8960f237658ebe3d112b8",
+      "redacted": true
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/memory.cpp",
+      "bytes": 3797,
+      "original_sha256": "d3747cdefb77bdaa0a570871895dc5cdf9683c4e807eff383d7444425184cf74",
+      "archived_sha256": "d3747cdefb77bdaa0a570871895dc5cdf9683c4e807eff383d7444425184cf74",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "original_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "archived_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16030,
+      "original_sha256": "8faf3021c055db45ca26676c9a2bf298085b96ff1ffb302af86d0b58921a58a8",
+      "archived_sha256": "8faf3021c055db45ca26676c9a2bf298085b96ff1ffb302af86d0b58921a58a8",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "original_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "archived_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "redacted": false
+    }
+  ]
+}

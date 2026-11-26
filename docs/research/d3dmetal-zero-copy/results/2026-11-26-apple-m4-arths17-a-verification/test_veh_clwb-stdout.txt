@@ -1,0 +1,8 @@
+CLWB traps observed: 6
+xmem stats: limit=8192 MB committed=8192 bytes
+PASS: test_veh_clwb
+
+Trace summary of /tmp/bx473-cpu-conformance/test_veh_clwb.jsonl:
+Trace events     : 4
+clwb VEH traps   : at least 4 (sampled)
+ADX illegal ops  : 0

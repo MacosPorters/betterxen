@@ -1,0 +1,4 @@
+{"ts_ms":521464307,"tid":36,"level":"INFO","sub":"runtime_veh","event":"attached","detail":"profile=lockhart"}
+{"ts_ms":521464309,"tid":36,"level":"INFO","sub":"runtime_veh","event":"clwb_trapped","detail":"rip=0x0000000140008715 len=4 total_traps=1"}
+{"ts_ms":521464310,"tid":36,"level":"INFO","sub":"runtime_veh","event":"clwb_trapped","detail":"rip=0x0000000140008719 len=5 total_traps=2"}
+{"ts_ms":521464310,"tid":36,"level":"INFO","sub":"runtime_veh","event":"clwb_trapped","detail":"rip=0x0000000140008729 len=5 total_traps=4"}

@@ -1,0 +1,10 @@
+{
+  "command": [
+    "memory_pressure",
+    "-Q"
+  ],
+  "exit": 0,
+  "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 71%\n",
+  "stderr": "",
+  "elapsed_seconds": 0.0021400420228019357
+}

@@ -1,0 +1,12 @@
+{
+  "command": [
+    "vmmap",
+    "-w",
+    "52930",
+    "0x00000000008e0000"
+  ],
+  "exit": 0,
+  "stdout": "0x8e0000 is in 0x8e0000-0x88e0000;  bytes after start: 0  bytes before end: 134217727\n\n      REGION TYPE                    START - END         [ VSIZE  RSDNT  DIRTY   SWAP] PRT/MAX SHRMOD PURGE    REGION DETAIL\n      Untagged                       800000-8e0000       [  896K     0K     0K     0K] ---/rwx SM=NUL  \n--->  Untagged                       8e0000-88e0000      [128.0M  95.4M  95.4M  32.6M] rw-/rwx SM=PRV  \n      Untagged                      88e0000-108e0000     [128.0M  43.7M  43.7M  84.3M] rw-/rwx SM=PRV  \n",
+  "stderr": "",
+  "seconds": 1.4965699169551954
+}

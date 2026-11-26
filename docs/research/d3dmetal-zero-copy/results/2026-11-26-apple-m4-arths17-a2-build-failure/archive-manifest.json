@@ -1,0 +1,41 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "receipt.json",
+      "bytes": 54583,
+      "original_sha256": "c03015fc49bd289c5a6c67d35797df3137fdd71d76a7640f37ee9bf261d39dee",
+      "archived_sha256": "dd2da05ebf1727632cae49b458432cc65780f39509f35b563e2471e978fa7ab0",
+      "redacted": true
+    },
+    {
+      "path": "source/memory.cpp",
+      "bytes": 3797,
+      "original_sha256": "d3747cdefb77bdaa0a570871895dc5cdf9683c4e807eff383d7444425184cf74",
+      "archived_sha256": "d3747cdefb77bdaa0a570871895dc5cdf9683c4e807eff383d7444425184cf74",
+      "redacted": false
+    },
+    {
+      "path": "source/observe.cpp",
+      "bytes": 906,
+      "original_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "archived_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "redacted": false
+    },
+    {
+      "path": "source/run.py",
+      "bytes": 11788,
+      "original_sha256": "de45f1509dcf5f8536176a4befe6456130d1020964c21b70706de9c4a65460eb",
+      "archived_sha256": "de45f1509dcf5f8536176a4befe6456130d1020964c21b70706de9c4a65460eb",
+      "redacted": false
+    },
+    {
+      "path": "source/support.h",
+      "bytes": 14678,
+      "original_sha256": "18795b461034a39103db578471a7c932e1ade49e80f4cf92574c815880f8751c",
+      "archived_sha256": "18795b461034a39103db578471a7c932e1ade49e80f4cf92574c815880f8751c",
+      "redacted": false
+    }
+  ]
+}

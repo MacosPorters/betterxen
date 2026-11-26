@@ -1,0 +1,161 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+ADAPTER description=AMD Compatibility Mode vendor=0x1002 device=0x66AF subsystem=0x00000000 revision=0 flags=0 dedicated_video_bytes=19069665280 dedicated_system_bytes=19069665280 shared_system_bytes=19069665280 luid=00000000:000003F1
+OPTIONS ResourceHeapTier=2 CrossAdapterRowMajorTextureSupported=0 StandardSwizzle64KBSupported=0
+ARCH UMA=0 CacheCoherentUMA=0 TileBasedRenderer=0 IsolatedMMU=0
+CUSTOM_PROPERTIES input_type=1 Type=4 CPUPageProperty=1 MemoryPoolPreference=2 CreationNodeMask=1 VisibleNodeMask=1
+CUSTOM_PROPERTIES input_type=2 Type=4 CPUPageProperty=2 MemoryPoolPreference=1 CreationNodeMask=1 VisibleNodeMask=1
+CUSTOM_PROPERTIES input_type=3 Type=4 CPUPageProperty=3 MemoryPoolPreference=1 CreationNodeMask=1 VisibleNodeMask=1
+GUEST_PAGE_SIZE 4096 ALLOCATION_GRANULARITY 65536
+STAGE baseline cpu_ptr=0
+FORMAT format=28 HRESULT=0x00000000 support1=0x03ECD3FF support2=0x000001C0
+CASE mixed type=wb format=28 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=260 row_pitch=512 total=26176
+FOOTPRINT mip=1 offset=19456 rows=18 row_bytes=128 row_pitch=256 total=26176
+FOOTPRINT mip=2 offset=24064 rows=9 row_bytes=64 row_pitch=256 total=26176
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+OUTCOME mixed type=wb format=28 bytes_match=12500/12500 guard_words=16384/16384
+FORMAT format=61 HRESULT=0x00000000 support1=0x03E4D3FF support2=0x000001C0
+CASE mixed type=wb format=61 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=65 row_pitch=256 total=16912
+FOOTPRINT mip=1 offset=10240 rows=18 row_bytes=32 row_pitch=256 total=16912
+FOOTPRINT mip=2 offset=14848 rows=9 row_bytes=16 row_pitch=256 total=16912
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+OUTCOME mixed type=wb format=61 bytes_match=3125/3125 guard_words=16384/16384
+FORMAT format=42 HRESULT=0x00000000 support1=0x038051FF support2=0x000001FF
+CASE mixed type=wb format=42 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=260 row_pitch=512 total=26176
+FOOTPRINT mip=1 offset=19456 rows=18 row_bytes=128 row_pitch=256 total=26176
+FOOTPRINT mip=2 offset=24064 rows=9 row_bytes=64 row_pitch=256 total=26176
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+OUTCOME mixed type=wb format=42 bytes_match=12500/12500 guard_words=16384/16384
+FORMAT format=28 HRESULT=0x00000000 support1=0x03ECD3FF support2=0x000001C0
+CASE mixed type=wc format=28 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=260 row_pitch=512 total=26176
+FOOTPRINT mip=1 offset=19456 rows=18 row_bytes=128 row_pitch=256 total=26176
+FOOTPRINT mip=2 offset=24064 rows=9 row_bytes=64 row_pitch=256 total=26176
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+OUTCOME mixed type=wc format=28 bytes_match=12500/12500 guard_words=16384/16384
+FORMAT format=61 HRESULT=0x00000000 support1=0x03E4D3FF support2=0x000001C0
+CASE mixed type=wc format=61 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=65 row_pitch=256 total=16912
+FOOTPRINT mip=1 offset=10240 rows=18 row_bytes=32 row_pitch=256 total=16912
+FOOTPRINT mip=2 offset=14848 rows=9 row_bytes=16 row_pitch=256 total=16912
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+OUTCOME mixed type=wc format=61 bytes_match=3125/3125 guard_words=16384/16384
+FORMAT format=42 HRESULT=0x00000000 support1=0x038051FF support2=0x000001FF
+CASE mixed type=wc format=42 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=260 row_pitch=512 total=26176
+FOOTPRINT mip=1 offset=19456 rows=18 row_bytes=128 row_pitch=256 total=26176
+FOOTPRINT mip=2 offset=24064 rows=9 row_bytes=64 row_pitch=256 total=26176
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+API mixed Map null pointer HRESULT=0x00000000
+API mixed WriteToSubresource HRESULT=0x00000000
+OUTCOME mixed type=wc format=42 bytes_match=12500/12500 guard_words=16384/16384
+FORMAT format=28 HRESULT=0x00000000 support1=0x03ECD3FF support2=0x000001C0
+CASE mixed type=default format=28 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=260 row_pitch=512 total=26176
+FOOTPRINT mip=1 offset=19456 rows=18 row_bytes=128 row_pitch=256 total=26176
+FOOTPRINT mip=2 offset=24064 rows=9 row_bytes=64 row_pitch=256 total=26176
+OUTCOME mixed type=default format=28 bytes_match=12500/12500 guard_words=16384/16384
+FORMAT format=61 HRESULT=0x00000000 support1=0x03E4D3FF support2=0x000001C0
+CASE mixed type=default format=61 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=65 row_pitch=256 total=16912
+FOOTPRINT mip=1 offset=10240 rows=18 row_bytes=32 row_pitch=256 total=16912
+FOOTPRINT mip=2 offset=14848 rows=9 row_bytes=16 row_pitch=256 total=16912
+OUTCOME mixed type=default format=61 bytes_match=3125/3125 guard_words=16384/16384
+FORMAT format=42 HRESULT=0x00000000 support1=0x038051FF support2=0x000001FF
+CASE mixed type=default format=42 mips=3 texture_size=65536 texture_alignment=65536
+API mixed CreateHeap HRESULT=0x00000000
+API mixed texture HRESULT=0x00000000
+PLACEMENT guard_offset=0 guard_size=65536 texture_offset=65536 heap_bytes=131072 disjoint=1
+FOOTPRINT mip=0 offset=512 rows=37 row_bytes=260 row_pitch=512 total=26176
+FOOTPRINT mip=1 offset=19456 rows=18 row_bytes=128 row_pitch=256 total=26176
+FOOTPRINT mip=2 offset=24064 rows=9 row_bytes=64 row_pitch=256 total=26176
+OUTCOME mixed type=default format=42 bytes_match=12500/12500 guard_words=16384/16384
+FORMAT format=28 HRESULT=0x00000000 support1=0x03ECD3FF support2=0x000001C0
+CASE clear_alias type=wb depth=0 size=65536 alignment=65536
+API clear heap HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+OUTCOME clear_alias type=wb depth=0 alias=0 expected=FFFF00FF matches=2405/2405
+OUTCOME clear_alias type=wb depth=0 alias=1 expected=FFFFFF00 matches=2405/2405
+FORMAT format=40 HRESULT=0x00000000 support1=0x05E515FF support2=0x00000040
+CASE clear_alias type=wb depth=1 size=65536 alignment=65536
+API clear heap HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+OUTCOME clear_alias type=wb depth=1 alias=0 expected=3F000000 matches=2405/2405
+OUTCOME clear_alias type=wb depth=1 alias=1 expected=3E800000 matches=2405/2405
+FORMAT format=28 HRESULT=0x00000000 support1=0x03ECD3FF support2=0x000001C0
+CASE clear_alias type=default depth=0 size=65536 alignment=65536
+API clear heap HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+OUTCOME clear_alias type=default depth=0 alias=0 expected=FFFF00FF matches=2405/2405
+OUTCOME clear_alias type=default depth=0 alias=1 expected=FFFFFF00 matches=2405/2405
+FORMAT format=40 HRESULT=0x00000000 support1=0x05E515FF support2=0x00000040
+CASE clear_alias type=default depth=1 size=65536 alignment=65536
+API clear heap HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+API clear alias texture HRESULT=0x00000000
+OUTCOME clear_alias type=default depth=1 alias=0 expected=3F000000 matches=2405/2405
+OUTCOME clear_alias type=default depth=1 alias=1 expected=3E800000 matches=2405/2405
+NEGATIVE placement offset=1 HRESULT=0x00000000 rejected=0
+NEGATIVE placement offset=65536 HRESULT=0x00000000 rejected=0
+NEGATIVE texture_on_buffer_only HRESULT=0x80070057 rejected=1
+NEGATIVE_SUMMARY unexpected_successes=2/3
+STAGE resources_released cpu_ptr=0
+END failure reason=invalid creations accepted

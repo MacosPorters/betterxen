@@ -1,0 +1,2 @@
+bx-cli: replaced /tmp/bx473-cpu-conformance/prefix/drive_c/windows/system32/bx_runtime_veh.dll
+bx-cli: replaced /tmp/bx473-cpu-conformance/prefix/drive_c/windows/system32/xgameruntime.dll

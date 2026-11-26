@@ -1,0 +1,146 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "pool-omitted-copy-control/baseline-footprint.json",
+      "bytes": 3874,
+      "original_sha256": "b12dd7021c42750b7eaa1fbb67145b0891df70f9dda68c25065ef2e2f0e9d7ee",
+      "archived_sha256": "b12dd7021c42750b7eaa1fbb67145b0891df70f9dda68c25065ef2e2f0e9d7ee",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/baseline-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "403201b36cb58b239a74085e171fefda527454449f75b8fe83cc01a3ef05b01f",
+      "archived_sha256": "403201b36cb58b239a74085e171fefda527454449f75b8fe83cc01a3ef05b01f",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/baseline-pressure.json",
+      "bytes": 248,
+      "original_sha256": "a3a06f2031c61f0e41e6238474127ab6f422766878f9655528f6d506ec1d01de",
+      "archived_sha256": "a3a06f2031c61f0e41e6238474127ab6f422766878f9655528f6d506ec1d01de",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/baseline-swap.json",
+      "bytes": 215,
+      "original_sha256": "3e52f8067b5a54ec02b265924eeb2c3d2d511b8f409ed228dfe15d924ee54464",
+      "archived_sha256": "3e52f8067b5a54ec02b265924eeb2c3d2d511b8f409ed228dfe15d924ee54464",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/baseline-vmmap.json",
+      "bytes": 8049,
+      "original_sha256": "a6c9c3b728673fe94a52b5a573daa4a98d8beb98d34fee6ab2a036b67087c0a4",
+      "archived_sha256": "a6c9c3b728673fe94a52b5a573daa4a98d8beb98d34fee6ab2a036b67087c0a4",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/baseline-vmstat.json",
+      "bytes": 1390,
+      "original_sha256": "7b968eef98463d352a5a91c98aa4a63599d797dd45b6b03048bc0369fa305c14",
+      "archived_sha256": "7b968eef98463d352a5a91c98aa4a63599d797dd45b6b03048bc0369fa305c14",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/case.json",
+      "bytes": 14461,
+      "original_sha256": "941326196cc51ce141bdad6bc12f8e370ee52388b119428fb26188ecfcb50d37",
+      "archived_sha256": "941326196cc51ce141bdad6bc12f8e370ee52388b119428fb26188ecfcb50d37",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/heap_ready-footprint.json",
+      "bytes": 3875,
+      "original_sha256": "29333a1f3063d3603fdbfefb3400476015538e5f24ba638d33552674d635f122",
+      "archived_sha256": "29333a1f3063d3603fdbfefb3400476015538e5f24ba638d33552674d635f122",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/heap_ready-kernel_pressure.json",
+      "bytes": 172,
+      "original_sha256": "5d12ce12d7cc2faf529f62f40485e1a49354b2a1f21fa8781390f31cd0848eb2",
+      "archived_sha256": "5d12ce12d7cc2faf529f62f40485e1a49354b2a1f21fa8781390f31cd0848eb2",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/heap_ready-pressure.json",
+      "bytes": 247,
+      "original_sha256": "f490264ba7f3f4f88ce24f63cee5c9fbb5c2691f5e6f00ec2865dc52c74206c4",
+      "archived_sha256": "f490264ba7f3f4f88ce24f63cee5c9fbb5c2691f5e6f00ec2865dc52c74206c4",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/heap_ready-swap.json",
+      "bytes": 215,
+      "original_sha256": "724867ba72d63f26430378b0bb9a83e3396fbcdb44f86f49e1eb83fb462dfea2",
+      "archived_sha256": "724867ba72d63f26430378b0bb9a83e3396fbcdb44f86f49e1eb83fb462dfea2",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/heap_ready-vmmap.json",
+      "bytes": 8049,
+      "original_sha256": "c7138371e870dc59cf00ee1b573b37e164fd36b49f22bdf104db652dab560952",
+      "archived_sha256": "c7138371e870dc59cf00ee1b573b37e164fd36b49f22bdf104db652dab560952",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/heap_ready-vmstat.json",
+      "bytes": 1389,
+      "original_sha256": "a9998be69a512c9e38857d08cb3e61359c19a4653c30b6eae0dd47b73a47ef7d",
+      "archived_sha256": "a9998be69a512c9e38857d08cb3e61359c19a4653c30b6eae0dd47b73a47ef7d",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "pool-omitted-copy-control/stdout.txt",
+      "bytes": 5019,
+      "original_sha256": "fae182ad28dc30f66d29ccdc8d40f3b9e6c7cb9fa4c15e8c5f2f77609e9627e2",
+      "archived_sha256": "fae182ad28dc30f66d29ccdc8d40f3b9e6c7cb9fa4c15e8c5f2f77609e9627e2",
+      "redacted": false
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 82311,
+      "original_sha256": "303aea979d806626cdf957745f09485f1bcac01caba4b1d27161ea96164bb017",
+      "archived_sha256": "b95c1727fe926da9029e5a872a0e175bd7f1c0c7eb9f025f46c9c73062165ed8",
+      "redacted": true
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "original_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "archived_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/pool.cpp",
+      "bytes": 13362,
+      "original_sha256": "a265b5f78ab854f1f6936605f872b6cff4abecce6ce71e3d184b1a6605df1989",
+      "archived_sha256": "a265b5f78ab854f1f6936605f872b6cff4abecce6ce71e3d184b1a6605df1989",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16030,
+      "original_sha256": "8faf3021c055db45ca26676c9a2bf298085b96ff1ffb302af86d0b58921a58a8",
+      "archived_sha256": "8faf3021c055db45ca26676c9a2bf298085b96ff1ffb302af86d0b58921a58a8",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "original_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "archived_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "redacted": false
+    }
+  ]
+}

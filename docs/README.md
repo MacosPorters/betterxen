@@ -18,6 +18,8 @@
 
 ## Research, Testing & Licensing
 
+- [Workstream A Memory and Resource Research](research/d3dmetal-zero-copy/allocation-profiling/README.md) — Historical evidence inventory, footprint/retirement correction, xmem feasibility, pooling and texture protocols; local observations and explicit review/pressure limitations for #473.
+
 - [D3DMetal Unified-Memory and Zero-Copy Research](research/d3dmetal-zero-copy/README.md) — Shared six-check synthetic probe, per-host raw logs and evidence limits for #473 / #464.
 
 - [Hybrid Workloads & Measurement Protocol](testing/hybrid-workloads.md) — Original Windows workloads, receipt fields, timing conventions, and negative controls.

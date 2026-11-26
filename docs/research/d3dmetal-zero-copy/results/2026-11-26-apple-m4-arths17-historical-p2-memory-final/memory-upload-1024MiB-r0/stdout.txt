@@ -1,0 +1,14 @@
+PHASE2 protocol=1 mode=memory guest_pid=528
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+SHADER_COMPILER C:\windows\system32\d3dcompiler_47.dll
+SHADER_BYTECODE bytes=1384 magic=DXBC
+MEMORY type=upload bytes=1073741824
+STAGE baseline cpu_ptr=0000000000000000
+STAGE created cpu_ptr=0000000000000000
+STAGE mapped cpu_ptr=0000000226014000
+STAGE fully_initialized cpu_ptr=0000000226014000
+VERIFY full_allocation_shader_read matches=256/256 first_actual=59DC3731 first_expected=59DC3731
+STAGE gpu_complete cpu_ptr=0000000226014000
+STAGE released cpu_ptr=0000000000000000
+END success

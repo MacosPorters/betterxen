@@ -1,0 +1,2618 @@
+{
+  "protocol": "A-local-2.2",
+  "suite": "pool",
+  "allow_warning": true,
+  "utc": "2026-11-26T20:45:09.992092+00:00",
+  "independent_review": "pending",
+  "environment": {
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "CX_GRAPHICS_BACKEND": "d3dmetal",
+    "WINEDEBUG": "-all"
+  },
+  "sources": {
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/pool.cpp": "e58b4cf67e3c68b5bf65be6698fd9147901e61c33cf3ff355049f336eef84d13",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/support.h": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/run.py": "f0ad89ec395e7f0f882cf7474af1dc6bfccef936219d766b7b1ea9e5306521ed"
+  },
+  "baseline_sha256": "33e90bfee89e812f48990613cd74ced56473e5c3fc5d973f2ba1116090646a0c",
+  "tools": {
+    "chip": {
+      "command": [
+        "sysctl",
+        "-n",
+        "machdep.cpu.brand_string"
+      ],
+      "exit": 0,
+      "stdout": "Apple M4\n",
+      "stderr": "",
+      "seconds": 0.0029712090035900474
+    },
+    "ram": {
+      "command": [
+        "sysctl",
+        "-n",
+        "hw.memsize"
+      ],
+      "exit": 0,
+      "stdout": "25769803776\n",
+      "stderr": "",
+      "seconds": 0.002324207976926118
+    },
+    "host": {
+      "command": [
+        "uname",
+        "-m"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": "",
+      "seconds": 0.0021546250209212303
+    },
+    "macos": {
+      "command": [
+        "sw_vers"
+      ],
+      "exit": 0,
+      "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+      "stderr": "",
+      "seconds": 0.007065624988172203
+    },
+    "page": {
+      "command": [
+        "sysctl",
+        "-n",
+        "hw.pagesize"
+      ],
+      "exit": 0,
+      "stdout": "16384\n",
+      "stderr": "",
+      "seconds": 0.002467291022185236
+    },
+    "swap_before": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 6144.00M  used = 5116.38M  free = 1027.62M  (encrypted)\n",
+      "stderr": "",
+      "seconds": 0.002100749989040196
+    },
+    "pressure_before": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 62%\n",
+      "stderr": "",
+      "seconds": 0.002228124998509884
+    },
+    "vm_before": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   110010.\nPages active:                                 425580.\nPages inactive:                               418723.\nPages speculative:                              5872.\nPages throttled:                                   0.\nPages wired down:                             173070.\nPages purgeable:                                2129.\n\"Translation faults\":                     2391917564.\nPages copy-on-write:                        98058208.\nPages zero filled:                        1689406797.\nPages reactivated:                         188942889.\nPages purged:                               19486068.\nFile-backed pages:                            286646.\nAnonymous pages:                              563529.\nPages stored in compressor:                  1465190.\nPages occupied by compressor:                 400896.\nDecompressions:                            149510561.\nCompressions:                              188145120.\nPageins:                                    47539083.\nPageouts:                                     921194.\nSwapins:                                     1680374.\nSwapouts:                                    2468999.\n",
+      "stderr": "",
+      "seconds": 0.0020622910233214498
+    },
+    "load_before": {
+      "command": [
+        "ps",
+        "-axo",
+        "pid,pcpu,comm"
+      ],
+      "exit": 0,
+      "stdout": "  PID  %CPU COMM\n    1   1.0 /sbin/launchd\n  339   1.5 /usr/libexec/logd\n  342   0.0 /usr/libexec/UserEventAgent\n  344   3.2 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/Versions/A/Support/fseventsd\n  345   0.0 /System/Library/PrivateFrameworks/MediaRemote.framework/Support/mediaremoted\n  349   0.0 /usr/sbin/systemstats\n  353   0.0 /usr/libexec/configd\n  355   0.0 /System/Library/CoreServices/powerd.bundle/powerd\n  356   0.0 /usr/libexec/IOMFB_bics_daemon\n  360   0.0 /usr/libexec/remoted\n  364   0.0 /System/Library/PrivateFrameworks/CoreSpeech.framework/corespeechd_system\n  366   0.0 /usr/libexec/watchdogd\n  369   0.4 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mds\n  371   0.0 /usr/libexec/kernelmanagerd\n  372   0.0 /usr/libexec/diskarbitrationd\n  376   0.0 /usr/sbin/syslogd\n  378   0.0 /usr/libexec/thermalmonitord\n  379   0.3 /System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/contextstored\n  380   0.0 /usr/libexec/xprotectd\n  381   0.2 /usr/libexec/opendirectoryd\n  382   0.2 /System/Library/PrivateFrameworks/ApplePushService.framework/apsd\n  383   1.2 /System/Library/CoreServices/launchservicesd\n  384   0.0 /usr/libexec/timed\n  385   0.0 /System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/Resources/usbmuxd\n  386   0.0 /usr/sbin/securityd\n  388   0.0 /usr/libexec/locationd\n  389   0.0 /usr/libexec/nesessionmanager\n  391   0.0 autofsd\n  392   0.1 /usr/libexec/dasd\n  393   0.0 /System/Library/PrivateFrameworks/Heimdal.framework/Helpers/kdc\n  396   0.0 /usr/sbin/distnoted\n  399   0.0 /System/Library/CoreServices/logind\n  400   0.0 /System/Library/PrivateFrameworks/GenerationalStorage.framework/Versions/A/Support/revisiond\n  401   0.0 /usr/sbin/KernelEventAgent\n  403   0.0 /usr/libexec/usermanagerd\n  406   0.1 /usr/sbin/notifyd\n  408   0.0 /usr/libexec/corebrightnessd\n  409   0.0 /System/Library/Frameworks/CoreMediaIO.framework/Versions/A/Resources/com.apple.cmio.registerassistantservice\n  412  36.8 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  413   0.0 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n  415   0.3 /usr/sbin/cfprefsd\n  416   0.7 /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow\n  417   2.7 /usr/libexec/runningboardd\n  449   0.0 /System/Library/CoreServices/coreservicesd\n  461   0.0 /usr/libexec/clocksyncd\n  462   0.6 /System/Library/PrivateFrameworks/CoreAnalytics.framework/Support/analyticsd\n  463   0.0 /usr/libexec/lsd\n  465   0.3 /usr/sbin/mDNSResponder\n  469   0.0 /usr/libexec/apfsd\n  479   0.1 /usr/libexec/airportd\n  481   0.1 /usr/libexec/symptomsd\n  485   0.0 /System/Library/PrivateFrameworks/BiomeStreams.framework/Support/biomed\n  491   0.0 /System/Library/PrivateFrameworks/SystemStatusServer.framework/Support/systemstatusd\n  495   0.0 /usr/libexec/eligibilityd\n  499   0.0 /System/Library/CoreServices/TimeMachine/backupd\n  501   0.0 /usr/libexec/ApplicationFirewall/socketfilterfw\n  502   0.0 /usr/sbin/distnoted\n  503   0.0 /System/Library/Frameworks/Security.framework/Versions/A/XPCServices/authd.xpc/Contents/MacOS/authd\n  504   0.0 /usr/sbin/mDNSResponderHelper\n  505   3.7 /usr/libexec/syspolicyd\n  507   0.0 /usr/sbin/distnoted\n  509   0.0 /System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Resources/backgroundtaskmanagementd\n  514   0.0 /usr/sbin/distnoted\n  515   0.0 /usr/sbin/WirelessRadioManagerd\n  520   0.0 /usr/sbin/distnoted\n  528   0.0 /usr/libexec/com.apple.cmio.videodriverkithostextension.systemextension/Contents/MacOS/com.apple.cmio.videodriverkithostextension\n  530   0.0 /usr/libexec/cameracaptured\n  531   0.0 /usr/libexec/searchpartyd\n  532   0.0 /System/Library/Frameworks/CoreMediaIO.framework/Versions/A/Resources/UVCAssistant.systemextension/Contents/MacOS/UVCAssistant\n  533   0.0 /usr/sbin/coreaudiod\n  539   0.5 /usr/libexec/gamepolicyd\n  544   0.0 /usr/sbin/distnoted\n  549   0.0 /System/Library/CoreServices/appleeventsd\n  551   0.0 Core Audio Driver (BlackHole2ch.driver)\n  562   0.0 /System/Library/CoreServices/Software Update.app/Contents/Resources/suhelperd\n  570   0.0 /usr/sbin/distnoted\n  574   0.0 Core Audio Driver (VoicemodAudioDevice.driver)\n  576   0.0 /usr/libexec/modelmanagerd\n  578   0.0 /System/Library/Frameworks/LocalAuthentication.framework/Support/coreauthd\n  583   0.0 /usr/sbin/distnoted\n  584   0.0 /System/Library/DriverExtensions/com.apple.DriverKit-IOUserDockChannelSerial.dext/com.apple.DriverKit-IOUserDockChannelSerial\n  585   0.6 /System/Library/DriverExtensions/com.apple.DriverKit-AppleBCMWLAN.dext/com.apple.DriverKit-AppleBCMWLAN\n  586   0.0 /System/Library/DriverExtensions/com.apple.AppleUserHIDDrivers.dext/com.apple.AppleUserHIDDrivers\n  588   0.0 /usr/sbin/distnoted\n  592   0.0 /usr/libexec/audiomxd\n  599   0.0 /usr/sbin/distnoted\n  604   0.4 /usr/sbin/distnoted\n  605   0.0 /usr/libexec/secd\n  609   0.3 /usr/sbin/cfprefsd\n  611   0.0 /usr/libexec/sysmond\n  614   0.0 /usr/libexec/UserEventAgent\n  620   0.0 /System/Library/CoreServices/audioaccessoryd\n  624   0.1 /usr/sbin/universalaccessd\n  625   0.0 /usr/libexec/ContinuityCaptureAgent\n  626   0.0 /usr/libexec/pboard\n  628   4.3 /System/Library/CoreServices/WindowManager.app/Contents/MacOS/WindowManager\n  629   0.0 /System/Library/PrivateFrameworks/UserNotificationsCore.framework/Support/usernotificationsd\n  630  17.4 /System/Library/PrivateFrameworks/BiomeStreams.framework/Support/BiomeAgent\n  631   0.0 /usr/libexec/lsd\n  632   3.1 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n  633   0.0 /System/Library/Frameworks/Accounts.framework/Versions/A/Support/accountsd\n  634   0.0 /usr/libexec/containermanagerd\n  635   1.5 /System/Library/PrivateFrameworks/IDS.framework/identityservicesd.app/Contents/MacOS/identityservicesd\n  636   0.0 /System/Library/PrivateFrameworks/CloudKitDaemon.framework/Support/cloudd\n  637   0.0 /System/Library/CoreServices/WallpaperAgent.app/Contents/MacOS/WallpaperAgent\n  639   0.0 /System/Library/CoreServices/talagentd\n  640   0.0 /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock\n  642   5.7 /System/Library/CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter\n  643  14.6 /System/Library/CoreServices/MenuBarAgent.app/Contents/MacOS/MenuBarAgent\n  644   0.0 /usr/libexec/linkd\n  645   2.0 /System/Library/CoreServices/SystemUIServer.app/Contents/MacOS/SystemUIServer\n  646   3.5 /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder\n  653   0.0 /System/Library/CoreServices/AccessibilityUIServer.app/Contents/MacOS/AccessibilityUIServer\n  654   0.1 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/XPCServices/com.apple.hiservices-xpcservice.xpc/Contents/MacOS/com.apple.hiservices-xpcservice\n  658   0.0 /System/Library/Frameworks/QuickLookUI.framework/Versions/A/XPCServices/QuickLookUIService.xpc/Contents/MacOS/QuickLookUIService\n  659   0.0 /usr/sbin/usernoted\n  661   0.0 /System/Library/CoreServices/sharedfilelistd\n  663   0.0 automountd\n  664   0.1 /System/Library/PrivateFrameworks/FileProvider.framework/Support/fileproviderd\n  666   0.0 /System/Library/PrivateFrameworks/AMPDevices.framework/Versions/A/Support/AMPDeviceDiscoveryAgent\n  668   0.3 /System/Library/PrivateFrameworks/ViewBridge.framework/Versions/A/XPCServices/ViewBridgeAuxiliary.xpc/Contents/MacOS/ViewBridgeAuxiliary\n  669   0.0 /System/Library/PrivateFrameworks/UserActivity.framework/Agents/useractivityd\n  671   0.0 /System/Library/CoreServices/Dock.app/Contents/XPCServices/com.apple.dock.extra.xpc/Contents/MacOS/com.apple.dock.extra\n  672   0.0 /System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Support/fontd\n  675   0.0 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Support/fontworker\n  678   0.2 /System/Applications/Siri AI.app/Contents/MacOS/Siri AI\n  680   1.5 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/corespotlightd\n  687   0.0 /System/Library/PrivateFrameworks/CoreSuggestions.framework/Versions/A/Support/suggestd\n  692   0.0 /System/Library/PrivateFrameworks/ChronoCore.framework/Support/chronod\n  694   0.0 /System/Library/ExtensionKit/Extensions/WallpaperGradientExtension.appex/Contents/MacOS/WallpaperGradientExtension\n  696   0.0 /usr/libexec/sharingd\n  698   0.0 /usr/libexec/rosetta/oahd\n  699   0.0 /System/Library/ExtensionKit/Extensions/WallpaperAerialsExtension.appex/Contents/MacOS/WallpaperAerialsExtension\n  703   0.0 /System/Library/CoreServices/CoreLocationAgent.app/Contents/MacOS/CoreLocationAgent\n  705   0.0 /System/Library/PrivateFrameworks/CampoUIServices.framework/Versions/A/XPCServices/CampoRemoteService.xpc/Contents/MacOS/CampoRemoteService\n  707   0.0 /System/Library/PrivateFrameworks/AgentSessionKitRuntime.framework/Versions/A/agentstored\n  713   0.0 /System/Library/PrivateFrameworks/IMCore.framework/imagent.app/Contents/MacOS/imagent\n  717   0.0 /usr/libexec/rapportd\n  718   0.0 /usr/libexec/nsurlsessiond\n  719   6.1 /System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/ContextStoreAgent\n  720   0.0 /usr/libexec/routined\n  723   0.0 /usr/libexec/wifip2pd\n  732   0.0 /System/Library/PrivateFrameworks/AssistantServices.framework/Versions/A/Support/assistantd\n  738   0.4 /usr/libexec/duetexpertd\n  741   0.0 /usr/sbin/filecoordinationd\n  746   0.0 /System/Library/CoreServices/WiFiAgent.app/Contents/MacOS/WiFiAgent\n  747   0.0 /System/Library/PrivateFrameworks/CommunicationsFilter.framework/CMFSyncAgent\n  761   0.0 /System/Library/Frameworks/LocalAuthentication.framework/Support/coreauthd\n  765   0.0 /System/Library/CoreServices/UIKitSystem.app/Contents/MacOS/UIKitSystem\n  767   0.0 /System/Library/Frameworks/CryptoTokenKit.framework/ctkd\n  768   0.0 /usr/libexec/milod\n  769   0.0 /usr/libexec/nearbyd\n  784   0.0 /System/Library/CoreServices/NotificationCenter.app/Contents/MacOS/NotificationCenter\n  788   0.0 /System/Library/PrivateFrameworks/AuthKit.framework/Versions/A/Support/akd\n  809   0.0 /usr/libexec/avconferenced\n  810   0.0 /System/Library/PrivateFrameworks/MediaRemote.framework/Support/mediaremoteagent\n  831   0.0 /System/Library/CoreServices/SubmitDiagInfo\n  847   0.0 /usr/sbin/distnoted\n  849   0.0 /System/Library/PrivateFrameworks/CloudDocs.framework/PlugIns/com.apple.CloudDocs.iCloudDriveFileProvider.appex/Contents/MacOS/com.apple.CloudDocs.iCloudDriveFileProvider\n  851   0.0 /System/Library/Frameworks/InputMethodKit.framework/Resources/imklaunchagent\n  852   7.0 /System/Library/PrivateFrameworks/TextInputUIMacHelper.framework/Versions/A/XPCServices/CursorUIViewService.xpc/Contents/MacOS/CursorUIViewService\n  856   0.1 /System/Library/Input Methods/PressAndHold.app/Contents/PlugIns/PAH_Extension.appex/Contents/MacOS/PAH_Extension\n  857   0.0 /System/Library/PrivateFrameworks/CoreSpeech.framework/corespeechd\n  867   0.1 /System/Library/CoreServices/Siri.app/Contents/MacOS/Siri\n  868   0.0 /System/Library/Image Capture/Support/icdd\n  872   0.0 <HOME>/.wakatime/xcode-hackatime\n  876   0.0 /System/Library/CoreServices/AirPlayUIAgent.app/Contents/MacOS/AirPlayUIAgent\n  879   0.0 /System/Library/CoreServices/diagnostics_agent\n  881   0.1 /System/Library/CoreServices/TextInputMenuAgent.app/Contents/MacOS/TextInputMenuAgent\n  884   0.0 /System/Library/Frameworks/CryptoTokenKit.framework/ctkahp.bundle/Contents/MacOS/ctkahp\n  892   0.0 /System/Library/PrivateFrameworks/FamilyControls.framework/Resources/parentalcontrolsd\n  906   0.3 /Applications/Rectangle.app/Contents/MacOS/Rectangle\n  913   0.0 /usr/sbin/systemstats\n  921   0.0 /usr/libexec/diagnosticd\n  943   0.0 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/CVMServer\n  951   0.0 /usr/libexec/InternetSharing\n 1018   0.0 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mdbulkimport\n 1058   0.0 /usr/sbin/distnoted\n 1063   0.0 /System/Library/PrivateFrameworks/CoreFP.framework/Versions/A/fairplayd\n 1067   0.0 /usr/libexec/dhcp6d\n 1126   0.0 /System/Library/PrivateFrameworks/UniversalAccess.framework/Versions/A/Resources/universalAccessAuthWarn.app/Contents/MacOS/universalAccessAuthWarn\n 1510   0.0 /usr/sbin/distnoted\n 1515   0.0 /usr/sbin/distnoted\n 1517   0.0 /System/Library/PrivateFrameworks/PassKitCore.framework/passd\n 1522   0.0 /usr/sbin/distnoted\n 1553   0.0 /System/Library/ExtensionKit/Extensions/MouseIntentsExtension.appex/Contents/MacOS/MouseIntentsExtension\n 1557   0.0 /System/Library/ExtensionKit/Extensions/DesktopSettingsIntents.appex/Contents/MacOS/DesktopSettingsIntents\n 1558   0.0 /System/Library/ExtensionKit/Extensions/SpotlightSettingsIntentsExtension.appex/Contents/MacOS/SpotlightSettingsIntentsExtension\n 1560   0.0 /System/Library/ExtensionKit/Extensions/NotificationsSettingsIntents.appex/Contents/MacOS/NotificationsSettingsIntents\n 1561   0.0 /System/Library/ExtensionKit/Extensions/PlaceholderSettingsSearchTermsIntents.appex/Contents/MacOS/PlaceholderSettingsSearchTermsIntents\n 1563   0.0 /System/Library/ExtensionKit/Extensions/StartupDiskWidgetExtension.appex/Contents/MacOS/StartupDiskWidgetExtension\n 1565   0.0 /System/Library/ExtensionKit/Extensions/ScreenTimeAppIntentsExtension.appex/Contents/MacOS/ScreenTimeAppIntentsExtension\n 1566   0.0 /System/Library/ExtensionKit/Extensions/ControlCenterSettingsIntents.appex/Contents/MacOS/ControlCenterSettingsIntents\n 1567   0.0 /System/Library/CoreServices/Shortcuts Events.app/Contents/MacOS/Shortcuts Events\n 1568   0.0 /System/Library/ExtensionKit/Extensions/ProfilesSettingsIntents.appex/Contents/MacOS/ProfilesSettingsIntents\n 1570   0.0 /System/Library/ExtensionKit/Extensions/DateTimeIntentsExtension.appex/Contents/MacOS/DateTimeIntentsExtension\n 1571   0.0 /System/Library/ExtensionKit/Extensions/DoNotDisturbAppIntents.appex/Contents/MacOS/DoNotDisturbAppIntents\n 1572   0.0 /System/Library/ExtensionKit/Extensions/FamilyIntents.appex/Contents/MacOS/FamilyIntents\n 1573   0.0 /System/Library/ExtensionKit/Extensions/CDsAndDvDsSettingsIntents.appex/Contents/MacOS/CDsAndDvDsSettingsIntents\n 1574   0.0 /System/Library/ExtensionKit/Extensions/SoftwareUpdateSettingsExtensionIntents.appex/Contents/MacOS/SoftwareUpdateSettingsExtensionIntents\n 1575   0.0 /System/Library/ExtensionKit/Extensions/AccessibilitySettingsSearchExtension.appex/Contents/MacOS/AccessibilitySettingsSearchExtension\n 1577   0.0 /System/Library/ExtensionKit/Extensions/TrackpadIntentsExtension.appex/Contents/MacOS/TrackpadIntentsExtension\n 1578   0.0 /System/Library/ExtensionKit/Extensions/WallpaperSettingsIntents.appex/Contents/MacOS/WallpaperSettingsIntents\n 1580   0.0 /System/Library/ExtensionKit/Extensions/AccountsUISettingsAppIntents.appex/Contents/MacOS/AccountsUISettingsAppIntents\n 1582   0.0 /System/Library/ExtensionKit/Extensions/PrefPaneSearchIntent.appex/Contents/MacOS/PrefPaneSearchIntent\n 1585   0.0 /System/Library/ExtensionKit/Extensions/BluetoothSettingsAppIntentsWidgetExtension.appex/Contents/MacOS/BluetoothSettingsAppIntentsWidgetExtension\n 1588   0.0 /System/Library/ExtensionKit/Extensions/ClassroomDeviceExpert.appex/Contents/MacOS/ClassroomDeviceExpert\n 1589   0.0 /System/Library/ExtensionKit/Extensions/SiriSetupSettingsIntents.appex/Contents/MacOS/SiriSetupSettingsIntents\n 1595   0.0 /System/Library/ExtensionKit/Extensions/VpnSettingsIntents.appex/Contents/MacOS/VpnSettingsIntents\n 1598   0.0 /System/Library/ExtensionKit/Extensions/GameControllerSettingsIntents.appex/Contents/MacOS/GameControllerSettingsIntents\n 1599   0.0 /System/Library/ExtensionKit/Extensions/InternationalSettingsExtension.appex/Contents/MacOS/InternationalSettingsExtension\n 1600   0.0 /System/Library/ExtensionKit/Extensions/BiometricsAndPasswordSettingsAppIntentsExtension.appex/Contents/MacOS/BiometricsAndPasswordSettingsAppIntentsExtension\n 1601   0.0 /System/Library/ExtensionKit/Extensions/GameCenterSettingsSearchExtension.appex/Contents/MacOS/GameCenterSettingsSearchExtension\n 1602   0.0 /System/Library/ExtensionKit/Extensions/WiFiMacSettingsIntents.appex/Contents/MacOS/WiFiMacSettingsIntents\n 1603   0.0 /System/Library/ExtensionKit/Extensions/AppleAccountIntents_macOS.appex/Contents/MacOS/AppleAccountIntents_macOS\n 1605   0.0 /System/Library/ExtensionKit/Extensions/StorageSettingsIntentsExtension.appex/Contents/MacOS/StorageSettingsIntentsExtension\n 1606   0.0 /System/Library/CoreServices/CrashReporterSupportHelper\n 1607   0.0 /System/Library/ExtensionKit/Extensions/KeyboardSettingsIntents.appex/Contents/MacOS/KeyboardSettingsIntents\n 1609   0.0 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/Extensions/SafariLinkExtension.appex/Contents/MacOS/SafariLinkExtension\n 1610   0.0 /System/Applications/Calendar.app/Contents/Extensions/CalendarIntentsExtension.appex/Contents/MacOS/CalendarIntentsExtension\n 1611   0.0 /System/Applications/Messages.app/Contents/Extensions/MessagesActionExtension.appex/Contents/MacOS/MessagesActionExtension\n 1612   0.0 /System/Library/ExtensionKit/Extensions/TimeMachineSettingsIntents.appex/Contents/MacOS/TimeMachineSettingsIntents\n 1613   0.0 /System/Library/ExtensionKit/Extensions/ClassKitAppIntents.appex/Contents/MacOS/ClassKitAppIntents\n 1615   0.0 /System/Library/ExtensionKit/Extensions/PasswordSettingsAppIntentsExtension.appex/Contents/MacOS/PasswordSettingsAppIntentsExtension\n 1617   0.0 /System/Library/ExtensionKit/Extensions/BatterySettingsIntentsExtension.appex/Contents/MacOS/BatterySettingsIntentsExtension\n 1648   0.0 /System/Applications/Notes.app/Contents/PlugIns/com.apple.Notes.SpotlightIndexExtension.appex/Contents/MacOS/com.apple.Notes.SpotlightIndexExtension\n 1681   0.0 /System/Library/ExtensionKit/Extensions/PCCAgentClientExtension.appex/Contents/MacOS/PCCAgentClientExtension\n 1682   0.0 /usr/sbin/distnoted\n 1700   0.0 /usr/sbin/distnoted\n 3613   0.7 /Applications/Raycast.app/Contents/MacOS/Raycast\n 3625   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.GPU.xpc/Contents/MacOS/com.apple.WebKit.GPU\n 3626   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent\n 3627   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.Networking.xpc/Contents/MacOS/com.apple.WebKit.Networking\n 3628   0.4 Raycast Backend\n 3637   0.0 /Applications/Raycast.app/Contents/XPCServices/Raycast Accessibility.xpc/Contents/MacOS/com.raycast.macos.Accessibility\n 3639   0.0 /Applications/Raycast.app/Contents/XPCServices/Raycast Pasteboard.xpc/Contents/MacOS/com.raycast.macos.Pasteboard\n 4273   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n 4275   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n 4277   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n 5420   0.0 /usr/bin/ssh-agent\n 6978   0.9 /usr/libexec/proactived\n 6979   0.0 /System/Library/PrivateFrameworks/DoNotDisturbServer.framework/Support/donotdisturbd\n 8692   0.0 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mdwrite\n10103   0.0 /System/Library/PrivateFrameworks/Synapse.framework/Support/contentlinkingd\n11088   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n11111   0.0 npm exec firebase-tools@latest mcp --dir .\n11128   0.0 node\n15381   3.8 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n15468   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n16019   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n16020   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n16853   0.0 /System/Library/PrivateFrameworks/AmbientDisplay.framework/Versions/A/XPCServices/com.apple.AmbientDisplayAgent.xpc/Contents/MacOS/com.apple.AmbientDisplayAgent\n16971   0.2 <HOME>/.vscode/extensions/openai.chatgpt-26.1120.50957-darwin-arm64/bin/macos-aarch64/codex-code-mode-host\n17157  14.3 /Applications/Vorssaint.app/Contents/MacOS/Vorssaint\n20776   0.0 /System/Library/PrivateFrameworks/People.framework/peopled\n22596   0.0 /System/Library/Frameworks/AppKit.framework/Versions/C/XPCServices/ThemeWidgetControlViewService.xpc/Contents/MacOS/ThemeWidgetControlViewService\n23466   0.0 /usr/libexec/swcd\n24422   0.0 /usr/sbin/appleh16camerad\n24765   0.1 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n25410   0.0 /System/Library/Frameworks/Security.framework/Versions/A/XPCServices/com.apple.CodeSigningHelper.xpc/Contents/MacOS/com.apple.CodeSigningHelper\n26282   1.7 /System/Library/PrivateFrameworks/IntelligencePlatformCompute.framework/Versions/A/XPCServices/IntelligencePlatformComputeService.xpc/Contents/MacOS/IntelligencePlatformComputeService\n26552   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n26569   0.0 npm exec firebase-tools@latest mcp --dir .\n26587   0.0 node\n26800   0.0 /System/Library/CoreServices/PowerChime.app/Contents/MacOS/PowerChime\n26893   0.0 /System/Library/PrivateFrameworks/CoreEmbeddedSpeechRecognition.framework/Versions/A/XPCServices/com.apple.siri.embeddedspeech.xpc/Contents/MacOS/com.apple.siri.embeddedspeech\n26909   0.0 /System/Library/ExtensionKit/Extensions/TGOnDeviceInferenceProviderService.appex/Contents/MacOS/TGOnDeviceInferenceProviderService\n26917   0.0 /System/Library/PrivateFrameworks/PhotoAnalysis.framework/Versions/A/Support/photoanalysisd\n26918   0.0 /System/Library/ExtensionKit/Extensions/GenerativeExperiencesSafetyInferenceProvider.appex/Contents/MacOS/GenerativeExperiencesSafetyInferenceProvider\n26920   0.0 /System/Library/ExtensionKit/Extensions/TGOnDeviceInferenceProviderService.appex/Contents/MacOS/TGOnDeviceInferenceProviderService\n26971   0.0 /System/Library/PrivateFrameworks/SocialLayer.framework/sociallayerd.app/Contents/MacOS/sociallayerd\n27275   1.8 /usr/libexec/trustd\n27277   1.5 /usr/libexec/trustd\n27637   0.3 /usr/libexec/GamePolicyAgent\n28136   0.0 /System/Applications/Mail.app/Contents/PlugIns/com.apple.mail.SpotlightIndexExtension.appex/Contents/MacOS/com.apple.mail.SpotlightIndexExtension\n28192   0.0 /usr/sbin/distnoted\n29458   0.0 /System/Library/CoreServices/GameOverlayUI.app/Contents/MacOS/GameOverlayUI\n31543   0.0 /usr/libexec/neagent\n31562   0.0 /System/Library/PrivateFrameworks/HearingCore.framework/heard\n31802   0.0 /System/Library/CoreServices/mapspushd\n31803   0.0 /System/Library/PrivateFrameworks/MapsSync.framework/mapssyncd\n31826   0.0 /System/Library/PrivateFrameworks/GeoAnalytics.framework/geoanalyticsd\n31989   0.0 /System/Library/PrivateFrameworks/CloudTelemetry.framework/Support/cloudtelemetryd\n31991   0.0 /System/Library/PrivateFrameworks/CoreAnalytics.framework/Support/analyticsagent\n32063   0.0 /System/Library/PrivateFrameworks/VoiceShortcuts.framework/Versions/A/Support/siriactionsd\n32065   0.0 /System/Library/PrivateFrameworks/iCloudDriveCore.framework/Versions/A/Support/bird\n32140   0.0 /Applications/OneDrive.app/Contents/OneDrive Sync Service.app/Contents/MacOS/OneDrive Sync Service\n32260   0.0 /System/Library/PrivateFrameworks/KerberosHelper/Helpers/DiskUnmountWatcher\n32427   0.0 /usr/libexec/secinitd\n32712   0.0 /usr/libexec/containermanagerd_system\n33963   0.0 /System/Library/Frameworks/CoreMediaIO.framework/Resources/VDC.plugin/Contents/Resources/VDCAssistant\n33967   0.0 /System/Library/Audio/Plug-Ins/usbaudio.bundle/Contents/MacOS/usbaudiod\n36517   0.0 /System/Library/PrivateFrameworks/PowerLog.framework/Versions/A/XPCServices/PerfPowerTelemetryClientRegistrationService.xpc/Contents/MacOS/PerfPowerTelemetryClientRegistrationService\n37496   0.0 /usr/libexec/nsurlsessiond\n37502   0.0 /usr/libexec/smd\n37572   0.0 /System/Library/CoreServices/CoreServicesUIAgent.app/Contents/MacOS/CoreServicesUIAgent\n37583   0.2 /System/Library/PrivateFrameworks/CalendarDaemon.framework/Support/calaccessd\n37635   0.0 /System/Library/PrivateFrameworks/iCloudDriveService.framework/XPCServices/ContainerMetadataExtractor.xpc/Contents/MacOS/ContainerMetadataExtractor\n37640   0.0 /System/Library/PrivateFrameworks/AppPredictionFoundation.framework/Versions/A/XPCServices/AppPredictionIntentsHelperService.xpc/Contents/MacOS/AppPredictionIntentsHelperService\n37789   0.0 /usr/libexec/pkd\n37834   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n38354   0.0 /System/Library/PrivateFrameworks/EcosystemAnalytics.framework/Support/ecosystemanalyticsd\n38355   0.0 /System/Library/PrivateFrameworks/Ecosystem.framework/Support/ecosystemd\n38366   0.0 /System/Library/PrivateFrameworks/AssistantServices.framework/Versions/A/Support/assistant_service\n38440   0.0 /System/Library/ExtensionKit/Extensions/WallpaperMacintoshExtension.appex/Contents/MacOS/WallpaperMacintoshExtension\n38831   0.0 /System/Library/PrivateFrameworks/XprotectFramework.framework/Versions/A/XPCServices/XprotectService.xpc/Contents/MacOS/XprotectService\n38842   0.0 /System/Library/PrivateFrameworks/CoreSymbolication.framework/coresymbolicationd\n39800   0.0 /System/Library/PrivateFrameworks/SafariSafeBrowsing.framework/com.apple.Safari.SafeBrowsing.Service\n39842   0.0 /System/Library/CoreServices/Setup Assistant.app/Contents/Resources/mbuseragent\n43308   0.0 /usr/libexec/nfcd\n46519   0.0 /usr/libexec/aned\n46827   0.4 /System/Library/CoreServices/UniversalControl.app/Contents/MacOS/UniversalControl\n46867   0.0 /System/Library/PrivateFrameworks/StatusKit.framework/StatusKitAgent\n46869   0.0 /usr/libexec/sandboxd\n46871   0.0 /System/Library/PrivateFrameworks/CoreFollowUp.framework/Versions/A/Support/followupd\n46872   0.0 /System/Library/Frameworks/CryptoTokenKit.framework/ctkd\n47920   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n47921   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n50786   0.0 /System/Library/PrivateFrameworks/AXAssetLoader.framework/Support/axassetsd\n50851   0.0 /System/Library/Frameworks/Contacts.framework/Support/contactsd\n51377   0.0 /usr/libexec/logd_helper\n51404   0.0 /usr/libexec/triald\n51635   0.0 rtadvd\n51737   0.0 /System/Library/PrivateFrameworks/AppleMediaServices.framework/Resources/amsaccountsd\n51738   0.0 /System/Library/CoreServices/Software Update.app/Contents/Resources/softwareupdated\n51743   0.0 /System/Library/Frameworks/ManagedAppDistribution.framework/Support/managedappdistributionagent\n51750   0.0 /System/Library/CoreServices/iconservicesd\n51756   0.0 /System/Library/Frameworks/ManagedAppDistribution.framework/Support/managedappdistributiond\n51760   0.0 /System/Library/PrivateFrameworks/AppSSO.framework/Support/AppSSOAgent.app/Contents/MacOS/AppSSOAgent\n51762   0.0 /System/Library/PrivateFrameworks/AppSSO.framework/Support/AppSSODaemon\n52253   0.0 /System/Library/PrivateFrameworks/CoreParsec.framework/parsec-fbf\n52351   0.0 /usr/libexec/gamed\n52352   0.0 /usr/libexec/aneuserd\n52353   0.0 /usr/libexec/networkserviceproxy\n52355   0.0 /usr/libexec/dmd\n52356   0.0 /System/Library/PrivateFrameworks/GenerativeExperiencesRuntime.framework/Versions/A/generativeexperiencesd\n52358   0.0 /System/Library/PrivateFrameworks/AppStoreDaemon.framework/Support/appstoreagent\n52366   0.0 /System/Library/PrivateFrameworks/ModelCatalogRuntime.framework/Versions/A/modelcatalogd\n52367   0.0 /System/Library/PrivateFrameworks/PhotoLibraryServices.framework/Versions/A/Support/photolibraryd\n52368   0.0 /System/Library/CoreServices/ScopedBookmarkAgent\n52369   0.0 /System/Library/PrivateFrameworks/AppStoreDaemon.framework/Support/appstored\n52371   0.0 /System/Library/PrivateFrameworks/CloudSubscriptionFeatures.framework/FeatureAccessAgent\n52373   0.0 /System/Library/PrivateFrameworks/AppleMediaServicesUI.framework/amsengagementd\n52374   0.0 /usr/libexec/promotedcontentd\n52380   0.0 /usr/libexec/remindd\n52407   0.0 cloudphotod\n52429   0.0 /System/Library/CoreServices/pbs\n52970   0.0 /System/Library/CoreServices/Keychain Circle Notification.app/Contents/MacOS/Keychain Circle Notification\n53206   0.0 /System/Library/PrivateFrameworks/WorkflowKit.framework/XPCServices/ShortcutsViewService.xpc/Contents/MacOS/ShortcutsViewService\n53212   0.0 /System/Library/PrivateFrameworks/SessionCore.framework/Support/liveactivitiesd\n53213   0.0 /System/Library/PrivateFrameworks/ReplicatorCore.framework/Support/replicatord\n53215   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n53322   0.0 /System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Support/BackgroundTaskManagementAgent.app/Contents/MacOS/BackgroundTaskManagementAgent\n53329   0.0 /usr/libexec/amfid\n53343   0.0 /System/Library/Services/AppleSpell.service/Contents/MacOS/AppleSpell\n53358   0.0 /System/Library/PrivateFrameworks/OnDeviceStorage.framework/Support/amsondevicestoraged\n53387   0.0 /System/Library/CoreServices/Dock.app/Contents/XPCServices/DockHelper.xpc/Contents/MacOS/DockHelper\n53409   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n53423   0.0 /System/Library/PrivateFrameworks/XprotectFramework.framework/Versions/A/XPCServices/XProtectBridgeService.xpc/Contents/MacOS/XProtectBridgeService\n53428   0.0 /System/Cryptexes/App/usr/libexec/AuthenticationServicesAgent\n53429   0.0 /System/Library/PrivateFrameworks/SiriAppIntentsRuntime.framework/siriappintentsd\n53430   0.0 /usr/libexec/keychainsharingmessagingd\n53435   0.0 /System/Cryptexes/App/usr/libexec/SafariLaunchAgent\n53450   0.0 /System/Library/PrivateFrameworks/IntelligenceFlowRuntime.framework/Versions/A/intelligenceflowd\n53451   0.0 /System/Library/PrivateFrameworks/IntelligenceFlowContextRuntime.framework/Versions/A/intelligencecontextd\n53458   0.0 /System/Library/Frameworks/AudioToolbox.framework/AudioComponentRegistrar\n53488   0.0 /System/Library/CoreServices/iconservicesagent\n53489   0.0 /System/Library/Frameworks/Metal.framework/Versions/A/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService\n53538   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n54056   0.0 /usr/libexec/powerdatad\n54057   0.0 /System/Library/CoreServices/liquiddetectiond.app/liquiddetectiond\n54068   0.0 /usr/libexec/tipsd\n54077   0.0 /System/Library/PrivateFrameworks/FamilyCircle.framework/Versions/A/Resources/familycircled\n54083   0.0 /usr/libexec/appleaccountd\n54185   0.0 /System/Library/PrivateFrameworks/EmailDaemon.framework/Versions/A/maild\n54267   0.0 /usr/libexec/seserviced\n54306   0.0 /System/Library/PrivateFrameworks/CharacterPicker.framework/Versions/A/XPCServices/com.apple.CharacterPicker.FileService.xpc/Contents/MacOS/com.apple.CharacterPicker.FileService\n54503   0.0 /System/Library/Frameworks/Metal.framework/Versions/A/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService\n54535   0.0 /usr/sbin/spindump\n54537   0.0 /usr/libexec/spindump_agent\n54631   0.0 /usr/libexec/replayd\n54708   0.0 /usr/sbin/bluetoothd\n54733   0.0 /usr/libexec/inputanalyticsd\n54734   0.0 /System/Library/Frameworks/Metal.framework/Versions/A/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService\n54735   0.0 /System/Library/PrivateFrameworks/CoreParsec.framework/parsecd\n54736   0.0 /System/Library/PrivateFrameworks/ContinuousDialogManagerService.framework/assistant_cdmd\n54737   0.0 /System/Library/PrivateFrameworks/iTunesCloud.framework/Support/itunescloudd\n54740   0.0 /System/Library/Frameworks/Metal.framework/Versions/A/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService\n54814   2.1 /usr/libexec/PerfPowerServices\n54828   0.0 /System/Library/DriverExtensions/IOUserBluetoothSerialDriver.dext/IOUserBluetoothSerialDriver\n54977   0.0 /System/Library/Frameworks/StoreKit.framework/Support/storekitagent\n55802   0.0 /usr/libexec/taskgated\n55826   0.0 /usr/libexec/mobileassetd\n55833   0.0 /System/Library/PrivateFrameworks/MobileAssetDaemon.framework/Versions/A/XPCServices/com.apple.MobileAsset.DownloadService.Builtin.xpc/Contents/MacOS/com.apple.MobileAsset.DownloadService.Builtin\n55909   0.0 /usr/libexec/findmydevice-user-agent\n55913   0.0 /System/Library/PrivateFrameworks/MobileAsset.framework/Versions/A/XPCServices/ManifestStorageService.xpc/Contents/MacOS/ManifestStorageService\n55924   0.0 natpmpd\n55945   0.0 /usr/sbin/netbiosd\n56251   0.0 /System/Library/PrivateFrameworks/DeviceConfiguration.framework/Versions/A/DeviceConfigurationAgent\n56252   0.0 /System/Library/PrivateFrameworks/DeviceConfiguration.framework/Versions/A/deviceconfigurationd\n56861   0.0 /usr/libexec/assessmentagent\n56889   0.0 /usr/libexec/feedbackd\n56956   0.0 /usr/libexec/AirPlayXPCHelper\n56990   0.0 /usr/libexec/ospredictiond\n57023   0.0 /usr/libexec/gamecontrollerd\n57030   0.0 /usr/libexec/gamecontrolleragentd\n57064   0.0 /System/Library/PrivateFrameworks/CommerceKit.framework/Versions/A/Resources/commerce\n57249   0.0 /System/Library/Frameworks/CoreTelephony.framework/Support/CommCenter\n57266   0.0 /System/Library/PrivateFrameworks/AssetCacheServices.framework/Versions/A/XPCServices/AssetCacheLocatorService.xpc/Contents/MacOS/AssetCacheLocatorService\n57641   0.0 /System/Library/PrivateFrameworks/UsageTracking.framework/Versions/A/UsageTrackingAgent\n57642   0.0 /System/Library/Frameworks/ManagedSettings.framework/Versions/A/ManagedSettingsAgent\n57647   0.0 /usr/libexec/knowledge-agent\n57656   0.0 /usr/libexec/securityd_system\n57662   0.0 /System/Library/PrivateFrameworks/Categories.framework/Versions/A/XPCServices/CategoriesService.xpc/Contents/MacOS/CategoriesService\n57663   0.0 /System/Library/PrivateFrameworks/ContextKit.framework/Versions/A/XPCServices/ContextService.xpc/Contents/MacOS/ContextService\n57931   0.0 /usr/sbin/distnoted\n57956   0.0 /usr/libexec/searchpartyuseragent\n57963   0.0 /usr/libexec/findmylocateagent\n57964   0.0 /usr/libexec/findmydeviced\n57970   0.0 /usr/libexec/findmybeaconingd\n57971   0.0 /usr/libexec/mobileactivationd\n57976   0.0 /usr/libexec/storagekitd\n57977   0.0 /usr/libexec/fskitd\n57978   0.0 /System/Library/PrivateFrameworks/CacheDelete.framework/deleted\n57979   0.0 /System/Library/PrivateFrameworks/CacheDelete.framework/deleted_helper\n57981   0.0 /usr/libexec/triald_system\n57982   0.0 /usr/libexec/AssetCache/AssetCache\n57983   0.0 /System/Library/CoreServices/TimeMachine/backupd-helper\n57984   0.0 /System/Library/PrivateFrameworks/PackageKit.framework/Resources/installd\n57985   0.0 /System/Library/PrivateFrameworks/PackageKit.framework/Resources/system_installd\n57986   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/geodMachServiceBridge\n57987   0.0 /System/Library/PrivateFrameworks/CloudKitDaemon.framework/Support/cloudd\n57988   0.0 /System/Library/Frameworks/QuickLookThumbnailing.framework/Support/com.apple.quicklook.ThumbnailsAgent\n57990   0.0 /System/Library/PrivateFrameworks/AssetCacheServicesExtensions.framework/XPCServices/AssetCacheTetheratorService.xpc/Contents/MacOS/AssetCacheTetheratorService\n57991   0.0 /System/Library/PrivateFrameworks/TrialServer.framework/Versions/A/XPCServices/TrialArchivingService.xpc/Contents/MacOS/TrialArchivingService\n57996   0.0 /System/Library/PrivateFrameworks/AMPLibrary.framework/Versions/A/Support/AMPArtworkAgent\n58115   0.0 /System/Library/PrivateFrameworks/MediaAnalysis.framework/Versions/A/mediaanalysisd\n58297   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n58298   0.0 /usr/libexec/secinitd\n58299   0.0 /usr/sbin/cfprefsd\n58305   0.0 /usr/libexec/trustd\n58309   0.0 /usr/libexec/containermanagerd\n58310   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n58311   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n58312   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n58313   0.0 /usr/libexec/secinitd\n58314   0.0 /usr/libexec/secinitd\n58315   0.0 /usr/libexec/secinitd\n58316   0.0 /usr/sbin/cfprefsd\n58317   0.0 /usr/sbin/cfprefsd\n58318   0.0 /usr/libexec/containermanagerd\n58319   0.0 /usr/libexec/trustd\n58320   0.0 /usr/libexec/trustd\n58321   0.0 /usr/libexec/containermanagerd\n58322   0.0 /usr/libexec/containermanagerd\n58347   0.0 /System/Library/PrivateFrameworks/SiriAnalytics.framework/Versions/A/XPCServices/SAExtensionOrchestrator.xpc/Contents/MacOS/SAExtensionOrchestrator\n58348   0.0 /System/Library/ExtensionKit/Extensions/IFTelemetrySELFIngestor.appex/Contents/MacOS/IFTelemetrySELFIngestor\n58349   0.0 /System/Library/ExtensionKit/Extensions/IFTranscriptSELFIngestor.appex/Contents/MacOS/IFTranscriptSELFIngestor\n58350   0.0 /System/Library/ExtensionKit/Extensions/GMSSELFIngestor.appex/Contents/MacOS/GMSSELFIngestor\n58351   0.0 /System/Library/ExtensionKit/Extensions/BiomeSELFIngestor.appex/Contents/MacOS/BiomeSELFIngestor\n58362   0.0 /System/Library/ExtensionKit/Extensions/AppleIntelligenceReportingSELFIngestor.appex/Contents/MacOS/AppleIntelligenceReportingSELFIngestor\n58376   0.0 /usr/libexec/powerexperienced\n58461   0.0 /usr/libexec/ASPCarryLog\n58467   0.0 /usr/libexec/symptomsd-diag\n58637   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n58680   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n58743   0.0 /Library/SystemExtensions/0266265E-E200-4E8D-9FE6-45B91B174D30/io.tailscale.ipn.macsys.network-extension.systemextension/Contents/MacOS/io.tailscale.ipn.macsys.network-extension\n58747   0.0 /usr/libexec/keyboardservicesd\n58839   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent\n58840   0.0 /System/Library/Frameworks/MediaAccessibility.framework/Versions/A/XPCServices/com.apple.accessibility.mediaaccessibilityd.xpc/Contents/MacOS/com.apple.accessibility.mediaaccessibilityd\n58943   0.0 /System/Library/PrivateFrameworks/IntelligenceTasksEngine.framework/Support/intelligencetasksd\n58944   0.0 /usr/libexec/dbtelemetryd\n58945   0.0 /usr/libexec/ValidUpdater\n58946   0.0 /usr/libexec/transparencyd\n58947   0.0 /usr/libexec/fpassetmanagerd\n58948   0.0 /usr/libexec/mlhostd\n58956   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n58957   0.0 /System/Library/PrivateFrameworks/ProtectedCloudStorage.framework/Helpers/ProtectedCloudKeySyncing\n58959   0.0 /usr/libexec/swtransparencyd\n58960   0.0 /usr/libexec/frauddefensed\n58961   0.0 /System/Library/PrivateFrameworks/AppleAccountTransparency.framework/Versions/A/Resources/appleaccounttransparencyd\n58962   0.0 /System/Library/Frameworks/FinanceKit.framework/financed\n58963   0.0 /System/Library/PrivateFrameworks/PrivateCloudCompute.framework/privatecloudcomputed.app/Contents/MacOS/privatecloudcomputed\n58964   0.0 /System/Library/CoreServices/osanalyticshelper\n58965   0.0 /System/Library/PrivateFrameworks/IMDPersistence.framework/XPCServices/IMDPersistenceAgent.xpc/Contents/MacOS/IMDPersistenceAgent\n58966   0.0 /usr/libexec/PowerUIAgent\n58967   0.0 /System/Library/PrivateFrameworks/AppleIntelligenceReportingProcessing.framework/Versions/A/XPCServices/AppleIntelligenceReportingProcessingService.xpc/Contents/MacOS/AppleIntelligenceReportingProcessingService\n58968   0.0 /System/Library/PrivateFrameworks/HomeKitEvents.framework/Support/homeeventsd\n58969   0.0 /System/Library/PrivateFrameworks/ScreenTimeSettingsFoundation.framework/Versions/A/ScreenTimeSettingsAgent\n58980   0.0 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/managedcorespotlightd\n58983   0.0 /System/Library/Frameworks/FamilyControls.framework/Versions/A/FamilyControlsAgent\n58985   0.0 /System/Library/PrivateFrameworks/ScreenTimeCore.framework/Versions/A/ScreenTimeAgent\n58986   0.0 /System/Library/PrivateFrameworks/ScreenTimeSettingsFoundation.framework/Versions/A/PlugIns/ScreenTimeSettingsDeviceActivityMonitorExtension.appex/Contents/MacOS/ScreenTimeSettingsDeviceActivityMonitorExtension\n59015   0.2 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n59190   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n59317   0.0 /usr/sbin/systemsoundserverd\n59318   0.0 /usr/libexec/audioanalyticsd\n59319   0.0 /System/Library/Frameworks/AudioToolbox.framework/AudioComponentRegistrar\n59320   0.0 /usr/libexec/rtcreportingd\n59321   0.0 /System/Library/Frameworks/AudioToolbox.framework/XPCServices/com.apple.audio.SandboxHelper.xpc/Contents/MacOS/com.apple.audio.SandboxHelper\n59631   0.0 /System/Library/Frameworks/AppKit.framework/Versions/C/XPCServices/ThemeWidgetControlViewService.xpc/Contents/MacOS/ThemeWidgetControlViewService\n59818   0.0 /usr/libexec/bootpd\n60583   0.9 /System/Library/Input Methods/CharacterPalette.app/Contents/MacOS/CharacterPalette\n60672   0.0 /System/Library/CoreServices/UserNotificationCenter.app/Contents/MacOS/UserNotificationCenter\n61451   0.0 /usr/libexec/peakpowermanagerd\n61973   7.1 /Library/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python\n61991   0.0 ps\n69867   3.0 /Applications/Visual Studio Code.app/Contents/MacOS/Code\n69872   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Electron Framework.framework/Helpers/chrome_crashpad_handler\n69873   5.7 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n69874   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n70359   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n70967   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n71184   0.8 /System/Library/PrivateFrameworks/SyncedDefaults.framework/Support/syncdefaultsd\n71185   0.0 /System/Library/PrivateFrameworks/CoreADI.framework/adid\n71264   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n71272   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n71287   0.0 /Applications/Visual Studio Code.app/Contents/Resources/app/node_modules.asar.unpacked/@microsoft/copilot-sdk-darwin-arm64/prebuilds/darwin-arm64/copilot-runtime\n72563   0.0 /usr/libexec/coreduetd\n73924   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n74713   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Electron Framework.framework/Helpers/chrome_crashpad_handler\n77303   2.8 /usr/libexec/spotlightknowledged.updater\n77922   0.0 /usr/libexec/biometrickitd\n79347   0.0 /usr/libexec/nehelper\n79362  67.1 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n79390   1.6 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n79391   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n79392   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n79815   0.0 <HOME>/.vscode/extensions/ms-python.python-2026.10.0-darwin-arm64/python-env-tools/bin/pet\n79889   0.0 /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Resources/Python.app/Contents/MacOS/Python\n79926   0.0 <HOME>/.vscode/extensions/charliermarsh.ruff-2026.98.0-darwin-arm64/bundled/libs/bin/ruff\n80389   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n80525   3.2 <HOME>/.vscode/extensions/openai.chatgpt-26.1120.50957-darwin-arm64/bin/macos-aarch64/codex\n80532   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n80542   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n81200   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n81270   0.0 npm exec firebase-tools@latest mcp --dir .\n81393   0.0 node\n86120   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n89699   0.0 /usr/libexec/diskimagesiod\n90537   0.0 /System/Library/PrivateFrameworks/TelephonyUtilities.framework/callservicesd\n90580   0.0 /System/Library/PrivateFrameworks/CallHistory.framework/Support/CallHistorySyncHelper\n90771  97.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools\n91076   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n91093   0.0 npm exec firebase-tools@latest mcp --dir .\n91106   0.0 node\n92532   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n93706   0.0 /opt/homebrew/Cellar/node/25.8.1_1/bin/node\n79932   0.0 /bin/zsh\n",
+      "stderr": "",
+      "seconds": 0.018235875002574176
+    },
+    "wine_version": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Product Name: CrossOver\nPublic Version: 26.3.0\nProduct Version: 26.3.0.39832\nBuild Tag: cxoffice-26.3.0rc2\nBuild Timestamp: 20260715T103801Z\n",
+      "stderr": "",
+      "seconds": 0.012478416960220784
+    },
+    "wine_build": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineloader",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "wine-11.0-8726-g2e2f5fca349\n",
+      "stderr": "",
+      "seconds": 0.012599874986335635
+    },
+    "kernel_pressure_before": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": "",
+      "seconds": 0.0024957499699667096
+    },
+    "rosetta": {
+      "command": [
+        "pkgutil",
+        "--pkg-info",
+        "com.apple.pkg.RosettaUpdateAuto"
+      ],
+      "exit": 0,
+      "stdout": "package-id: com.apple.pkg.RosettaUpdateAuto\nversion: 1.0.0.0.1788432274\nvolume: /\nlocation: /\ninstall-time: 1791147684\n",
+      "stderr": "",
+      "seconds": 0.0220517500420101
+    },
+    "gcc": {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "x86_64-w64-mingw32-g++ (GCC) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": "",
+      "seconds": 0.0035746669746004045
+    },
+    "clang": {
+      "command": [
+        "xcrun",
+        "clang++",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin\n",
+      "stderr": "",
+      "seconds": 0.011839999991934747
+    },
+    "sdk": {
+      "command": [
+        "xcrun",
+        "--show-sdk-version"
+      ],
+      "exit": 0,
+      "stdout": "26.2\n",
+      "stderr": "",
+      "seconds": 0.007669957994949073
+    },
+    "python": {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Python 3.14.3\n",
+      "stderr": "",
+      "seconds": 0.01052695797989145
+    },
+    "compiler_arch": {
+      "command": [
+        "file",
+        "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++"
+      ],
+      "exit": 0,
+      "stdout": "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++: Mach-O 64-bit executable arm64\n",
+      "stderr": "",
+      "seconds": 0.0029718750156462193
+    },
+    "compiler_lipo": {
+      "command": [
+        "lipo",
+        "-archs",
+        "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": "",
+      "seconds": 0.00950074999127537
+    },
+    "compiler_links": {
+      "command": [
+        "otool",
+        "-L",
+        "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++"
+      ],
+      "exit": 0,
+      "stdout": "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++:\n\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.27.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)\n",
+      "stderr": "",
+      "seconds": 0.011711541970726103
+    },
+    "build_pe": {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/pool.cpp",
+        "-o",
+        "/private/tmp/bx473-a22-pool-more/a-probe.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "seconds": 1.189369291998446
+    },
+    "build_observer": {
+      "command": [
+        "xcrun",
+        "clang++",
+        "-std=c++20",
+        "-O2",
+        "-arch",
+        "arm64",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+        "-o",
+        "/private/tmp/bx473-a22-pool-more/observe"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "seconds": 0.054542875033803284
+    },
+    "formats": {
+      "command": [
+        "file",
+        "/private/tmp/bx473-a22-pool-more/a-probe.exe",
+        "/private/tmp/bx473-a22-pool-more/observe"
+      ],
+      "exit": 0,
+      "stdout": "/private/tmp/bx473-a22-pool-more/a-probe.exe: PE32+ executable (console) x86-64, for MS Windows\n/private/tmp/bx473-a22-pool-more/observe:     Mach-O 64-bit executable arm64\n",
+      "stderr": "",
+      "seconds": 0.0032843750086613
+    },
+    "observer_arch": {
+      "command": [
+        "lipo",
+        "-archs",
+        "/private/tmp/bx473-a22-pool-more/observe"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": "",
+      "seconds": 0.009173416998237371
+    },
+    "observer_links": {
+      "command": [
+        "otool",
+        "-L",
+        "/private/tmp/bx473-a22-pool-more/observe"
+      ],
+      "exit": 0,
+      "stdout": "/private/tmp/bx473-a22-pool-more/observe:\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2000.67.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)\n",
+      "stderr": "",
+      "seconds": 0.010745375009719282
+    },
+    "pressure_after": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 64%\n",
+      "stderr": "",
+      "seconds": 0.002454124973155558
+    },
+    "vm_after": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   110111.\nPages active:                                 425109.\nPages inactive:                               451758.\nPages speculative:                               324.\nPages throttled:                                   0.\nPages wired down:                             147818.\nPages purgeable:                                4046.\n\"Translation faults\":                     2410308928.\nPages copy-on-write:                        98120784.\nPages zero filled:                        1692040586.\nPages reactivated:                         188943773.\nPages purged:                               19488407.\nFile-backed pages:                            288908.\nAnonymous pages:                              588283.\nPages stored in compressor:                  1474888.\nPages occupied by compressor:                 399031.\nDecompressions:                            149522694.\nCompressions:                              188165863.\nPageins:                                    47551059.\nPageouts:                                     921194.\nSwapins:                                     1681112.\nSwapouts:                                    2468999.\n",
+      "stderr": "",
+      "seconds": 0.002190499973949045
+    },
+    "swap_after": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 6144.00M  used = 5108.38M  free = 1035.62M  (encrypted)\n",
+      "stderr": "",
+      "seconds": 0.002149916021153331
+    },
+    "kernel_pressure_after": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": "",
+      "seconds": 0.002088500012177974
+    }
+  },
+  "cases": [
+    {
+      "name": "pool-pooled-s1",
+      "args": [
+        "pooled",
+        "474"
+      ],
+      "expected_exit": 0,
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--bottle",
+        "/private/tmp/bx473-a22-pool-more/bottle",
+        "--no-update",
+        "--no-gui",
+        "/private/tmp/bx473-a22-pool-more/a-probe.exe",
+        "pooled",
+        "474"
+      ],
+      "timeout_seconds": 240,
+      "pressure_before": {
+        "command": [
+          "memory_pressure",
+          "-Q"
+        ],
+        "exit": 0,
+        "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 63%\n",
+        "stderr": "",
+        "seconds": 0.0023584169684909284
+      },
+      "kernel_pressure_before": {
+        "command": [
+          "sysctl",
+          "-n",
+          "kern.memorystatus_vm_pressure_level"
+        ],
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": "",
+        "seconds": 0.0024372499901801348
+      },
+      "snapshots": [
+        {
+          "phase": "baseline",
+          "marker": "STAGE baseline cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":70040168,\"resident_size\":87445504,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":78150152}\n",
+              "stderr": "",
+              "seconds": 0.05421620805282146,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 70040168,
+                "resident_size": 87445504,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 78150152
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":70040168,\"resident_size\":87445504,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":78150152}\n",
+              "stderr": "",
+              "seconds": 0.0025743329897522926,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 70040168,
+                "resident_size": 87445504,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 78150152
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":70040168,\"resident_size\":87445504,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":78150152}\n",
+              "stderr": "",
+              "seconds": 0.0026294169947504997,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 70040168,
+                "resident_size": 87445504,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 78150152
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "baseline-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "baseline-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "baseline-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "baseline-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "baseline-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "baseline-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "live",
+          "marker": "STAGE live cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348291296,\"resident_size\":88846336,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348291296}\n",
+              "stderr": "",
+              "seconds": 0.0027045420138165355,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348291296,
+                "resident_size": 88846336,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348291296
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348291296,\"resident_size\":88846336,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348291296}\n",
+              "stderr": "",
+              "seconds": 0.002475041022989899,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348291296,
+                "resident_size": 88846336,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348291296
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348291296,\"resident_size\":88846336,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348291296}\n",
+              "stderr": "",
+              "seconds": 0.0022797909914515913,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348291296,
+                "resident_size": 88846336,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348291296
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "live-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "live-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "live-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "live-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "live-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "live-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "resources_released",
+          "marker": "STAGE resources_released cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348373216,\"resident_size\":88932352,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.0028974590240977705,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348373216,
+                "resident_size": 88932352,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348373216,\"resident_size\":88932352,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.0024275840260088444,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348373216,
+                "resident_size": 88932352,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348373216,\"resident_size\":88932352,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.002419791999273002,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348373216,
+                "resident_size": 88932352,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "resources_released-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "resources_released-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "resources_released-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "resources_released-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "resources_released-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "resources_released-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "commands_retired",
+          "marker": "STAGE commands_retired cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306098400,\"resident_size\":88940544,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.002498249989002943,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306098400,
+                "resident_size": 88940544,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306098400,\"resident_size\":88940544,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.002181332965847105,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306098400,
+                "resident_size": 88940544,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306098400,\"resident_size\":88940544,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.0022376670385710895,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306098400,
+                "resident_size": 88940544,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "commands_retired-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "commands_retired-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "commands_retired-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "commands_retired-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "commands_retired-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "commands_retired-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "retired_settled",
+          "marker": "STAGE retired_settled cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306102496,\"resident_size\":88944640,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.0029060000088065863,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306102496,
+                "resident_size": 88944640,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306102496,\"resident_size\":88944640,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.0024952079984359443,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306102496,
+                "resident_size": 88944640,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62039"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62039,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306102496,\"resident_size\":88944640,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348373216}\n",
+              "stderr": "",
+              "seconds": 0.0023336669546552002,
+              "data": {
+                "pid": 62039,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306102496,
+                "resident_size": 88944640,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348373216
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "retired_settled-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "retired_settled-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "retired_settled-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "retired_settled-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "retired_settled-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "retired_settled-kernel_pressure.json"
+          }
+        }
+      ],
+      "host_pid": 62039,
+      "backend_paths_excerpt": [
+        "usr/libexec/rosetta/runtime",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+      ],
+      "backend_lsof_exit": 0,
+      "exit": 0,
+      "timed_out": false,
+      "seconds": 17.301652291964274,
+      "outputs": {
+        "stdout.txt": "62da5f2bceadacafa32636e88c2cbc2dd0cb3f612a1ea4683bf45738a2fd9395",
+        "baseline-footprint.json": "8790b68d99a8f7da83da06d10360d0b8635816e46618024ec6641645033f6fc1",
+        "retired_settled-swap.json": "d607410b0a259787b892b071f10d2d284f67129b8e3a8ff304b0d72f4c3d4998",
+        "commands_retired-pressure.json": "84b6c283aa5f961edef423e9ecac1ec52142e5efb3c2755fe7fb5c533b8f7078",
+        "resources_released-pressure.json": "24ca3f462c4424b75dd1532b9e546f889631b5429f620213494d9b9e2eee06a9",
+        "resources_released-vmstat.json": "c754c930124bea1a81ba042f3a4b6c2be51aeb01a292612988abbe23b3e7fd89",
+        "resources_released-footprint.json": "11b6836177fa6c000ee7d59ac201a76fa16579b2c8be191a5fc267fd91fe8129",
+        "retired_settled-vmmap.json": "04b7af9b77bc74031ddbc031c9ece373d6446fc8dfe1ce2772628a12abcf6025",
+        "commands_retired-kernel_pressure.json": "12749dbc5610d3349d79f9ba4f5da85a764d463caa89ada42840ccb92cc29736",
+        "baseline-vmmap.json": "07fcf0a63c6f6848bede1fe4e1e92720822f86720b7811feacfabdfdb87d6433",
+        "resources_released-vmmap.json": "deb1caa99dc6d2c6122f2ddc546e505d9788af04ca70709e2c43c6448ab938c2",
+        "commands_retired-vmstat.json": "f8f35e93855937a27d915718fef25f85f38b4a3dcd1a2c7dc18129c34eab7f3b",
+        "baseline-vmstat.json": "588350146464926e55cdb54981a1267fb5bf9a9ed01d5419dc762afa35be3f23",
+        "retired_settled-footprint.json": "ec5a278a47138f99e8bf0b26a8860f97d17c8d03a379eeaf960f83689861b2c1",
+        "live-kernel_pressure.json": "6f9635ca895c45db51171721e51fb05af1bf21e678add31bfc7efb9ce3c2df07",
+        "live-footprint.json": "cc2ac4982dcac847994ea82f8993c821c5b0be5c3dafe8d4743fdeacd39b704d",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "live-swap.json": "97d2c4540ec9510ce5d91723a57d1911ab8cc4afee9b92a48877013f4315d0a4",
+        "commands_retired-swap.json": "8e5138fb55025098e5043df8697ff52e0f0b95f2c5821b54ac960102645ebc2f",
+        "retired_settled-kernel_pressure.json": "8eed100a1f0c2cdf7ed03480d12625c5978ec04261cf22d75d9f7c57ba0b0e4d",
+        "baseline-pressure.json": "c66a53634f47245e88dc4ad99beb5eb43a199841681b4a2f1461af65500b93d3",
+        "live-vmmap.json": "795ca2b28d87a6d42189c5152fdd66bcb4c1bb594dff17e06fc43650d678b208",
+        "live-vmstat.json": "5e3760689d80091a317f1752aabee63c42bf7e95ac06f43dd4b703f5642e12e9",
+        "retired_settled-vmstat.json": "3603839b976763bb9f2d0df49b5b4a5d85aaa4cd7813f95e06b2652d746bfa61",
+        "resources_released-swap.json": "9de2b0aeb870c29a749104c90269702fa6d6e3816cb166489b64f22664807d9e",
+        "live-pressure.json": "d51a09d46b3b1291f3b3ca49f7075fd2f6b22e3a434ed5aacc9b549794d77049",
+        "baseline-kernel_pressure.json": "774f82d487e161465e390616d71d0cb47ffff16dfcd13ff6f86a6415cea8046e",
+        "baseline-swap.json": "5c40d99551f70096465401406c1ea1364fecd49a3a3454a4e6f97ad287466a47",
+        "commands_retired-vmmap.json": "ef63890bbc5bc969b67a6ac7c3e92d8820c48025287e3013a7d08eb8a525ea1b",
+        "commands_retired-footprint.json": "22ba9fb7ccbe99a82a09a947801599e0928c0feb35553c9bb5baae624d585671",
+        "resources_released-kernel_pressure.json": "c34f9d41737f20b31d9271faa6c013beb90b7de13b7a9da47517f28920c2ea14",
+        "retired_settled-pressure.json": "6cccf6fcd5c61ac206eb3a18810117a663c75b80e13806c7176a567b5ae68176"
+      }
+    },
+    {
+      "name": "pool-individual-s1",
+      "args": [
+        "individual",
+        "474"
+      ],
+      "expected_exit": 0,
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--bottle",
+        "/private/tmp/bx473-a22-pool-more/bottle",
+        "--no-update",
+        "--no-gui",
+        "/private/tmp/bx473-a22-pool-more/a-probe.exe",
+        "individual",
+        "474"
+      ],
+      "timeout_seconds": 240,
+      "pressure_before": {
+        "command": [
+          "memory_pressure",
+          "-Q"
+        ],
+        "exit": 0,
+        "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 63%\n",
+        "stderr": "",
+        "seconds": 0.0021100830053910613
+      },
+      "kernel_pressure_before": {
+        "command": [
+          "sysctl",
+          "-n",
+          "kern.memorystatus_vm_pressure_level"
+        ],
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": "",
+        "seconds": 0.0026696669519878924
+      },
+      "snapshots": [
+        {
+          "phase": "baseline",
+          "marker": "STAGE baseline cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":36121192,\"resident_size\":53534720,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":77941352}\n",
+              "stderr": "",
+              "seconds": 0.0028656250215135515,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 36121192,
+                "resident_size": 53534720,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 77941352
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":36121192,\"resident_size\":53534720,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":77941352}\n",
+              "stderr": "",
+              "seconds": 0.0025629999581724405,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 36121192,
+                "resident_size": 53534720,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 77941352
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":36121192,\"resident_size\":53534720,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":77941352}\n",
+              "stderr": "",
+              "seconds": 0.0025725000305101275,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 36121192,
+                "resident_size": 53534720,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 77941352
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "baseline-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "baseline-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "baseline-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "baseline-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "baseline-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "baseline-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "live",
+          "marker": "STAGE live cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348221760,\"resident_size\":71106560,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348221760}\n",
+              "stderr": "",
+              "seconds": 0.002936457982286811,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348221760,
+                "resident_size": 71106560,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348221760
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348221760,\"resident_size\":71106560,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348221760}\n",
+              "stderr": "",
+              "seconds": 0.002541749970987439,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348221760,
+                "resident_size": 71106560,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348221760
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348221760,\"resident_size\":71106560,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348221760}\n",
+              "stderr": "",
+              "seconds": 0.002278959029354155,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348221760,
+                "resident_size": 71106560,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348221760
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "live-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "live-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "live-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "live-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "live-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "live-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "resources_released",
+          "marker": "STAGE resources_released cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348340568,\"resident_size\":74096640,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.002792250015772879,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348340568,
+                "resident_size": 74096640,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348340568,\"resident_size\":74096640,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.00242004101164639,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348340568,
+                "resident_size": 74096640,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348340568,\"resident_size\":74096640,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.0022957499604672194,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348340568,
+                "resident_size": 74096640,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "resources_released-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "resources_released-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "resources_released-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "resources_released-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "resources_released-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "resources_released-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "commands_retired",
+          "marker": "STAGE commands_retired cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306065752,\"resident_size\":74100736,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.0023517089430242777,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306065752,
+                "resident_size": 74100736,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306065752,\"resident_size\":74100736,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.002339625032618642,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306065752,
+                "resident_size": 74100736,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306065752,\"resident_size\":74100736,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.0021624999935738742,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306065752,
+                "resident_size": 74100736,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "commands_retired-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "commands_retired-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "commands_retired-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "commands_retired-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "commands_retired-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "commands_retired-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "retired_settled",
+          "marker": "STAGE retired_settled cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306020696,\"resident_size\":74055680,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.003024042001925409,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306020696,
+                "resident_size": 74055680,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306020696,\"resident_size\":74055680,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.002353290969040245,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306020696,
+                "resident_size": 74055680,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62202"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62202,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":306020696,\"resident_size\":74055680,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348340568}\n",
+              "stderr": "",
+              "seconds": 0.0022560000070370734,
+              "data": {
+                "pid": 62202,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 306020696,
+                "resident_size": 74055680,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348340568
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "retired_settled-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "retired_settled-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "retired_settled-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "retired_settled-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "retired_settled-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "retired_settled-kernel_pressure.json"
+          }
+        }
+      ],
+      "host_pid": 62202,
+      "backend_paths_excerpt": [
+        "usr/libexec/rosetta/runtime",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+      ],
+      "backend_lsof_exit": 0,
+      "exit": 0,
+      "timed_out": false,
+      "seconds": 15.95239541697083,
+      "outputs": {
+        "stdout.txt": "65d3d498ac5cc492c671fd8ebdb565282948b38a3a82c0fc7d2b5b9b95a26c7d",
+        "baseline-footprint.json": "349d88a8b054f73e8ed793440fd50a82128a539d5cb0b5cd75a5f001906ed8b5",
+        "retired_settled-swap.json": "77b8f9462b1fdb7fb4d8fce463d0a160e5baf677450e6fdeaf2e5803c5944bc6",
+        "commands_retired-pressure.json": "bf66d73cfb0ada354556bbebac9f5f176533bc73ce5cf725d7b658a82cb46d83",
+        "resources_released-pressure.json": "b8f22c682364134cc5bbff9c34a0eb9bdf07427536718775869c8324a9938f2c",
+        "resources_released-vmstat.json": "2619ab5169170850a7e1fa8facf5de1d78b4468b3f623e42b2014b2ea167f520",
+        "resources_released-footprint.json": "44fdad93bd6215f5410f31d0c99541a4f5813f5e87cecfd8896b4607c303a5cc",
+        "retired_settled-vmmap.json": "f19188dbf5934924d2b7d9df0f4b26a36020a4f85a436e2c1e6227a7691a0a76",
+        "commands_retired-kernel_pressure.json": "b50019dfed6c3f8353751a9b0884277d7a55cad25446d6d7ffcdcb59d5893d0a",
+        "baseline-vmmap.json": "dc53e8324b2d911a5590ba8529a3d74eb6076cba591dc4a80283e6151e6de033",
+        "resources_released-vmmap.json": "504def5abda90d5da9e9ac4ccf9739aec89260bf050d90194d53fe40b4c3d9c9",
+        "commands_retired-vmstat.json": "4bf5b1113305254fa43ec3837c54763f0f24096e63cc0a56fcda2d2d8bb266bb",
+        "baseline-vmstat.json": "b9601094faffe5f373018805a50f6e5a55ce0671b09d789474377cf5cdeaa838",
+        "retired_settled-footprint.json": "12b79f6d2c1fbbe9c9224d59dd11938a4b6e1797c755fc7e4b28621b552ee09e",
+        "live-kernel_pressure.json": "df0ed31bb7ecbd9b4c5622107efea90a82cfa907ccb70b3d6da2a8a0bf2afd3c",
+        "live-footprint.json": "0bf508a837826873d212b7f4db07c2afc767caa703d853c0ed8ba1bacbb75f7d",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "live-swap.json": "e2466ef245bc4c9114b5d3e2b6397d2818678aee1c4759aaab20761d3909c2d0",
+        "commands_retired-swap.json": "cc940a1ea2259b91f529b6e6b3a1c0ce1c4117502144a0c58bdd3500fe29df0c",
+        "retired_settled-kernel_pressure.json": "968eedac1382d6ce96943ccd5f21042b1e7a5233ae24f260884c28d0a361e110",
+        "baseline-pressure.json": "8c5ac93b7d6c45058a594baa85c5b109aa59bc9a6d6b47b3754c0bce3cc0de41",
+        "live-vmmap.json": "fbb5642cac96748c3d0f3cf1e166da9bdc54073da5568f23add44f03b28a05f5",
+        "live-vmstat.json": "36c5a4621a40caed73157ad1056bddd9228d348581887d8e8f9ee3269afd327e",
+        "retired_settled-vmstat.json": "80cd871ebce88bc8ff7c63f4b86528d032fcbdb42e111a9cdb1469ca09b8dc87",
+        "resources_released-swap.json": "17fae753b9ef1a172e3ef6278889db4a3bb2465be56ee6b2405def13456b2264",
+        "live-pressure.json": "fa6020629c48f8e46991ff955d2174868a29039a5bfd4caea613041b6e429e6c",
+        "baseline-kernel_pressure.json": "cd8ba239e8596c4c42d029ad16c1f2adf02e44edd722d90369484e018aa678d6",
+        "baseline-swap.json": "debd795731cbd44b30fb7777269ea9c3fbee20b68c58cd761a655285a6217e44",
+        "commands_retired-vmmap.json": "a43f03bf8a1ef8a571260d8c477b0b8562032f3fa725d7d358188c0c2e8aa89c",
+        "commands_retired-footprint.json": "0d30ccf26f0bc36ea1e7aaa81b2b42fe78253959e0d486dc273b752907738ff0",
+        "resources_released-kernel_pressure.json": "96bcdb78dd8ac7d992c46988729b793f9fcac9004cbb3d84be9c028c87dfa89d",
+        "retired_settled-pressure.json": "244f9eea0aa7b9e44296e6d3117b05b60e7722f5cc919f94591a18752bafbadd"
+      }
+    },
+    {
+      "name": "pool-individual-s2",
+      "args": [
+        "individual",
+        "475"
+      ],
+      "expected_exit": 0,
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--bottle",
+        "/private/tmp/bx473-a22-pool-more/bottle",
+        "--no-update",
+        "--no-gui",
+        "/private/tmp/bx473-a22-pool-more/a-probe.exe",
+        "individual",
+        "475"
+      ],
+      "timeout_seconds": 240,
+      "pressure_before": {
+        "command": [
+          "memory_pressure",
+          "-Q"
+        ],
+        "exit": 0,
+        "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 64%\n",
+        "stderr": "",
+        "seconds": 0.0021439590491354465
+      },
+      "kernel_pressure_before": {
+        "command": [
+          "sysctl",
+          "-n",
+          "kern.memorystatus_vm_pressure_level"
+        ],
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": "",
+        "seconds": 0.0026019590441137552
+      },
+      "snapshots": [
+        {
+          "phase": "baseline",
+          "marker": "STAGE baseline cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35936800,\"resident_size\":53399552,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77748768}\n",
+              "stderr": "",
+              "seconds": 0.002789875026792288,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 35936800,
+                "resident_size": 53399552,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 77748768
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35936800,\"resident_size\":53399552,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77748768}\n",
+              "stderr": "",
+              "seconds": 0.0023082499974407256,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 35936800,
+                "resident_size": 53399552,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 77748768
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35936800,\"resident_size\":53399552,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77748768}\n",
+              "stderr": "",
+              "seconds": 0.0021030830102972686,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 35936800,
+                "resident_size": 53399552,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 77748768
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "baseline-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "baseline-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "baseline-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "baseline-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "baseline-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "baseline-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "live",
+          "marker": "STAGE live cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348049632,\"resident_size\":70803456,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348049632}\n",
+              "stderr": "",
+              "seconds": 0.002875833015423268,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348049632,
+                "resident_size": 70803456,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348049632
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348049632,\"resident_size\":70803456,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348049632}\n",
+              "stderr": "",
+              "seconds": 0.0025078330072574317,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348049632,
+                "resident_size": 70803456,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348049632
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348049632,\"resident_size\":70803456,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348049632}\n",
+              "stderr": "",
+              "seconds": 0.0022785839973948896,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348049632,
+                "resident_size": 70803456,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348049632
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "live-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "live-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "live-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "live-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "live-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "live-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "resources_released",
+          "marker": "STAGE resources_released cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348078304,\"resident_size\":75161600,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.0034604580141603947,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348078304,
+                "resident_size": 75161600,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348078304,\"resident_size\":75161600,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.0026253340183757246,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348078304,
+                "resident_size": 75161600,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348078304,\"resident_size\":75161600,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.002184333046898246,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348078304,
+                "resident_size": 75161600,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "resources_released-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "resources_released-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "resources_released-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "resources_released-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "resources_released-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "resources_released-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "commands_retired",
+          "marker": "STAGE commands_retired cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305811680,\"resident_size\":75173888,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.0024703749804757535,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305811680,
+                "resident_size": 75173888,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305811680,\"resident_size\":75173888,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.002297625003848225,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305811680,
+                "resident_size": 75173888,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305811680,\"resident_size\":75173888,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.00210995803354308,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305811680,
+                "resident_size": 75173888,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "commands_retired-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "commands_retired-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "commands_retired-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "commands_retired-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "commands_retired-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "commands_retired-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "retired_settled",
+          "marker": "STAGE retired_settled cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305766624,\"resident_size\":75132928,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.002739541989285499,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305766624,
+                "resident_size": 75132928,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305766624,\"resident_size\":75132928,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.002267042000312358,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305766624,
+                "resident_size": 75132928,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62301"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62301,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305766624,\"resident_size\":75132928,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":348078304}\n",
+              "stderr": "",
+              "seconds": 0.002051917021162808,
+              "data": {
+                "pid": 62301,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305766624,
+                "resident_size": 75132928,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 348078304
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "retired_settled-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "retired_settled-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "retired_settled-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "retired_settled-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "retired_settled-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "retired_settled-kernel_pressure.json"
+          }
+        }
+      ],
+      "host_pid": 62301,
+      "backend_paths_excerpt": [
+        "usr/libexec/rosetta/runtime",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+      ],
+      "backend_lsof_exit": 0,
+      "exit": 0,
+      "timed_out": false,
+      "seconds": 15.500898124999367,
+      "outputs": {
+        "stdout.txt": "e7e77d56e150f764ca30df3ddf8ce421f7abfb0b7b1c818d3cbc3f479710bcbe",
+        "baseline-footprint.json": "539b4ad522d13cd1b52231f1f74f6fad9d11ac6abe30e0976a7ac0a26455db05",
+        "retired_settled-swap.json": "e837b869e6db5960f73fa9cb88141a3bb8c28ba115a665e4f727e684737e553d",
+        "commands_retired-pressure.json": "96d78d5d2cd43cad532046d4b93225a7748af3f4811bbe8892fab4b66ed33b4e",
+        "resources_released-pressure.json": "be2f66aadaff223ceeba74c3a49ce914e0223f9e0220b1182d82aa5f19a690aa",
+        "resources_released-vmstat.json": "d18138a0f5dcc35229a910082442ea5f0c68e64ccba29a86c51415d1675fe241",
+        "resources_released-footprint.json": "cf59657288186eb51ebc7eeaad0d26896669f0d3a7a5d8f1b173898a7f39946c",
+        "retired_settled-vmmap.json": "8c038eb49abf144d592e0f19ad165f45fca02049b9e2c918dba5a7a14424c309",
+        "commands_retired-kernel_pressure.json": "4a7c4ce8f4f584f0d38d42e37b89393fe01ddb37e394d0d70c2f5f176a396b32",
+        "baseline-vmmap.json": "b25d10d4be26828882be6af6596e40e854cf2b3957fc11ae2aec813b4a7848ef",
+        "resources_released-vmmap.json": "c99047e680afdcc45981266ea04947f496542d054f8d0120d12ba5576f6b6e30",
+        "commands_retired-vmstat.json": "a3822c067a66047a493e31dd27a5ec32bf510b1b4cac07a9f3323a4c03d27aeb",
+        "baseline-vmstat.json": "88877c9994d781e6b34e045de68e2867d33f7cd47b589e63dd909fa2f97299cd",
+        "retired_settled-footprint.json": "d15e50675e4f83dab0754c16a8d8c2150b61f8122ff4c21def5964a8119f9f87",
+        "live-kernel_pressure.json": "24e94572cca969f3a70da69dab0546f3d9b158f59736b61a204e70c4c84ed0b5",
+        "live-footprint.json": "e60655049fab9780c3d2393f06df833c33a22dc215e52d3ddc36263b0c74a067",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "live-swap.json": "4c084ec6a40a19dbda47b3634ab317f3005cb3423d83fec43b0c96c45710978a",
+        "commands_retired-swap.json": "d8953d3bad4415c93449b643fe8343ad49f883e4719cf1f2f4433753d3736d6e",
+        "retired_settled-kernel_pressure.json": "96c05b6ef8951a40d85f8064d37fc614093cfe17f45b46869235e0aef21730a1",
+        "baseline-pressure.json": "2e8ccb2500a828174e9f6270acabdb09d4010eac0e1fc402340f3d8cffdbf3f8",
+        "live-vmmap.json": "0ec7bcb7644394c16902282b3c0a96a6f903e4c17144b4e4d9e6198f693a28bb",
+        "live-vmstat.json": "447963211902ffa60050b9ba5c6312b24bdb26d12376308072017cae652ca9d3",
+        "retired_settled-vmstat.json": "67c9c5d4372cbab7845225a008e5479beec8af3b52a2b05befa52f7383976e85",
+        "resources_released-swap.json": "4c9e3f613313706250eff58677b1d73617eaebe2cd4a304740f371e806ca2829",
+        "live-pressure.json": "ccd85e065447f9d6feeaee2b0e38bc9e19534aeef9d5cee9faf87e261e190943",
+        "baseline-kernel_pressure.json": "704d534fbbbd991eb949daaf969cc40c8ddee2c0994882b33283a082ae58f4a9",
+        "baseline-swap.json": "58d9a3ff3db002c7f2e08f44a4d83be9a5a10e0b856271d90f7b9b14bb2e4c7c",
+        "commands_retired-vmmap.json": "fbb8327d1d22b5b41704199d1fa1333f2342997a5744a3e46c45e84d5f949904",
+        "commands_retired-footprint.json": "b810481be52562bb6bc76a53526e0c36aca7eb1d2e5d2a6618728a501ece1169",
+        "resources_released-kernel_pressure.json": "a245be41ed836a48b97479001ed8246f34678c04f3d935d96db896286b2c0603",
+        "retired_settled-pressure.json": "c5fbac3c8fb39935cadd7ab2d31669e56b4cd7680df9bc017f171cd39a5de414"
+      }
+    },
+    {
+      "name": "pool-pooled-s2",
+      "args": [
+        "pooled",
+        "475"
+      ],
+      "expected_exit": 0,
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--bottle",
+        "/private/tmp/bx473-a22-pool-more/bottle",
+        "--no-update",
+        "--no-gui",
+        "/private/tmp/bx473-a22-pool-more/a-probe.exe",
+        "pooled",
+        "475"
+      ],
+      "timeout_seconds": 240,
+      "pressure_before": {
+        "command": [
+          "memory_pressure",
+          "-Q"
+        ],
+        "exit": 0,
+        "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 64%\n",
+        "stderr": "",
+        "seconds": 0.002158916962798685
+      },
+      "kernel_pressure_before": {
+        "command": [
+          "sysctl",
+          "-n",
+          "kern.memorystatus_vm_pressure_level"
+        ],
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": "",
+        "seconds": 0.0028077089809812605
+      },
+      "snapshots": [
+        {
+          "phase": "baseline",
+          "marker": "STAGE baseline cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":69671552,\"resident_size\":87085056,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":77793824}\n",
+              "stderr": "",
+              "seconds": 0.002840332977939397,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 69671552,
+                "resident_size": 87085056,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 77793824
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":69671552,\"resident_size\":87085056,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":77793824}\n",
+              "stderr": "",
+              "seconds": 0.0025532080326229334,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 69671552,
+                "resident_size": 87085056,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 77793824
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":69671552,\"resident_size\":87085056,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":77793824}\n",
+              "stderr": "",
+              "seconds": 0.0022318330011330545,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 69671552,
+                "resident_size": 87085056,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 77793824
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "baseline-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "baseline-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "baseline-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "baseline-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "baseline-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "baseline-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "live",
+          "marker": "STAGE live cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348029176,\"resident_size\":88522752,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.002980666991788894,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348029176,
+                "resident_size": 88522752,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348029176,\"resident_size\":88522752,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.002456541988067329,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348029176,
+                "resident_size": 88522752,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":348029176,\"resident_size\":88522752,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.002386000007390976,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 348029176,
+                "resident_size": 88522752,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "live-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "live-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "live-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "live-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "live-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "live-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "resources_released",
+          "marker": "STAGE resources_released cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":347971832,\"resident_size\":88535040,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.0029017089982517064,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 347971832,
+                "resident_size": 88535040,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":347971832,\"resident_size\":88535040,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.0023407500120811164,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 347971832,
+                "resident_size": 88535040,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":347971832,\"resident_size\":88535040,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.0024274169700220227,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 347971832,
+                "resident_size": 88535040,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "resources_released-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "resources_released-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "resources_released-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "resources_released-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "resources_released-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "resources_released-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "commands_retired",
+          "marker": "STAGE commands_retired cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305697016,\"resident_size\":88543232,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.0025649580056779087,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305697016,
+                "resident_size": 88543232,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305697016,\"resident_size\":88543232,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.002345459011849016,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305697016,
+                "resident_size": 88543232,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305697016,\"resident_size\":88543232,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.0022767079644836485,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305697016,
+                "resident_size": 88543232,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "commands_retired-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "commands_retired-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "commands_retired-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "commands_retired-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "commands_retired-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "commands_retired-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "retired_settled",
+          "marker": "STAGE retired_settled cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305656056,\"resident_size\":88502272,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.0031351250363513827,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305656056,
+                "resident_size": 88502272,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305656056,\"resident_size\":88502272,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.0027372080367058516,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305656056,
+                "resident_size": 88502272,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a22-pool-more/observe",
+                "62402"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":62402,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":305656056,\"resident_size\":88502272,\"wired_size\":0,\"pageins\":8,\"max_phys_footprint\":348029176}\n",
+              "stderr": "",
+              "seconds": 0.002400166995357722,
+              "data": {
+                "pid": 62402,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 305656056,
+                "resident_size": 88502272,
+                "wired_size": 0,
+                "pageins": 8,
+                "max_phys_footprint": 348029176
+              }
+            }
+          ],
+          "footprint": {
+            "exit": 0,
+            "file": "retired_settled-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "retired_settled-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "retired_settled-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "retired_settled-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "retired_settled-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "retired_settled-kernel_pressure.json"
+          }
+        }
+      ],
+      "host_pid": 62402,
+      "backend_paths_excerpt": [
+        "usr/libexec/rosetta/runtime",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+        "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+      ],
+      "backend_lsof_exit": 0,
+      "exit": 0,
+      "timed_out": false,
+      "seconds": 15.454055209003855,
+      "outputs": {
+        "stdout.txt": "695bf7abbbc0dfbc4418a4b1dc9358aca39ebdc1c14e565e6e19a3faadf4184e",
+        "baseline-footprint.json": "54aaad1898f7ce513500d80bd9e1072c4b78a7dffff2030fb87505da4c3fd588",
+        "retired_settled-swap.json": "d7d7cf119b20d349dd871d4837d977db802fb6158ba170e06d91a5279b3c6b8b",
+        "commands_retired-pressure.json": "dd0422f77c466d5a879e3f5759213ff4ecb4abd4b47636008e8426da41d0f70b",
+        "resources_released-pressure.json": "f2db9fb8d04d5a50c38238d6dee43e410449f7a81779856d223418225748f800",
+        "resources_released-vmstat.json": "379104c2f8dfea174c3d2127751054846f9047384b982283f4802dac02ec635f",
+        "resources_released-footprint.json": "8c0a0868ade7148003955de514f73b6abcedfa771d5b565347a8ea9bb7f38a0c",
+        "retired_settled-vmmap.json": "f61ba6a81347c2328e4bffacb9390c05187ffc2011c18f362e88baf9f29d4d07",
+        "commands_retired-kernel_pressure.json": "a4d5c5b7b3d50fec35f5a2a5c7e1a3fb66ed2dbcc77ebf51cf324cd9c1496b28",
+        "baseline-vmmap.json": "17d31eb221bb4e1199a7d638dab6b58ae587618cd0c122cf8b3b7b09da41be50",
+        "resources_released-vmmap.json": "c5fd65ec56e0991c9a6ee7957d68bc10ad07d933ea77c0942d23188b9bc76a40",
+        "commands_retired-vmstat.json": "366b022cb8b08913c36bb3b822ac2d9aa34c2a18677f8934d292d9a0bba67bbb",
+        "baseline-vmstat.json": "884289539f7ee720119ee44ddbd60fb72c00ae2d8ed16968f21b9cc3b7548844",
+        "retired_settled-footprint.json": "3b48d3501787545e41a59eef913c39f6f19830e86d0099728acf65b4fbdc4448",
+        "live-kernel_pressure.json": "974c92a2464d47c693624b915da3ee6ee8f0fe63c94ad9fde69b3d65ed62ab82",
+        "live-footprint.json": "6b34139490fe9a75b5923d55785b7fb71254f28bc7e4d7973c40b172337e06c1",
+        "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "live-swap.json": "e2d87bdb33ed3de462a4fc9e0fa7df8a9d7a095dc8368cbd017514e35aea2f31",
+        "commands_retired-swap.json": "7a27bd30daf0d8674f9425a19b52d74df8a02852425ac796cafdfc67454e0369",
+        "retired_settled-kernel_pressure.json": "21bef84228a46ea92595c48b452b251a0cee28fd67894c01beab9f0422437d07",
+        "baseline-pressure.json": "25c906c6c91a2777bf711e3fda57c03c6b97f16868b8f30fcab131f576636c45",
+        "live-vmmap.json": "e7e6d7f95a4bc2460497af2a6bdbadba86a1bbfef759c46c8df68a2be45dba72",
+        "live-vmstat.json": "8d2c9509e29c30b2a766449a7e4ad4e12b62e8cf5d11b661222982d1267e047a",
+        "retired_settled-vmstat.json": "f292a432fc5f630e815cc93352ddba19e28112a2e645c53807b000ffebaea463",
+        "resources_released-swap.json": "02f97d7b637e94a2f4cb5d5a12444349abc207297cd1167ef1991207a132175a",
+        "live-pressure.json": "896c5755adb6a669d96bbac98f4ee708002f0cd83afca5037890f9698d957539",
+        "baseline-kernel_pressure.json": "ce4e059636a75d17559127899f39756eadd4b7e219d11d57abde709db7791072",
+        "baseline-swap.json": "2c3f61c4ca690c803b461f57d748f771442103fd279728305732560e09fd54e7",
+        "commands_retired-vmmap.json": "4e4c1db91e633298b19ed47fd22438c65805591f4f289ce0281e63a9be770989",
+        "commands_retired-footprint.json": "085cd5ab54c2e79b9908f29abc260c89db2fea54e93dee37b47435a2575cdc54",
+        "resources_released-kernel_pressure.json": "34da03f483a10c407b3e5666915a36c45a5f4db781bd44de9a82feb6d0ff3977",
+        "retired_settled-pressure.json": "f7ef0cf5d57ea5f03c378672ba1534cb083541caa2505b88add10d247279de21"
+      }
+    }
+  ],
+  "binaries": {
+    "a-probe.exe": "f618e6c226143af577f8840c31cb44f4e0f6c34f8f3855666dcfbbdd128f0ce5",
+    "observe": "09bdf1513f982e9229ef0d2f6e1e9e397a9f14a13c244a695995e08e2b878e55"
+  },
+  "framework": {
+    "Info.plist": {
+      "DTPlatformVersion": "15.4",
+      "CFBundleIdentifier": "com.apple.D3DMetal",
+      "DTCompiler": "com.apple.compilers.llvm.clang.1_0",
+      "DTPlatformBuild": "24E241",
+      "CFBundleInfoDictionaryVersion": "6.0",
+      "CFBundleVersion": "3.0",
+      "CFBundleExecutable": "D3DMetal",
+      "DTXcodeBuild": "16E140",
+      "DTSDKName": "macosx15.4.internal",
+      "CFBundleShortVersionString": "3.0",
+      "DTXcode": "1630",
+      "CFBundleSupportedPlatforms": [
+        "MacOSX"
+      ],
+      "CFBundlePackageType": "FMWK",
+      "BuildMachineOSBuild": "23A344013",
+      "LSMinimumSystemVersion": "14.0",
+      "DTPlatformName": "macosx",
+      "DTSDKBuild": "24E241",
+      "CFBundleDevelopmentRegion": "English",
+      "CFBundleName": "D3DMetal"
+    },
+    "version.plist": {
+      "BuildVersion": "1",
+      "CFBundleShortVersionString": "3.0",
+      "CFBundleVersion": "3.0",
+      "ProjectName": "D3DRendererMetal",
+      "SourceVersion": "32047000000000"
+    }
+  },
+  "runtime_hashes": {
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll": "bbda1c4e94ee70255c528c5689b28333ca9bece2d755ede7c4197977a534704f",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib/wine/x86_64-windows/d3dcompiler_47.dll": "0f37e0a1d637dd750daca8748761b28c0043d2edfdcd22361ec5f934d0f96a91"
+  },
+  "bottle_original_sha256": "e92241859696ad21866aa37723c255ee7aecca4c01ee8cfaee348f810ea72534",
+  "bottle_settings": [
+    "\"AllowUntrusted\" = \"1\" Section >---------------------------------------------",
+    "\"Version\" = \"26.3.0.39832\"",
+    "\"Template\" = \"win11_64\"",
+    "\"WineArch\" = \"win64\"",
+    "\"CX_GRAPHICS_BACKEND\" = \"d3dmetal\"",
+    "\"AntiVirusScan\" = \"untrusted\""
+  ],
+  "server_stop": {
+    "command": [
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+      "-k"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.06315233296481892
+  },
+  "server_wait": {
+    "command": [
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+      "-w"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.008553249994292855
+  },
+  "source_bottle_unchanged": true
+}

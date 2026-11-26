@@ -1,0 +1,10 @@
+{
+  "command": [
+    "sysctl",
+    "vm.swapusage"
+  ],
+  "exit": 0,
+  "stdout": "vm.swapusage: total = 8192.00M  used = 7355.38M  free = 836.62M  (encrypted)\n",
+  "stderr": "",
+  "seconds": 0.002176041016355157
+}

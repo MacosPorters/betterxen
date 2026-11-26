@@ -1,0 +1,27 @@
+{
+  "expected_exit": 0,
+  "name": "dirty-upload-4096-s1",
+  "args": [
+    "dirty",
+    "upload",
+    "4096",
+    "1"
+  ],
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/bx-uma-verify/p2-functional-final/bottle",
+    "--no-update",
+    "--no-gui",
+    "/private/tmp/bx-uma-verify/p2-functional-final/phase2.exe",
+    "dirty",
+    "upload",
+    "4096",
+    "1"
+  ],
+  "timeout_seconds": 90,
+  "snapshots": [],
+  "exit": 0,
+  "timed_out": false,
+  "elapsed_seconds": 1.539217290992383
+}

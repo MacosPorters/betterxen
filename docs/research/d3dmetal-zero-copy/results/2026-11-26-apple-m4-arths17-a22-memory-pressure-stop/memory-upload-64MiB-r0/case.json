@@ -1,0 +1,1349 @@
+{
+  "name": "memory-upload-64MiB-r0",
+  "args": [
+    "upload",
+    "67108864"
+  ],
+  "expected_exit": 0,
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/bx473-a22-memory-bounded/bottle",
+    "--no-update",
+    "--no-gui",
+    "/private/tmp/bx473-a22-memory-bounded/a-probe.exe",
+    "upload",
+    "67108864"
+  ],
+  "timeout_seconds": 240,
+  "pressure_before": {
+    "command": [
+      "memory_pressure",
+      "-Q"
+    ],
+    "exit": 0,
+    "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 60%\n",
+    "stderr": "",
+    "seconds": 0.002426083025056869
+  },
+  "kernel_pressure_before": {
+    "command": [
+      "sysctl",
+      "-n",
+      "kern.memorystatus_vm_pressure_level"
+    ],
+    "exit": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "seconds": 0.003183458000421524
+  },
+  "ram_before": {
+    "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+    "occupied_bytes": 20389691392,
+    "ceiling_bytes": 23000000000,
+    "available_below_ceiling_bytes": 2610308608,
+    "vm_stat": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    54383.\nPages active:                                 436312.\nPages inactive:                               435717.\nPages speculative:                               192.\nPages throttled:                                   0.\nPages wired down:                             171387.\nPages purgeable:                                2841.\n\"Translation faults\":                     2495451911.\nPages copy-on-write:                        98456143.\nPages zero filled:                        1704180107.\nPages reactivated:                         189730498.\nPages purged:                               19541148.\nFile-backed pages:                            273993.\nAnonymous pages:                              598228.\nPages stored in compressor:                  1606413.\nPages occupied by compressor:                 436160.\nDecompressions:                            154938905.\nCompressions:                              193966888.\nPageins:                                    47699644.\nPageouts:                                     921211.\nSwapins:                                     1684937.\nSwapouts:                                    2468999.\n",
+      "stderr": "",
+      "seconds": 0.002745250007137656
+    },
+    "ram": {
+      "command": [
+        "sysctl",
+        "-n",
+        "hw.memsize"
+      ],
+      "exit": 0,
+      "stdout": "25769803776\n",
+      "stderr": "",
+      "seconds": 0.0021678750053979456
+    }
+  },
+  "snapshots": [
+    {
+      "phase": "warm_baseline",
+      "marker": "STAGE warm_baseline cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315824864,\"resident_size\":65478656,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002640000020619482,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315824864,
+            "resident_size": 65478656,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315824864,\"resident_size\":65478656,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.00252958299824968,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315824864,
+            "resident_size": 65478656,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315824864,\"resident_size\":65478656,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002622790983878076,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315824864,
+            "resident_size": 65478656,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20837842944,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2162157056,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    26136.\nPages active:                                 442847.\nPages inactive:                               440766.\nPages speculative:                               716.\nPages throttled:                                   0.\nPages wired down:                             188373.\nPages purgeable:                                2490.\n\"Translation faults\":                     2495513366.\nPages copy-on-write:                        98459196.\nPages zero filled:                        1704215446.\nPages reactivated:                         189730498.\nPages purged:                               19541148.\nFile-backed pages:                            274887.\nAnonymous pages:                              609442.\nPages stored in compressor:                  1604162.\nPages occupied by compressor:                 435313.\nDecompressions:                            154941176.\nCompressions:                              193966888.\nPageins:                                    47700451.\nPageouts:                                     921211.\nSwapins:                                     1684937.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.0026545830187387764
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.0021842910209670663
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "warm_baseline-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "warm_baseline-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "warm_baseline-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "warm_baseline-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "warm_baseline-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "warm_baseline-kernel_pressure.json"
+      }
+    },
+    {
+      "phase": "baseline",
+      "marker": "STAGE baseline cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315948272,\"resident_size\":29642752,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002272250014357269,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315948272,
+            "resident_size": 29642752,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315948272,\"resident_size\":29642752,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002373958006501198,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315948272,
+            "resident_size": 29642752,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":315948272,\"resident_size\":29642752,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.0023020420339889824,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 315948272,
+            "resident_size": 29642752,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20517421056,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2482578944,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    44655.\nPages active:                                 434427.\nPages inactive:                               431274.\nPages speculative:                              1225.\nPages throttled:                                   0.\nPages wired down:                             165762.\nPages purgeable:                                2725.\n\"Translation faults\":                     2496390318.\nPages copy-on-write:                        98461939.\nPages zero filled:                        1704355355.\nPages reactivated:                         189767270.\nPages purged:                               19541773.\nFile-backed pages:                            275925.\nAnonymous pages:                              591001.\nPages stored in compressor:                  1660868.\nPages occupied by compressor:                 456808.\nDecompressions:                            155115861.\nCompressions:                              194239700.\nPageins:                                    47701535.\nPageouts:                                     921211.\nSwapins:                                     1684937.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.002900124993175268
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.0022342500160448253
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "baseline-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "baseline-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "baseline-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "baseline-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "baseline-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "baseline-kernel_pressure.json"
+      }
+    },
+    {
+      "phase": "created",
+      "marker": "STAGE created cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316046792,\"resident_size\":96899072,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.003521667036693543,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316046792,
+            "resident_size": 96899072,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316046792,\"resident_size\":96899072,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002498542016837746,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316046792,
+            "resident_size": 96899072,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316046792,\"resident_size\":96899072,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.0023502089898101985,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316046792,
+            "resident_size": 96899072,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20494319616,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2505680384,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    46213.\nPages active:                                 440665.\nPages inactive:                               439142.\nPages speculative:                               314.\nPages throttled:                                   0.\nPages wired down:                             158447.\nPages purgeable:                                4121.\n\"Translation faults\":                     2497553947.\nPages copy-on-write:                        98464879.\nPages zero filled:                        1704505183.\nPages reactivated:                         189773586.\nPages purged:                               19543184.\nFile-backed pages:                            275777.\nAnonymous pages:                              604344.\nPages stored in compressor:                  1637802.\nPages occupied by compressor:                 449370.\nDecompressions:                            155274124.\nCompressions:                              194388406.\nPageins:                                    47702170.\nPageouts:                                     921211.\nSwapins:                                     1684937.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.002764167031273246
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.002272791985888034
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "created-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "created-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "created-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "created-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "created-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "created-kernel_pressure.json"
+      }
+    },
+    {
+      "phase": "mapped",
+      "marker": "STAGE mapped cpu_ptr=0000000215cb4000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316046792,\"resident_size\":29040640,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002232792030554265,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316046792,
+            "resident_size": 29040640,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316046792,\"resident_size\":29040640,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002270541968755424,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316046792,
+            "resident_size": 29040640,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316046792,\"resident_size\":29040640,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002124041027855128,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316046792,
+            "resident_size": 29040640,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20553433088,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2446566912,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    43234.\nPages active:                                 439577.\nPages inactive:                               441073.\nPages speculative:                               223.\nPages throttled:                                   0.\nPages wired down:                             153815.\nPages purgeable:                                 650.\n\"Translation faults\":                     2499119546.\nPages copy-on-write:                        98467101.\nPages zero filled:                        1704628046.\nPages reactivated:                         189875706.\nPages purged:                               19547291.\nFile-backed pages:                            275148.\nAnonymous pages:                              605725.\nPages stored in compressor:                  1610607.\nPages occupied by compressor:                 456229.\nDecompressions:                            155808980.\nCompressions:                              194950153.\nPageins:                                    47702332.\nPageouts:                                     921211.\nSwapins:                                     1685068.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.0021973749971948564
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.001992083969525993
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "mapped-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "mapped-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "mapped-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "mapped-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "mapped-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "mapped-kernel_pressure.json"
+      },
+      "pointer_vmmap": {
+        "exit": 0,
+        "file": "mapped-pointer_vmmap.json"
+      }
+    },
+    {
+      "phase": "fully_initialized",
+      "marker": "STAGE fully_initialized cpu_ptr=0000000215cb4000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316050888,\"resident_size\":96350208,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.0029257090063765645,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316050888,
+            "resident_size": 96350208,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316050888,\"resident_size\":96350208,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.0024419169640168548,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316050888,
+            "resident_size": 96350208,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316050888,\"resident_size\":96350208,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":357767928}\n",
+          "stderr": "",
+          "seconds": 0.002469541970640421,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316050888,
+            "resident_size": 96350208,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 357767928
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20148682752,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2851317248,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    66606.\nPages active:                                 417519.\nPages inactive:                               414368.\nPages speculative:                               798.\nPages throttled:                                   0.\nPages wired down:                             164120.\nPages purgeable:                                 284.\n\"Translation faults\":                     2501069790.\nPages copy-on-write:                        98470398.\nPages zero filled:                        1704908732.\nPages reactivated:                         189875905.\nPages purged:                               19547470.\nFile-backed pages:                            276480.\nAnonymous pages:                              556205.\nPages stored in compressor:                  1679984.\nPages occupied by compressor:                 470740.\nDecompressions:                            155824873.\nCompressions:                              195033647.\nPageins:                                    47703664.\nPageouts:                                     921211.\nSwapins:                                     1685068.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.0028535419842228293
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.002569457981735468
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "fully_initialized-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "fully_initialized-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "fully_initialized-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "fully_initialized-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "fully_initialized-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "fully_initialized-kernel_pressure.json"
+      },
+      "pointer_vmmap": {
+        "exit": 0,
+        "file": "fully_initialized-pointer_vmmap.json"
+      }
+    },
+    {
+      "phase": "gpu_complete",
+      "marker": "STAGE gpu_complete cpu_ptr=0000000215cb4000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":358407792,\"resident_size\":62156800,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0024532500538043678,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 358407792,
+            "resident_size": 62156800,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":358407792,\"resident_size\":62156800,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0021972499671392143,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 358407792,
+            "resident_size": 62156800,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":358407792,\"resident_size\":62156800,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.002627709007356316,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 358407792,
+            "resident_size": 62156800,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20372439040,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2627560960,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    54155.\nPages active:                                 409912.\nPages inactive:                               408378.\nPages speculative:                               402.\nPages throttled:                                   0.\nPages wired down:                             186435.\nPages purgeable:                                4052.\n\"Translation faults\":                     2503118919.\nPages copy-on-write:                        98475613.\nPages zero filled:                        1705210702.\nPages reactivated:                         189904554.\nPages purged:                               19548101.\nFile-backed pages:                            275274.\nAnonymous pages:                              543418.\nPages stored in compressor:                  1716469.\nPages occupied by compressor:                 474869.\nDecompressions:                            155935114.\nCompressions:                              195170100.\nPageins:                                    47704416.\nPageouts:                                     921211.\nSwapins:                                     1685068.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.0033360000234097242
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.002557832980528474
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "gpu_complete-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "gpu_complete-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "gpu_complete-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "gpu_complete-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "gpu_complete-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "gpu_complete-kernel_pressure.json"
+      },
+      "pointer_vmmap": {
+        "exit": 0,
+        "file": "gpu_complete-pointer_vmmap.json"
+      }
+    },
+    {
+      "phase": "resources_released",
+      "marker": "STAGE resources_released cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316214896,\"resident_size\":29515776,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0025369999930262566,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316214896,
+            "resident_size": 29515776,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316214896,\"resident_size\":29515776,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.002405709004960954,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316214896,
+            "resident_size": 29515776,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316214896,\"resident_size\":29515776,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.002242540998850018,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316214896,
+            "resident_size": 29515776,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 19958808576,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 3041191424,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    79728.\nPages active:                                 407680.\nPages inactive:                               406402.\nPages speculative:                               152.\nPages throttled:                                   0.\nPages wired down:                             153972.\nPages purgeable:                                5219.\n\"Translation faults\":                     2505233114.\nPages copy-on-write:                        98478185.\nPages zero filled:                        1705455328.\nPages reactivated:                         189922322.\nPages purged:                               19549858.\nFile-backed pages:                            274947.\nAnonymous pages:                              539287.\nPages stored in compressor:                  1731751.\nPages occupied by compressor:                 486217.\nDecompressions:                            156168368.\nCompressions:                              195456434.\nPageins:                                    47704541.\nPageouts:                                     921211.\nSwapins:                                     1685071.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.002844250004272908
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.002314959012437612
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "resources_released-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "resources_released-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "resources_released-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "resources_released-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "resources_released-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "resources_released-kernel_pressure.json"
+      }
+    },
+    {
+      "phase": "commands_retired",
+      "marker": "STAGE commands_retired cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29937664,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.002259999979287386,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29937664,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29937664,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0021564579801633954,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29937664,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29937664,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.002081250015180558,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29937664,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20101677056,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2898322944,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    71591.\nPages active:                                 412201.\nPages inactive:                               410702.\nPages speculative:                               295.\nPages throttled:                                   0.\nPages wired down:                             156466.\nPages purgeable:                                6156.\n\"Translation faults\":                     2506209428.\nPages copy-on-write:                        98480682.\nPages zero filled:                        1705595859.\nPages reactivated:                         189922362.\nPages purged:                               19549862.\nFile-backed pages:                            274364.\nAnonymous pages:                              548834.\nPages stored in compressor:                  1727188.\nPages occupied by compressor:                 482896.\nDecompressions:                            156183382.\nCompressions:                              195468619.\nPageins:                                    47704605.\nPageouts:                                     921211.\nSwapins:                                     1685071.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.0023275840212590992
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.002296667022164911
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "commands_retired-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "commands_retired-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "commands_retired-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "commands_retired-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "commands_retired-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "commands_retired-kernel_pressure.json"
+      }
+    },
+    {
+      "phase": "retired_settled",
+      "marker": "STAGE retired_settled cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29945856,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0031619580113328993,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29945856,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29945856,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.002322290965821594,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29945856,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29945856,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0020360000198706985,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29945856,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 21187198976,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 1812801024,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     6237.\nPages active:                                 457394.\nPages inactive:                               456324.\nPages speculative:                               128.\nPages throttled:                                   0.\nPages wired down:                             153408.\nPages purgeable:                                5977.\n\"Translation faults\":                     2507319354.\nPages copy-on-write:                        98483052.\nPages zero filled:                        1705728091.\nPages reactivated:                         189922712.\nPages purged:                               19555646.\nFile-backed pages:                            273463.\nAnonymous pages:                              640383.\nPages stored in compressor:                  1633589.\nPages occupied by compressor:                 460660.\nDecompressions:                            156341677.\nCompressions:                              195533809.\nPageins:                                    47704740.\nPageouts:                                     921211.\nSwapins:                                     1685071.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.002932917035650462
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.0024134580162353814
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "retired_settled-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "retired_settled-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "retired_settled-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "retired_settled-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "retired_settled-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "retired_settled-kernel_pressure.json"
+      }
+    },
+    {
+      "phase": "device_released",
+      "marker": "STAGE device_released cpu_ptr=0000000000000000",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29741056,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0023230420192703605,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29741056,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29741056,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.001968415977898985,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29741056,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-memory-bounded/observe",
+            "65303"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":65303,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":316132952,\"resident_size\":29741056,\"wired_size\":0,\"pageins\":10,\"max_phys_footprint\":358420080}\n",
+          "stderr": "",
+          "seconds": 0.0021154999849386513,
+          "data": {
+            "pid": 65303,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 316132952,
+            "resident_size": 29741056,
+            "wired_size": 0,
+            "pageins": 10,
+            "max_phys_footprint": 358420080
+          }
+        }
+      ],
+      "ram": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20172242944,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2827757056,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    67853.\nPages active:                                 407653.\nPages inactive:                               406391.\nPages speculative:                               189.\nPages throttled:                                   0.\nPages wired down:                             166342.\nPages purgeable:                                 590.\n\"Translation faults\":                     2508289311.\nPages copy-on-write:                        98486456.\nPages zero filled:                        1705859021.\nPages reactivated:                         189933587.\nPages purged:                               19555650.\nFile-backed pages:                            273795.\nAnonymous pages:                              540438.\nPages stored in compressor:                  1718735.\nPages occupied by compressor:                 485723.\nDecompressions:                            156354469.\nCompressions:                              195633918.\nPageins:                                    47704970.\nPageouts:                                     921211.\nSwapins:                                     1685083.\nSwapouts:                                    2468999.\n",
+          "stderr": "",
+          "seconds": 0.0019959580386057496
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.0019581670057959855
+        }
+      },
+      "footprint": {
+        "exit": 0,
+        "file": "device_released-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "device_released-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "device_released-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "device_released-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "device_released-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "device_released-kernel_pressure.json"
+      }
+    }
+  ],
+  "host_pid": 65303,
+  "backend_paths_excerpt": [
+    "/usr/libexec/rosetta/runtime",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+  ],
+  "backend_lsof_exit": 0,
+  "exit": 0,
+  "timed_out": false,
+  "seconds": 37.54189195798244,
+  "outputs": {
+    "stdout.txt": "70ba9e0f66062d3e9269784a0731919eb75ebffc9ef4c2b64b004dc5fa9efe28",
+    "gpu_complete-footprint.json": "91684f8374633b7f9107a8c04a13d94bf62b36def7923f082648dca13ceac6e0",
+    "created-footprint.json": "61747fa9fb4304bbfb3cdf8fe938274f3663bd1d8361542e6210631547f5866e",
+    "device_released-pressure.json": "f4ea9dc6402c631afd41aa4b20a39ea28505300567e1d70e414c1654a8a26479",
+    "baseline-footprint.json": "9c48f3fb6c3ec717e9d12503388291e43d08d78bab8ebb31ab76f20e961a64ee",
+    "device_released-swap.json": "ae7c22406fffe68d6407d9ce95998156ff600c33a8b9ec0e3d989822f89eef6b",
+    "retired_settled-swap.json": "052d960c49070d1d68a9819d39a2d57a8f45382fe662f532274517f86498798d",
+    "gpu_complete-pointer_vmmap.json": "d07eed4f316dff09cd48ab24bd279d158bf6bb4b75ff6a80a0081c798499bf35",
+    "commands_retired-pressure.json": "02f4ce8df312c2a4e14f1f8c9bb781250f5745bf863ab7aec9fb6c24c6e95c21",
+    "resources_released-pressure.json": "036bbcdbd3510c8f0a98e82586cd3f73256cdfeb58a0d868156af574c2149e55",
+    "resources_released-vmstat.json": "4e0e71160b2daf321b33f40c3642ae11cf074765b88dadd4f152757a1bdc68cb",
+    "mapped-swap.json": "c370e1bbb6ad0f41e92c36b97950f9713f45940e9fdb5c1fbceb10cf1cf6a238",
+    "gpu_complete-vmmap.json": "01693674177917f5dac0b8e57685746ce09c929b32dc1d665430816e6f2cd13b",
+    "resources_released-footprint.json": "0f0a85e85369fef7385a309b9943d33f331004ee2d8a2bcbfed0c0fc1ee975e0",
+    "retired_settled-vmmap.json": "2fcee4baff2087259453c0d421c343d0f7172bd0e7fa7dae37a4f94f41e5c1e8",
+    "fully_initialized-pressure.json": "159bae60ef57298f3bdbf0f89cb8eb7e64a70da90d771a29efc9a12e07877865",
+    "warm_baseline-pressure.json": "fb2fdde8f434c5b86efd2317669e95c3e9b86b8b9508691939ece24f95c9d441",
+    "mapped-vmstat.json": "2177939f8c0d7fbe8d1d27464f6d04e245e53ba43ff4f76c064ed0392bb791cb",
+    "fully_initialized-vmmap.json": "e0474ce43875bff4afbd41ac92a75714dd8fdcefd6b36a56fe61a2a5d7e75c01",
+    "warm_baseline-vmstat.json": "ba3957060d96d0103c26f1b1e648df2a454b1814ed404b101e7162d0512a7635",
+    "device_released-kernel_pressure.json": "782b54f8b6eba069da9478ded7c1a7227b7e70e6dbb325dd410d8ce97767e620",
+    "mapped-pointer_vmmap.json": "1ef5ac6856930de244398389a8cd2140eb78877d66aad0e2517a7ac8ca095288",
+    "created-kernel_pressure.json": "ef562344eea8b3c21212f9066c5b8023aac7676ecf2779e70baf28e42dc29d15",
+    "commands_retired-kernel_pressure.json": "f816c4e8973a259e35ba734ce6819e9d46c0e157c39aa982288a4ff7342ac6e0",
+    "created-swap.json": "fa9acc108ba50e327ba9d022102b055f73f0735798e4e197da78e484aea90bd3",
+    "baseline-vmmap.json": "69ea7b006bac82ed70f6a2a1bd9572e427721e1b1bc964df4b849dd34ab2967a",
+    "fully_initialized-vmstat.json": "dea5358ab20830d384921944d8af33ecdaf153e377b2c51e2015533bfc157990",
+    "warm_baseline-kernel_pressure.json": "b4f2c2c9d3432837cdd518a11135c1e60d4e26ec518f23827e38d2694cdcb08f",
+    "resources_released-vmmap.json": "4742f9ca60d296607f4562453211b36d289907ce2e71222203657ec751f41bca",
+    "fully_initialized-pointer_vmmap.json": "510f08364f4087705d926d90bb05cb567a4d85cf3e5010ad7e1972d2a26c862d",
+    "device_released-vmstat.json": "36a4e86e3ea81cbbb71d70561fde3ec2adc2e81a14a76dde0811e8bf8aa156b2",
+    "commands_retired-vmstat.json": "c97b80a2d2602e62dae24037a7f88406cb7b02c7f75a8b2ab5d62b9080bdb696",
+    "baseline-vmstat.json": "31176523821c835d8418bf502cd4dcc0a89dc7ae18e8942364591b1ae1add4c0",
+    "gpu_complete-pressure.json": "7619d76379c53d6133e71784ce381502492a5b190cdecdf83238af728da93b9a",
+    "warm_baseline-footprint.json": "3d2defaf861abe4e2d523e873bde5697ed5ba0d7b3b451752f8d8a7f33bd2ff5",
+    "mapped-vmmap.json": "03c99c32fbf66a649554755eb0648e9baabd014f6e1520793d6a670ed506c4ac",
+    "device_released-footprint.json": "811945c9bce729144ba9043af6a67d4745b57ee51f1b809d0eae0d3a29f8c6fb",
+    "retired_settled-footprint.json": "047d4d1ea405b2088cf2ce221a59697620e444f9bab233506c7d9e889d079a32",
+    "stderr.txt": "36e40620843f9c688b8911384f7e308955adef8be76c248e85ef83bca19c6930",
+    "gpu_complete-swap.json": "560abc6b5dc676002ee861327330381f425e7783a2b5b9c4cdd4720ecc98638f",
+    "warm_baseline-swap.json": "7b1fccde90716dd21d26496a60acd7c524bd4e742f5705d95557ff074ea302a5",
+    "commands_retired-swap.json": "a84df589e6395d8c8775564a5bb18fc01f74710af85a87c359074f1c361959fa",
+    "mapped-kernel_pressure.json": "d05a80b84bfd94bf76acf5fefb02c206301e48a31979b09e55b1077ca42e3057",
+    "created-pressure.json": "71d621cc2c672157e2da2b2c3d8721cadbfe083fbfb42c2f028f31db31d05a5a",
+    "retired_settled-kernel_pressure.json": "39fec8a0d0070738cb7df30f187eba80c6fea1eda71b4d9eac8fd9515509bd2c",
+    "baseline-pressure.json": "749a811a78ac7e8c356307543ac0a3e838cf0226d3ebe53716b02b2e3c926e12",
+    "gpu_complete-kernel_pressure.json": "a390d55395e48a0b2cf4859fec0de7e08b91d366665b161e515af5954cb32477",
+    "gpu_complete-vmstat.json": "a9ecbf9349d25504e4dfd13a3e964f5b6d52887c5af3a835361006336c491d85",
+    "warm_baseline-vmmap.json": "81f805b259eeed88af0ee7994671dc134c0a330920ff865e3485b12f8c628da7",
+    "retired_settled-vmstat.json": "0fe14f634333628d30164c0b448ba78e89feecd334044645f7276126e3c2710e",
+    "resources_released-swap.json": "13fbf3c2a0de7aa7de7b6e1d051d6fa07de7e3abc90e9cff794f2e823a70e80a",
+    "fully_initialized-footprint.json": "0e1ad5039f05d6fd8f52db66db63fa3867d0a9ae114f11bc6f62d7734bd8998d",
+    "fully_initialized-kernel_pressure.json": "07765bf3a13cec016c2332fcc65da3156d190ced0d15f72b07b2eb7769d79f56",
+    "device_released-vmmap.json": "69f752be5a01ba1a27a6ed0add67d3b0fd7720be2c88a576a5ef2895df157c60",
+    "baseline-kernel_pressure.json": "c13df4c661b20f40c37da77ba87475840e1637fe565b5d9d5b16170903d8123f",
+    "baseline-swap.json": "46181f7ba0b2bf55ccfb79be6c1c88c75966d576a7504036e1914cda2758e2f7",
+    "fully_initialized-swap.json": "8aa7c68cc519e15a109f3b5255c80b029605cc32841756ec61d5887e4b2d27ac",
+    "mapped-pressure.json": "959f6882d85229a03885313c1120a548c2145d325b62dcd48f41f779d838c021",
+    "created-vmmap.json": "e4e7613e4db04292e49b9dbf45cce999d7b902a1df1388dd69ff07209521550d",
+    "commands_retired-vmmap.json": "291f0832edd98a2cb62434ac53d0542e41771c8fb63c537577c683ce80c13ecc",
+    "consumption.dxbc": "a8458e0abaf39fd6e1a0de145f2c1f3cd5ce1e4ba69502b0f130a30ea4bc1420",
+    "created-vmstat.json": "50ea94efaa5fc527978b254ee1534d9c82cd38d4f20b3a0ce2534e516068c0d7",
+    "consumption.hlsl": "57a2cf0b068574fb05483b133968308ca593a0cf349d85ccd5ac3c8b11a5fc09",
+    "commands_retired-footprint.json": "e19a9ca4da73c4c5b0ef3b52ebbd6b7997820856e4e38469f3a237550f3fddb5",
+    "resources_released-kernel_pressure.json": "9e5764b776fcfd1923ea501b63ed5f8df3ebc04f4d5075a76e488fb5276c5417",
+    "retired_settled-pressure.json": "893fb6deacc41603d025a0bb75677800416eb04ac5dd85f9121d2eec97634c0f",
+    "mapped-footprint.json": "c4a2be5f03a48851460f8796b8651256a8b49870c62b3d103532692eea4b6044"
+  }
+}

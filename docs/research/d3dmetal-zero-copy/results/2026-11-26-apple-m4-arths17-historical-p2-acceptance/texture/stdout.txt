@@ -1,0 +1,19 @@
+PHASE2 protocol=1 mode=texture guest_pid=364
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+TEXTURE layout=0 allocation_bytes=65536 alignment=65536
+API texture heap HRESULT=0x00000000
+API placed texture HRESULT=0x00000000
+API texture Map HRESULT=0x00000000
+TEXTURE layout=0 returned_cpu_ptr=0000000000000000 pointer_requested=0
+API WriteToSubresource HRESULT=0x00000000
+TEXTURE_FOOTPRINT layout=0 rows=37 row_bytes=260 row_pitch=512 total_bytes=18692 offset=0
+TEXTURE_GPU_READBACK layout=0 matches=2405/2405 ms=16.623000
+TEXTURE layout=1 allocation_bytes=65536 alignment=65536
+API texture heap HRESULT=0x00000000
+API placed texture HRESULT=0x00000000
+API texture Map HRESULT=0x00000000
+TEXTURE layout=1 returned_cpu_ptr=0000000000000000 pointer_requested=0
+TEXTURE_FOOTPRINT layout=1 rows=37 row_bytes=260 row_pitch=512 total_bytes=18692 offset=0
+TEXTURE_GPU_READBACK layout=1 matches=2405/2405 ms=0.507400
+END success

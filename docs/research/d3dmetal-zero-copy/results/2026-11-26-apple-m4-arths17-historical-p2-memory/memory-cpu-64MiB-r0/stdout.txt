@@ -1,0 +1,7 @@
+PHASE2 protocol=1 mode=memory guest_pid=208
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+SHADER_COMPILER C:\windows\system32\d3dcompiler_47.dll
+SHADER_BYTECODE bytes=1384 magic=DXBC
+MEMORY type=cpu bytes=67108864
+STAGE baseline cpu_ptr=0000000000000000

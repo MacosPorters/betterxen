@@ -1,0 +1,35 @@
+{
+  "name": "memory-cpu-64MiB-r0",
+  "args": [
+    "memory",
+    "cpu",
+    "67108864"
+  ],
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/bx-uma-verify/p2-memory/bottle",
+    "--no-update",
+    "--no-gui",
+    "/private/tmp/bx-uma-verify/p2-memory/phase2.exe",
+    "memory",
+    "cpu",
+    "67108864"
+  ],
+  "timeout_seconds": 150,
+  "snapshots": [],
+  "pid_lookup": {
+    "command": [
+      "lsof",
+      "-t",
+      "/private/tmp/bx-uma-verify/p2-memory/phase2.exe"
+    ],
+    "exit": 0,
+    "stdout": "39671\n39690\n",
+    "stderr": "",
+    "elapsed_seconds": 0.26933204097440466
+  },
+  "exit": -9,
+  "timed_out": true,
+  "elapsed_seconds": 2.3993302499875426
+}

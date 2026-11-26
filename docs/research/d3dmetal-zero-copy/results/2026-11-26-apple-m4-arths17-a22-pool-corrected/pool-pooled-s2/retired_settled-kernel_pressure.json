@@ -1,0 +1,11 @@
+{
+  "command": [
+    "sysctl",
+    "-n",
+    "kern.memorystatus_vm_pressure_level"
+  ],
+  "exit": 0,
+  "stdout": "1\n",
+  "stderr": "",
+  "seconds": 0.0019922080100513995
+}

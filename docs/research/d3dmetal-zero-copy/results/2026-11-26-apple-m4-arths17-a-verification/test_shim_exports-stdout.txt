@@ -1,0 +1,6 @@
+PASS: test_shim_exports (25 checks verified)
+
+Trace summary of /tmp/bx473-cpu-conformance/test_shim_exports.jsonl:
+Trace events     : 1
+clwb VEH traps   : 0
+ADX illegal ops  : 0

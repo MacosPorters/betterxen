@@ -1,0 +1,7 @@
+PHASE2 protocol=1 mode=negative-control guest_pid=336
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+SHADER_COMPILER C:\windows\system32\d3dcompiler_47.dll
+SHADER_BYTECODE bytes=1384 magic=DXBC
+VERIFY direct_shader_same_cpu_pointer matches=0/256 first_actual=DEADC0DE first_expected=6D7036B2
+END failure reason=GPU checksum mismatch

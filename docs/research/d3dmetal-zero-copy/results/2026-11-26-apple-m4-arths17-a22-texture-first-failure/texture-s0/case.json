@@ -1,0 +1,153 @@
+{
+  "name": "texture-s0",
+  "args": [
+    "0"
+  ],
+  "expected_exit": 0,
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/bx473-a22-texture-smoke/bottle",
+    "--no-update",
+    "--no-gui",
+    "/private/tmp/bx473-a22-texture-smoke/a-probe.exe",
+    "0"
+  ],
+  "timeout_seconds": 240,
+  "pressure_before": {
+    "command": [
+      "memory_pressure",
+      "-Q"
+    ],
+    "exit": 0,
+    "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 61%\n",
+    "stderr": "",
+    "seconds": 0.002215874963440001
+  },
+  "kernel_pressure_before": {
+    "command": [
+      "sysctl",
+      "-n",
+      "kern.memorystatus_vm_pressure_level"
+    ],
+    "exit": 0,
+    "stdout": "1\n",
+    "stderr": "",
+    "seconds": 0.0027193750138394535
+  },
+  "snapshots": [
+    {
+      "phase": "baseline",
+      "marker": "STAGE baseline cpu_ptr=0",
+      "samples": [
+        {
+          "command": [
+            "/private/tmp/bx473-a22-texture-smoke/observe",
+            "61661"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":61661,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35629648,\"resident_size\":53067776,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77539920}\n",
+          "stderr": "",
+          "seconds": 0.05812095804139972,
+          "data": {
+            "pid": 61661,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 35629648,
+            "resident_size": 53067776,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 77539920
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-texture-smoke/observe",
+            "61661"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":61661,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35629648,\"resident_size\":53067776,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77539920}\n",
+          "stderr": "",
+          "seconds": 0.0027334169717505574,
+          "data": {
+            "pid": 61661,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 35629648,
+            "resident_size": 53067776,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 77539920
+          }
+        },
+        {
+          "command": [
+            "/private/tmp/bx473-a22-texture-smoke/observe",
+            "61661"
+          ],
+          "exit": 0,
+          "stdout": "{\"pid\":61661,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35629648,\"resident_size\":53067776,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77539920}\n",
+          "stderr": "",
+          "seconds": 0.002411915978882462,
+          "data": {
+            "pid": 61661,
+            "return": 0,
+            "errno": 0,
+            "host_page_size": 16384,
+            "phys_footprint": 35629648,
+            "resident_size": 53067776,
+            "wired_size": 0,
+            "pageins": 0,
+            "max_phys_footprint": 77539920
+          }
+        }
+      ],
+      "footprint": {
+        "exit": 0,
+        "file": "baseline-footprint.json"
+      },
+      "vmmap": {
+        "exit": 0,
+        "file": "baseline-vmmap.json"
+      },
+      "vmstat": {
+        "exit": 0,
+        "file": "baseline-vmstat.json"
+      },
+      "pressure": {
+        "exit": 0,
+        "file": "baseline-pressure.json"
+      },
+      "swap": {
+        "exit": 0,
+        "file": "baseline-swap.json"
+      },
+      "kernel_pressure": {
+        "exit": 0,
+        "file": "baseline-kernel_pressure.json"
+      }
+    }
+  ],
+  "host_pid": 61661,
+  "backend_paths_excerpt": [
+    "usr/libexec/rosetta/runtime",
+    "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+    "Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+  ],
+  "backend_lsof_exit": 0,
+  "exit": 1,
+  "timed_out": false,
+  "seconds": 4.822175166977104,
+  "outputs": {
+    "stdout.txt": "67fa2f926124989677547a6860ef6f1577242f8a250c90d655d2256131424bcb",
+    "baseline-footprint.json": "8bc2017b72f30f9dd85f72e18353b6c152c7b72e9fa29f1a6dba3ace47445cb4",
+    "baseline-vmmap.json": "ae3ba5450f6bb925257719abfa0f378c2a8aad67e797ed6d122717441524447f",
+    "baseline-vmstat.json": "3252a554fa80476db34110f4bea39dc783ccf04cb60616f7733f4da4e85f9be8",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+    "baseline-pressure.json": "1c599b0d679bb937dc903c2c66e92d7ee1e35b311c3709ea65fd4d597946baf4",
+    "baseline-kernel_pressure.json": "9651eafa5fc52282d4a348ff3224c03cc8a20bb5f6b6b5e5663a0357ed18446b",
+    "baseline-swap.json": "8b4d8a6b44933e17292e5b4e263ee4e9413bf1ec2167cf1c9ee46f632cb571cc"
+  }
+}

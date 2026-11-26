@@ -1,0 +1,7 @@
+    Checking dxbc-accc v0.2.0 (<HOME>/betterxen-473-a/shader-transpiler/crates/dxbc-accc)
+   Compiling libc v0.2.191
+    Checking d3dmetal-harness v0.2.0 (<HOME>/betterxen-473-a/shader-transpiler/crates/d3dmetal-harness)
+    Checking bx-probe v0.2.0 (<HOME>/betterxen-473-a/launcher/crates/bx-probe)
+    Checking bx-telemetry v0.2.0 (<HOME>/betterxen-473-a/launcher/crates/bx-telemetry)
+    Checking bx-cli v0.2.0 (<HOME>/betterxen-473-a/launcher/crates/bx-cli)
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 1.29s

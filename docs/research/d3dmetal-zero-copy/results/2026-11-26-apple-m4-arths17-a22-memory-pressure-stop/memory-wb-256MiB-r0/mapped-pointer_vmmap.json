@@ -1,0 +1,12 @@
+{
+  "command": [
+    "vmmap",
+    "-w",
+    "66025",
+    "0x0000000226054000"
+  ],
+  "exit": 0,
+  "stdout": "0x226054000 is in 0x226054000-0x236064000;  bytes after start: 0  bytes before end: 268500991\n\n      REGION TYPE                    START - END         [ VSIZE  RSDNT  DIRTY   SWAP] PRT/MAX SHRMOD PURGE    REGION DETAIL\n      Untagged (reserved)         225c54000-226054000    [ 4096K     0K     0K     0K] rw-/rw- SM=NUL          reserved VM address space (unallocated)\n--->  IOAccelerator               226054000-236064000    [256.1M  64.0M     0K     0K] rw-/rw- SM=SHM PURGE=N  \n      GAP OF 0xd89f9c000 BYTES\n      Guard                       fc0000000-1000000000   [  1.0G     0K     0K     0K] ---/--- SM=NUL  \n",
+  "stderr": "",
+  "seconds": 1.3418272910057567
+}

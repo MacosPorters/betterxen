@@ -1,0 +1,34 @@
+{
+  "utc": "2026-11-26T20:49:42.427567+00:00",
+  "ceiling_bytes": 23000000000,
+  "interpretation": "ceiling, not target; no optional >1 GiB source. VM-stat metric and process receipts are estimates, not an exact Activity Monitor reading",
+  "commands": [
+    {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    19620.\nPages active:                                 482635.\nPages inactive:                               481510.\nPages speculative:                               272.\nPages throttled:                                   0.\nPages wired down:                             169036.\nPages purgeable:                                3979.\n\"Translation faults\":                     2446688112.\nPages copy-on-write:                        98266035.\nPages zero filled:                        1696847247.\nPages reactivated:                         189173409.\nPages purged:                               19494563.\nFile-backed pages:                            253058.\nAnonymous pages:                              711359.\nPages stored in compressor:                  1396774.\nPages occupied by compressor:                 381078.\nDecompressions:                            152095693.\nCompressions:                              190696104.\nPageins:                                    47601585.\nPageouts:                                     921199.\nSwapins:                                     1682593.\nSwapouts:                                    2468999.\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 63%\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    }
+  ]
+}

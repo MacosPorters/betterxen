@@ -1,0 +1,13 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "receipt.json",
+      "bytes": 50866,
+      "original_sha256": "a0f0af7b8c46300d76356131b0fdebc2c234a0ad74c482350225a6083a8f8384",
+      "archived_sha256": "255157f85ae68b4f71354e3f1d10fecfeb6074664b565ed82cb2a6fca1775eb6",
+      "redacted": true
+    }
+  ]
+}

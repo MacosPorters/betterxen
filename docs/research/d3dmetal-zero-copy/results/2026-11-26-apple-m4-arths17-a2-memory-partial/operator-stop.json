@@ -1,0 +1,7 @@
+{
+  "utc": "2026-11-26T20:38:32.462850+00:00",
+  "reason": "manual SIGINT after observing kernel pressure level 2; preserve partial second session, no pass",
+  "kernel_pressure": "kern.memorystatus_vm_pressure_level: 2\n",
+  "free_percentage": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 52%\n",
+  "swap": "vm.swapusage: total = 6144.00M  used = 5276.38M  free = 867.62M  (encrypted)\n"
+}

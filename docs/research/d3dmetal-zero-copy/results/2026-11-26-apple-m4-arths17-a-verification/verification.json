@@ -1,0 +1,151 @@
+{
+  "status": "local verification; not independent acceptance",
+  "commands": [
+    {
+      "command": "cargo fmt --all -- --check",
+      "exit": 0
+    },
+    {
+      "command": "CARGO_BUILD_JOBS=2 cargo clippy --locked --workspace --all-targets -- -D warnings",
+      "exit": 0
+    },
+    {
+      "command": "CARGO_BUILD_JOBS=2 cargo test --locked --workspace",
+      "exit": 0,
+      "passed": 66,
+      "failed": 0,
+      "ignored": 1
+    },
+    {
+      "command": "BX_BUILD_JOBS=2 scripts/build-shims.sh",
+      "exit": 0,
+      "shim_dlls": 16,
+      "exact_exports": 108
+    },
+    {
+      "command": "CARGO_BUILD_JOBS=2 cargo build --locked -p bx-cli; file/lipo/otool target/debug/bx-cli",
+      "exit": 0,
+      "architecture": "arm64"
+    },
+    {
+      "command": "python3 scripts/audit/docs_hygiene.py --require-yaml with temporary index including candidate files",
+      "exit": 0,
+      "real_git_index_changed": false
+    }
+  ],
+  "files": [
+    {
+      "path": "cargo-fmt.txt",
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "home_path_redacted": false
+    },
+    {
+      "path": "cargo-clippy.txt",
+      "original_sha256": "6aaf5f4c9a7ffae65ab7ace312852d5f1f67fd65802dc710b09613c903f19583",
+      "archived_sha256": "fda20f022b8084a8ea8e492579c8f22842ba48a812bcabe7afb7f6226e52706b",
+      "home_path_redacted": true
+    },
+    {
+      "path": "cargo-test.txt",
+      "original_sha256": "66f32380e82dd8c0ec08c844e11faaebd200c3d3ba1f7697d42bda9a4e45782e",
+      "archived_sha256": "01c7976665860f72a578de5fc4e5e881bb6117ad8f149416f155dab57d3ffd45",
+      "home_path_redacted": true
+    },
+    {
+      "path": "build-shims.txt",
+      "original_sha256": "d9cbe50fd72f9cb19eb03ff670cc8d174647c64e83a8ae7d92c3374f37af0485",
+      "archived_sha256": "83f4903a19e525128e515fd329a65b38b9d0b3f405b87f3bc401c868af2d110c",
+      "home_path_redacted": true
+    },
+    {
+      "path": "cargo-build-cli.txt",
+      "original_sha256": "3b4101fc411435c3c728e66d214beed08f30f0b5f5842cc310e0c430098c54b6",
+      "archived_sha256": "e5fc11e28ee08f276c2ebe25d7c71a04fdc2f130d34ee3e15b7704cf504258b8",
+      "home_path_redacted": true
+    },
+    {
+      "path": "cli-architecture.txt",
+      "original_sha256": "7d202b53ca40b3df4fe07b9933ea0a5672077473018c6ad9a1fc192eedbbb52b",
+      "archived_sha256": "7d202b53ca40b3df4fe07b9933ea0a5672077473018c6ad9a1fc192eedbbb52b",
+      "home_path_redacted": false
+    },
+    {
+      "path": "docs-hygiene-final.txt",
+      "original_sha256": "2732bf7bf4dd589f80067d7408e18e60bb454968ab951698cf544f4e3094e46b",
+      "archived_sha256": "2732bf7bf4dd589f80067d7408e18e60bb454968ab951698cf544f4e3094e46b",
+      "home_path_redacted": false
+    },
+    {
+      "path": "hash-audit.json",
+      "original_sha256": "0a1c3846353f9f4c71a0717b39246ec67990127538d5dcfaafada33e1b3dc9d3",
+      "archived_sha256": "0a1c3846353f9f4c71a0717b39246ec67990127538d5dcfaafada33e1b3dc9d3",
+      "home_path_redacted": false
+    },
+    {
+      "path": "host-followup.json",
+      "original_sha256": "b262d86f4d40b733abb38804eb51dd68dc411fdf7d1452404a337e83661cd0cc",
+      "archived_sha256": "b262d86f4d40b733abb38804eb51dd68dc411fdf7d1452404a337e83661cd0cc",
+      "home_path_redacted": false
+    },
+    {
+      "path": "23gb-cap-receipt.json",
+      "original_sha256": "8dee3dbc7494fa67c34a78732e05e79e1b604ae34fbf6d97f9d300afe500c5e9",
+      "archived_sha256": "8dee3dbc7494fa67c34a78732e05e79e1b604ae34fbf6d97f9d300afe500c5e9",
+      "home_path_redacted": false
+    },
+    {
+      "path": "test_shim_exports-stderr.txt",
+      "original_sha256": "fe6fe9d95d7b86f1474402208a1d7b1c3ddd1be1fb3091c873356157a4d6d485",
+      "archived_sha256": "fe6fe9d95d7b86f1474402208a1d7b1c3ddd1be1fb3091c873356157a4d6d485",
+      "home_path_redacted": false
+    },
+    {
+      "path": "test_veh_clwb-stdout.txt",
+      "original_sha256": "dfb2b1a587f0b0249af05ddd32d151bfd99696c6501a9520793af01a3ec046e6",
+      "archived_sha256": "dfb2b1a587f0b0249af05ddd32d151bfd99696c6501a9520793af01a3ec046e6",
+      "home_path_redacted": false
+    },
+    {
+      "path": "test_veh_clwb.jsonl",
+      "original_sha256": "bca91c4ae5c9c4c5a8a1813d56d0d972fc1f8a0ff1858ea1ff309c2d984d93e5",
+      "archived_sha256": "bca91c4ae5c9c4c5a8a1813d56d0d972fc1f8a0ff1858ea1ff309c2d984d93e5",
+      "home_path_redacted": false
+    },
+    {
+      "path": "test_shim_exports-stdout.txt",
+      "original_sha256": "62cc84b4c5b68a0b338b8d42ec3ca6cd01db6aa520f63b9bff0b1ba4fc94f173",
+      "archived_sha256": "62cc84b4c5b68a0b338b8d42ec3ca6cd01db6aa520f63b9bff0b1ba4fc94f173",
+      "home_path_redacted": false
+    },
+    {
+      "path": "test_shim_exports.jsonl",
+      "original_sha256": "898843eaf10aa33637833ba7331be166136197a375c78fe2d389d29504051c76",
+      "archived_sha256": "898843eaf10aa33637833ba7331be166136197a375c78fe2d389d29504051c76",
+      "home_path_redacted": false
+    },
+    {
+      "path": "test_veh_clwb-stderr.txt",
+      "original_sha256": "0b02b527929196a2b4377a0fdb298acd6bb7ff15d941c45f00f18f82be00030c",
+      "archived_sha256": "0b02b527929196a2b4377a0fdb298acd6bb7ff15d941c45f00f18f82be00030c",
+      "home_path_redacted": false
+    },
+    {
+      "path": "receipt.json",
+      "original_sha256": "62fb59a5d4b65c0aa2b7c6f3826fb62f02eb0156cfac08566155300cc6324157",
+      "archived_sha256": "5e1865e388a8a1a47cd230182d1a26defa5852dbc62a40fe0ccb3c38672ffc95",
+      "home_path_redacted": true
+    }
+  ],
+  "notes": [
+    "Initial tracked-only documentation check reported the untracked new index link as missing; final temporary-index candidate check passed.",
+    "Initial setup/compiler failures and pressure interruptions are retained separately.",
+    "Post-run Bottle section insertion correction was checked structurally; a post-correction guest launch is not claimed.",
+    "No native-first GPU suite was run from the retired native workspace; no ignored test counts as GPU verification."
+  ],
+  "cpu_conformance": {
+    "test_veh_clwb": 0,
+    "test_shim_exports": 0,
+    "scope": "unchanged baseline CPU programs; not a GPU or independent Workstream A certification"
+  }
+}
