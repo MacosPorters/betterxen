@@ -10,7 +10,8 @@ The D3D11 and D3D12 workloads are Track F acceptance inputs for the launcher. Th
 second graphics pipeline and do not exercise the `d3d12_xs` shim.
 
 `bx-cli` has been run only against CrossOver 26.3 (26.3.0.39832). On any other build `run` and
-`bench` warn, and records and `doctor` report `crossover_build_tested: false`.
+`bench` refuse to start unless given `--allow-untested-crossover`, and `doctor` reports
+`crossover_build_tested: false`. `stop` is never refused.
 
 ## What has been run
 

@@ -8,7 +8,12 @@ Original conformance workloads are built with external llvm-mingw 20261117 (arch
 
 ## BetterXen contributor work carried from #405
 
-These are contributions to BetterXen under `GPL-3.0-or-later`, not third-party code. They were moved onto the six-track layout, so their original commits are not in the new history. Each original commit carries its author's `Signed-off-by`.
+These are contributions to BetterXen under `GPL-3.0-or-later`, not third-party code. They were moved onto the six-track layout, so their original commits are not in the new history. The sign-offs recorded in the original commits are:
+
+```text
+ce9c10a  Signed-off-by: Adeeb Rahman <therealabeeb@icloud.com>
+0427465  Signed-off-by: Bartosz Szczepański <bartosz.szczepanski@hotmail.com>
+```
 
 | Contributor | Original commit | Carried to |
 | --- | --- | --- |

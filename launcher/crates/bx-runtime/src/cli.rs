@@ -16,9 +16,9 @@ const USAGE: &str = "usage: bx-cli <command>
   doctor [--bottle B] [--min-start-free N]
                         check that a run could start here (JSON); non-zero exit if not
   inspect <file.exe>    identify a Windows executable: machine, subsystem, imports (JSON)
-  run (--bottle B | --prefix P) [--exe FILE] [--shims DIR] [--profile lockhart|anaconda] [--log FILE] [--backend d3dmetal|dxmt|dxvk|wined3d] [--timeout S] [--stall-timeout S]
+  run (--bottle B | --prefix P) [--exe FILE] [--shims DIR (default build-shims/bin)] [--profile lockhart|anaconda] [--log FILE] [--backend d3dmetal|dxmt|dxvk|wined3d] [--timeout S] [--stall-timeout S]
       [--settle-bound S] [--expect TEXT] [--require-gates a,b,c] [--out DIR]
-      [--min-start-free N] [--min-free N] -- EXE [ARGS...]
+      [--min-start-free N] [--min-free N] [--allow-untested-crossover] -- EXE [ARGS...]
                         run a Windows program through CrossOver; write a JSON record
   bench --bottle B --backends a,b,c [--repeat N] [same options] -- EXE [ARGS...]
                         run the program per backend N times; summarise frame times
@@ -128,6 +128,7 @@ fn guard(args: &[String]) -> ExitCode {
 }
 
 struct RunArgs {
+    allow_untested: bool,
     cfg: run::RunConfig,
     backends: Vec<String>,
     repeat: u32,
@@ -146,6 +147,36 @@ fn unix_to_wine_z_path(path: &std::path::Path) -> String {
     format!("Z:{}", path.to_string_lossy().replace('/', "\\"))
 }
 
+/// #406's launch contract: shim overrides and `WINEPATH` are always configured, from
+/// `build-shims/bin` unless `--shims` names another directory. An explicit `--shims` wins over
+/// `--env`; the default does not replace a value the caller passed with `--env`.
+fn shim_environment(
+    explicit: Option<&std::path::Path>,
+    user: &[(String, String)],
+) -> Result<Vec<(String, String)>, String> {
+    let dir = match explicit {
+        Some(path) => {
+            let path = std::fs::canonicalize(path)
+                .map_err(|e| format!("cannot open shims {}: {e}", path.display()))?;
+            if !path.is_dir() {
+                return Err("--shims must name a directory".into());
+            }
+            path
+        }
+        None => std::fs::canonicalize(DEFAULT_SHIMS).unwrap_or_else(|_| DEFAULT_SHIMS.into()),
+    };
+    Ok([
+        ("WINEDLLOVERRIDES", SHIM_DLL_OVERRIDES.to_string()),
+        ("WINEPATH", unix_to_wine_z_path(&dir)),
+    ]
+    .into_iter()
+    .filter(|(name, _)| explicit.is_some() || !user.iter().any(|(k, _)| k == name))
+    .map(|(name, value)| (name.to_string(), value))
+    .collect())
+}
+
+const DEFAULT_SHIMS: &str = "build-shims/bin";
+
 fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
     let (mut bottle, mut prefix, mut exe, mut shims, mut log) = (None, None, None, None, None);
     let mut profile = "lockhart".to_string();
@@ -160,21 +191,25 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
     let mut out = None;
     let (mut min_start, mut min_free) = (50u8, 15u8);
     let (mut inherit_env, mut keep_output) = (false, false);
+    let mut allow_untested = false;
     let mut env = Vec::new();
     let mut i = 0;
     while i < args.len() && args[i] != "--" {
         let key = args[i].as_str();
-        if matches!(key, "--inherit-env" | "--keep-output") {
+        if matches!(
+            key,
+            "--inherit-env" | "--keep-output" | "--allow-untested-crossover"
+        ) {
             let value = args
                 .get(i + 1)
                 .filter(|v| matches!(v.as_str(), "true" | "false"));
             let enabled = value
                 .map_or(Ok(true), |v| v.parse::<bool>())
                 .map_err(|_| "invalid boolean")?;
-            if key == "--inherit-env" {
-                inherit_env = enabled;
-            } else {
-                keep_output = enabled;
+            match key {
+                "--inherit-env" => inherit_env = enabled,
+                "--keep-output" => keep_output = enabled,
+                _ => allow_untested = enabled,
             }
             i += if value.is_some() { 2 } else { 1 };
             continue;
@@ -306,15 +341,8 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
     }
     env.push(("ROSETTA_ADVERTISE_AVX".into(), "1".into()));
     env.push(("BX_PROFILE".into(), profile));
-    if let Some(path) = shims {
-        let path = std::fs::canonicalize(&path)
-            .map_err(|e| format!("cannot open shims {}: {e}", path.display()))?;
-        if !path.is_dir() {
-            return Err("--shims must name a directory".into());
-        }
-        env.push(("WINEDLLOVERRIDES".into(), SHIM_DLL_OVERRIDES.into()));
-        env.push(("WINEPATH".into(), unix_to_wine_z_path(&path)));
-    }
+    let shim_env = shim_environment(shims.as_deref(), &env)?;
+    env.extend(shim_env);
     if let Some(path) = log {
         let path = if path.is_absolute() {
             path
@@ -329,6 +357,7 @@ fn parse_run_args(args: &[String]) -> Result<RunArgs, String> {
         env.push(("BX_LOG_FILE".into(), unix_to_wine_z_path(&path)));
     }
     Ok(RunArgs {
+        allow_untested,
         cfg: run::RunConfig {
             wine,
             bottle,
@@ -497,13 +526,24 @@ fn crossover_build() -> Option<String> {
         })
 }
 
-fn warn_if_untested(build: Option<&str>) {
-    if !run::tested_crossover_build(build) {
-        eprintln!(
-            "warning: CrossOver {} has not been tested with this launcher (tested: {})",
-            build.unwrap_or("of unknown version"),
-            run::TESTED_CROSSOVER_BUILDS.join(", ")
-        );
+/// The launcher options are observed behaviour of specific builds, so an unlisted build is
+/// refused unless the caller opts in. `stop` is not gated: recovery must always work.
+fn check_build(build: Option<&str>, allow_untested: bool) -> Result<(), String> {
+    if run::tested_crossover_build(build) {
+        return Ok(());
+    }
+    let message = format!(
+        "CrossOver {} has not been tested with this launcher (tested: {})",
+        build.unwrap_or("of unknown version"),
+        run::TESTED_CROSSOVER_BUILDS.join(", ")
+    );
+    if allow_untested {
+        eprintln!("warning: {message}");
+        Ok(())
+    } else {
+        Err(format!(
+            "{message}; pass --allow-untested-crossover to run anyway"
+        ))
     }
 }
 
@@ -540,6 +580,11 @@ fn run_cmd(args: &[String]) -> ExitCode {
             return ExitCode::from(2);
         }
     };
+    let build = crossover_build();
+    if let Err(e) = check_build(build.as_deref(), a.allow_untested) {
+        eprintln!("{e}");
+        return ExitCode::from(2);
+    }
     let mut session = match BottleSession::acquire(&a.cfg.prefix_path(), false) {
         Ok(s) => s,
         Err(e) => {
@@ -547,8 +592,6 @@ fn run_cmd(args: &[String]) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    let build = crossover_build();
-    warn_if_untested(build.as_deref());
     let mut r = run::execute(&a.cfg, build);
     if r.class != run::Class::CleanupFailed
         && let Err(e) = session.complete()
@@ -590,6 +633,11 @@ fn bench_cmd(args: &[String]) -> ExitCode {
             return ExitCode::from(2);
         }
     };
+    let build = crossover_build();
+    if let Err(e) = check_build(build.as_deref(), a.allow_untested) {
+        eprintln!("{e}");
+        return ExitCode::from(2);
+    }
     let mut session = match BottleSession::acquire(&a.cfg.prefix_path(), false) {
         Ok(s) => s,
         Err(e) => {
@@ -597,8 +645,6 @@ fn bench_cmd(args: &[String]) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    let build = crossover_build();
-    warn_if_untested(build.as_deref());
     let mut per_backend = Vec::new();
     let mut all_ok = true;
     let mut cleanup_failed = false;
@@ -712,6 +758,37 @@ mod foundation_contract_tests {
         assert_eq!(recommended_profile(16), "lockhart");
         assert_eq!(recommended_profile(24), "lockhart");
         assert_eq!(recommended_profile(32), "anaconda");
+    }
+
+    #[test]
+    fn untested_crossover_builds_are_refused_unless_allowed() {
+        assert!(check_build(Some("26.3 (26.3.0.39832)"), false).is_ok());
+        for build in [Some("26.2 (26.2.0.39821)"), None] {
+            let refused = check_build(build, false).unwrap_err();
+            assert!(refused.contains("--allow-untested-crossover"));
+            assert!(check_build(build, true).is_ok());
+        }
+    }
+
+    #[test]
+    fn shims_are_configured_by_default_without_replacing_env_values() {
+        let names =
+            |env: Vec<(String, String)>| env.into_iter().map(|(k, _)| k).collect::<Vec<_>>();
+        let default = shim_environment(None, &[]).unwrap();
+        assert!(
+            default[1].1.ends_with("build-shims\\bin"),
+            "{}",
+            default[1].1
+        );
+        assert_eq!(names(default), ["WINEDLLOVERRIDES", "WINEPATH"]);
+        let user = [("WINEDLLOVERRIDES".to_string(), "xmem=".to_string())];
+        assert_eq!(names(shim_environment(None, &user).unwrap()), ["WINEPATH"]);
+        let dir = std::env::temp_dir();
+        assert_eq!(
+            names(shim_environment(Some(&dir), &user).unwrap()),
+            ["WINEDLLOVERRIDES", "WINEPATH"]
+        );
+        assert!(shim_environment(Some(std::path::Path::new("/nonexistent")), &[]).is_err());
     }
 
     #[test]

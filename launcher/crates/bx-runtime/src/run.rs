@@ -935,6 +935,9 @@ pub fn stop_prefix(wine: &Path, prefix: &Path) -> Result<(), String> {
         loop {
             match child.try_wait() {
                 Ok(Some(status)) if status.success() => break,
+                // `-k` exits 1 when no server is running (observed on 26.3). The `-w` that
+                // follows must still succeed, so a server that survived is not accepted.
+                Ok(Some(status)) if arg == "-k" && status.code() == Some(1) => break,
                 Ok(Some(status)) => return Err(format!("bottle cleanup {arg} failed: {status}")),
                 Ok(None) if started.elapsed() < Duration::from_secs(15) => {
                     std::thread::sleep(Duration::from_millis(50))
@@ -1003,6 +1006,33 @@ mod tests {
         assert!(!tested_crossover_build(Some("26.2 (26.2.0.39821)")));
         assert!(!tested_crossover_build(Some("26.3 (26.3.0.39833)")));
         assert!(!tested_crossover_build(None));
+    }
+
+    #[test]
+    fn cleanup_accepts_an_idle_server_only_when_the_wait_succeeds() {
+        use std::os::unix::fs::PermissionsExt;
+        let root = std::env::temp_dir().join(format!("bxrun-idle-{}", std::process::id()));
+        for (name, kill, wait, ok) in [
+            ("idle", 1, 0, true),
+            ("stuck", 1, 1, false),
+            ("broken", 2, 0, false),
+        ] {
+            let dir = root.join(name);
+            std::fs::create_dir_all(&dir).unwrap();
+            let server = dir.join("wineserver");
+            let script = format!("#!/bin/sh\n[ \"$1\" = -k ] && exit {kill}\nexit {wait}\n");
+            std::fs::write(&server, script).unwrap();
+            std::fs::set_permissions(&server, std::fs::Permissions::from_mode(0o755)).unwrap();
+            // What `stop` does: recover the session, clean up, and complete only on success.
+            drop(crate::session::BottleSession::acquire(&dir, false).unwrap());
+            let mut session = crate::session::BottleSession::acquire(&dir, true).unwrap();
+            let stopped = stop_prefix(&dir.join("wine"), &dir).and_then(|()| session.complete());
+            assert_eq!(stopped.is_ok(), ok, "{name}");
+            drop(session);
+            let next = crate::session::BottleSession::acquire(&dir, false);
+            assert_eq!(next.is_ok(), ok, "{name}: next run");
+        }
+        std::fs::remove_dir_all(&root).unwrap();
     }
 
     #[test]

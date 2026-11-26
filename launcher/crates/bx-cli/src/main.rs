@@ -2,6 +2,7 @@
 
 use std::collections::BTreeMap;
 use std::env;
+use std::fmt::Write as _;
 use std::fs;
 use std::process::ExitCode;
 
@@ -83,20 +84,29 @@ fn cmd_trace(path: &str) -> ExitCode {
             return ExitCode::FAILURE;
         }
     };
-    let summary = summarize_jsonl(&text);
-    println!("Trace events     : {}", summary.total_lines);
-    println!(
+    print!("{}", render_trace(&text));
+    ExitCode::SUCCESS
+}
+
+fn render_trace(text: &str) -> String {
+    let mut out = String::new();
+    let summary = summarize_jsonl(text);
+    let _ = writeln!(out, "Trace events     : {}", summary.total_lines);
+    let _ = writeln!(
+        out,
         "{}",
         format_clwb_line(summary.clwb_events, summary.clwb_trap_lower_bound)
     );
-    println!("ADX illegal ops  : {}", summary.adx_errors);
+    let _ = writeln!(out, "ADX illegal ops  : {}", summary.adx_errors);
     if !summary.unhandled_exceptions.is_empty() {
-        println!(
+        let _ = writeln!(
+            out,
             "\nUnhandled exceptions ({}):",
             summary.unhandled_exceptions.len()
         );
         for crash in summary.unhandled_exceptions {
-            println!(
+            let _ = writeln!(
+                out,
                 "  code={} module_base={} + RVA={} RIP={}",
                 crash.exception_code.as_deref().unwrap_or("unknown"),
                 crash.module_base.as_deref().unwrap_or("unknown"),
@@ -106,18 +116,52 @@ fn cmd_trace(path: &str) -> ExitCode {
         }
     }
     if !summary.unimpl_apis.is_empty() {
-        println!("\nUnimplemented APIs:");
+        let _ = writeln!(out, "\nUnimplemented APIs:");
         for (api, count) in summary.unimpl_apis {
-            println!("  {count:5}x  {api}");
+            let _ = writeln!(out, "  {count:5}x  {api}");
         }
     }
     if !summary.unimpl_vtables.is_empty() {
-        println!("\nUnimplemented COM vtable slots:");
+        let _ = writeln!(out, "\nUnimplemented COM vtable slots:");
         for (slot, count) in summary.unimpl_vtables {
-            println!("  {count:5}x  {slot}");
+            let _ = writeln!(out, "  {count:5}x  {slot}");
         }
     }
-    ExitCode::SUCCESS
+    out
+}
+
+/// The `--log` value of a `run` invocation, ignoring anything after `--` (guest arguments).
+fn run_log_path(args: &[String]) -> Option<&str> {
+    let args = match args.first().map(String::as_str) {
+        Some("hybrid") => &args[1..],
+        _ => args,
+    };
+    if args.first().map(String::as_str) != Some("run") {
+        return None;
+    }
+    let mut options = args.iter().take_while(|a| *a != "--");
+    options.find(|a| *a == "--log")?;
+    options.next().map(String::as_str)
+}
+
+/// Runs the supervised engine and, when `--log` grew during the run, prints the log's summary
+/// to stderr so stdout stays a single JSON record (#408).
+fn cmd_runtime(args: &[String]) -> ExitCode {
+    let log = run_log_path(args);
+    let size = |path: &str| fs::metadata(path).map_or(0, |m| m.len());
+    let before = log.map_or(0, size);
+    let code = bx_runtime::cli::run_cli(args);
+    if let Some(path) = log
+        && size(path) > before
+        && let Ok(bytes) = fs::read(path)
+    {
+        // Guest text may not be valid UTF-8; a summary is still worth printing.
+        eprint!(
+            "\nTrace summary of {path} (whole log):\n{}",
+            render_trace(&String::from_utf8_lossy(&bytes))
+        );
+    }
+    code
 }
 
 fn cmd_shader(path: &str) -> ExitCode {
@@ -167,7 +211,7 @@ fn main() -> ExitCode {
             ExitCode::SUCCESS
         }
         "doctor" | "host" | "receipt" | "crossover" | "toolchain" | "inspect" | "frames"
-        | "guard" | "run" | "bench" | "stop" | "hybrid" => bx_runtime::cli::run_cli(&args),
+        | "guard" | "run" | "bench" | "stop" | "hybrid" => cmd_runtime(&args),
         "probe" if args.len() >= 2 => cmd_probe(&args[1]),
         "shader" if args.len() >= 2 => cmd_shader(&args[1]),
         "trace" if args.len() >= 2 => cmd_trace(&args[1]),
@@ -181,6 +225,25 @@ fn main() -> ExitCode {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn finds_the_run_log_but_not_guest_arguments() {
+        let args = |list: &[&str]| list.iter().map(|s| s.to_string()).collect::<Vec<_>>();
+        let run = args(&["run", "--bottle", "b", "--log", "x.jsonl", "--exe", "a.exe"]);
+        assert_eq!(run_log_path(&run), Some("x.jsonl"));
+        let hybrid = args(&["hybrid", "run", "--log", "y.jsonl"]);
+        assert_eq!(run_log_path(&hybrid), Some("y.jsonl"));
+        let guest = args(&["run", "--bottle", "b", "--", "a.exe", "--log", "z"]);
+        assert_eq!(run_log_path(&guest), None);
+        assert_eq!(run_log_path(&args(&["bench", "--log", "x"])), None);
+    }
+
+    #[test]
+    fn renders_a_trace_summary() {
+        let out = render_trace("");
+        assert!(out.starts_with("Trace events     : 0\n"));
+        assert!(out.contains("ADX illegal ops  : 0\n"));
+    }
 
     #[test]
     fn formats_clwb_summary_lines() {
