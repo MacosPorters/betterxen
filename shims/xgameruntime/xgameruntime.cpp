@@ -1,4 +1,6 @@
 #include "com_dispatch.h"
+#include "runtime_internal.h"
+#include "synthetic_keys.h"
 #include "task_queue.h"
 
 #include <condition_variable>
@@ -6,6 +8,7 @@
 #include <cstdio>
 #include <cstring>
 #include <cwchar>
+#include <map>
 #include <mutex>
 #include <new>
 #include <unordered_set>
@@ -18,10 +21,10 @@ namespace {
 using namespace bx::gdk;
 
 // ABI values and layouts checked against Microsoft's public PC GDK 2510.5.6322.
-constexpr HRESULT runtime_not_initialized = static_cast<HRESULT>(0x89240100u);
-constexpr HRESULT runtime_invalid_handle = static_cast<HRESULT>(0x8924010cu);
-constexpr HRESULT illegal_method_call = static_cast<HRESULT>(0x8000000eu);
-constexpr HRESULT insufficient_buffer = HRESULT_FROM_WIN32(ERROR_INSUFFICIENT_BUFFER);
+constexpr HRESULT runtime_not_initialized = kRuntimeNotInitialized;
+constexpr HRESULT runtime_invalid_handle = kRuntimeInvalidHandle;
+constexpr HRESULT illegal_method_call = kIllegalMethodCall;
+constexpr HRESULT insufficient_buffer = kInsufficientBuffer;
 
 struct AsyncBlock {
     void* queue;
@@ -56,7 +59,8 @@ struct SpaceInfo {
     uint64_t total_bytes;
 };
 
-enum class Operation : uint32_t { add_user, game_license };
+// custom: an AsyncOp from another translation unit (XGameSave), see runtime_internal.h.
+enum class Operation : uint32_t { add_user, game_license, custom };
 
 struct AsyncState {
     const AsyncBlock* owner;
@@ -79,6 +83,8 @@ uint64_t next_operation = 1;
 uintptr_t next_handle = 2;
 std::unordered_set<void*> users;
 std::unordered_set<void*> stores;
+// Finished custom operations awaiting their Result call, keyed by AsyncState::sequence.
+std::map<uint64_t, std::unique_ptr<AsyncOp>> finished_ops;
 
 HRESULT create_handle(std::unordered_set<void*>& handles, void** out) {
     auto handle = reinterpret_cast<void*>(next_handle);
@@ -159,10 +165,12 @@ class AsyncTask final : public Task {
 public:
     AsyncBlock* block;
     Operation operation;
+    std::unique_ptr<AsyncOp> op;
     std::unique_ptr<CompletionTask> completion;
     bool queued = false;
 
-    AsyncTask(AsyncBlock* block, Operation operation) : block(block), operation(operation) {}
+    AsyncTask(AsyncBlock* block, Operation operation, std::unique_ptr<AsyncOp> op)
+        : block(block), operation(operation), op(std::move(op)) {}
 
     ~AsyncTask() override {
         if (!queued) return;
@@ -185,11 +193,27 @@ public:
 private:
     void finish(const QueueRef& queue, bool canceled) {
         const bool entitled = !canceled && operation == Operation::game_license && fixture_entitlement();
+        bool cancel_requested;
+        {
+            std::lock_guard lock(state_mutex);
+            cancel_requested = read_state(block).cancel_requested;
+        }
+        // The block stays E_PENDING meanwhile, so the caller cannot reuse it. Once an op has
+        // run, a later XAsyncCancel cannot undo it, so its own status is reported.
+        const bool executed = op && !canceled && !cancel_requested;
+        const HRESULT op_status = executed ? op->execute() : S_OK;
         {
             std::lock_guard lock(state_mutex);
             auto state = read_state(block);
-            state.status = (canceled || state.cancel_requested) ? E_ABORT : S_OK;
+            state.status = executed ? op_status : (canceled || state.cancel_requested) ? E_ABORT : S_OK;
             state.entitled = entitled;
+            if (op && SUCCEEDED(state.status) && state.runtime_generation == runtime_generation && runtime_refs) {
+                try {
+                    finished_ops[state.sequence] = std::move(op);
+                } catch (const std::bad_alloc&) {
+                    state.status = E_OUTOFMEMORY;
+                }
+            }
             if (completion) completion->sequence = state.sequence;
             queued = false;
             write_state(block, state);
@@ -198,12 +222,12 @@ private:
     }
 };
 
-HRESULT begin(AsyncBlock* block, Operation operation, void* store = nullptr) {
+HRESULT begin(AsyncBlock* block, Operation operation, void* store = nullptr, std::unique_ptr<AsyncOp> op = nullptr) {
     if (!block) return E_POINTER;
     const auto queue = acquire_queue(block->queue);
     if (!queue) return block->queue ? E_HANDLE : E_OUTOFMEMORY;
 
-    auto work = std::unique_ptr<AsyncTask>(new (std::nothrow) AsyncTask(block, operation));
+    auto work = std::unique_ptr<AsyncTask>(new (std::nothrow) AsyncTask(block, operation, std::move(op)));
     if (!work) return E_OUTOFMEMORY;
     if (block->callback) {
         work->completion.reset(new (std::nothrow) CompletionTask(block));
@@ -222,6 +246,8 @@ HRESULT begin(AsyncBlock* block, Operation operation, void* store = nullptr) {
              callback_running(previous.sequence, GetCurrentThreadId()))) {
             return illegal_method_call;
         }
+        // An unconsumed result of an earlier operation on this block is abandoned.
+        if (previous.owner == block) finished_ops.erase(previous.sequence);
         write_state(block, {block, next_operation++, E_PENDING, operation, runtime_generation,
                             false, block->callback != nullptr, false, false});
         work->queued = true;
@@ -277,19 +303,6 @@ bool fixture_entitlement() {
            GetProcAddress(GetModuleHandleW(nullptr), "BetterXenSyntheticStoreFixture") != nullptr;
 }
 
-HRESULT ensure_directory(const wchar_t* path) {
-    if (CreateDirectoryW(path, nullptr)) return S_OK;
-    const auto error = GetLastError();
-    if (error != ERROR_ALREADY_EXISTS) return HRESULT_FROM_WIN32(error);
-
-    const auto attributes = GetFileAttributesW(path);
-    if (attributes == INVALID_FILE_ATTRIBUTES) return HRESULT_FROM_WIN32(GetLastError());
-    if ((attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != FILE_ATTRIBUTE_DIRECTORY) {
-        return HRESULT_FROM_WIN32(ERROR_DIRECTORY);
-    }
-    return S_OK;
-}
-
 HRESULT storage_path(wchar_t (&path)[MAX_PATH]) {
     wchar_t module[MAX_PATH];
     const wchar_t* name = nullptr;
@@ -302,11 +315,7 @@ HRESULT storage_path(wchar_t (&path)[MAX_PATH]) {
                        normalized, MAX_PATH, nullptr, nullptr, 0)) {
         return HRESULT_FROM_WIN32(GetLastError());
     }
-    uint64_t path_id = 14695981039346656037ULL;
-    for (auto* ch = normalized; *ch; ++ch) {
-        path_id ^= static_cast<uint16_t>(*ch);
-        path_id *= 1099511628211ULL;
-    }
+    const uint64_t path_id = bx::gdk::fnv1a(normalized);
     const auto length = std::swprintf(path, MAX_PATH, L"%ls\\%016llx", storage_root,
                                       static_cast<unsigned long long>(path_id));
     return length < 0 ? HRESULT_FROM_WIN32(ERROR_FILENAME_EXCED_RANGE) : S_OK;
@@ -323,6 +332,7 @@ bool release_runtime_ref() {
     if (!--runtime_refs) {
         users.clear();
         stores.clear();
+        finished_ops.clear();
     }
     return true;
 }
@@ -369,13 +379,10 @@ struct ApiInitOptions {
 };
 static_assert(offsetof(ApiInitOptions, game_config) == 8);
 
-constexpr uint16_t family_data2 = 0x5853;
-constexpr uint16_t family_data3 = 0x4000;
-
+// The synthetic key encoding is defined in synthetic_keys.h.
 bool synthetic_guid(const GUID* guid) {
-    return guid->Data2 == family_data2 && guid->Data3 == family_data3 && guid->Data4[0] == 0x80 &&
-           guid->Data4[1] == 0 && guid->Data4[2] == 0 && guid->Data4[3] == 0 && guid->Data4[4] == 0 &&
-           guid->Data4[5] == 0 && guid->Data4[6] == 0 && guid->Data4[7] == 1;
+    return guid->Data2 == synthetic::kData2 && guid->Data3 == synthetic::kData3 &&
+           std::memcmp(guid->Data4, synthetic::kData4, sizeof(synthetic::kData4)) == 0;
 }
 
 void format_guid(char* dst, size_t cap, const GUID* guid) {
@@ -459,6 +466,75 @@ HRESULT check_loader_versions(uint32_t gdk_ver, uint32_t gs_ver, const char* eve
 
 } // namespace
 
+namespace bx::gdk {
+
+HRESULT ensure_directory(const wchar_t* path) {
+    if (CreateDirectoryW(path, nullptr)) return S_OK;
+    const auto error = GetLastError();
+    if (error != ERROR_ALREADY_EXISTS) return HRESULT_FROM_WIN32(error);
+
+    const auto attributes = GetFileAttributesW(path);
+    if (attributes == INVALID_FILE_ATTRIBUTES) return HRESULT_FROM_WIN32(GetLastError());
+    if ((attributes & (FILE_ATTRIBUTE_DIRECTORY | FILE_ATTRIBUTE_REPARSE_POINT)) != FILE_ATTRIBUTE_DIRECTORY) {
+        return HRESULT_FROM_WIN32(ERROR_DIRECTORY);
+    }
+    return S_OK;
+}
+
+uint64_t fnv1a(const wchar_t* text) {
+    uint64_t hash = 14695981039346656037ULL;
+    for (auto* ch = text; *ch; ++ch) {
+        hash ^= static_cast<uint16_t>(*ch);
+        hash *= 1099511628211ULL;
+    }
+    return hash;
+}
+
+HRESULT executable_path(wchar_t (&path)[MAX_PATH]) {
+    const wchar_t* name = nullptr;
+    return executable_name(path, name);
+}
+
+HRESULT title_storage_directory(wchar_t (&path)[MAX_PATH]) {
+    const auto hr = storage_path(path);
+    return FAILED(hr) ? hr : create_storage(path);
+}
+
+uint32_t active_runtime_generation() {
+    std::lock_guard lock(state_mutex);
+    return runtime_refs ? runtime_generation : 0;
+}
+
+bool is_valid_user(void* user) {
+    std::lock_guard lock(state_mutex);
+    return runtime_refs && users.contains(user);
+}
+
+HRESULT begin_async_op(void* block, std::unique_ptr<AsyncOp> op) {
+    if (!op) return E_OUTOFMEMORY;
+    return begin(static_cast<AsyncBlock*>(block), Operation::custom, nullptr, std::move(op));
+}
+
+HRESULT consume_async_op(void* block, uint32_t kind, const std::function<HRESULT(AsyncOp&)>& consume) {
+    auto* async = static_cast<AsyncBlock*>(block);
+    std::lock_guard lock(state_mutex);
+    AsyncState state{};
+    const auto hr = check_result(async, Operation::custom, state);
+    if (FAILED(hr)) return hr;
+    const auto found = finished_ops.find(state.sequence);
+    if (found == finished_ops.end() || found->second->kind() != kind) return illegal_method_call;
+
+    const auto result = consume(*found->second);
+    if (SUCCEEDED(result)) {
+        finished_ops.erase(found);
+        state.result_consumed = true;
+        write_state(async, state);
+    }
+    return result;
+}
+
+} // namespace bx::gdk
+
 extern "C" {
 
 HRESULT WINAPI XGameRuntimeInitialize() {
@@ -513,7 +589,16 @@ HRESULT WINAPI XAsyncGetResultSize(AsyncBlock* block, size_t* size) {
     const auto state = read_state(block);
     if (state.owner != block || state.result_consumed) return illegal_method_call;
     if (SUCCEEDED(state.status)) {
-        *size = state.operation == Operation::add_user ? sizeof(void*) : sizeof(GameLicense);
+        switch (state.operation) {
+            case Operation::add_user: *size = sizeof(void*); break;
+            case Operation::game_license: *size = sizeof(GameLicense); break;
+            case Operation::custom: {
+                const auto found = finished_ops.find(state.sequence);
+                if (found == finished_ops.end()) return illegal_method_call;
+                *size = found->second->result_size();
+                break;
+            }
+        }
     }
     return state.status;
 }
@@ -804,15 +889,18 @@ struct Family {
     const void* table;
 };
 
-// Synthetic BetterXen dispatch keys, not Microsoft CLSIDs.
-// Data2 = 0x5853, Data3 = 0x4000, Data4 = 80 00 00 00 00 00 00 01.
+// Synthetic BetterXen dispatch keys, not Microsoft CLSIDs. All keys and the COM slot
+// orders live in synthetic_keys.h.
 const Family families[] = {
-    {0xB7581001, 0xB7581002, "xtaskqueue", &task_queue_api},
-    {0xB7581101, 0xB7581102, "xasync", &async_api},
-    {0xB7581201, 0xB7581202, "xuser", &user_api},
-    {0xB7581301, 0xB7581302, "xstore", &store_api},
-    {0xB7581401, 0xB7581402, "xsystem", &system_api},
-    {0xB7581501, 0xB7581502, "xpersistentlocalstorage", &storage_api},
+    {synthetic::kTaskQueue.clsid, synthetic::kTaskQueue.iid, "xtaskqueue", &task_queue_api},
+    {synthetic::kAsync.clsid, synthetic::kAsync.iid, "xasync", &async_api},
+    {synthetic::kUser.clsid, synthetic::kUser.iid, "xuser", &user_api},
+    {synthetic::kStore.clsid, synthetic::kStore.iid, "xstore", &store_api},
+    {synthetic::kSystem.clsid, synthetic::kSystem.iid, "xsystem", &system_api},
+    {synthetic::kPersistentLocalStorage.clsid, synthetic::kPersistentLocalStorage.iid, "xpersistentlocalstorage",
+     &storage_api},
+    {synthetic::kGameSave.clsid, synthetic::kGameSave.iid, "xgamesave", bx::gdk::game_save_object},
+    {synthetic::kPackage.clsid, synthetic::kPackage.iid, "xpackage", bx::gdk::package_object},
 };
 
 const Family* find_family(const GUID* clsid) {
