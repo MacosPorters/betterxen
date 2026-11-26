@@ -11,7 +11,8 @@ Read this section first; the sections below are the earlier session's record.
 - Open: on-screen checks failed because the window was on another macOS Space; one unexplained D3D11 soak stall; one unexplained keyboard-negative failure; independent maintainer reproduction not done.
 - Pushed; draft PR https://github.com/MacosPorters/betterxen/pull/425 (CI: both checks passed on `c1e9581`). #405 left open and unmodified.
 - Clean clone `../betterxen-maintainer-verify` of `c1e9581` with new llvm-mingw/DXC under `../betterxen-maintainer-deps`: all checks passed except five on-screen captures (screen locked mid-run). Records in that clone's ignored `artifacts/`.
-- Dedicated bottles created by this work: `betterxen-maintainer-407`, `-clean`, `-test`. The user's `betterxen-test` bottle was not used.
+- Private bundle built from `53c4380` (in the clean clone's ignored `artifacts/packages/`); its unpacked `test.sh` gave the same results: all passed except the five on-screen captures (locked screen) and the known D3D12 shutdown.
+- Dedicated bottles created by this work: `betterxen-maintainer-407`, `-clean`, `-test`, `-bundle`. The user's `betterxen-test` bottle was not used.
 - Next: (1) with the Mac unlocked and a desktop in front, rerun the suite for the on-screen checks; (2) independent maintainer reproduction; (3) D3D11 soak stall if it recurs.
 
 ## Current state
