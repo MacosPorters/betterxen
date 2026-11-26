@@ -1,0 +1,4 @@
+d3d11-texture.exe
+ref_selftest
+sample_hlsl.h
+*.o
