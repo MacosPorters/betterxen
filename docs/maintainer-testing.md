@@ -8,29 +8,20 @@ results yet.
 
 ## What has been run
 
-On commit `c1e958194cd608dd99b52e9b476c6c5c0e1b5990`, from a fresh GitHub clone with newly
-downloaded llvm-mingw and DXC (Rust 1.100.0 was already installed), on one Apple M4 with
-CrossOver 26.3, by the author's coding agent. This is not independent verification.
+On commit `7451f0f2ae27b19313015d1ee529b69a755ef12f`, from an existing checkout rebuilt with
+`build-maintainer.sh`, on one Apple M4 with CrossOver 26.3, by the author's coding agent.
+This is not independent verification.
 
 | Check | Result |
 | --- | --- |
-| fmt, clippy, tests | clean; 68 passed, 0 failed, 0 ignored |
+| fmt, clippy, tests | clean; 109 passed, 0 failed, 1 ignored (opt-in live D3DMetal test) |
 | Shim build | 16 DLLs, 102 exports |
-| Shim fixtures | both passed; 2 `clwb` traps, 0 ADX faults |
-| D3D12 and D3D11 workloads, image oracle, intended-gate negative controls | passed, except D3D12 `shutdown` (known) |
-| Shader Model 6, keyboard, lifecycle, crash and hang recovery | passed |
-| 20,000-frame soaks | D3D12: known `shutdown` only; D3D11: passed |
-| Five on-screen capture checks | **failed**: the screen locked during the run |
+| `test_*.exe` fixtures, through `--bottle` and `--prefix` | passed, except `test_veh_unhandled.exe`, which crashes on purpose |
+| Full acceptance suite | exit 2: 50 `ok`, 2 `KNOWN`, 0 `FAIL`, 0 `NOT-RUN` |
+| On-screen capture checks | passed |
 
-The suite exited 1 because of those five lines. **On-screen output has not been verified
-for this build.** An earlier attempt the same night failed the same checks because the
-window was on another Space.
-
-After merging `main` at `f7194d0` and fixing how `--bottle` runs pass DLL overrides and the
-backend, the Rust checks (109 passed, 0 failed, 1 live test ignored), the shim build and every
-`test_*.exe` fixture were rerun, through both `--bottle` and `--prefix`. All passed except
-`test_veh_unhandled.exe`, which crashes on purpose. **The full acceptance suite has not been
-rerun on the merged tree**, so the table above is for the earlier source.
+The two `KNOWN` lines are the D3D12 swapchain retention below. A clean-clone run and a
+private-bundle run were last done on earlier source, before `main` was merged.
 
 ## Requirements
 

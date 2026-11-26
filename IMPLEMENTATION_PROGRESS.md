@@ -8,7 +8,10 @@
   `--dll`. Bottle settings also replaced `--backend` (old runner ran vkd3d when asked for
   d3dmetal); now passed with `--env`.
 - Rerun: Rust checks, shim build, all `test_*.exe` fixtures in bottle and prefix mode.
-- Not rerun: `scripts/hybrid/accept-integrated.sh` (about 12 minutes), including on-screen checks.
+- Full acceptance on `7451f0f`: exit 2 (50 ok, 2 KNOWN swapchain retention, 0 FAIL, 0 NOT-RUN).
+  On-screen checks passed. Records: ignored `artifacts/acceptance/20261126T153518Z-kbsZ0p/`.
+  The older "on-screen unverified" statements below are superseded. The private bundle from
+  `53c4380` predates the launcher fix; do not hand it out.
 - #440 (open) changes `bx-cli` trace output and may conflict. #408 overlaps this launcher work.
 
 ## Latest state (resumed by Claude Code, 2026-11-26)
