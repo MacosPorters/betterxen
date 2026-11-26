@@ -54,7 +54,9 @@ Prerequisites: Apple Silicon Mac, CrossOver (user-installed), a `win11_64` bottl
 
 ## Acceptance gates
 
-Evidence from `scripts/hybrid/accept-integrated.sh` on one machine: Apple M4 (24 GiB), macOS 27.0 (26A428), CrossOver 26.3 (26.3.0.39832), default backend, 2026-11-25. The author of the code ran it, so none of this is independently verified.
+Evidence from `scripts/hybrid/accept-integrated.sh` on one machine: Apple M4 (24 GiB), macOS 27.0 (26A428), CrossOver 26.3 (26.3.0.39832), default backend, 2026-11-25, all 21 steps passing on revision `2b3ad75`. The author of the code ran it, so none of this is independently verified.
+
+One earlier attempt on the same code failed seven of those steps: free memory was under the 50 % start threshold, so the runner refused to launch them (`refused_to_start_low_memory`). The threshold was not changed. The passing run started its programs with 50 to 54 % free, so a busy 24 GiB machine can refuse again.
 
 | Gate | Status | Evidence | Limit |
 | --- | --- | --- | --- |
@@ -66,7 +68,7 @@ Evidence from `scripts/hybrid/accept-integrated.sh` on one machine: Apple M4 (24
 | F. First verified frame | Pass | back-buffer read-back at frame 0; window capture matches 1016 of 1016 samples of the final frame; wrong rendering is detected on screen | Capture is a sampled grid with a tolerance of 6 per channel |
 | G. Continuous rendering | Pass | 20,000 presented frames, 46 read back, none mismatched | Sampled verification; about three minutes |
 | H. Interactive execution | **Partial** | five posted key messages change the rendered image as expected; the `input` control fails | No key was typed on the Mac; no mouse or controller |
-| I. Extended stability | **Partial** | five repeats with identical pixel digests; working set 65.8 MB after warm-up to 69.1 MB at the end of the 20,000-frame run; crash and hang stopped and followed by a passing run | Minutes, not hours; GPU memory not measured; Ctrl-C of the supervisor not tested |
+| I. Extended stability | **Partial** | five repeats with identical pixel digests; 20,000-frame run working set 94.8 MB after warm-up and 66.5 MB at the end (an earlier such run: 65.8 to 69.1 MB); crash and hang stopped and followed by a passing run | Minutes, not hours; GPU memory not measured; Ctrl-C of the supervisor not tested |
 | J. Reproducibility | **Not met** | one script and documented prerequisites | No second person or machine has run it |
 
 ## Backends
@@ -77,11 +79,11 @@ One run of 300 frames each, same executable. All five passed with the same pixel
 
 | Measurement | Value |
 | --- | --- |
-| Workload resident memory, sampled by `ps` | peak 78 to 93 MB across runs |
+| Workload resident memory, sampled by `ps` | peak 78 to 97 MB across runs |
 | Persistent CrossOver processes | not part of the workload figure; reported separately as `peak_crossover_rss_kb_sampled` |
 | First verified frame, from program start | about 1.0 s on the first run of a session, about 0.25 s afterwards |
-| Frame interval, 600 frames, vsync off | p50 1.8 ms in one run and 8.1 ms in later runs; the cause of the difference is **unknown** |
-| Soak, 20,000 frames | p50 8.4 ms, p99 31 ms, maximum 158 ms |
+| Frame interval, 600 frames, vsync off | p50 1.8 to 3.0 ms in the first run of a sequence and about 8.2 ms in later runs; the cause of the difference is **unknown** |
+| Soak, 20,000 frames | p50 8.5 ms, p99 35 ms, maximum 154 ms |
 | GPU memory, GPU utilization | not measured |
 
 These describe a tiny offscreen-sized scene with periodic read-back. They are not estimates of any application's performance.

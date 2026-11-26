@@ -22,6 +22,8 @@ What was inspected, what the integration branch contains, what to do with the op
 
 Baseline before changes (merged base): format, Clippy, workspace tests (1059 passed, 0 failed, 35 ignored), release build, status, claims, dependency-direction and documentation checks passed. `scripts/assemble-fixture.sh --check` failed because Homebrew `llvm` is not installed; with `llvm@17` one assembled fixture differs. This is a toolchain mismatch present before any change.
 
+Final code: format, Clippy, 1073 tests passed (0 failed, 35 ignored), release build and the same audits passed, with the same fixture failure. `scripts/test-gpu.sh` (native research GPU suite, on revision `e6d614b`; later commits touch no native code) reported 124 passed, 0 failed, 2 ignored.
+
 ## Open pull requests and merge order
 
 | PR | State seen | Disposition |
