@@ -9,6 +9,7 @@
 - [Frozen ABI Contracts](../abi/README.md) — Cross-DLL C headers (`abi/include/`) and canonical `.def` export tables (`abi/defs/`).
 - [Synthetic Conformance Suite](../tests/conformance/README.md) — Auto-discovered PE32+ conformance binaries.
 - [Changelog](../CHANGELOG.md) — Unreleased and historical changes.
+- [Implementation checkpoint](../IMPLEMENTATION_PROGRESS.md) — Preserved donor work, actual local checks and remaining maintainer-build tasks.
 
 ## Architecture Decision Records
 
