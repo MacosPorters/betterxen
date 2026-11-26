@@ -6,6 +6,15 @@ The memory guard and stall/memory-settle concepts in `launcher/crates/bx-runtime
 
 Original conformance workloads are built with external llvm-mingw 20261117 (archive SHA-256 `98d340bbb8d46b09ad6886ffba88bd9d5415e131c316de48e6bd7647377446aa`). Its wrappers are ISC; LLVM and MinGW compiler/runtime components carry separate terms. Compiler binaries are not bundled. Windows workload bundles preserve the unmodified LLVM/MinGW notices for linked runtime support. Microsoft DXC v1.9.2609 is an external, checksum-pinned Windows guest tool; its executable and DLLs are never bundled. Details: [selected source review](docs/research/maintainer-upstream-review.md).
 
+## BetterXen contributor work carried from #405
+
+These are contributions to BetterXen under `GPL-3.0-or-later`, not third-party code. They were moved onto the six-track layout, so their original commits are not in the new history. Each original commit carries its author's `Signed-off-by`.
+
+| Contributor | Original commit | Carried to |
+| --- | --- | --- |
+| Adeeb Rahman | [`ce9c10a`](https://github.com/MacosPorters/betterxen/commit/ce9c10a3ab4e2c476bf8ab568688089e1edbd19e) | `tests/conformance/optional/d3d11-compute/` (D3D11 compute-buffer readback workload) |
+| Bartosz Szczepański | [`0427465`](https://github.com/MacosPorters/betterxen/commit/042746554c808dafe48b76b765efd872545429bd) | `launcher/crates/bx-runtime/src/host.rs` and `run.rs` (GPU wired-memory fields in receipts and run records) |
+
 ## External Host Tools & Runtime Dependencies (Never Bundled)
 
 | Component | Role | Licensing & Provenance |

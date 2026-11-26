@@ -6,6 +6,12 @@ narrow Windows API behaviour under CrossOver on one Mac. It says nothing about X
 software, game compatibility or performance, and no maintainer has reproduced these
 results yet.
 
+The D3D11 and D3D12 workloads are Track F acceptance inputs for the launcher. They are not a
+second graphics pipeline and do not exercise the `d3d12_xs` shim.
+
+`bx-cli` has been run only against CrossOver 26.3 (26.3.0.39832). On any other build `run` and
+`bench` warn, and records and `doctor` report `crossover_build_tested: false`.
+
 ## What has been run
 
 On commit `7451f0f2ae27b19313015d1ee529b69a755ef12f`, from an existing checkout rebuilt with

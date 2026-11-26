@@ -130,6 +130,14 @@ fn isolated_host_env(
 /// unknown value silently, so the runner refuses it instead.
 pub const BACKENDS: [&str; 4] = ["d3dmetal", "dxmt", "dxvk", "wined3d"];
 
+/// CrossOver builds this launcher has been run against. Its launcher options are observed
+/// behaviour, not a documented interface, so any other build is reported as untested.
+pub const TESTED_CROSSOVER_BUILDS: [&str; 1] = ["26.3 (26.3.0.39832)"];
+
+pub fn tested_crossover_build(build: Option<&str>) -> bool {
+    build.is_some_and(|b| TESTED_CROSSOVER_BUILDS.contains(&b))
+}
+
 const BACKEND_VARS: [&str; 2] = ["CX_GRAPHICS_BACKEND", "CX_GRAPHICS_BACKEND_VERSION"];
 
 /// Options placed before the program when launching through `bin/wine --bottle`.
@@ -712,10 +720,12 @@ pub fn execute(cfg: &RunConfig, crossover_build: Option<String>) -> RunRecord {
         };
         Json::Arr(keep.iter().map(|l| Json::str(*l)).collect())
     };
+    let build_tested = tested_crossover_build(crossover_build.as_deref());
     let mut fields = vec![
         ("schema", Json::str("betterxen-hybrid-run/0")),
         ("unix_time", Json::Num(t_wall as f64)),
         ("crossover_build", Json::opt_str(crossover_build)),
+        ("crossover_build_tested", Json::Bool(build_tested)),
         (
             "launcher_interface",
             Json::str(if cfg.prefix.is_some() {
@@ -985,6 +995,14 @@ mod tests {
             bottle_options(&env, Some("d3dmetal")),
             ["--dll", "xmem=n,b", "--env", "CX_GRAPHICS_BACKEND=d3dmetal"]
         );
+    }
+
+    #[test]
+    fn only_listed_crossover_builds_count_as_tested() {
+        assert!(tested_crossover_build(Some("26.3 (26.3.0.39832)")));
+        assert!(!tested_crossover_build(Some("26.2 (26.2.0.39821)")));
+        assert!(!tested_crossover_build(Some("26.3 (26.3.0.39833)")));
+        assert!(!tested_crossover_build(None));
     }
 
     #[test]

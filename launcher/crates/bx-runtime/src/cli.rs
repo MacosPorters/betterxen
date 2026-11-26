@@ -460,6 +460,12 @@ fn host_info(install: Option<&crossover::Install>) -> Json {
             Json::opt_str(memory_gib.map(|g| recommended_profile(g).to_string())),
         ),
         (
+            "crossover_build_tested",
+            install.map_or(Json::Null, |_| {
+                Json::Bool(run::tested_crossover_build(crossover_build().as_deref()))
+            }),
+        ),
+        (
             "d3dmetal_framework_present",
             d3dmetal.map_or(Json::Null, Json::Bool),
         ),
@@ -489,6 +495,16 @@ fn crossover_build() -> Option<String> {
                 i.build_version.clone()?
             ))
         })
+}
+
+fn warn_if_untested(build: Option<&str>) {
+    if !run::tested_crossover_build(build) {
+        eprintln!(
+            "warning: CrossOver {} has not been tested with this launcher (tested: {})",
+            build.unwrap_or("of unknown version"),
+            run::TESTED_CROSSOVER_BUILDS.join(", ")
+        );
+    }
 }
 
 fn save(dir: &std::path::Path, kind: &str, j: &Json) -> Result<(), String> {
@@ -531,7 +547,9 @@ fn run_cmd(args: &[String]) -> ExitCode {
             return ExitCode::from(1);
         }
     };
-    let mut r = run::execute(&a.cfg, crossover_build());
+    let build = crossover_build();
+    warn_if_untested(build.as_deref());
+    let mut r = run::execute(&a.cfg, build);
     if r.class != run::Class::CleanupFailed
         && let Err(e) = session.complete()
     {
@@ -580,6 +598,7 @@ fn bench_cmd(args: &[String]) -> ExitCode {
         }
     };
     let build = crossover_build();
+    warn_if_untested(build.as_deref());
     let mut per_backend = Vec::new();
     let mut all_ok = true;
     let mut cleanup_failed = false;

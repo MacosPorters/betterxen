@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Fixed
+- `bx-cli` now warns when the installed CrossOver build is not one it has been run against, and records `crossover_build_tested`. The notices record the contributor work carried from #405.
 - Fixed `bx-cli run --bottle` losing DLL overrides, including those set for `--shims`: CrossOver's `bin/wine` discards `WINEDLLOVERRIDES`, so they are now passed with `--dll`. A requested `--backend` is also passed with `--env`, so a backend saved in the bottle's settings no longer replaces it. First found by jelly013 on #425.
 - Fixed unattended crash handling in new test bottles: `create-test-bottle.py` now turns off Wine's crash dialog, which otherwise waits for a click until the run times out (observed: timeout at 240 s with the dialog, 2.8 s without).
 - The acceptance suite now soaks Direct3D 12 as well as the Direct3D 11 control. One D3D11 soak stalled on a GPU event query after 9,183 frames; three reruns passed and the cause is unknown.
