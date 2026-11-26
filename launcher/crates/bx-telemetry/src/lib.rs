@@ -13,10 +13,37 @@ pub struct TraceSummary {
     pub clwb_events: usize,
     /// Highest cumulative counter in the sampled CLWB records, if available.
     pub clwb_trap_lower_bound: Option<u64>,
+    /// Sampled `<kind>_trapped` records for the other AMD-only instructions the
+    /// VEH emulates (`clzero`, `monitorx`, `mwaitx`, `rdpru`, `extrq`, `insertq`).
+    pub amd_traps: BTreeMap<String, TrapCount>,
     pub adx_errors: usize,
     pub unhandled_exceptions: Vec<UnhandledException>,
     pub unimpl_apis: BTreeMap<String, usize>,
     pub unimpl_vtables: BTreeMap<String, usize>,
+}
+
+/// Sampled trap records of one instruction kind.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct TrapCount {
+    pub events: usize,
+    /// Highest cumulative counter in the sampled records, if available.
+    pub lower_bound: Option<u64>,
+}
+
+const AMD_TRAP_EVENTS: [(&str, &str); 6] = [
+    ("clzero_trapped", "clzero"),
+    ("monitorx_trapped", "monitorx"),
+    ("mwaitx_trapped", "mwaitx"),
+    ("rdpru_trapped", "rdpru"),
+    ("extrq_trapped", "extrq"),
+    ("insertq_trapped", "insertq"),
+];
+
+fn sampled_counter(detail: &str) -> Option<u64> {
+    detail
+        .split_ascii_whitespace()
+        .find_map(|field| field.strip_prefix("total_traps="))
+        .and_then(|count| count.parse::<u64>().ok())
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -48,11 +75,14 @@ pub fn summarize_jsonl(input: &str) -> TraceSummary {
         match event {
             "clwb_trapped" => {
                 summary.clwb_events += 1;
-                let sample = detail
-                    .split_ascii_whitespace()
-                    .find_map(|field| field.strip_prefix("total_traps="))
-                    .and_then(|count| count.parse::<u64>().ok());
-                summary.clwb_trap_lower_bound = summary.clwb_trap_lower_bound.max(sample);
+                summary.clwb_trap_lower_bound =
+                    summary.clwb_trap_lower_bound.max(sampled_counter(detail));
+            }
+            _ if AMD_TRAP_EVENTS.iter().any(|(e, _)| *e == event) => {
+                let name = AMD_TRAP_EVENTS.iter().find(|(e, _)| *e == event).unwrap().1;
+                let entry = summary.amd_traps.entry(name.to_string()).or_default();
+                entry.events += 1;
+                entry.lower_bound = entry.lower_bound.max(sampled_counter(detail));
             }
             "adx_illegal_instruction" => summary.adx_errors += 1,
             "unhandled_exception" => {
@@ -164,5 +194,39 @@ mod tests {
                 },
             ]
         );
+    }
+
+    #[test]
+    fn counts_amd_only_traps_per_kind() {
+        let summary = summarize_jsonl(
+            r#"{"event":"clzero_trapped","detail":"rip=0x1000 len=3 total_traps=1"}
+{"event":"clzero_trapped","detail":"rip=0x1000 len=3 total_traps=2"}
+{"event":"clzero_trapped","detail":"rip=0x1000 len=3 total_traps=4"}
+{"event":"extrq_trapped","detail":"rip=0x2000 len=5 total_traps=1"}
+{"event":"rdpru_trapped","detail":"rip=0x3000 len=3"}"#,
+        );
+        assert_eq!(
+            summary.amd_traps["clzero"],
+            TrapCount {
+                events: 3,
+                lower_bound: Some(4)
+            }
+        );
+        assert_eq!(
+            summary.amd_traps["extrq"],
+            TrapCount {
+                events: 1,
+                lower_bound: Some(1)
+            }
+        );
+        assert_eq!(
+            summary.amd_traps["rdpru"],
+            TrapCount {
+                events: 1,
+                lower_bound: None
+            }
+        );
+        assert!(!summary.amd_traps.contains_key("mwaitx"));
+        assert_eq!(summary.clwb_events, 0);
     }
 }

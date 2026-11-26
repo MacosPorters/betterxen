@@ -13,7 +13,7 @@ use std::process::{Command, ExitCode};
 use std::time::{Duration, Instant};
 
 use bx_probe::{ShimTrack, classify_dll, probe_pe32_plus};
-use bx_telemetry::summarize_jsonl;
+use bx_telemetry::{TrapCount, summarize_jsonl};
 use dxbc_accc::inspect_dxbc;
 use supervise::{Outcome, Stop};
 
@@ -174,6 +174,14 @@ fn format_clwb_line(clwb_events: usize, clwb_trap_lower_bound: Option<u64>) -> S
     }
 }
 
+fn format_amd_trap_line(name: &str, count: &TrapCount) -> String {
+    let label = format!("{name} VEH traps");
+    match count.lower_bound {
+        Some(lower_bound) => format!("{label:<17}: at least {lower_bound} (sampled)"),
+        None => format!("{label:<17}: {} samples", count.events),
+    }
+}
+
 fn cmd_trace(path: &str) -> ExitCode {
     let text = match fs::read_to_string(path) {
         Ok(s) => s,
@@ -195,6 +203,9 @@ fn render_trace(text: &str) -> String {
         "{}",
         format_clwb_line(summary.clwb_events, summary.clwb_trap_lower_bound)
     );
+    for (name, count) in &summary.amd_traps {
+        let _ = writeln!(out, "{}", format_amd_trap_line(name, count));
+    }
     let _ = writeln!(out, "ADX illegal ops  : {}", summary.adx_errors);
     if !summary.unhandled_exceptions.is_empty() {
         let _ = writeln!(
@@ -1361,6 +1372,26 @@ sub setup_bottle_wineprefix {
         assert_eq!(
             unix_to_wine_z_path(Path::new("/tmp/bx-test.jsonl")),
             "Z:\\tmp\\bx-test.jsonl"
+        );
+    }
+
+    #[test]
+    fn formats_amd_trap_summary_lines() {
+        let sampled = TrapCount {
+            events: 3,
+            lower_bound: Some(4),
+        };
+        assert_eq!(
+            format_amd_trap_line("clzero", &sampled),
+            "clzero VEH traps : at least 4 (sampled)"
+        );
+        let unnumbered = TrapCount {
+            events: 2,
+            lower_bound: None,
+        };
+        assert_eq!(
+            format_amd_trap_line("rdpru", &unnumbered),
+            "rdpru VEH traps  : 2 samples"
         );
     }
 
