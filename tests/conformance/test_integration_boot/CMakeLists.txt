@@ -6,7 +6,9 @@
 # CreateWindowExA & co. bind to the ext-ms-win-rtcore-ntuser-* shims instead of
 # the toolchain's default user32 import library.
 add_executable(test_integration_boot main.cpp)
-target_include_directories(test_integration_boot PRIVATE "${BX_ABI_INCLUDE_DIR}")
+target_include_directories(test_integration_boot PRIVATE
+    "${BX_ABI_INCLUDE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../../../shims/xg_xs")
 target_link_libraries(test_integration_boot PRIVATE
     ntuser_win_ansi_1_0
     ntuser_win_1_0

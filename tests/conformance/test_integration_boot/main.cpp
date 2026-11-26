@@ -24,7 +24,8 @@
  *             or an error-severity exception.
  *
  * Function prototypes below mirror the in-tree shim sources and abi/defs; this
- * fixture deliberately invents no console structure layouts.
+ * fixture deliberately invents no console structure layouts. The xg_xs
+ * descriptor and vtable are BetterXen's own, from shims/xg_xs/xg_texture.h.
  */
 #include <windows.h>
 #include <unknwn.h>
@@ -40,6 +41,7 @@
 #include "bx_config.h"
 #include "bx_log.h"
 #include "bx_xmem_internal.h"
+#include "xg_texture.h"
 
 #define BX_IMPORT __declspec(dllimport)
 
@@ -94,11 +96,7 @@ BX_IMPORT HRESULT WINAPI XDspDisconnect(void* handle);
 /* GameInput.dll (ordinal 1) */
 BX_IMPORT HRESULT WINAPI GameInputCreate(void** out_game_input);
 
-/* xg_xs.dll */
-BX_IMPORT HRESULT WINAPI XGCreateTextureComputer(const void* desc, void** out_computer);
-BX_IMPORT uint32_t WINAPI XGSuggestSwizzleMode(uint32_t resource_type, uint32_t format, uint32_t width,
-                                               uint32_t height, uint32_t depth, uint32_t mip_levels,
-                                               uint32_t sample_count, uint32_t flags);
+/* xg_xs.dll is declared by "xg_texture.h". */
 
 /* d3d12_xs.dll (D3D12SerializeVersionedRootSignature is declared by <d3d12.h>) */
 BX_IMPORT HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv);
@@ -651,27 +649,71 @@ void stage_acphal_heap() {
 
 /* ---- Stage 13: xg_xs ---------------------------------------------------------------------- */
 
+/*
+ * 100x50 R8G8B8A8 with two mips, so both public D3D12 alignments matter. By hand:
+ *   mip 0: 100 * 4 = 400 bytes per row, pitch 512 (256-byte pitch alignment);
+ *          ends at 49 * 512 + 400 = 25488.
+ *   mip 1: starts at the next 512 boundary, 25600; 50 * 4 = 200 bytes per row,
+ *          pitch 256; ends at 25600 + 24 * 256 + 200 = 31944.
+ *   total: 31944 rounded up to 512 = 32256.
+ */
+void* stage_xg_texture_computer() {
+    begin_stage("xg_xs_texture_computer");
+    bx_xg_resource_desc desc = {};
+    desc.dimension = BX_XG_DIMENSION_TEXTURE2D;
+    desc.width = 100;
+    desc.height = 50;
+    desc.depth_or_array_size = 1;
+    desc.mip_levels = 2;
+    desc.format = DXGI_FORMAT_R8G8B8A8_UNORM;
+    desc.sample_desc.count = 1;
+    desc.layout = BX_XG_LAYOUT_LINEAR;
+
+    void* object = reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEAD));
+    HRESULT hr = XGCreateTextureComputer(&desc, &object);
+    if (hr != S_OK || !object || object == reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEAD))) {
+        checkpoint("xg_xs_texture_computer", Status::Fail, "XGCreateTextureComputer hr=0x%08lx object=%p",
+                   static_cast<unsigned long>(hr), object);
+        return nullptr;
+    }
+
+    auto* computer = static_cast<bx_xg_texture_computer*>(object);
+    bx_xg_placed_footprint mips[2] = {};
+    uint32_t rows[2] = {};
+    uint64_t row_bytes[2] = {};
+    uint64_t total = 0;
+    hr = computer->lpVtbl->GetResourceLayout(computer, 0, 2, 0, mips, rows, row_bytes, &total);
+    auto shape_is = [](const bx_xg_subresource_footprint& f, uint32_t width, uint32_t height, uint32_t pitch) {
+        return f.format == DXGI_FORMAT_R8G8B8A8_UNORM && f.width == width && f.height == height && f.depth == 1 &&
+               f.row_pitch == pitch;
+    };
+    const bool mip0 = mips[0].offset == 0 && shape_is(mips[0].footprint, 100, 50, 512) && mips[0].copy_end == 25488 &&
+                      rows[0] == 50 && row_bytes[0] == 400;
+    const bool mip1 = mips[1].offset == 25600 && shape_is(mips[1].footprint, 50, 25, 256) && mips[1].copy_end == 31944 &&
+                      rows[1] == 25 && row_bytes[1] == 200;
+    if (hr == S_OK && mip0 && mip1 && total == 32256) {
+        checkpoint("xg_xs_texture_computer", Status::Pass,
+                   "100x50 RGBA8 two-mip linear footprints and 32256 total bytes match hand-computed values");
+    } else {
+        checkpoint("xg_xs_texture_computer", Status::Fail,
+                   "GetResourceLayout hr=0x%08lx mip0_ok=%d mip1_ok=%d total=%llu",
+                   static_cast<unsigned long>(hr), mip0, mip1, static_cast<unsigned long long>(total));
+    }
+    return object;
+}
+
 void* stage_xg_xs() {
     begin_stage("xg_xs_swizzle_mode");
     /* D3D12_RESOURCE_DIMENSION_TEXTURE2D / DXGI_FORMAT_R8G8B8A8_UNORM, 256x256, 1 mip, 1 sample. */
     uint32_t mode_a = XGSuggestSwizzleMode(D3D12_RESOURCE_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 256, 256, 1, 1, 1, 0);
     uint32_t mode_b = XGSuggestSwizzleMode(D3D12_RESOURCE_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 256, 256, 1, 1, 1, 0);
-    if (mode_a == mode_b) {
-        checkpoint("xg_xs_swizzle_mode", Status::Pass, "XGSuggestSwizzleMode is deterministic for identical inputs (mode=%u)", mode_a);
+    if (mode_a == BX_XG_LAYOUT_LINEAR && mode_b == mode_a) {
+        checkpoint("xg_xs_swizzle_mode", Status::Pass, "XGSuggestSwizzleMode suggests linear and is deterministic (mode=%u)", mode_a);
     } else {
-        checkpoint("xg_xs_swizzle_mode", Status::Fail, "XGSuggestSwizzleMode returned %u then %u for identical inputs", mode_a, mode_b);
+        checkpoint("xg_xs_swizzle_mode", Status::Fail, "XGSuggestSwizzleMode returned %u then %u, expected linear", mode_a, mode_b);
     }
 
-    begin_stage("xg_xs_texture_computer");
-    void* computer = reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEAD));
-    HRESULT hr = XGCreateTextureComputer(nullptr, &computer);
-    if (computer == reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEAD))) {
-        checkpoint("xg_xs_texture_computer", Status::Fail, "XGCreateTextureComputer left the out pointer unwritten (hr=0x%08lx)",
-                   static_cast<unsigned long>(hr));
-        return nullptr;
-    }
-    report_create("xg_xs_texture_computer", "XGCreateTextureComputer", hr, computer, true);
-    return hr == S_OK ? computer : nullptr;
+    return stage_xg_texture_computer();
 }
 
 /* ---- Stage 14: d3d12_xs ------------------------------------------------------------------- */
@@ -825,7 +867,12 @@ int main(int argc, char** argv) {
     /* --- Shutdown (reverse order) ----------------------------------------- */
     begin_stage("shutdown");
     release_com(device);
-    release_com(texture_computer);
+    /* The fixture holds the only reference, so this Release must return 0. */
+    ULONG texture_refs = 0;
+    if (texture_computer) {
+        auto* computer = static_cast<bx_xg_texture_computer*>(texture_computer);
+        texture_refs = computer->lpVtbl->Release(computer);
+    }
     release_com(game_input);
     bool dsp_closed = true;
     if (dsp) {
@@ -841,10 +888,11 @@ int main(int argc, char** argv) {
     if (runtime_initialized) XGameRuntimeUninitialize();
 
     LONG faults = InterlockedCompareExchange(&g_error_exceptions, 0, 0);
-    if (dsp_closed && apu_closed && faults == 0) {
+    if (dsp_closed && apu_closed && texture_refs == 0 && faults == 0) {
         checkpoint("shutdown", Status::Pass, "reverse-order teardown completed with 0 error-severity exceptions");
     } else {
-        checkpoint("shutdown", Status::Fail, "dsp_closed=%d apu_closed=%d error_exceptions=%ld", dsp_closed, apu_closed, faults);
+        checkpoint("shutdown", Status::Fail, "dsp_closed=%d apu_closed=%d texture_refs=%lu error_exceptions=%ld",
+                   dsp_closed, apu_closed, texture_refs, faults);
     }
     if (fault_handle) RemoveVectoredExceptionHandler(fault_handle);
     SetUnhandledExceptionFilter(g_prev_unhandled_filter);
