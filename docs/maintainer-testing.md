@@ -23,6 +23,10 @@ This is not independent verification.
 The two `KNOWN` lines are the D3D12 swapchain retention below. A clean-clone run and a
 private-bundle run were last done on earlier source, before `main` was merged.
 
+`main` at `02b8924` (`xmem` physical pages) was merged afterwards. The Rust checks, shim
+build and all fixtures, now including `test_xmem_physical.exe`, were rerun with the same
+results; the full acceptance suite was not.
+
 ## Requirements
 
 - Apple Silicon Mac. Developed on an M4 with 24 GB and macOS 27; nothing else was tried.
