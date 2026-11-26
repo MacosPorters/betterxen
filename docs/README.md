@@ -53,6 +53,7 @@ checkpoints retain their original evidence scope.
 
 ## Testing, validation, and benchmarks
 
+- [Hybrid workloads and measurement protocol](testing/hybrid-workloads.md) — Original Windows workload selection, metric definitions, receipt sources and independent reproduction requirements; distinguishes the pending hybrid candidate from merged behavior.
 - [Migrated pull-request integration review](testing/migration-pr-review.md) — Merge decisions, integration fixes, native verification and excluded concurrent work.
 - [Testing and acceptance index](testing/README.md) — Entry point for test procedures, evidence and review records.
 - [AMD RDNA2 desktop GPU (gfx1030) form acceptance](testing/shader-form-acceptance.md) — Independence, command, log and promotion rules for fixture-verified instruction forms.
@@ -76,6 +77,7 @@ checkpoints retain their original evidence scope.
 - [Synthetic integration and upstream evidence](research/synthetic-integration.md) — Audited source snapshots and remaining commercial startup prerequisites.
 - [Hybrid backlog research record](research/hybrid-backlog-research-2026-11-25.md) — Findings, registry candidates and the issues they produced (2026-11-25); not verified on hardware.
 - [Primary-source verification](research/primary-source-verification-2026-11-25.md) — Which hybrid-research claims were confirmed, contradicted or left unverified against vendor documentation.
+- [CrossOver licensing boundaries](research/crossover-licensing.md) — Per-component licenses and redistribution status for the hybrid direction, with the unread documents named.
 
 ## Security, licensing, and contributions
 

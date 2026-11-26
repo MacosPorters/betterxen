@@ -90,22 +90,6 @@ cycles `agent:invalid` (and restores them when fixed), flags overlapping claims 
 writes a JSON summary to the run summary. `scripts/agent-queue.sh status --json` prints the same
 machine-readable summary (counts and lists per area, priority and state).
 
-## Pull request checks
-
-`agent-pr-checks` fails a pull request when: it has no `Closes #N` for a claimed task; the task is held
-by someone else; it changes files outside the task's patterns; it changes a file that another open
-pull request also changes; the claim has lapsed without a push; or no eligible `/verified <current
-head sha>` exists. The SHA must be the full 40 characters and the only argument: a commit with the
-same short prefix is cheap to make. After an accepted `/verified` (an eligible verifier, the current
-head) the verify job evaluates the same check again and writes it to its run summary; the earlier
-check run is not re-run, since `pull_request_target` runs are recorded against the base branch and
-cannot be found by the pull request head. Refused, stale, malformed or unauthorized `/verified`
-comments get a reply and nothing else, and other pull request comments start no job.
-
-The check is advisory for now: a failure is shown as a warning and in the run summary, and the job
-still succeeds. It becomes blocking (fail on problems, then a required check) only after a live smoke
-test on GitHub and the migration of existing issues into the queue.
-
 ## Forks and upstream sync
 
 Work from a fork, but synchronise against the real upstream (`ranveersoni98/Xenora` in the

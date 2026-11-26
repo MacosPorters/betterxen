@@ -36,10 +36,9 @@ pending-run replay and exact head-SHA verification against a real repository.
 
 ## Production follow-ups
 
-1. Keep `agent-pr-checks` advisory until this evidence is reviewed.
-2. Coordinate adding `pull-requests: read` to the production audit job permissions
+1. Coordinate adding `pull-requests: read` to the production audit job permissions
    (same defect as the smoke audit failure).
-3. Add a second QA-eligible verifier before treating `/verified` as smoke-complete.
+2. Add a second QA-eligible verifier before treating `/verified` as smoke-complete.
 
 ## Local unit suite
 

@@ -114,3 +114,21 @@ These packages are resolved only by the isolated fuzz workspace. Use MIT when it
 | libfuzzer-sys | 0.4.13 | `719e4efb9b8857ebaa782ae59376c8cbb78fed0f` | MIT AND NCSA |
 | r-efi | 6.0.0 | `7e1b0322d31d625f81a5656096330934f9cd835d` | MIT |
 | shlex | 2.0.1 | `e82b1411beb7c92871c2c078c9ab415bbcf207ef` | MIT |
+
+## External hybrid components (not distributed)
+
+The hybrid direction relies on an externally installed CrossOver. Nothing below is bundled, linked or redistributed by BetterXen, and the licenses are the upstream texts read on 2026-11-25, not the revisions CodeWeavers ships in 26.3.0.
+
+| Component | License read | Distribution model | Notes |
+|---|---|---|---|
+| CrossOver (product) | Proprietary EULA; FOSS components keep their licenses | External install | [EULA](https://www.codeweavers.com/crossover/eula) §2 permits building alternate Wine and does not supersede FOSS licenses; §3 restricts reverse engineering and redistribution. The source page lists Wine, Vkd3d, DXVK and MoltenVK, not DXMT or VKD3D-Proton |
+| Wine | LGPL-2.1-or-later | External | `either version 2.1 … or any later version` |
+| DXMT | LGPL-2.1-or-later; releases up to v0.80 were MIT (`LICENSE.OLD`) | External | Copyright 2023-2026 Feifan He for CodeWeavers |
+| DXVK | zlib | External | Retain the notice if ever distributed |
+| VKD3D-Proton | LGPL-2.1-or-later | External | Source headers carry the `or later` grant |
+| MoltenVK | Apache-2.0 | External | Compatible with GPL-3.0, not GPL-2.0; no `NOTICE` file at the pinned revision |
+| D3DMetal | Unverified: a third-party copy of the 4.0 `License.pdf` was reported; Apple's own copy was not read | User-supplied only; never bundled | The reported terms are non-commercial and no reverse engineering; the Apache-2.0 Game Porting Toolkit repository is not the D3DMetal license |
+| Rosetta 2 | Unknown; Apple's license text was not read | External OS component | Never redistributed |
+
+Details, exact sources and the missing documents are in [research/crossover-licensing.md](research/crossover-licensing.md).
+
