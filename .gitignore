@@ -41,3 +41,6 @@ __pycache__/
 
 # Native application build output
 /app/.build/
+
+# DXVK writes its state cache into the working directory of a run
+*.dxvk-cache
