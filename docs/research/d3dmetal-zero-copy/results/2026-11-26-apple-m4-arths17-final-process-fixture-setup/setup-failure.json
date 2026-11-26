@@ -1,0 +1,1 @@
+{"scope":"A harness-fixture setup failed before any subprocess case", "error":"old module directory too shallow for HERE.parents[3]", "correction":"restore original relative source directory depth; rerun in new directory"}

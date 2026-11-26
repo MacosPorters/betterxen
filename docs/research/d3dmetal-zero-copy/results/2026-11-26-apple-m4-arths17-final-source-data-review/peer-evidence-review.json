@@ -1,0 +1,135 @@
+{
+  "b_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+  "scope": "published source/data inspection, no GPU or Wine launch",
+  "baseline": {
+    "source_hash_matches": true,
+    "exit": 0,
+    "timed_out": false,
+    "backend_scope": "separate receipt-only process supplies lsof evidence, not the full benchmark PID"
+  },
+  "fault_cases": [
+    {
+      "name": "positive_gate",
+      "exit": 0,
+      "stdout_matches": true,
+      "canary_output_absent": true
+    },
+    {
+      "name": "fault_signal_stop",
+      "exit": 2,
+      "stdout_matches": true,
+      "canary_output_absent": true
+    },
+    {
+      "name": "fault_wait_timeout",
+      "exit": 2,
+      "stdout_matches": true,
+      "canary_output_absent": true
+    }
+  ],
+  "fault_scope": "positive real queued copy; Signal failure dispatcher called directly; timeout on empty unsignaled fence; no actual Signal HRESULT failure or arbitrary multithreaded teardown injection",
+  "graphics_hash_expectations": [
+    {
+      "group": "b-a-render-01",
+      "path": "render-s0/readback_default_m0_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s0/readback_default_m1_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s0/readback_default_m1_p1.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s0/readback_default_m2_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s0/readback_default_m2_p1.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s0/readback_wb_m0_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s0/readback_wc_m0_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s1/readback_default_m0_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s1/readback_default_m1_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s1/readback_default_m1_p1.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s1/readback_wb_m0_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-01",
+      "path": "render-s1/readback_wc_m0_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    },
+    {
+      "group": "b-a-render-omit-01",
+      "path": "render-omitted-draw-control/readback_default_m0_p0.rgba",
+      "expected_sha_matches_reported": true,
+      "raw_rgba_published": false
+    }
+  ],
+  "graphics_stop": "render-s1 completed both depth passes; last marker STAGE stencil, Urgent stop; repeat incomplete",
+  "forensic_delta_ns": 3656510,
+  "forensic_timestamp_provenance": "published B stat table, not an independently retrieved APFS transcript; separate A process fixture reproduces the hash race",
+  "missing_artifacts": [
+    "independent B bitmap checker and M5 logical rerun raw",
+    "raw RGBA bytes (hash-only verification available)",
+    "raw stat transcript / corrected forced-stop receipt"
+  ],
+  "allocator_subset": [
+    {
+      "case": "wb-seed-473",
+      "requests": 432,
+      "stats": 36,
+      "readbacks": 24,
+      "bound_rejected": true
+    },
+    {
+      "case": "wc-seed-473",
+      "requests": 432,
+      "stats": 36,
+      "readbacks": 24,
+      "bound_rejected": true
+    }
+  ]
+}

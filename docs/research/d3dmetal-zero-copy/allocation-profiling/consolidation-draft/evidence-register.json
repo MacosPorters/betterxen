@@ -1,10 +1,11 @@
 {
   "schema_version": 1,
-  "status": "A-authored joint evidence draft; B review ownership/independent acceptance pending",
+  "status": "Joint research update: dedicated A-branch publication authorized; B final review of latest delta pending; integration/production changes unauthorized",
   "source_pins": {
     "baseline": "9ae6d1ee7092b6021aad075531f50ba60de4fd53",
     "A": "8c9eceb05ab660504ee981c2f4fcaf1728a5dbff",
-    "B": "a40228747470f0d184375e451b0173769c90aef5"
+    "B": "a40228747470f0d184375e451b0173769c90aef5",
+    "B_review_and_trace_inputs": "4ba4926d2f491517c01b1e94fb8539184055dc22"
   },
   "status_definitions": {
     "Author-tested": "Author executed the scoped workload; not independent acceptance.",
@@ -37,29 +38,44 @@
       "observed_result": "M4 reports all four architecture flags zero and ResourceHeapTier 2.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-runner/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt"
+        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json",
+        "scope": "Exact shared runner/source on M5; backend lsof is from separate receipt-only process, not full benchmark PID"
       },
-      "remaining_limitations": "Adapter branding/UMA flags do not identify physical topology. Identical full baseline runner reproduction across generations is not established.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "Adapter branding/UMA flags do not identify physical topology. Identical full baseline runner reproduction across generations is not established. Exact-source M4/M5 functional reproduction is now recorded; normal-pressure sensitivity and baseline timing limitations remain. Full benchmark backend is supported by separate receipt-only process evidence.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Use public capabilities and runtime detection, not Apple-generation or branding assumptions.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "reported capability flags on tested stack",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "reported capability flags on tested stack"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "BASE-2",
@@ -81,29 +97,39 @@
       "observed_result": "Both opens return E_NOTIMPL on tested M4 stack; visibility through those routes was not run.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-runner/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt"
+        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json",
+        "scope": "Exact shared runner/source on M5; backend lsof is from separate receipt-only process, not full benchmark PID"
       },
-      "remaining_limitations": "Version-scoped unsupported entry points; not proof that every future API/version lacks import.",
+      "remaining_limitations": "Version-scoped unsupported entry points; not proof that every future API/version lacks import. Exact-source M4/M5 functional reproduction is now recorded; normal-pressure sensitivity and baseline timing limitations remain. Full benchmark backend is supported by separate receipt-only process evidence.",
       "acceptance_status": "Unsupported",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Unsupported"
       ],
       "architectural_relevance": "Keep existing CPU owner and explicit transfer boundary.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "BASE-3",
@@ -125,29 +151,44 @@
       "observed_result": "Five L0 heap cases succeed; L1 control returns E_INVALIDARG; same-heap buffer/texture creation and CPU subresource round-trip match.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-runner/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt"
+        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json",
+        "scope": "Exact shared runner/source on M5; backend lsof is from separate receipt-only process, not full benchmark PID"
       },
-      "remaining_limitations": "CPU texture round-trip is not GPU sampling, texture pointer aliasing or general format support.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "CPU texture round-trip is not GPU sampling, texture pointer aliasing or general format support. Exact-source M4/M5 functional reproduction is now recorded; normal-pressure sensitivity and baseline timing limitations remain. Full benchmark backend is supported by separate receipt-only process evidence.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Separate CPU-visible buffer and opaque texture resource classes.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "five L0/L1 control and initial mixed placement/CPU subresource round-trip",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "five L0/L1 control and initial mixed placement/CPU subresource round-trip"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "BASE-4",
@@ -169,29 +210,44 @@
       "observed_result": "Two changing CPU-to-GPU rounds and reverse GPU-to-original-CPU-pointer values match.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-runner/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt"
+        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json",
+        "scope": "Exact shared runner/source on M5; backend lsof is from separate receipt-only process, not full benchmark PID"
       },
-      "remaining_limitations": "No simultaneous CPU/GPU access, atomic interoperability or physical-page identity established.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "No simultaneous CPU/GPU access, atomic interoperability or physical-page identity established. Exact-source M4/M5 functional reproduction is now recorded; normal-pressure sensitivity and baseline timing limitations remain. Full benchmark backend is supported by separate receipt-only process evidence.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "A persistent pointer still requires owner lifetime and final-use fence.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "fence-separated persistent-map copy visibility",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "fence-separated persistent-map copy visibility"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "BASE-5",
@@ -213,29 +269,44 @@
       "observed_result": "All original N/40 validations match; timings vary by session.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-runner/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt"
+        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json",
+        "scope": "Exact shared runner/source on M5; backend lsof is from separate receipt-only process, not full benchmark PID"
       },
-      "remaining_limitations": "Endpoint-only GPU work, prior sparse touches and different CUSTOM/UPLOAD barriers prohibit a universal no-copy or heap-ranking conclusion.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "Endpoint-only GPU work, prior sparse touches and different CUSTOM/UPLOAD barriers prohibit a universal no-copy or heap-ranking conclusion. Exact-source M4/M5 functional reproduction is now recorded; normal-pressure sensitivity and baseline timing limitations remain. Full benchmark backend is supported by separate receipt-only process evidence.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Use later matched B windows and preserve the fixed baseline unchanged.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "negative methodological conclusion: original endpoint latency does not prove absence of copies",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "negative methodological conclusion: original endpoint latency does not prove absence of copies"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "BASE-6",
@@ -257,29 +328,44 @@
       "observed_result": "Two stores yield 4096-byte reported granularity and offsets 0/16384.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-runner/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt"
+        "https://github.com/MacosPorters/betterxen/blob/9ae6d1ee7092b6021aad075531f50ba60de4fd53/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-initial/stdout.txt",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json",
+        "scope": "Exact shared runner/source on M5; backend lsof is from separate receipt-only process, not full benchmark PID"
       },
-      "remaining_limitations": "Separate ordinary CPU allocation; not tracking of D3D12 Map or GPU writes.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "Separate ordinary CPU allocation; not tracking of D3D12 Map or GPU writes. Exact-source M4/M5 functional reproduction is now recorded; normal-pressure sensitivity and baseline timing limitations remain. Full benchmark backend is supported by separate receipt-only process evidence.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Selective-copy fallback needs a documented watch allocation and serialized ownership.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "ordinary CPU VirtualAlloc MEM_WRITE_WATCH behavior",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "ordinary CPU VirtualAlloc MEM_WRITE_WATCH behavior"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-1",
@@ -301,20 +387,21 @@
       "observed_result": "12 initial corrected cases, then six completed smaller/control processes; large graphics charges retained after device release while CPU controls and small graphics differ.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a2-memory-partial/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-memory-pressure-stop/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-memory-pressure-stop/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Asufte / atesahmet0 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Earlier A source/data and contract derivation; not resumed A additions"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Pending",
         "contributor": null,
         "scope": "B recalculated representative M4 receipts but did not reproduce large accounting profile"
       },
-      "remaining_limitations": "Both repeated profiles incomplete. Stage readings correlated; RSS, footprint, compression/swap and driver charges differ. No physical residency/page identity or leak conclusion. Initial wine64 version lookup failed; later direct wineloader observation is not a rewritten receipt.",
+      "remaining_limitations": "Both repeated profiles incomplete. Stage readings correlated; RSS, footprint, compression/swap and driver charges differ. No physical residency/page identity or leak conclusion. Initial wine64 version lookup failed; later direct wineloader observation is not a rewritten receipt. B source review and representative accounting recalculation are complete; large repeated hardware profiles remain blocked, not independently reproduced.",
       "acceptance_status": "Unknown",
       "status_flags": [
         "Author-tested",
@@ -326,7 +413,10 @@
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-2",
@@ -348,13 +438,14 @@
       "observed_result": "Three seed-matched individual/pooled process pairs separate setup, API costs, Map, guards and a real queued retirement gate. Heap/suballocation call costs fall; whole-cycle benefit is inconsistent.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-pool-corrected/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-pool-negative/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-pool-negative/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Asufte / atesahmet0 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Earlier A source/data and contract derivation; not resumed A additions"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Pending",
@@ -372,7 +463,10 @@
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-3",
@@ -394,29 +488,43 @@
       "observed_result": "Three seeds yield 6012 checked snapshots. Four separated 4 MiB gaps cannot satisfy 8 MiB; pending spans remain withheld until simulated completion. Corrupted-log control rejected.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-fragmentation/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-logical-oracle-control/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "bounded CPU logical-span model only; no driver fragmentation claim"
       },
-      "remaining_limitations": "CPU logical model; chosen 64 KiB/2 MiB alignment is policy, not physical-page proof; author wrote both distinct implementations.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "CPU logical model; chosen 64 KiB/2 MiB alignment is policy, not physical-page proof; author wrote both distinct implementations. B reports independent bitmap verification and M5 rerun; checker source/raw rerun are not in this pin, so A attributes those to B rather than claiming to have rerun that checker. Free-list iteration is split-age order between coalescing operations; rounding assumes bounded inputs.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Track largest free span, alignment waste and pending reservations, not only total free bytes.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "bounded CPU logical-span model only; no driver fragmentation claim",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "bounded CPU logical-span model only; no driver fragmentation claim"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-4",
@@ -435,32 +543,47 @@
         "host_page_bytes": 16384,
         "conditions": "non-idle; compression/swap; later explicit Warning profile, Urgent stops; first A2 kernel pressure initially unrecorded"
       },
-      "observed_result": "Six processes pass sampled readbacks; oversized valid request rejected; 216 statistics checkpoints match separate span calculation; each 432-request sequence matches original pool seed.",
+      "observed_result": "Six processes pass sampled readbacks; oversized valid request rejected; 216 statistics checkpoints match separate span calculation; each 432-request sequence matches original pool seed. B source/data review covers all six M4 cases and reproduces WB/WC seed 473 on M5 with the corrected helper.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-external-allocator-bounded/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-data-analysis/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-d3d12ma-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "bounded single-block single-queue CUSTOM WB/WC buffer compatibility/statistics; M5 seed-473 subset with corrected helper"
       },
-      "remaining_limitations": "One block, one queue/thread, buffers only. Library does not retire fences automatically. No texture/defrag/multi-queue/device-loss qualification; no independent acceptance.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "One block, one queue/thread, buffers only. Library does not retire fences automatically. No texture/defrag/multi-queue/device-loss qualification; no independent acceptance. Only two M5 processes, not a six-case cross-generation repetition; no controlled performance comparison.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "First reuse candidate for a future bounded graphics-buffer provider, subject to review and production workload evidence.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "bounded single-block single-queue CUSTOM WB/WC buffer compatibility/statistics; M5 seed-473 subset with corrected helper",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "bounded single-block single-queue CUSTOM WB/WC buffer compatibility/statistics; M5 seed-473 subset with corrected helper"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-5",
@@ -479,14 +602,16 @@
         "host_page_bytes": 16384,
         "conditions": "non-idle; compression/swap; later explicit Warning profile, Urgent stops; first A2 kernel pressure initially unrecorded"
       },
-      "observed_result": "Mapped slabs plausibly serve eligible byte-buffer allocations; requested VA, pre-device ownership, section/scatter/decommit and existing pointer identity are not supplied by Map.",
+      "observed_result": "Mapped slabs plausibly serve eligible byte-buffer allocations; requested VA, pre-device ownership, section/scatter/decommit and existing pointer identity are not supplied by Map. A independently confirms the c13f9c7 combined-budget source defect: graphics-first 6 then CPU3 can both pass against cap8; separate locks also admit a stale-snapshot interleaving.",
       "supporting_raw_evidence": [
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/inverted-ownership.md"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/inverted-ownership.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Pending",
@@ -496,14 +621,27 @@
       "remaining_limitations": "Implementation contracts are not verified console ABI semantics. Biased slices do not create legal misaligned placed resources. Migration retains old plus new backing.",
       "acceptance_status": "Unknown",
       "status_flags": [
-        "Unknown"
+        "Independently source-reviewed",
+        "Unknown",
+        "Failed"
       ],
-      "architectural_relevance": "Use per-requirement eligibility with CPU/section and explicit-copy fallbacks.",
+      "architectural_relevance": "A coherent reserve/commit/release authority must enforce both allocation orders and atomic cross-DLL admission, not merely display summed counters; implementation/ABI changes require authorization.",
       "evidence_classes": {
         "observed_result": "B/D/U",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "budget_defect": {
+        "revision": "c13f9c76650edded41774528b50f40798244a6f3",
+        "status": "Source-derived combined admission invariant fails; not production runtime execution",
+        "sequential_counterexample": "cap8, graphics6 accepted with xmem0, then xmem3 accepted; total9",
+        "concurrent_counterexample": "xmem4 snapshot, intervening CPU4, GPU4 from stale snapshot; total12 against8",
+        "assumptions": "stable common cap, distinct allocations and successful underlying allocation",
+        "local_evidence": "../results/2026-11-26-apple-m4-arths17-final-source-data-review/budget-review.json"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-6",
@@ -526,43 +664,43 @@
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-buffer-inheritance/receipt.json",
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a2-memory-partial/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Asufte / atesahmet0 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Earlier A source/data and contract derivation; not resumed A additions"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Independently reproduced",
         "contributor": "Asufte / atesahmet0",
-        "hardware_runtime": {
-          "chip": "Apple M5",
-          "ram_bytes": 17179869184,
-          "macos": "27.2.1 (26B131)",
-          "CrossOver": "26.3.0.39832",
-          "Wine": "11.0-8726-g2e2f5fca349",
-          "D3DMetal": "3.0",
-          "Rosetta": "1.0.0.0.1793943009",
-          "host_page_bytes": 16384,
-          "conditions": "Warning with substantial compression/swap; stopped captures preserved"
-        },
-        "scope": "Same A source on M5 with Warning profile; exact receipt differences retained"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "placement alignment does not guarantee 64 KiB CPU pointer alignment"
       },
       "remaining_limitations": "Actual pointer must be inspected; placement alignment and CPU alignment are separate. Two MiB padding is not physical-page semantics.",
-      "acceptance_status": "Unknown",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
         "Author-tested",
         "Independently source-reviewed",
-        "Independently reproduced"
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Validate CPU address separately, and validate legal view/resource offsets.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "placement alignment does not guarantee 64 KiB CPU pointer alignment",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "placement alignment does not guarantee 64 KiB CPU pointer alignment"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-7",
@@ -584,13 +722,14 @@
       "observed_result": "Misaligned and out-of-bounds calls return S_OK; texture on buffer-only heap rejects. B adds offset 1 in 128 KiB to isolate alignment. Invalid resources are never GPU-used.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-texture-matrix/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-small-03/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Asufte / atesahmet0 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Earlier A source/data and contract derivation; not resumed A additions"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Independently reproduced",
@@ -621,7 +760,10 @@
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-8",
@@ -643,43 +785,43 @@
       "observed_result": "Two sessions per generation, three changing rounds: all source/inherited/guard words match. Equal overlapping Map/GPU addresses and disjoint +65536 deltas observed.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-buffer-inheritance/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-alias-01/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Asufte / atesahmet0 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Earlier A source/data and contract derivation; not resumed A additions"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Independently reproduced",
         "contributor": "Asufte / atesahmet0",
-        "hardware_runtime": {
-          "chip": "Apple M5",
-          "ram_bytes": 17179869184,
-          "macos": "27.2.1 (26B131)",
-          "CrossOver": "26.3.0.39832",
-          "Wine": "11.0-8726-g2e2f5fca349",
-          "D3DMetal": "3.0",
-          "Rosetta": "1.0.0.0.1793943009",
-          "host_page_bytes": 16384,
-          "conditions": "Warning with substantial compression/swap; stopped captures preserved"
-        },
-        "scope": "Same A source on M5 with Warning profile; exact receipt differences retained"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "advanced-model whole-buffer alias inheritance with guards in tested states"
       },
       "remaining_limitations": "Whole-buffer advanced-model case only; not arbitrary CPU aliases, requested VA, sections or physical page identity.",
-      "acceptance_status": "Unknown",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
         "Author-tested",
         "Independently source-reviewed",
-        "Independently reproduced"
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Resource/heap owners and barriers/fences are essential for reuse.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "advanced-model whole-buffer alias inheritance with guards in tested states",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "advanced-model whole-buffer alias inheritance with guards in tested states"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-9",
@@ -701,43 +843,43 @@
       "observed_result": "RGBA8/R32_UINT match 12500 useful bytes, R8_UNORM 3125, with all 16384 guard words per case; WB/WC/DEFAULT and three mips reproduced on M5.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-texture-matrix/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Asufte / atesahmet0 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Earlier A source/data and contract derivation; not resumed A additions"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Independently reproduced",
         "contributor": "Asufte / atesahmet0",
-        "hardware_runtime": {
-          "chip": "Apple M5",
-          "ram_bytes": 17179869184,
-          "macos": "27.2.1 (26B131)",
-          "CrossOver": "26.3.0.39832",
-          "Wine": "11.0-8726-g2e2f5fca349",
-          "D3DMetal": "3.0",
-          "Rosetta": "1.0.0.0.1793943009",
-          "host_page_bytes": 16384,
-          "conditions": "Warning with substantial compression/swap; stopped captures preserved"
-        },
-        "scope": "Same A source on M5 with Warning profile; exact receipt differences retained"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "three-format three-mip transfers/disjoint guards; full process retains exit 1 at A-7"
       },
       "remaining_limitations": "Full fixture exits 1 because invalid-placement gate fails. Positive subcases do not imply general texture formats, sampling or CPU texel pointers.",
-      "acceptance_status": "Unknown",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
         "Author-tested",
         "Independently source-reviewed",
-        "Independently reproduced"
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Use format-aware subresource/copy footprints, not raw opaque storage reinterpretation.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "three-format three-mip transfers/disjoint guards; full process retains exit 1 at A-7",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "three-format three-mip transfers/disjoint guards; full process retains exit 1 at A-7"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-10",
@@ -759,43 +901,43 @@
       "observed_result": "RGBA8 and D32_FLOAT WB/DEFAULT alias clear/readback each match 2405 pixels/words, including same-source M5 reproduction.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a22-texture-matrix/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-texture-01/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Asufte / atesahmet0 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Earlier A source/data and contract derivation; not resumed A additions"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Independently reproduced",
         "contributor": "Asufte / atesahmet0",
-        "hardware_runtime": {
-          "chip": "Apple M5",
-          "ram_bytes": 17179869184,
-          "macos": "27.2.1 (26B131)",
-          "CrossOver": "26.3.0.39832",
-          "Wine": "11.0-8726-g2e2f5fca349",
-          "D3DMetal": "3.0",
-          "Rosetta": "1.0.0.0.1793943009",
-          "host_page_bytes": 16384,
-          "conditions": "Warning with substantial compression/swap; stopped captures preserved"
-        },
-        "scope": "Same A source on M5 with Warning profile; exact receipt differences retained"
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "post-activation RT/depth initialization/clear/readback, not texture data inheritance"
       },
       "remaining_limitations": "Each alias is cleared after activation. No texture data inheritance, raster depth or stencil inference from this fixture.",
-      "acceptance_status": "Unknown",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
         "Author-tested",
         "Independently source-reviewed",
-        "Independently reproduced"
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Require activation/initialization and ordered copies on reuse.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "post-activation RT/depth initialization/clear/readback, not texture data inheritance",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "post-activation RT/depth initialization/clear/readback, not texture data inheritance"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-11",
@@ -816,29 +958,35 @@
       },
       "observed_result": "UNKNOWN and restricted DEFAULT shared-cross-adapter ROW_MAJOR GPU readbacks each match 2405/2405; ROW_MAJOR CPU Map explicitly not run.",
       "supporting_raw_evidence": [
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-historical-p2-functional-final/texture/stdout.txt"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-historical-p2-functional-final/texture/stdout.txt",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
         "status": "Pending",
         "contributor": null,
         "scope": "No independent reproduction recorded"
       },
-      "remaining_limitations": "One mip/slice, original format; no general CPU-visible ROW_MAJOR claim or opaque raw texel address proof.",
+      "remaining_limitations": "One mip/slice, original format; no general CPU-visible ROW_MAJOR claim or opaque raw texel address proof. B independently source-reviewed the historical case; no new M5 ROW_MAJOR reproduction.",
       "acceptance_status": "Unknown",
       "status_flags": [
-        "Author-tested"
+        "Author-tested",
+        "Independently source-reviewed"
       ],
       "architectural_relevance": "Treat layouts and access paths separately; opaque formats retain explicit transfer operations.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-12",
@@ -857,26 +1005,33 @@
         "host_page_bytes": 16384,
         "conditions": "non-idle; compression/swap; later explicit Warning profile, Urgent stops; first A2 kernel pressure initially unrecorded"
       },
-      "observed_result": "One corrected process matches seven 512-pixel checks; initial compiler-DLL lifetime bug preserved; full repeat stopped before any guest.",
+      "observed_result": "One corrected process matches seven 512-pixel checks; initial compiler-DLL lifetime bug preserved; full repeat stopped before any guest. M5 variant0 completes, omitted draw is detected, and variant1 stops at the stencil pressure checkpoint after both depth passes.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-fixed-smoke/receipt.json",
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-lifetime-failure/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a23-render-pressure-stop/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-render-01/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-render-omit-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-render-01/receipt.json",
+        "scope": "Partial: variant0 seven checks and omitted-draw control; variant1 passes sampling/depth then stops at STAGE stencil, not depth"
       },
-      "remaining_limitations": "Repeated datasets, packed-frame recalculation and omitted-draw control unrun. Tiny RGBA8/D32/D24S8 point sample only; no blanket support.",
+      "remaining_limitations": "Repeated datasets, packed-frame recalculation and omitted-draw control unrun. Tiny RGBA8/D32/D24S8 point sample only; no blanket support. B archives only frame hashes, not RGBA bytes; A regenerates all 13 expected hashes but cannot inspect absent raw frames. Overall repeated matrix remains Blocked/Unknown.",
       "acceptance_status": "Unknown",
       "status_flags": [
         "Author-tested",
+        "Independently source-reviewed",
+        "Independently reproduced",
         "Blocked"
       ],
       "architectural_relevance": "Keep resource-class qualification explicit before expanding texture paths.",
@@ -884,7 +1039,10 @@
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "A-13",
@@ -903,34 +1061,46 @@
         "host_page_bytes": 16384,
         "conditions": "non-idle; compression/swap; later explicit Warning profile, Urgent stops; first A2 kernel pressure initially unrecorded"
       },
-      "observed_result": "B finds unsafe exception unwinding in historical helper. Proposed correction exits disposable guest with failure 2 and verifies completion after the event; strict compile-only evidence.",
+      "observed_result": "B independently reviews the exact proposed helper and executes a real gated-copy positive, direct stopInFlight exit2/canary control and empty unsignaled-fence timeout exit2 on M5; A checks source and corresponding logs.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-fence-build/receipt.json",
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/receipt.json"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/results/2026-11-26-apple-m4-arths17-a24-allocator-build/receipt.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-a-fence-fault-01/results.json"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
-        "reviewer": "B reviewed old hazard; new patch pending",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
-        "scope": "Hazard finding is independent; proposed fix is author code"
+        "reviewer": "Asufte / atesahmet0 agent",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Published explicit per-finding source review; acceptance limited as stated"
       },
       "independent_reproduction": {
-        "status": "Pending",
-        "contributor": null,
-        "scope": "No independent reproduction recorded"
+        "status": "Independently reproduced",
+        "contributor": "Asufte / atesahmet0",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "single-threaded disposable research helper: real positive gated copy, direct failure dispatcher and empty-queue timeout, not all actual API failures or production teardown"
       },
-      "remaining_limitations": "Independent patch review and runtime fault-path test pending. All historical sources preserved; no new GPU run uses correction yet.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "No actual queue Signal failure/device-removal/spurious-event injection, arbitrary stalled GPU failure, multithreaded DLL detach or general production recovery qualification. Local M4 repeat blocked; B runtime scope unblocks safe dependent research runs. Supervising harness sealing hardening remains separate.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
         "Independently source-reviewed",
-        "Blocked"
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Never free/recycle submitted resources after unproven completion; fail closed.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "single-threaded disposable research helper: real positive gated copy, direct failure dispatcher and empty-queue timeout, not all actual API failures or production teardown",
+      "acceptance_decision": {
+        "by": "B independent reviewer",
+        "reference": "https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205365496",
+        "scope": "single-threaded disposable research helper: real positive gated copy, direct failure dispatcher and empty-queue timeout, not all actual API failures or production teardown"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-1",
@@ -957,7 +1127,7 @@
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "reference": "../final-verification/findings.md",
         "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
       },
       "independent_reproduction": {
@@ -969,14 +1139,18 @@
       "acceptance_status": "Unknown",
       "status_flags": [
         "Author-tested",
-        "Independently source-reviewed"
+        "Independently source-reviewed",
+        "Blocked"
       ],
       "architectural_relevance": "Constrain the measured window rather than claim universal no copies.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-2",
@@ -1003,7 +1177,7 @@
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "reference": "../final-verification/findings.md",
         "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
       },
       "independent_reproduction": {
@@ -1015,14 +1189,18 @@
       "acceptance_status": "Unknown",
       "status_flags": [
         "Author-tested",
-        "Independently source-reviewed"
+        "Independently source-reviewed",
+        "Blocked"
       ],
       "architectural_relevance": "Do not derive physical transactions or a heap ordering from aggregate rates.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-3",
@@ -1049,7 +1227,7 @@
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "reference": "../final-verification/findings.md",
         "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
       },
       "independent_reproduction": {
@@ -1061,14 +1239,18 @@
       "acceptance_status": "Unknown",
       "status_flags": [
         "Author-tested",
-        "Independently source-reviewed"
+        "Independently source-reviewed",
+        "Blocked"
       ],
       "architectural_relevance": "Eligible persistent buffers require synchronized producer/consumer ownership.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-4",
@@ -1096,7 +1278,7 @@
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "reference": "../final-verification/findings.md",
         "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
       },
       "independent_reproduction": {
@@ -1108,14 +1290,18 @@
       "acceptance_status": "Unknown",
       "status_flags": [
         "Author-tested",
-        "Independently source-reviewed"
+        "Independently source-reviewed",
+        "Blocked"
       ],
       "architectural_relevance": "Use watch only for eligible CPU-owned fallback and serialized range ownership.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-5",
@@ -1141,7 +1327,7 @@
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "reference": "../final-verification/findings.md",
         "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
       },
       "independent_reproduction": {
@@ -1162,7 +1348,10 @@
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-6",
@@ -1189,7 +1378,7 @@
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "reference": "../final-verification/findings.md",
         "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
       },
       "independent_reproduction": {
@@ -1209,13 +1398,16 @@
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-7",
       "research_question": "Do target-only Metal intervals support independently extracted GPU rates?",
       "responsible_workstream": "B",
-      "exact_source_revision": "a40228747470f0d184375e451b0173769c90aef5",
+      "exact_source_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
       "executed_source": "copy-detection/summarize-trace.py and trace launch sources",
       "hardware_runtime": {
         "chip": "Apple M5",
@@ -1228,7 +1420,7 @@
         "host_page_bytes": 16384,
         "conditions": "Warning with substantial compression/swap; stopped captures preserved"
       },
-      "observed_result": "Seven extracts contain 300 shader and 45 copy intervals; A verifies unique IDs and all published medians/MAD/rates. 4 MiB shader and 64 MiB copy denominators remain distinct.",
+      "observed_result": "A reproduces all seven extraction outputs exactly: 300 shader +45 copy intervals, all warmups/outliers retained, DEFAULT270 blit rows excluded; ns scale, PID, references, IDs and all distributions checked independently.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-02/gpu-samples.json",
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-wc/gpu-samples.json",
@@ -1236,32 +1428,43 @@
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-default/gpu-samples.json",
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb/gpu-samples.json",
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc/gpu-samples.json",
-        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/gpu-samples.json"
+        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry/gpu-samples.json",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-inputs-01/receipt.json"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
-        "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
+        "reference": "../final-verification/findings.md",
+        "scope": "Independent XML/schema/reference/PID/encoder join and unit/statistics inspection plus all seven exact extraction replays; not independent GPU capture"
       },
       "independent_reproduction": {
-        "status": "Blocked",
-        "contributor": null,
-        "scope": "Critical M4 reproduction blocked by urgent pressure"
+        "status": "Independently reproduced",
+        "contributor": "Arths17 agent",
+        "scope": "All seven unmodified extractor outputs exactly equal published JSON; separate XML resolver/join/unit/statistics checks",
+        "reference": "../results/2026-11-26-apple-m4-arths17-final-trace-replay/receipt.json"
       },
-      "remaining_limitations": "Minimal source XML/schema/ref nodes not yet supplied. PID/encoder selection and time-unit conversion cannot be independently rerun from output JSON. Single pressured captures retain long outliers.",
-      "acceptance_status": "Unknown",
+      "remaining_limitations": "Full unsanitized captures/export completeness remain B-controlled evidence; A verifies supplied sanitized tables, not independent capture. Single pressured runs cannot establish physical traffic, intrinsic heap order or game performance.",
+      "acceptance_status": "Independently accepted",
       "status_flags": [
         "Author-tested",
         "Independently source-reviewed",
-        "Blocked"
+        "Independently reproduced",
+        "Independently accepted"
       ],
       "architectural_relevance": "Rates are conditional workload observations, not physical traffic or intrinsic ordering.",
       "evidence_classes": {
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "CPU-only extraction/selection/join/timing calculations from supplied sanitized XML, not independent GPU recapture or physical bandwidth",
+      "acceptance_decision": {
+        "by": "A independent reviewer of B",
+        "scope": "CPU-only extraction/selection/join/timing calculations from supplied sanitized XML, not independent GPU recapture or physical bandwidth",
+        "evidence": "CPU replay and independent XML checks recorded locally"
+      },
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "B-8",
@@ -1280,16 +1483,17 @@
         "host_page_bytes": 16384,
         "conditions": "Warning with substantial compression/swap; stopped captures preserved"
       },
-      "observed_result": "Receipt declares empty stderr SHA; published stderr contains backend-handshake failure with different SHA. 155 other reviewed raw-output hashes match.",
+      "observed_result": "Historical stderr hash discrepancy preserved. B publishes stat timeline; A reproduces the exact empty-to-handshake SHA race with real Python subprocesses, and confirms corrected harness seals matching hashes on controlled normal/forced-stop paths.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/case.json",
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/stderr.txt",
-        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md"
+        "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/b1-b2-audit.md"
       ],
       "independent_source_review": {
         "status": "Independently source-reviewed",
         "reviewer": "Arths17 agent",
-        "reference": "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/review-b.md",
+        "reference": "../final-verification/findings.md",
         "scope": "Actual pinned B source/data; hardware reproduction and raw trace extraction remain separate"
       },
       "independent_reproduction": {
@@ -1297,7 +1501,7 @@
         "contributor": null,
         "scope": "Critical M4 reproduction blocked by urgent pressure"
       },
-      "remaining_limitations": "Finalization sequence/root cause awaits B evidence; late surviving-child output is only a hypothesis. No evidence that completed benchmarks are affected.",
+      "remaining_limitations": "Historical receipt stays Failed. Raw APFS stat transcript and corrected real-Wine forced-stop receipt are not published. A process-only test finds failed normal wineserver wait is ignored; failed cleanup cannot certify finality. Wrapper trace mid-save hashes/redaction metadata are separate from guest outputs.",
       "acceptance_status": "Failed",
       "status_flags": [
         "Failed",
@@ -1309,7 +1513,11 @@
         "observed_result": "A within recorded workload",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "local_verification_evidence": "../results/2026-11-26-apple-m4-arths17-final-process-sealing-clean/receipt.json",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "X-1",
@@ -1338,9 +1546,10 @@
         "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/findings.md"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "A and B review the evidence/conclusion, not unknown mechanism implementation",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Reviewed uncertainty/coverage limits; no physical mechanism or unmeasured generation accepted"
       },
       "independent_reproduction": {
         "status": "Pending",
@@ -1350,14 +1559,18 @@
       "remaining_limitations": "No physical-page oracle or comprehensive internal-copy observation. Cache/overlap/driver-accounting alternatives remain.",
       "acceptance_status": "Unknown",
       "status_flags": [
-        "Unknown"
+        "Unknown",
+        "Independently source-reviewed"
       ],
       "architectural_relevance": "No physical zero-copy guarantee or guaranteed FPS/production speedup.",
       "evidence_classes": {
         "observed_result": "U",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     },
     {
       "id": "X-2",
@@ -1380,33 +1593,39 @@
         ],
         "runtime": "CrossOver 26.3.0.39832 / D3DMetal 3.0; exact per-run versions in linked receipts"
       },
-      "observed_result": "Critical alias/texture subcases have M4/M5 evidence; identical full six-check shared-runner cross-generation reproduction and normal-pressure repeated performance remain incomplete.",
+      "observed_result": "Exact six-check shared-runner M4/M5 reproduction is now reported and evidenced; selected alias/texture/allocator/helper scopes have independent decisions. Normal-pressure, M1\u2013M3 and broader resource coverage remain incomplete.",
       "supporting_raw_evidence": [
         "https://github.com/MacosPorters/betterxen/blob/8c9eceb05ab660504ee981c2f4fcaf1728a5dbff/docs/research/d3dmetal-zero-copy/allocation-profiling/handoff-asufte.md",
-        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md"
+        "https://github.com/MacosPorters/betterxen/blob/a40228747470f0d184375e451b0173769c90aef5/docs/research/d3dmetal-zero-copy/copy-detection/review-a.md",
+        "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-baseline-runner-01/receipt.json"
       ],
       "independent_source_review": {
-        "status": "Pending",
-        "reviewer": null,
-        "scope": "No independent acceptance of this author result claimed"
+        "status": "Independently source-reviewed",
+        "reviewer": "A and B review the evidence/conclusion, not unknown mechanism implementation",
+        "reference": "https://github.com/MacosPorters/betterxen/blob/4ba4926d2f491517c01b1e94fb8539184055dc22/docs/research/d3dmetal-zero-copy/copy-detection/review-a-consolidation.md",
+        "scope": "Reviewed uncertainty/coverage limits; no physical mechanism or unmeasured generation accepted"
       },
       "independent_reproduction": {
         "status": "Pending",
         "contributor": null,
         "scope": "No independent reproduction recorded"
       },
-      "remaining_limitations": "No measured M1\u2013M3 coverage, MSAA/BC/planar/arrays/3D/general filtering or full multi-queue qualification; source gaps in historical failures preserved.",
+      "remaining_limitations": "M4 critical B runs and graphics/accounting repeats remain pressure-blocked; partial M5 graphics variant1 is incomplete. No unmeasured generation/general resource qualification.",
       "acceptance_status": "Unknown",
       "status_flags": [
         "Blocked",
-        "Unknown"
+        "Unknown",
+        "Independently source-reviewed"
       ],
       "architectural_relevance": "Detect capabilities at runtime; admit a resource class only after its own contract/tests.",
       "evidence_classes": {
         "observed_result": "U",
         "public_contract_constraints": "B; source-feature assessment D; neither establishes console semantics",
         "architecture_candidate": "Inference; not production qualification or physical mechanism proof"
-      }
+      },
+      "final_review_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+      "acceptance_scope": "See scoped status and limitations; no blanket independent acceptance",
+      "review_update_status": "Updated against B published peer decision plus A actual CPU/source verification; unrun hardware work remains explicit"
     }
   ]
 }

@@ -16,7 +16,7 @@ def main():
     for p in sorted(src.rglob('*')):
         if not p.is_file() or p.is_symlink():continue
         rel=p.relative_to(src)
-        if p.suffix=='.exe' or p.name=='observe' or any(v.startswith('.wine') or v=='bottle' for v in rel.parts):continue
+        if p.suffix in ['.exe','.pyc','.pyo'] or '__pycache__' in rel.parts or p.name=='observe' or any(v.startswith('.wine') or v=='bottle' for v in rel.parts):continue
         original=p.read_bytes()
         if original[:2]==b'MZ' or original[:4] in [b'\xcf\xfa\xed\xfe',b'\xfe\xed\xfa\xcf',b'\xca\xfe\xba\xbe',b'\xbe\xba\xfe\xca']:
             continue  # Executables remain in ignored artifacts, not public research records.

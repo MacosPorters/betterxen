@@ -1,0 +1,23 @@
+{
+  "command": [
+    "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+    "/tmp/bx473-final-harness-check-02/parent.py",
+    "/tmp/bx473-final-harness-check-02/child.py"
+  ],
+  "timeout_seconds": 45,
+  "exit": -9,
+  "backend": {
+    "verified": true,
+    "guest_pid": "22343",
+    "scope": "actual Python fixture PID; synthetic backend identification, no graphics"
+  },
+  "pressure_ready": {
+    "allowed": false,
+    "scope": "injected process-test condition; not a bypassed GPU pressure guard"
+  },
+  "error": "RuntimeError('pressure gate at paused device before workload')",
+  "output_hashes": {
+    "stdout.txt": "a3118942fe3f999f05d73a1e63dd807135c96bd83561fa69b92c00adec2bddd9",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

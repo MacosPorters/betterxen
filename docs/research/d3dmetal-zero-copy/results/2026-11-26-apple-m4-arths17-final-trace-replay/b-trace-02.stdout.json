@@ -1,0 +1,1489 @@
+{
+  "guest_pid": 60493,
+  "case": "00-wb",
+  "matched_intervals": 75,
+  "omitted_dispatch_guest_samples": 15,
+  "distributions": {
+    "both": {
+      "n": 12,
+      "median_gpu_us": 124.0415,
+      "minimum_gpu_us": 105.083,
+      "maximum_gpu_us": 335.208,
+      "mad_gpu_us": 9.979,
+      "payload_GB_s": {
+        "read_bytes": 33.814177572609694,
+        "written_bytes": 33.814177572609694
+      }
+    },
+    "full_read": {
+      "n": 12,
+      "median_gpu_us": 110.229,
+      "minimum_gpu_us": 107.792,
+      "maximum_gpu_us": 448.584,
+      "mad_gpu_us": 1.5625,
+      "payload_GB_s": {
+        "read_bytes": 38.050822852718326,
+        "written_bytes": 2.3781764282948954
+      }
+    },
+    "sparse_read_4k": {
+      "n": 12,
+      "median_gpu_us": 6.75,
+      "minimum_gpu_us": 5.083,
+      "maximum_gpu_us": 74.334,
+      "mad_gpu_us": 0.12549999999999972,
+      "payload_GB_s": {
+        "read_bytes": 0.6068148148148148,
+        "written_bytes": 0.6068148148148148
+      }
+    },
+    "sparse_read_16k": {
+      "n": 12,
+      "median_gpu_us": 3.917,
+      "minimum_gpu_us": 3.167,
+      "maximum_gpu_us": 137.75,
+      "mad_gpu_us": 0.04100000000000037,
+      "payload_GB_s": {
+        "read_bytes": 0.26142455961194794,
+        "written_bytes": 0.26142455961194794
+      }
+    },
+    "write": {
+      "n": 12,
+      "median_gpu_us": 51.021,
+      "minimum_gpu_us": 47.625,
+      "maximum_gpu_us": 560.791,
+      "mad_gpu_us": 3.083500000000001,
+      "payload_GB_s": {
+        "written_bytes": 82.21235735176217
+      }
+    }
+  },
+  "samples": [
+    {
+      "mode": "both",
+      "iter": -3,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 34965.4,
+      "ids": [
+        3549015511,
+        3549015512
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1454084041,
+      "gpu_duration_ns": 73084,
+      "metal_encode_ns": 377625,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": -2,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 886.6,
+      "ids": [
+        3549015514,
+        3549015515
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1460277291,
+      "gpu_duration_ns": 138042,
+      "metal_encode_ns": 35708,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": -1,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 599.4,
+      "ids": [
+        3549015517,
+        3549015518
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1463223666,
+      "gpu_duration_ns": 105375,
+      "metal_encode_ns": 17667,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 0,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 576.0,
+      "ids": [
+        3549015520,
+        3549015521
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1466189458,
+      "gpu_duration_ns": 105083,
+      "metal_encode_ns": 16792,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 1,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 559.2,
+      "ids": [
+        3549015523,
+        3549015524
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1468774083,
+      "gpu_duration_ns": 335208,
+      "metal_encode_ns": 14041,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 2,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 591.8,
+      "ids": [
+        3549015526,
+        3549015527
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1471719041,
+      "gpu_duration_ns": 119334,
+      "metal_encode_ns": 14417,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 3,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 562.8,
+      "ids": [
+        3549015529,
+        3549015530
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1474444958,
+      "gpu_duration_ns": 120583,
+      "metal_encode_ns": 13042,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 4,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 568.8,
+      "ids": [
+        3549015532,
+        3549015533
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1477132791,
+      "gpu_duration_ns": 121500,
+      "metal_encode_ns": 13250,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 5,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 684.8,
+      "ids": [
+        3549015535,
+        3549015536
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1479978375,
+      "gpu_duration_ns": 180833,
+      "metal_encode_ns": 15334,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 6,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 850.4,
+      "ids": [
+        3549015538,
+        3549015539
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1482660833,
+      "gpu_duration_ns": 260500,
+      "metal_encode_ns": 12709,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 7,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 460.8,
+      "ids": [
+        3549015541,
+        3549015542
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1485426500,
+      "gpu_duration_ns": 123083,
+      "metal_encode_ns": 13542,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 8,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 639.2,
+      "ids": [
+        3549015544,
+        3549015545
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1488076333,
+      "gpu_duration_ns": 175917,
+      "metal_encode_ns": 13292,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 9,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 698.6,
+      "ids": [
+        3549015547,
+        3549015548
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1490801416,
+      "gpu_duration_ns": 139292,
+      "metal_encode_ns": 12625,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 10,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 472.3,
+      "ids": [
+        3549015550,
+        3549015551
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1493377458,
+      "gpu_duration_ns": 123583,
+      "metal_encode_ns": 13333,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "both",
+      "iter": 11,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 4194304,
+      "guest_completion_us": 427.3,
+      "ids": [
+        3549015553,
+        3549015554
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1495773833,
+      "gpu_duration_ns": 124500,
+      "metal_encode_ns": 12541,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "full_read",
+      "iter": -3,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 601.8,
+      "ids": [
+        3549015556,
+        3549015557
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1498185875,
+      "gpu_duration_ns": 139375,
+      "metal_encode_ns": 12750,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": -2,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 529.3,
+      "ids": [
+        3549015559,
+        3549015560
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1499818083,
+      "gpu_duration_ns": 112292,
+      "metal_encode_ns": 12542,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": -1,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 393.5,
+      "ids": [
+        3549015562,
+        3549015563
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1501276041,
+      "gpu_duration_ns": 107834,
+      "metal_encode_ns": 13375,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 0,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 415.8,
+      "ids": [
+        3549015565,
+        3549015566
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1502743708,
+      "gpu_duration_ns": 108333,
+      "metal_encode_ns": 23125,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 1,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 370.7,
+      "ids": [
+        3549015568,
+        3549015569
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1504177208,
+      "gpu_duration_ns": 108292,
+      "metal_encode_ns": 12792,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 2,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 667.0,
+      "ids": [
+        3549015571,
+        3549015572
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1505746083,
+      "gpu_duration_ns": 184042,
+      "metal_encode_ns": 12333,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 3,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 411.9,
+      "ids": [
+        3549015574,
+        3549015575
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1507310416,
+      "gpu_duration_ns": 109000,
+      "metal_encode_ns": 12041,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 4,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 416.7,
+      "ids": [
+        3549015577,
+        3549015578
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1508761416,
+      "gpu_duration_ns": 110584,
+      "metal_encode_ns": 13666,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 5,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 623.2,
+      "ids": [
+        3549015580,
+        3549015581
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1510326166,
+      "gpu_duration_ns": 448584,
+      "metal_encode_ns": 14167,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 6,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 592.0,
+      "ids": [
+        3549015583,
+        3549015584
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1512243541,
+      "gpu_duration_ns": 158375,
+      "metal_encode_ns": 13416,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 7,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 419.4,
+      "ids": [
+        3549015586,
+        3549015587
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1513794500,
+      "gpu_duration_ns": 110250,
+      "metal_encode_ns": 12709,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 8,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 417.2,
+      "ids": [
+        3549015589,
+        3549015590
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1515238708,
+      "gpu_duration_ns": 107792,
+      "metal_encode_ns": 12000,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 9,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 393.2,
+      "ids": [
+        3549015592,
+        3549015593
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1516698916,
+      "gpu_duration_ns": 110167,
+      "metal_encode_ns": 12250,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 10,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 386.3,
+      "ids": [
+        3549015595,
+        3549015596
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1518154166,
+      "gpu_duration_ns": 110375,
+      "metal_encode_ns": 13959,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "full_read",
+      "iter": 11,
+      "workload_payload": 0,
+      "read_bytes": 4194304,
+      "written_bytes": 262144,
+      "guest_completion_us": 720.1,
+      "ids": [
+        3549015598,
+        3549015599
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1519580000,
+      "gpu_duration_ns": 110208,
+      "metal_encode_ns": 12959,
+      "comparison": "65536/65536"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": -3,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 260.3,
+      "ids": [
+        3549015601,
+        3549015602
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1521356000,
+      "gpu_duration_ns": 6916,
+      "metal_encode_ns": 12542,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": -2,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 271.3,
+      "ids": [
+        3549015604,
+        3549015605
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1522249958,
+      "gpu_duration_ns": 6708,
+      "metal_encode_ns": 12125,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": -1,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 245.5,
+      "ids": [
+        3549015607,
+        3549015608
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1523103791,
+      "gpu_duration_ns": 6709,
+      "metal_encode_ns": 12333,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 0,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 282.7,
+      "ids": [
+        3549015610,
+        3549015611
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1523943791,
+      "gpu_duration_ns": 74334,
+      "metal_encode_ns": 12500,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 1,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 290.5,
+      "ids": [
+        3549015613,
+        3549015614
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1524935166,
+      "gpu_duration_ns": 6834,
+      "metal_encode_ns": 14375,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 2,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 257.9,
+      "ids": [
+        3549015616,
+        3549015617
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1525809500,
+      "gpu_duration_ns": 5083,
+      "metal_encode_ns": 13333,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 3,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 250.0,
+      "ids": [
+        3549015619,
+        3549015620
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1526666750,
+      "gpu_duration_ns": 5083,
+      "metal_encode_ns": 13041,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 4,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 950.3,
+      "ids": [
+        3549015622,
+        3549015623
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1527568333,
+      "gpu_duration_ns": 12833,
+      "metal_encode_ns": 12417,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 5,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 273.6,
+      "ids": [
+        3549015625,
+        3549015626
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1529107750,
+      "gpu_duration_ns": 6833,
+      "metal_encode_ns": 12917,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 6,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 275.5,
+      "ids": [
+        3549015628,
+        3549015629
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1529974416,
+      "gpu_duration_ns": 6750,
+      "metal_encode_ns": 12416,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 7,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 262.2,
+      "ids": [
+        3549015631,
+        3549015632
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1530861291,
+      "gpu_duration_ns": 6750,
+      "metal_encode_ns": 12709,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 8,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 274.0,
+      "ids": [
+        3549015634,
+        3549015635
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1531720291,
+      "gpu_duration_ns": 6709,
+      "metal_encode_ns": 12333,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 9,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 268.9,
+      "ids": [
+        3549015637,
+        3549015638
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1532591833,
+      "gpu_duration_ns": 6792,
+      "metal_encode_ns": 12125,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 10,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 254.7,
+      "ids": [
+        3549015640,
+        3549015641
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1533472958,
+      "gpu_duration_ns": 6583,
+      "metal_encode_ns": 12417,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_4k",
+      "iter": 11,
+      "workload_payload": 0,
+      "read_bytes": 4096,
+      "written_bytes": 4096,
+      "guest_completion_us": 260.4,
+      "ids": [
+        3549015643,
+        3549015644
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1534360958,
+      "gpu_duration_ns": 5167,
+      "metal_encode_ns": 12542,
+      "comparison": "1024/1024"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": -3,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 265.6,
+      "ids": [
+        3549015646,
+        3549015647
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1535246083,
+      "gpu_duration_ns": 3917,
+      "metal_encode_ns": 13125,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": -2,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 259.6,
+      "ids": [
+        3549015649,
+        3549015650
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1536119083,
+      "gpu_duration_ns": 3958,
+      "metal_encode_ns": 12125,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": -1,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 276.1,
+      "ids": [
+        3549015652,
+        3549015653
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1536992208,
+      "gpu_duration_ns": 3917,
+      "metal_encode_ns": 14166,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 0,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 260.1,
+      "ids": [
+        3549015655,
+        3549015656
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1537860041,
+      "gpu_duration_ns": 3917,
+      "metal_encode_ns": 12500,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 1,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 256.9,
+      "ids": [
+        3549015658,
+        3549015659
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1538717625,
+      "gpu_duration_ns": 3916,
+      "metal_encode_ns": 12375,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 2,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 244.3,
+      "ids": [
+        3549015661,
+        3549015662
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1539589291,
+      "gpu_duration_ns": 3917,
+      "metal_encode_ns": 12250,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 3,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 256.5,
+      "ids": [
+        3549015664,
+        3549015665
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1540441208,
+      "gpu_duration_ns": 3958,
+      "metal_encode_ns": 12875,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 4,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 249.1,
+      "ids": [
+        3549015667,
+        3549015668
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1541306958,
+      "gpu_duration_ns": 3958,
+      "metal_encode_ns": 12250,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 5,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 247.4,
+      "ids": [
+        3549015670,
+        3549015671
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1542157041,
+      "gpu_duration_ns": 3167,
+      "metal_encode_ns": 12542,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 6,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 296.8,
+      "ids": [
+        3549015673,
+        3549015674
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1542937416,
+      "gpu_duration_ns": 137750,
+      "metal_encode_ns": 12084,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 7,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 397.1,
+      "ids": [
+        3549015676,
+        3549015677
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1544068416,
+      "gpu_duration_ns": 3209,
+      "metal_encode_ns": 12667,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 8,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 247.5,
+      "ids": [
+        3549015679,
+        3549015680
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1544928166,
+      "gpu_duration_ns": 3167,
+      "metal_encode_ns": 12334,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 9,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 248.3,
+      "ids": [
+        3549015682,
+        3549015683
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1545797208,
+      "gpu_duration_ns": 3958,
+      "metal_encode_ns": 12292,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 10,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 256.8,
+      "ids": [
+        3549015685,
+        3549015686
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1546640750,
+      "gpu_duration_ns": 3916,
+      "metal_encode_ns": 12291,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "sparse_read_16k",
+      "iter": 11,
+      "workload_payload": 0,
+      "read_bytes": 1024,
+      "written_bytes": 1024,
+      "guest_completion_us": 262.0,
+      "ids": [
+        3549015688,
+        3549015689
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1547504291,
+      "gpu_duration_ns": 3917,
+      "metal_encode_ns": 12125,
+      "comparison": "256/256"
+    },
+    {
+      "mode": "write",
+      "iter": -3,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 343.9,
+      "ids": [
+        3549015691,
+        3549015692
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1548501916,
+      "gpu_duration_ns": 49500,
+      "metal_encode_ns": 12792,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": -2,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 748.0,
+      "ids": [
+        3549015694,
+        3549015695
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1551150875,
+      "gpu_duration_ns": 69416,
+      "metal_encode_ns": 12125,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": -1,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 333.8,
+      "ids": [
+        3549015697,
+        3549015698
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1553612708,
+      "gpu_duration_ns": 47083,
+      "metal_encode_ns": 12834,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 0,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 340.0,
+      "ids": [
+        3549015700,
+        3549015701
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1555847166,
+      "gpu_duration_ns": 50625,
+      "metal_encode_ns": 12250,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 1,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 342.2,
+      "ids": [
+        3549015703,
+        3549015704
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1558091541,
+      "gpu_duration_ns": 50000,
+      "metal_encode_ns": 12375,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 2,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 332.6,
+      "ids": [
+        3549015706,
+        3549015707
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1560324833,
+      "gpu_duration_ns": 51417,
+      "metal_encode_ns": 12375,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 3,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 330.1,
+      "ids": [
+        3549015709,
+        3549015710
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1562605500,
+      "gpu_duration_ns": 47625,
+      "metal_encode_ns": 12167,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 4,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 340.0,
+      "ids": [
+        3549015712,
+        3549015713
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1564817875,
+      "gpu_duration_ns": 49250,
+      "metal_encode_ns": 12042,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 5,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 343.6,
+      "ids": [
+        3549015715,
+        3549015716
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1567046291,
+      "gpu_duration_ns": 48250,
+      "metal_encode_ns": 13083,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 6,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 395.5,
+      "ids": [
+        3549015718,
+        3549015719
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1569097083,
+      "gpu_duration_ns": 55750,
+      "metal_encode_ns": 12291,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 7,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 370.5,
+      "ids": [
+        3549015721,
+        3549015722
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1571229375,
+      "gpu_duration_ns": 57416,
+      "metal_encode_ns": 11916,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 8,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 361.5,
+      "ids": [
+        3549015724,
+        3549015725
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1573323541,
+      "gpu_duration_ns": 57625,
+      "metal_encode_ns": 13042,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 9,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 339.4,
+      "ids": [
+        3549015727,
+        3549015728
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1575345250,
+      "gpu_duration_ns": 49041,
+      "metal_encode_ns": 12667,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 10,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 957.3,
+      "ids": [
+        3549015730,
+        3549015731
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1577292625,
+      "gpu_duration_ns": 560791,
+      "metal_encode_ns": 12375,
+      "comparison": "1048576/1048576"
+    },
+    {
+      "mode": "write",
+      "iter": 11,
+      "workload_payload": 0,
+      "read_bytes": 0,
+      "written_bytes": 4194304,
+      "guest_completion_us": 373.7,
+      "ids": [
+        3549015733,
+        3549015734
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Compute Command 0",
+      "gpu_start_ns": 1580046083,
+      "gpu_duration_ns": 61583,
+      "metal_encode_ns": 12334,
+      "comparison": "1048576/1048576"
+    }
+  ]
+}
