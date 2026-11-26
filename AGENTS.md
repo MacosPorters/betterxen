@@ -4,6 +4,37 @@ These rules apply to every human contributor and coding agent (`CLAUDE.md` is a 
 
 ---
 
+## 0. First-Time Contributor Onboarding
+
+If the user asks to contribute, get started, or pick a task (even with a short prompt like *"help me contribute"*), walk them through this exact end-to-end flow:
+
+1. **Preflight host & tools:**
+   - Check `uname -m` (`arm64`), `git`, `gh`, `cargo`, `cmake`, `x86_64-w64-mingw32-g++`, and `python3`.
+   - If `mingw-w64`, `cmake`, or `gh` is missing on macOS, ask permission before running `brew install mingw-w64 cmake gh`.
+   - Run `gh auth status` (if not logged in, pause and ask the user to run `gh auth login`).
+   - Run `cargo build --locked -p bx-cli && target/debug/bx-cli doctor` to report Apple Silicon, Rosetta 2, CrossOver, and toolchain readiness.
+   - Verify whether the user has push access or needs a fork (`gh repo fork MacosPorters/betterxen --remote`), and sync with `origin/main`.
+2. **Discover & pick an unclaimed issue:**
+   - Query ready issues in the active milestone:
+     ```sh
+     gh issue list --repo MacosPorters/betterxen --state open --label "status: ready" --json number,title,labels,assignees
+     ```
+   - Inspect comments and open PRs on candidate issues to filter out any issue that already has an active claim (< 7 days old).
+   - Present the unclaimed options in plain English (recommending 1–2 good starting issues matching the user's background) and wait for the user to choose one before coding.
+3. **Claim & isolate:**
+   - Post `Claiming — branch: track-<a..f>/<issue>-<slug>` on the chosen issue and create that branch (or `git worktree`) off `origin/main`.
+4. **Implement strictly in scope:**
+   - Read the full issue body (`gh issue view <issue> --repo MacosPorters/betterxen`) and the relevant contracts in `abi/defs/` and `abi/include/`.
+   - Edit **only** files inside the issue's **Exclusive file scope** (plus `CHANGELOG.md`). Add new synthetic C++ conformance tests under `tests/conformance/test_<name>/CMakeLists.txt` + `main.cpp` (auto-discovered by CMake).
+5. **Verify locally (including hosts without CrossOver):**
+   - Run every command in Section 8 and fix all warnings/failures before stopping.
+   - **No CrossOver installed?** The contributor can still run all ARM64 Rust checks, `scripts/build-shims.sh` (verifying all 16 PE32+ DLLs and exact exports), and `python3 scripts/audit/docs_hygiene.py`. Report honestly in the PR that live CrossOver execution was not run locally and needs verification on a CrossOver host—never report an unrun check as passed.
+6. **Review & submit PR:**
+   - Present a concise summary of changes and exact verification outputs, and ask explicit user permission before running `git commit -s` (DCO sign-off, zero AI trailers), pushing, and opening a PR (`Closes #<issue>`).
+   - After opening the PR, watch CI (`gh pr checks --watch`) until both `Hybrid build and shim checks` and `Repository hygiene` pass.
+
+---
+
 ## 1. Direction & Architecture
 
 - **Hybrid-first on Apple Silicon:** CrossOver 26.3+ (externally installed), Wine runtime APIs, Rosetta 2 (`ROSETTA_ADVERTISE_AVX=1`), and D3DMetal 3.0 (subject to license terms) form the external compatibility foundation. DXMT, DXVK, VKD3D-Proton, MoltenVK, and `utmapp/d3dmetal-native` may be evaluated and used where license-compatible and technically justified.
