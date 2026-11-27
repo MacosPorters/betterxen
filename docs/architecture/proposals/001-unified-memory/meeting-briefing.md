@@ -28,14 +28,14 @@ Do correctness and visibility now. Keep a hybrid resource provider as the target
 
 All twelve: [maintainer decisions](maintainer-decisions.md).
 
-## Dependencies on open work (as of 2026-11-26)
+## Dependencies on open work (as of 2026-11-27 02:40 UTC)
 
 | Item | State | Matters because |
 | --- | --- | --- |
 | #464 (`devil8blade`) | Claimed | Its scope is the first graphics accounting; this proposal does not widen or take it |
-| #486 | Changes needed: fixture 143/145 from a test bug; order-dependent cap; early credit | Input to Stage 0a |
+| #486 | New head `7056671`: drops the two extra `AddRef` calls and adds a stale-publication fix; CI passes. Not re-run here. `try_charge`, `release_charge` and `host_private_heap` are unchanged, so by source the order-dependent cap and early credit remain | Input to Stage 0a |
 | #469 (`atesahmet0`) | Claimed | Wording says `xmem` placed resources |
-| #494 | Passes with #486 and #471; the `xmem` view stays empty | Maintainers decide whether that meets the gate |
+| #494 | New head `6a1451b`: clarifies frame readback; CI fails at CMake configure of the new fixture. Not re-run here. At `c64534f` it passed with #486 and #471 while the `xmem` view stayed empty | Maintainers decide whether that meets the gate |
 
 **Shader development can proceed independently.** The only contact is textual (`proxy.cpp`, `CMakeLists.txt`).
 

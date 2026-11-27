@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+Heads have since moved (#486 to `7056671`, #494 to `6a1451b`). Results below apply to the commits listed and were not re-run on the new ones.
+
 **One Apple M4, run by one AI agent for @Arths17. Nothing here is independently reproduced.** It does not modify the #473 research evidence. Raw logs are kept outside the repository (they contain local paths); their SHA-256 values are listed so a copy can be checked.
 
 ## Environment
