@@ -2,6 +2,8 @@
 #include <unknwn.h>
 #include <atomic>
 #include <cstdint>
+#include <cstdio>
+#include <new>
 #include <unordered_map>
 
 #include "bx_log.h"
@@ -43,14 +45,38 @@ HRESULT unavailable(T* out) {
     return E_NOTIMPL;
 }
 
+class GameInputDispatcher;
+
 class GameInput final : public IUnknown {
     LONG refs = 0;
     SRWLOCK callback_lock_ = SRWLOCK_INIT;
     uint64_t next_token_ = 1;
     std::unordered_map<uint64_t, RegisteredDeviceCallback> callbacks_;
     std::atomic<uint32_t> focus_policy_{0};
+    // Live IGameInputDispatcher reference count. >0 means GameInput is in
+    // "manual dispatch" mode; 0 means "automatic dispatch" mode.
+    std::atomic<uint32_t> dispatcher_refs_{0};
 
 public:
+    // Logs the manual/automatic dispatch mode transition. Purely atomic: it
+    // never takes callback_lock_, so it cannot introduce lock ordering hazards.
+    void note_dispatch_mode(const char* mode, uint32_t count) {
+        char detail[96];
+        std::snprintf(detail, sizeof(detail), "mode=%s live_dispatchers=%u", mode,
+                      static_cast<unsigned>(count));
+        bx_log_emit(BX_LOG_INFO, "gameinput", "dispatch_mode", detail);
+    }
+
+    void on_dispatcher_created() {
+        const uint32_t count = dispatcher_refs_.fetch_add(1, std::memory_order_acq_rel) + 1;
+        if (count == 1) note_dispatch_mode("manual", count);
+    }
+
+    void on_dispatcher_released() {
+        const uint32_t count = dispatcher_refs_.fetch_sub(1, std::memory_order_acq_rel) - 1;
+        if (count == 0) note_dispatch_mode("automatic", count);
+    }
+
     HRESULT WINAPI QueryInterface(REFIID iid, void** out) override {
         if (!out) return E_POINTER;
         *out = nullptr;
@@ -133,10 +159,9 @@ public:
         SrwExclusiveLock guard(callback_lock_);
         return callbacks_.erase(token) > 0;
     }
-    virtual HRESULT WINAPI CreateDispatcher(void** out) {
-        BX_VTABLE_STUB_LOG("IGameInput", 14, "CreateDispatcher");
-        return unavailable(out);
-    }
+    // Slot 14. Defined out of line below because it allocates
+    // GameInputDispatcher, which in turn calls back into this class.
+    virtual HRESULT WINAPI CreateDispatcher(void** out);
     virtual HRESULT WINAPI CreateAggregateDevice(uint32_t, void** out) {
         BX_VTABLE_STUB_LOG("IGameInput", 15, "CreateAggregateDevice");
         return unavailable(out);
@@ -165,6 +190,89 @@ public:
         focus_policy_.store(policy, std::memory_order_relaxed);
     }
 };
+
+// IGameInputDispatcher (GameInput v0): IUnknown + Dispatch + OpenWaitHandle.
+// Holding a reference puts GameInput in manual dispatch mode; releasing the
+// last one returns it to automatic dispatch mode.
+class GameInputDispatcher final : public IUnknown {
+    LONG refs = 1;
+    GameInput* owner_ = nullptr;
+
+public:
+    explicit GameInputDispatcher(GameInput* owner) : owner_(owner) {}
+
+    HRESULT WINAPI QueryInterface(REFIID iid, void** out) override {
+        if (!out) return E_POINTER;
+        *out = nullptr;
+        if (iid == IID_IUnknown) {
+            AddRef();
+            *out = this;
+            return S_OK;
+        }
+        // The GameInput v0 IGameInputDispatcher IID is not published in the
+        // public Microsoft Learn / GDK documentation, so it is NOT guessed
+        // here. Only IID_IUnknown is served; every other queried id is logged
+        // (never silently ignored) and answered with E_NOINTERFACE.
+        char guid[40];
+        std::snprintf(guid, sizeof(guid), "%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x",
+                      static_cast<unsigned long>(iid.Data1), iid.Data2, iid.Data3,
+                      iid.Data4[0], iid.Data4[1], iid.Data4[2], iid.Data4[3],
+                      iid.Data4[4], iid.Data4[5], iid.Data4[6], iid.Data4[7]);
+        char detail[160];
+        std::snprintf(detail, sizeof(detail),
+                      "IGameInputDispatcher iid=%s unsupported (v0 dispatcher IID not publicly documented)",
+                      guid);
+        bx_log_emit(BX_LOG_WARN, "gameinput", "qi_unsupported", detail);
+        return E_NOINTERFACE;
+    }
+    ULONG WINAPI AddRef() override { return InterlockedIncrement(&refs); }
+    ULONG WINAPI Release() override {
+        const LONG count = InterlockedDecrement(&refs);
+        if (count == 0) {
+            GameInput* owner = owner_;
+            owner_ = nullptr;
+            if (owner) owner->on_dispatcher_released();
+            delete this;
+        }
+        return static_cast<ULONG>(count);
+    }
+
+    // Slot 3: bool Dispatch(uint64_t quotaInMicroseconds).
+    // This shim has no real background input work, so the dispatch queue is
+    // always empty. The documented "flush at least one item even at quota 0"
+    // shape is honoured trivially: there is nothing to flush, so it returns
+    // false (no work items remain) for every quota, including 0. No real work
+    // is scheduled, and it never busy-waits or sleeps.
+    virtual bool WINAPI Dispatch(uint64_t /*quota_us*/) {
+        return false;
+    }
+
+    // Slot 4: HRESULT OpenWaitHandle(HANDLE* waitHandle).
+    // Returns a fresh manual-reset event on every call. The dispatcher owns
+    // nothing after returning it: the caller closes it via CloseHandle.
+    virtual HRESULT WINAPI OpenWaitHandle(HANDLE* out) {
+        if (!out) return E_POINTER;
+        *out = nullptr;
+        HANDLE handle = CreateEventW(nullptr, TRUE, FALSE, nullptr);
+        if (!handle) {
+            return HRESULT_FROM_WIN32(GetLastError());
+        }
+        *out = handle;
+        return S_OK;
+    }
+};
+
+HRESULT WINAPI GameInput::CreateDispatcher(void** out) {
+    if (!out) return E_POINTER;
+    *out = nullptr;
+    GameInputDispatcher* dispatcher = new (std::nothrow) GameInputDispatcher(this);
+    if (!dispatcher) return E_OUTOFMEMORY;
+    *out = dispatcher;
+    // The GameInput singleton's own refcount is intentionally unchanged:
+    // the dispatcher only moves the manual-dispatch mode counter.
+    on_dispatcher_created();
+    return S_OK;
+}
 
 GameInput singleton;
 }

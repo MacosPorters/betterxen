@@ -186,8 +186,39 @@ int main() {
     CHECK(!unreg_cb(v0, tok2, 0));
     set_focus(v0, 0x2);
 
+    // Slot 14: IGameInput::CreateDispatcher. The singleton refcount is checked
+    // below via the pre-existing GameInput release sequence, which must be
+    // unchanged by dispatcher creation.
+    using CreateDispatcherFn = HRESULT (WINAPI*)(IUnknown*, void**);
+    using DispatchFn = bool (WINAPI*)(IUnknown*, uint64_t);
+    using OpenWaitHandleFn = HRESULT (WINAPI*)(IUnknown*, HANDLE*);
+    auto create_dispatcher = reinterpret_cast<CreateDispatcherFn>(table[14]);
+    CHECK(create_dispatcher(v0, nullptr) == E_POINTER);
+    void* dispatcher = reinterpret_cast<void*>(uintptr_t{1});
+    CHECK(create_dispatcher(v0, &dispatcher) == S_OK && dispatcher);
+    auto* disp_unknown = static_cast<IUnknown*>(dispatcher);
+    auto** disp_table = *reinterpret_cast<void***>(disp_unknown);
+    void* disp_qi = nullptr;
+    CHECK(reinterpret_cast<HRESULT (WINAPI*)(IUnknown*, REFIID, void**)>(disp_table[0])(
+              disp_unknown, IID_IUnknown, &disp_qi) == S_OK && disp_qi == dispatcher);
+    CHECK(disp_unknown->Release() == 1);
+    void* disp_other = reinterpret_cast<void*>(uintptr_t{1});
+    CHECK(reinterpret_cast<HRESULT (WINAPI*)(IUnknown*, REFIID, void**)>(disp_table[0])(
+              disp_unknown, kUnknownIid, &disp_other) == E_NOINTERFACE && !disp_other);
+    auto dispatch = reinterpret_cast<DispatchFn>(disp_table[3]);
+    CHECK(!dispatch(disp_unknown, 0));
+    CHECK(!dispatch(disp_unknown, 1000000));
+    auto open_wait = reinterpret_cast<OpenWaitHandleFn>(disp_table[4]);
+    CHECK(open_wait(disp_unknown, nullptr) == E_POINTER);
+    HANDLE wait1 = nullptr, wait2 = nullptr;
+    CHECK(open_wait(disp_unknown, &wait1) == S_OK && wait1);
+    CHECK(WaitForSingleObject(wait1, 0) == WAIT_TIMEOUT);
+    CHECK(open_wait(disp_unknown, &wait2) == S_OK && wait2 && wait2 != wait1);
+    CHECK(CloseHandle(wait1) && CloseHandle(wait2));
+    CHECK(disp_unknown->Release() == 0);
+
     CHECK(v0->Release() == 1);
     CHECK(input->Release() == 0);
     FreeLibrary(dll);
-    std::puts("PASS: audio mappings, APU and DSP queues, GameInput ordinal 1 and device callbacks");
+    std::puts("PASS: audio mappings, APU and DSP queues, GameInput ordinal 1, device callbacks, dispatcher");
 }
