@@ -5,6 +5,7 @@
 #include <unordered_map>
 
 #include "bx_log.h"
+#include "gameinput_allocation.h"
 
 namespace {
 // GameInputCreate @1 exposes the legacy v0 COM layout.
@@ -47,7 +48,9 @@ class GameInput final : public IUnknown {
     LONG refs = 0;
     SRWLOCK callback_lock_ = SRWLOCK_INIT;
     uint64_t next_token_ = 1;
-    std::unordered_map<uint64_t, RegisteredDeviceCallback> callbacks_;
+    std::unordered_map<uint64_t, RegisteredDeviceCallback, std::hash<uint64_t>,
+                       std::equal_to<uint64_t>,
+                       CallbackAllocator<std::pair<const uint64_t, RegisteredDeviceCallback>>> callbacks_;
     std::atomic<uint32_t> focus_policy_{0};
 
 public:
@@ -99,16 +102,22 @@ public:
             return E_INVALIDARG;
         }
         SrwExclusiveLock guard(callback_lock_);
-        const uint64_t token = next_token_++;
-        callbacks_.emplace(token, RegisteredDeviceCallback{
-            device,
-            input_kind,
-            status_filter,
-            enumeration_kind,
-            context,
-            callback,
-            false,
-        });
+        const uint64_t token = next_token_;
+        try {
+            const auto inserted = callbacks_.emplace(token, RegisteredDeviceCallback{
+                device,
+                input_kind,
+                status_filter,
+                enumeration_kind,
+                context,
+                callback,
+                false,
+            });
+            if (!inserted.second) return E_FAIL;
+        } catch (const std::bad_alloc&) {
+            return E_OUTOFMEMORY;
+        }
+        ++next_token_;
         if (out_token) *out_token = token;
         return S_OK;
     }
