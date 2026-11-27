@@ -90,6 +90,19 @@ pub struct ShaderGap {
 ///
 /// Values never contain spaces, so `atomic64=` followed by a space yields an
 /// empty value.
+/// Splits a log detail string into `key=value` pairs.
+///
+/// `stop_at_free_text` exists for records that end with prose after their
+/// fields (`shader_d3dmetal_gap` ends in a sentence), where the first token
+/// without `=` marks the end of the structured part.
+///
+/// For `shader_gate` the whole string is structured, so a token without `=`
+/// is skipped rather than treated as the end. Stopping there would silently
+/// drop every later field while the record still counted as parsed: with
+/// `atomic64=typed, raw, wave_lanes=64-64`, a `break` loses `wave_lanes`,
+/// whereas a `continue` keeps it. The emitter writes no spaces inside a value
+/// today, so this is robustness against a future value containing one, not a
+/// fix for current output.
 fn parse_key_values(detail: &str, stop_at_free_text: bool) -> Vec<(&str, &str)> {
     let mut pairs = Vec::new();
     for token in detail.split_ascii_whitespace() {
@@ -532,5 +545,28 @@ mod tests {
         let summary = summarize_jsonl(log);
         assert_eq!(summary.shader_gate.decisions["some_future_decision"], 1);
         assert_eq!(summary.shader_gate.kinds["some_future_kind"], 1);
+    }
+
+    /// A stray token must not end the structured part of a `shader_gate`
+    /// record: if it did, every later field would silently become `None`
+    /// while the record still counted as parsed.
+    #[test]
+    fn a_record_without_a_decision_is_counted_as_missing() {
+        let mut summary = TraceSummary::default();
+        record_shader_gate(&mut summary, "pso=graphics stage=pixel");
+        let gate = &summary.shader_gate;
+        assert_eq!(gate.total, 1);
+        assert_eq!(gate.unparsed, 0);
+        assert_eq!(gate.missing_decision, 1);
+        assert!(gate.decisions.is_empty());
+    }
+
+    /// The free-text path is the opposite: `shader_d3dmetal_gap` ends in a
+    /// sentence, so the first token without `=` ends the structured part.
+    #[test]
+    fn free_text_ends_the_structured_part_of_a_gap_record() {
+        let pairs = parse_key_values("pso=graphics stage=pixel and then some prose", true);
+        assert_eq!(pairs.len(), 2);
+        assert_eq!(pairs[1], ("stage", "pixel"));
     }
 }
