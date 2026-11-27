@@ -36,6 +36,25 @@ int bx_xmem_query_region(uint64_t va, bx_xmem_region_info_t* out_info);
 /* Snapshot current XMem usage against the active Lockhart/Anaconda cap. */
 void bx_xmem_get_internal_stats(bx_xmem_stats_t* out_stats);
 
+/*
+ * Reserve bytes for a private allocation by another DLL in this process.
+ * Admission is atomic with XMem allocation and includes both XMem usage and
+ * all outstanding external reservations under the active title limit.
+ * Returns 1 on success and 0 on refusal. Refusal leaves accounting intact.
+ * Reserve before allocating, and hold the charge until the allocation and
+ * all dependent objects are released. Roll back when allocation fails.
+ */
+int bx_xmem_try_reserve_external(uint64_t bytes);
+
+/*
+ * Credit a matching successful reservation once. Returns 1 on success, or
+ * 0 if bytes exceeds outstanding external reservations (no accounting change).
+ * A zero-byte operation succeeds without changing the budget.
+ * These reservations do not change the XMem-only statistics struct above.
+ * Provider implementation and activation in the xmem export table are paired.
+ */
+int bx_xmem_release_external(uint64_t bytes);
+
 #ifdef __cplusplus
 }
 #endif
