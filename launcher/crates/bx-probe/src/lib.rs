@@ -283,6 +283,14 @@ mod tests {
         bytes[off..off + 8].copy_from_slice(&value.to_le_bytes());
     }
 
+    fn write_section(bytes: &mut [u8], base: usize, rva: u32, raw_ptr: u32, raw_size: u32) {
+        bytes[base..base + 8].copy_from_slice(b".rdata\0\0");
+        put_u32(bytes, base + 8, raw_size);
+        put_u32(bytes, base + 12, rva);
+        put_u32(bytes, base + 16, raw_size);
+        put_u32(bytes, base + 20, raw_ptr);
+    }
+
     fn minimal_pe32_plus() -> Vec<u8> {
         let mut bytes = vec![0u8; 0x400];
         bytes[0..2].copy_from_slice(b"MZ");
@@ -296,11 +304,7 @@ mod tests {
         put_u64(&mut bytes, OPT + 24, 0x0000_0001_4000_0000);
         put_u32(&mut bytes, OPT + 56, 0x2000);
         put_u32(&mut bytes, OPT + 108, 16);
-        bytes[SEC..SEC + 8].copy_from_slice(b".rdata\0\0");
-        put_u32(&mut bytes, SEC + 8, 0x200);
-        put_u32(&mut bytes, SEC + 12, SECTION_RVA);
-        put_u32(&mut bytes, SEC + 16, 0x200);
-        put_u32(&mut bytes, SEC + 20, RAW_PTR);
+        write_section(&mut bytes, SEC, SECTION_RVA, RAW_PTR, 0x200);
         bytes
     }
 
@@ -332,6 +336,50 @@ mod tests {
 
         put_u16(&mut bytes, RAW_PTR as usize + 0x60, 0x1234);
         bytes[RAW_PTR as usize + 0x62..RAW_PTR as usize + 0x6C].copy_from_slice(b"NamedFunc\0");
+        bytes
+    }
+
+    /// Two sections: an import-descriptor section holding exactly two
+    /// descriptors and no terminator, and a data section for names and thunks.
+    /// Ellipsis bytes just past the descriptor section spell a third valid
+    /// descriptor, so an unbounded walk reports a DLL that is not imported.
+    fn import_table_without_terminator_pe32_plus() -> Vec<u8> {
+        const DATA_RVA: u32 = SECTION_RVA + 0x1000;
+        const DATA_PTR: u32 = 0x300;
+
+        let mut bytes = minimal_pe32_plus();
+        put_u16(&mut bytes, COFF + 2, 2);
+        write_section(&mut bytes, SEC, SECTION_RVA, RAW_PTR, 40);
+        write_section(&mut bytes, SEC + 40, DATA_RVA, DATA_PTR, 0x100);
+        put_u32(&mut bytes, OPT + 112 + 8, SECTION_RVA);
+
+        for (base, dll_rva, thunk_rva) in [
+            (RAW_PTR as usize, DATA_RVA, DATA_RVA + 0x80),
+            (RAW_PTR as usize + 20, DATA_RVA + 0x20, DATA_RVA + 0xA0),
+        ] {
+            put_u32(&mut bytes, base, thunk_rva);
+            put_u32(&mut bytes, base + 12, dll_rva);
+            put_u32(&mut bytes, base + 16, thunk_rva);
+        }
+
+        // A third, entirely valid descriptor just past the section boundary.
+        put_u32(&mut bytes, RAW_PTR as usize + 40, DATA_RVA + 0xC0);
+        put_u32(&mut bytes, RAW_PTR as usize + 52, DATA_RVA + 0x40);
+        put_u32(&mut bytes, RAW_PTR as usize + 56, DATA_RVA + 0xC0);
+
+        for (delta, name) in [
+            (0x00, &b"ONE.DLL\0"[..]),
+            (0x20, &b"TWO.DLL\0"[..]),
+            (0x40, &b"THREE.DLL\0"[..]),
+        ] {
+            let off = DATA_PTR as usize + delta;
+            bytes[off..off + name.len()].copy_from_slice(name);
+        }
+        for (delta, ordinal) in [(0x80, 1u64), (0xA0, 2), (0xC0, 3)] {
+            let off = DATA_PTR as usize + delta;
+            put_u64(&mut bytes, off, (1u64 << 63) | ordinal);
+            put_u64(&mut bytes, off + 8, 0);
+        }
         bytes
     }
 
@@ -401,7 +449,10 @@ mod tests {
     fn rejects_section_count_larger_than_file() {
         let mut image = minimal_pe32_plus();
         put_u16(&mut image, COFF + 2, u16::MAX);
-        assert!(probe_pe32_plus(&image).is_err());
+        assert_eq!(
+            probe_pe32_plus(&image).unwrap_err(),
+            ProbeError::NotPe32Plus("truncated section table")
+        );
     }
 
     #[test]
@@ -425,29 +476,24 @@ mod tests {
     #[test]
     fn rejects_truncated_import_directory() {
         let mut image = minimal_pe32_plus();
+        // An empty section table that fits, and an import data-directory entry
+        // cut after two of its four bytes.
+        put_u16(&mut image, COFF + 2, 0);
+        put_u16(&mut image, COFF + 16, 2);
         image.truncate(OPT + 112 + 8 + 2);
-        assert!(probe_pe32_plus(&image).is_err());
+        assert_eq!(
+            probe_pe32_plus(&image).unwrap_err(),
+            ProbeError::NotPe32Plus("truncated import directory")
+        );
     }
 
     #[test]
     fn bounds_unterminated_import_descriptor_walk() {
-        let mut image = minimal_pe32_plus();
-        put_u32(&mut image, OPT + 112 + 8, SECTION_RVA);
-        put_u32(&mut image, SEC + 8, 0x200);
-        put_u32(&mut image, SEC + 16, 0x200);
-        for off in (RAW_PTR as usize..image.len().saturating_sub(20)).step_by(20) {
-            put_u32(&mut image, off, SECTION_RVA + 0x80);
-            put_u32(&mut image, off + 12, SECTION_RVA + 0x40);
-            put_u32(&mut image, off + 16, SECTION_RVA + 0x80);
-        }
-        bytes_at(&mut image, RAW_PTR as usize + 0x40, b"NOEND.DLL\0");
-        put_u64(&mut image, RAW_PTR as usize + 0x80, 0);
-        let result = std::panic::catch_unwind(|| probe_pe32_plus(&image));
-        assert!(result.is_ok(), "unterminated descriptor table panicked");
-        assert!(result.unwrap().is_ok());
-    }
-
-    fn bytes_at(image: &mut [u8], off: usize, value: &[u8]) {
-        image[off..off + value.len()].copy_from_slice(value);
+        let summary = probe_pe32_plus(&import_table_without_terminator_pe32_plus()).unwrap();
+        let expected = BTreeMap::from([
+            ("ONE.DLL".to_owned(), vec!["ORDINAL:1".to_owned()]),
+            ("TWO.DLL".to_owned(), vec!["ORDINAL:2".to_owned()]),
+        ]);
+        assert_eq!(summary.imports, expected);
     }
 }
