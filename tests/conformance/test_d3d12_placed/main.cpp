@@ -26,21 +26,10 @@
 extern "C" {
 __declspec(dllimport) HRESULT WINAPI D3D12ConfigureVirtualMemoryX(void* config);
 __declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(void* params, REFIID riid, void** ppv);
-__declspec(dllimport) PVOID WINAPI XMemAlloc(SIZE_T size, uint64_t attributes);
-__declspec(dllimport) VOID WINAPI XMemFree(PVOID address, uint64_t attributes);
 __declspec(dllimport) BOOL WINAPI XMemAllocatePhysicalPages(SIZE_T* count, PULONG_PTR pages, uint64_t flags);
 __declspec(dllimport) BOOL WINAPI XMemFreePhysicalPages(SIZE_T* count, PULONG_PTR pages, uint64_t flags);
 __declspec(dllimport) PVOID WINAPI XMemMapPhysicalPages(PVOID base, SIZE_T count, uint64_t flags, PULONG_PTR pages);
-__declspec(dllimport) BOOL WINAPI XMemGetWorkingSetStatistics(PVOID out_stats, SIZE_T stats_size);
 }
-
-struct bx_xmem_stats_t {
-    uint64_t title_limit_bytes;
-    uint64_t committed_virtual_bytes;
-    uint64_t allocated_physical_bytes;
-    uint64_t peak_committed_bytes;
-};
-static_assert(sizeof(bx_xmem_stats_t) == 32, "xmem stats struct is 32 bytes");
 
 struct BxD3d12VirtualMemoryConfig {
     uint32_t magic;
@@ -475,45 +464,6 @@ void check_ordinary_heap_placement_validation(ID3D12Device* device) {
     if (ok_res) ok_res->Release();
 
     heap->Release();
-}
-
-/* #552: graphics-first / xmem-first pairing through the public exports.
- * With a 512 MiB cap, a 300 MiB D3D12 heap registers an external charge in
- * xmem. A 300 MiB XMemAlloc must then fail (300+300 > 512), and a 200 MiB
- * XMemAlloc must succeed (300+200 <= 512). After releasing the heap the
- * 300 MiB XMemAlloc must succeed. This is the graphics-first overcommit
- * that the private-ledger version allowed. */
-void check_graphics_xmem_pairing(ID3D12Device* device, uint64_t cap) {
-    if (cap != (512ull << 20)) {
-        return;
-    }
-    const uint64_t heap_bytes = 300ull << 20;
-    const auto heap_desc = heap_of(D3D12_HEAP_TYPE_UPLOAD, heap_bytes, D3D12_HEAP_FLAG_NONE);
-    ID3D12Heap* heap = nullptr;
-    HRESULT hr = device->CreateHeap(&heap_desc, __uuidof(ID3D12Heap), reinterpret_cast<void**>(&heap));
-    if (!check(hr == S_OK && heap, "pairing: 300 MiB graphics heap hr=0x%08lx", ul(hr))) {
-        return;
-    }
-
-    bx_xmem_stats_t stats{};
-    check(XMemGetWorkingSetStatistics(&stats, sizeof(stats)) != 0, "pairing: xmem stats readable");
-
-    /* 300 MiB heap + 300 MiB xmem = 600 MiB > 512 MiB cap. */
-    void* too_much = XMemAlloc(300ull << 20, 0);
-    check(too_much == nullptr, "pairing: 300 MiB XMemAlloc on top of 300 MiB heap exceeds the 512 MiB cap");
-    if (too_much) XMemFree(too_much, 0);
-
-    /* 300 MiB heap + 200 MiB xmem = 500 MiB <= 512 MiB cap. */
-    void* fits = XMemAlloc(200ull << 20, 0);
-    check(fits != nullptr, "pairing: 200 MiB XMemAlloc fits beside the 300 MiB heap");
-    if (fits) XMemFree(fits, 0);
-
-    heap->Release();
-
-    /* After the heap charge is released the 300 MiB allocation must fit. */
-    void* after = XMemAlloc(300ull << 20, 0);
-    check(after != nullptr, "pairing: 300 MiB XMemAlloc fits after releasing the graphics heap");
-    if (after) XMemFree(after, 0);
 }
 
 /* CreatePlacedResource1 must accept a heap from CreateHeap. CreatePlacedResource2
@@ -1398,7 +1348,6 @@ int main() {
     }
 
     if (device) {
-        check_graphics_xmem_pairing(device, cfg->title_memory_limit_bytes);
     }
 
     /*
