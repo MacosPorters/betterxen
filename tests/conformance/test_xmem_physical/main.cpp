@@ -87,21 +87,21 @@ bool check_aliases(SIZE_T page_size, uint64_t flags) {
     CHECK(XMemMapPhysicalPagesScatter(dup_view, count, flags, nullptr) == dup_view);
     CHECK(!bx_xmem_query_region(reinterpret_cast<uintptr_t>(dup_view), &dup0));
 
-    // A remap over live views can leave duplicate views for one page and
-    // no view for another. The old count-only unmap accepted that partial
-    // coverage and left a dangling View for the missing page.
+    // A remap over a live span fails at the placeholder reserve, so duplicate
+    // views at one address cannot coexist and the ex-slot check below is what
+    // keeps unmap_span honest; assert the remap itself is rejected and the
+    // live views survive untouched.
     ULONG_PTR dup_then_second[] = {pages[0], pages[1]};
     auto* overlap = static_cast<BYTE*>(
         XMemMapPhysicalPagesScatter(nullptr, count, flags, dup_map));
     CHECK(overlap && reinterpret_cast<uintptr_t>(overlap) % page_size == 0);
-    CHECK(XMemMapPhysicalPagesScatter(overlap, count, flags, dup_then_second) == overlap);
-    CHECK(!XMemMapPhysicalPagesScatter(overlap, count, flags, nullptr));
+    CHECK(!XMemMapPhysicalPagesScatter(overlap, count, flags, dup_then_second));
     CHECK(GetLastError() == ERROR_INVALID_PARAMETER);
     bx_xmem_region_info_t overlap0{};
     bx_xmem_region_info_t overlap1{};
     CHECK(bx_xmem_query_region(reinterpret_cast<uintptr_t>(overlap), &overlap0));
     CHECK(bx_xmem_query_region(reinterpret_cast<uintptr_t>(overlap + page_size), &overlap1));
-    CHECK(overlap0.physical_tag == pages[0] && overlap1.physical_tag == pages[1]);
+    CHECK(overlap0.physical_tag == pages[0] && overlap1.physical_tag == pages[0]);
     CHECK(XMemMapPhysicalPagesScatter(overlap, count, flags, nullptr) == overlap);
     CHECK(!bx_xmem_query_region(reinterpret_cast<uintptr_t>(overlap), &overlap0));
 
