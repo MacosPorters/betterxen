@@ -30,11 +30,10 @@
  * vkd3d on CrossOver 26.2 faults on that pointer with or without this shim.
  * https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createheap
  *
- * CreatePlacedResource forwards the caller's parameters to the host.
- * On the backing heap the offset must be a multiple of the alignment
- * GetResourceAllocationInfo reports, the resource
- * must fit, and an upload or readback heap (not this CUSTOM heap) must use the
- * initial state Microsoft Learn requires:
+ * CreatePlacedResource validates the placement before forwarding, on every
+ * heap. The offset must be a multiple of the alignment
+ * GetResourceAllocationInfo reports and the resource must fit, and an upload
+ * or readback heap must use the initial state Microsoft Learn requires:
  * https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-createplacedresource
  * https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12device-getresourceallocationinfo
  * Heap alignment values 0, 64 KiB and 4 MiB, and ID3D12Heap1:
@@ -557,33 +556,6 @@ HRESULT host_private_heap(BxDeviceProxy* self, const D3D12_HEAP_DESC* desc, REFI
     return hr;
 }
 
-bool is_backing_heap(ID3D12Heap* heap) {
-    if (!heap) {
-        return false;
-    }
-    BxChargedHeap* backing = nullptr;
-    {
-        Guard guard(g_section);
-        backing = g_record.backing;
-        if (!backing) {
-            return false;
-        }
-        backing->AddRef();
-    }
-    IUnknown* want = nullptr;
-    IUnknown* got = nullptr;
-    const HRESULT want_hr = backing->QueryInterface(IID_IUnknown, reinterpret_cast<void**>(&want));
-    const HRESULT got_hr = heap->QueryInterface(IID_IUnknown, reinterpret_cast<void**>(&got));
-    const bool same = SUCCEEDED(want_hr) && SUCCEEDED(got_hr) && want == got;
-    if (want) {
-        want->Release();
-    }
-    if (got) {
-        got->Release();
-    }
-    backing->Release();
-    return same;
-}
 
 void log_placed(UINT64 offset, HRESULT hr) {
     char detail[160];
@@ -621,7 +593,7 @@ HRESULT STDMETHODCALLTYPE create_heap(BxDeviceProxy* self, const D3D12_HEAP_DESC
     return host_private_heap(self, desc, riid, out, true);
 }
 
-HRESULT validate_backing_placement(ID3D12Device* device, ID3D12Heap* heap, UINT64 offset, const D3D12_RESOURCE_DESC* desc,
+HRESULT validate_placement(ID3D12Device* device, ID3D12Heap* heap, UINT64 offset, const D3D12_RESOURCE_DESC* desc,
                                    D3D12_RESOURCE_STATES state, const D3D12_CLEAR_VALUE* clear) {
     if (!heap || !desc) {
         return E_INVALIDARG;
@@ -663,12 +635,16 @@ HRESULT STDMETHODCALLTYPE create_placed(BxDeviceProxy* self, ID3D12Heap* heap, U
     if (out) {
         *out = nullptr;
     }
-    if (is_backing_heap(heap)) {
-        const HRESULT check_hr = validate_backing_placement(self->h_ID3D12Device, heap, offset, desc, state, clear);
-        if (FAILED(check_hr)) {
-            log_placed(offset, check_hr);
-            return check_hr;
-        }
+    /* Validate every placement, not just the backing heap's. The host accepts
+     * some invalid placements and returns success (research register A-7), and
+     * a misaligned or overhanging placement it accepts is silent corruption at
+     * draw time rather than a clean E_INVALIDARG here. The check reads the
+     * host's desc through the wrapper (BxChargedHeap::GetDesc forwards) and
+     * queries alignment on the host device, so it is heap-agnostic. */
+    const HRESULT check_hr = validate_placement(self->h_ID3D12Device, heap, offset, desc, state, clear);
+    if (FAILED(check_hr)) {
+        log_placed(offset, check_hr);
+        return check_hr;
     }
     ID3D12Heap* host_heap = bx_unwrap(heap);
     HRESULT hr = self->h_ID3D12Device->CreatePlacedResource(host_heap, offset, desc, state, clear, riid, out);
