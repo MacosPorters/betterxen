@@ -6,6 +6,7 @@
 - [Roadmap](roadmap.md) — Single authoritative plan (Milestones M0–M6) and completion gates.
 - [Parallel Track Architecture](architecture/parallel-tracks.md) — 6-track directory ownership, ABI freeze rule, and multi-agent Git workflow.
 - [Wave 1 Parallel Backlog](issues/wave-1-backlog.md) — Non-overlapping starter issues across Tracks A–F.
+- [Merge Order & CHANGELOG Conflicts](architecture/merge-order.md) — Why parallel `track-*` PRs conflict in `CHANGELOG.md`, and the keep-both-bullets resolution recipe (#529).
 - [Frozen ABI Contracts](../abi/README.md) — Cross-DLL C headers (`abi/include/`) and canonical `.def` export tables (`abi/defs/`).
 - [Synthetic Conformance Suite](../tests/conformance/README.md) — Auto-discovered PE32+ conformance binaries.
 - [Changelog](../CHANGELOG.md) — Unreleased and historical changes.
