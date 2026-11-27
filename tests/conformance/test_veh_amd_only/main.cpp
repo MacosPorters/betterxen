@@ -6,8 +6,156 @@
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
+#include <string>
+#include <vector>
 
 extern "C" uint64_t bx_veh_get_clwb_trap_count(void);
+
+// ---------------------------------------------------------------------------
+// BX_LOG_FILE reader (same pattern as test_veh_clwb / test_win32_bridge).
+// If BX_LOG_FILE is unset we create a temp log and point the variable at it
+// so the runtime_veh logger writes somewhere we can read back.
+// ---------------------------------------------------------------------------
+
+struct LogReader {
+    char path[MAX_PATH]{};
+    bool created_temp = false;
+    int64_t start_offset = 0;
+
+    bool init() {
+        const DWORD existing_len =
+            GetEnvironmentVariableA("BX_LOG_FILE", path, sizeof(path));
+        if (existing_len == 0 || existing_len >= sizeof(path)) {
+            char temp_dir[MAX_PATH]{};
+            const DWORD dir_len = GetTempPathA(sizeof(temp_dir), temp_dir);
+            if (dir_len == 0 || dir_len >= sizeof(temp_dir) ||
+                GetTempFileNameA(temp_dir, "bxa", 0, path) == 0) {
+                std::fprintf(stderr, "FAIL: could not create temporary AMD log file\n");
+                return false;
+            }
+            if (!SetEnvironmentVariableA("BX_LOG_FILE", path)) {
+                DeleteFileA(path);
+                std::fprintf(stderr, "FAIL: could not set BX_LOG_FILE\n");
+                return false;
+            }
+            created_temp = true;
+        }
+        start_offset = query_file_size(path);
+        return true;
+    }
+
+    ~LogReader() {
+        if (created_temp) {
+            DeleteFileA(path);
+        }
+    }
+
+    static int64_t query_file_size(const char* p) {
+        HANDLE f = CreateFileA(p, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (f == INVALID_HANDLE_VALUE) {
+            return 0;
+        }
+        LARGE_INTEGER size{};
+        const bool ok = GetFileSizeEx(f, &size) != 0;
+        CloseHandle(f);
+        return ok && size.QuadPart > 0 ? size.QuadPart : 0;
+    }
+
+    // Read only the bytes appended after start_offset.
+    bool read_new(std::string& out) const {
+        HANDLE f = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (f == INVALID_HANDLE_VALUE) {
+            std::fprintf(stderr, "FAIL: could not open AMD log %s (error %lu)\n",
+                         path, GetLastError());
+            return false;
+        }
+        LARGE_INTEGER size{};
+        if (!GetFileSizeEx(f, &size) || size.QuadPart < start_offset) {
+            CloseHandle(f);
+            std::fprintf(stderr, "FAIL: invalid AMD log size for %s\n", path);
+            return false;
+        }
+        const int64_t delta = size.QuadPart - start_offset;
+        if (delta < 0 || delta > (64LL << 20)) {
+            CloseHandle(f);
+            std::fprintf(stderr, "FAIL: unexpected AMD log delta (%lld bytes)\n",
+                         static_cast<long long>(delta));
+            return false;
+        }
+        LARGE_INTEGER seek{};
+        seek.QuadPart = start_offset;
+        if (!SetFilePointerEx(f, seek, nullptr, FILE_BEGIN)) {
+            CloseHandle(f);
+            return false;
+        }
+        out.assign(static_cast<size_t>(delta), '\0');
+        size_t total_read = 0;
+        while (total_read < out.size()) {
+            DWORD chunk = 0;
+            const DWORD want = static_cast<DWORD>(out.size() - total_read);
+            if (!ReadFile(f, out.data() + total_read, want, &chunk, nullptr) || chunk == 0) {
+                break;
+            }
+            total_read += chunk;
+        }
+        CloseHandle(f);
+        out.resize(total_read);
+        return true;
+    }
+};
+
+// One parsed `*_trapped` record.
+struct AmdRecord {
+    std::string event;
+    uint64_t total_traps = 0;
+    size_t len = 0;
+};
+
+// Parse every `"event":"<kind>_trapped"` line for `len=` and `total_traps=`.
+static std::vector<AmdRecord> parse_amd_records(const std::string& data) {
+    std::vector<AmdRecord> records;
+    size_t pos = 0;
+    while (pos < data.size()) {
+        size_t nl = data.find('\n', pos);
+        if (nl == std::string::npos) {
+            nl = data.size();
+        }
+        const std::string line = data.substr(pos, nl - pos);
+        pos = nl + 1;
+
+        // Match any *_trapped event from runtime_veh.
+        const size_t ev_key = line.find("\"event\":\"");
+        if (ev_key == std::string::npos) {
+            continue;
+        }
+        const size_t ev_start = ev_key + 9;
+        const size_t ev_end = line.find('"', ev_start);
+        if (ev_end == std::string::npos) {
+            continue;
+        }
+        const std::string event = line.substr(ev_start, ev_end - ev_start);
+        if (event.size() < 8 || event.compare(event.size() - 8, 8, "_trapped") != 0) {
+            continue;
+        }
+
+        AmdRecord rec{};
+        rec.event = event;
+        const size_t len_key = line.find("len=");
+        if (len_key == std::string::npos) {
+            continue;
+        }
+        rec.len = std::stoull(line.substr(len_key + 4));
+        const size_t tt_key = line.find("total_traps=");
+        if (tt_key == std::string::npos) {
+            continue;
+        }
+        rec.total_traps = std::stoull(line.substr(tt_key + 12));
+        records.push_back(rec);
+    }
+    return records;
+}
 
 namespace {
 
@@ -238,12 +386,114 @@ void check_bit_fields() {
 int main() {
     // Keep the DLL import so that its VEH is installed before this fixture.
     (void)bx_veh_get_clwb_trap_count();
+
+    // Set up the log reader BEFORE the first AMD instruction executes so we
+    // capture every *_trapped record the VEH emits. The counters are
+    // per-kind, so log_sampled_trap() sees count == 1 for the first trap of
+    // each kind. That means the first instance of all six kinds is always
+    // logged, and all six lengths are observable.
+    LogReader log;
+    if (!log.init()) {
+        return 5;
+    }
+
     check_cache_lines();
     check_address_override();
     check_write_fault();
     check_wait_instructions();
     check_processor_registers();
     check_bit_fields();
+
+    // -----------------------------------------------------------------------
+    // Verify the decoded instruction length (`len=`) that the VEH logs and
+    // uses to advance RIP. A wrong `len` lands the guest mid-instruction
+    // while the effect checks still pass, so this is the field that decides
+    // whether the guest resumes correctly.
+    //
+    // log_sampled_trap() logs when count == 1 or count is a power of two.
+    // Because the counters are per-kind, the first trap of each kind is
+    // logged with total_traps=1. We assert on that record for each kind.
+    //
+    // Expected lengths, derived from the byte sequences the fixture emits
+    // (verified by assembling with x86_64-w64-mingw32-as and disassembling
+    // with x86_64-w64-mingw32-objdump -d):
+    //
+    //   clzero:   0f 01 fc                    -> 3
+    //   monitorx: 67 0f 01 fa                 -> 4  (addr32, first in check_address_override)
+    //   mwaitx:   0f 01 fb                    -> 3
+    //   rdpru:    0f 01 fd                    -> 3
+    //   extrq:    66 0f 78 c3 0c 0c           -> 6  (first CHECK_SSE4A)
+    //   insertq:  f2 0f 78 dc 08 08           -> 6  (first CHECK_SSE4A)
+    //
+    // Note: extrq and insertq appear multiple times with different lengths
+    // (4, 5, 6, 7 bytes). total_traps=1 corresponds to the FIRST occurrence
+    // in check_bit_fields(), which is the 6-byte immediate form.
+    //
+    // Note: monitorx appears first as the 4-byte addr32 form in
+    // check_address_override(). If the low page allocation fails, that
+    // function returns early and the first monitorx becomes the 3-byte
+    // form in check_wait_instructions(). We assert len=4 for total_traps=1
+    // because the low page allocation is expected to succeed on this host.
+    // -----------------------------------------------------------------------
+    {
+        std::string log_data;
+        if (!log.read_new(log_data)) {
+            return 6;
+        }
+        const std::vector<AmdRecord> records = parse_amd_records(log_data);
+        if (records.empty()) {
+            std::fprintf(stderr,
+                         "FAIL: no *_trapped records found in log %s "
+                         "(BX_LOG_FILE must be readable)\n", log.path);
+            return 7;
+        }
+
+        // Every observed record must have 0 < len <= 15 (x86 maximum).
+        for (const auto& r : records) {
+            if (r.len == 0 || r.len > 15) {
+                std::fprintf(stderr,
+                             "FAIL: %s total_traps=%llu has invalid len=%zu\n",
+                             r.event.c_str(),
+                             static_cast<unsigned long long>(r.total_traps), r.len);
+                return 8;
+            }
+        }
+
+        // Exact expectations for the first trap of each kind.
+        struct Expected { const char* event; size_t len; const char* form; };
+        static const Expected kExpected[] = {
+            {"clzero_trapped",   3, "clzero (0f 01 fc)"},
+            {"monitorx_trapped", 4, "monitorx addr32 (67 0f 01 fa)"},
+            {"mwaitx_trapped",   3, "mwaitx (0f 01 fb)"},
+            {"rdpru_trapped",    3, "rdpru (0f 01 fd)"},
+            {"extrq_trapped",    6, "extrq $0xc,$0xc,%xmm3 (66 0f 78 c3 0c 0c)"},
+            {"insertq_trapped",  6, "insertq $0x8,$0x8,%xmm4,%xmm3 (f2 0f 78 dc 08 08)"},
+        };
+        for (const auto& exp : kExpected) {
+            bool found = false;
+            for (const auto& r : records) {
+                if (r.event == exp.event && r.total_traps == 1) {
+                    found = true;
+                    if (r.len != exp.len) {
+                        std::fprintf(stderr,
+                                     "FAIL: %s total_traps=1 (%s): "
+                                     "expected len=%zu, got len=%zu\n",
+                                     exp.event, exp.form, exp.len, r.len);
+                        return 9;
+                    }
+                    break;
+                }
+            }
+            if (!found) {
+                std::fprintf(stderr,
+                             "FAIL: missing %s record with total_traps=1 (%s)\n",
+                             exp.event, exp.form);
+                return 10;
+            }
+        }
+        std::printf("AMD decoded lengths verified for first trap of all six kinds "
+                    "(%zu records)\n", records.size());
+    }
 
     std::printf("%s: test_veh_amd_only (%u/%u checks)\n",
                 failures ? "FAIL" : "PASS", checks - failures, checks);
