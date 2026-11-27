@@ -54,7 +54,13 @@ BX_IMPORT uint64_t bx_veh_get_clwb_trap_count(void);
 BX_IMPORT PVOID WINAPI XMemAlloc(SIZE_T size, uint64_t attributes);
 BX_IMPORT VOID WINAPI XMemFree(PVOID address, uint64_t attributes);
 BX_IMPORT BOOL WINAPI XMemTransferMemory(PVOID dst, LPCVOID src, SIZE_T bytes, uint64_t flags);
-BX_IMPORT PVOID WINAPI XMemVirtualAlloc(PVOID address, SIZE_T size, DWORD alloc_type, DWORD protect);
+/* The export takes five parameters so a guest built against the public
+ * Xbox-GDK-Samples call sites can pass (address, size, alloc_type, XMEM_*,
+ * PAGE_*). A four-argument caller is still supported: the shim recognises the
+ * shape of arg 4 (a single PAGE_* bit) and uses it as the protection. This
+ * fixture passes the five-argument form, with an uninterpreted XMEM_* word
+ * (0x21) and an explicit PAGE_* protection. */
+BX_IMPORT PVOID WINAPI XMemVirtualAlloc(PVOID address, SIZE_T size, DWORD alloc_type, DWORD attributes, DWORD protect);
 BX_IMPORT SIZE_T WINAPI XMemVirtualQuery(LPCVOID address, PMEMORY_BASIC_INFORMATION buf, SIZE_T len);
 
 /* xgameruntime.dll */
@@ -437,7 +443,7 @@ void stage_xmem(const bx_runtime_config_t* cfg) {
     std::memset(dst, 0, kHeapBytes);
     bool transfer_ok = XMemTransferMemory(dst, src, kHeapBytes, 0) && std::memcmp(src, dst, kHeapBytes) == 0;
 
-    auto* vmem = static_cast<uint8_t*>(XMemVirtualAlloc(nullptr, kVirtualBytes, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE));
+    auto* vmem = static_cast<uint8_t*>(XMemVirtualAlloc(nullptr, kVirtualBytes, MEM_COMMIT | MEM_RESERVE, 0x21u, PAGE_READWRITE));
     bool virtual_ok = false;
     if (vmem) {
         vmem[0] = 0xA5;
