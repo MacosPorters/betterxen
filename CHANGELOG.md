@@ -102,6 +102,7 @@ remains unsupported.
 - Removed the "PR template" check (`.github/workflows/pr-template.yml`, `scripts/pr_template_check.py` and its tests) and its CI test step. Also removed `.github/PULL_REQUEST_TEMPLATE.md`. Pull request descriptions are no longer validated or pre-filled; CONTRIBUTING.md still asks for the same information and the claim-first rule still applies.
 
 ### Changed
+- Updated the roadmap with the startup checkpoint, synthetic first-frame backing contract, and shared-budget correction. M3 and M6 memory work now has explicit eligibility and measurement criteria.
 - Corrected `shader-transpiler/crates/dxbc-accc/README.md` (#498): its "Not done here" section listed the export list, the `build-shims.sh` staging and the `d3d12_xs` PSO hook as outstanding, but those shipped (#445, #484, #466). The section now describes each one and credits the issue that delivered it. Documentation only.
 - Documented independent Direct3D acceptance results on CrossOver 26.3 and CrossOver Preview 27, including D3D12 swapchain retention and Wine presentation stalls (#450).
 - Replaced the native-first development plan with a CrossOver-based hybrid roadmap (`docs/roadmap.md`: five provisional phases, only Phase 1 active; the earlier H0 to H7 breakdown is archived) and an accepted-direction ADR 0005. No hybrid component exists yet and no Xbox title is shown to run; this is planning and research scheduling only, and no phase is verified complete.
