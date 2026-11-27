@@ -2,7 +2,7 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
-This is the single place where the proposal is mapped onto BetterXen's [roadmap](../../../roadmap.md) and [tracks](../../parallel-tracks.md). It adds no milestone and no track, and changes neither document. Checked against `main` `cd945ba` and GitHub on 2026-11-27 (about 03:15 UTC).
+This is the single place where the proposal is mapped onto BetterXen's [roadmap](../../../roadmap.md) and [tracks](../../parallel-tracks.md). It adds no milestone and no track, and changes neither document. Checked against `main` `cd945ba` and GitHub on 2026-11-27 (about 03:30 UTC).
 
 ## Short answer
 
@@ -156,7 +156,7 @@ Tracks only; nobody is assigned.
 | Multi-queue synchronization | C | B, F | M3 (existing gate) | — | None | Cross-queue dependencies; negative controls |
 | Production benchmarking | F | A | M6 | What exists | None | [Measurement protocol](../../../testing/hybrid-workloads.md) |
 
-**Possible ownership conflicts:** `d3d12_xs/CMakeLists.txt` and `proxy.cpp` (#486, #471, any observation work); `bx-telemetry` and `bx-cli` (#496, claimed, and any new trace events); `xcrdapi.cpp` (#483, claimed, and staging reuse); `xmem` (any parameter fix and the authority).
+**Possible ownership conflicts:** `d3d12_xs/CMakeLists.txt` and `proxy.cpp` (#486, #471, any observation work); `bx-telemetry` and `bx-cli` (PR #497 and any new trace events); `xcrdapi.cpp` (#483, claimed, and staging reuse); `xmem` (any parameter fix and the authority).
 
 ## Current issues and pull requests
 
@@ -168,7 +168,7 @@ State on 2026-11-27. Nothing here takes over or replaces anyone's work.
 | #465 / PR #471 `b096424` | `Arths17` | Open, conflicts in `CHANGELOG.md`; two open review findings | Back buffers uncounted; shared files | Yes | — | #494, M2 gate presentation | Low |
 | #469 / PR #494 `fbd2f8c` | `atesahmet0` | CI green; fixture target is skipped until #486 and #471 merge; says `Tracks #469` | Exercises the configured region | No: needs both | Is a separate D3D12 mapping acceptable for "`xmem` placed resources"? | M2 exit evidence | None |
 | #483 | `1Bartosz` | Claimed, no PR | Destinations are D3D12 resources | Yes | — | Stage 4 | Staging reuse must not race it |
-| #496 | `EternaPeptix` | New, claimed, no PR | Same telemetry files as new events | Yes | — | Reading shader-gate evidence | Extend its summary later; do not parallel it |
+| #496 / PR #497 | `EternaPeptix` | Open, no CI result at the time of checking; not reviewed here | Same telemetry files as new events | Yes | — | Reading shader-gate evidence | Extend its summary later; do not parallel it |
 | #450 | `soggyramennoodle` | Open; independent results documented (#491) | Swap-chain retention informs lifetime diagnostics | Yes | — | — | Low |
 | #407 | `Arths17`, `jelly013` | Open; draft PR #425 | Supervised runs, evidence records | Yes | — | Stage 5 tooling | Low |
 | #473 | `atesahmet0`, `2elliti`, `Arths17` | Open; publication under review in [discussion 493](https://github.com/MacosPorters/betterxen/discussions/493) | Evidence base | Yes | Reviewer requested fixes before announcement | This proposal | — |
@@ -187,7 +187,7 @@ flowchart LR
   I465["465 / PR 471<br/>presentation"]
   I469["469 / PR 494<br/>M2 fixture"]
   I483["483 DirectStorage COM"]
-  I496["496 trace summary"]
+  I496["496 / PR 497 trace summary"]
   I450["450 acceptance failures"]
   I407["407 supervision"]
   I473["473 research"]
