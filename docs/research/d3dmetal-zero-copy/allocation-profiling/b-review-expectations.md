@@ -1,0 +1,23 @@
+# Independent expectations prepared for B review
+
+Prepared after reading the B report but before access to its actual source/raw bundle. These are public-contract expectations and review questions, not completed independent implementation acceptance. B now operates as Asufte/@atesahmet0; CarReal is unavailable. The [A handoff](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7204146451) provides the published A pin. B's [small M5 report](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7204220454) is attributed evidence until its actual source/receipts are inspected.
+
+[GetWriteWatch](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-getwritewatch) applies to a VirtualAlloc region created with MEM_WRITE_WATCH. Check address-array capacity before calls, returned count/granularity, error handling and exact page sets. The API tracks writes, not a comparison of byte values; a real same-value store can dirty a page, while an ordinary read should not be counted as a write. Source must actually perform the store, rather than an optimizer deleting it. With reported 4096-byte granularity, offsets 12288 and 16383 address the same reported page, while 16384 addresses the next. Do not substitute the host's 16 KiB page size for the returned granularity.
+
+[ResetWriteWatch](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-resetwritewatch) and the reset flag on GetWriteWatch clear prior records. Check empty queries after reset, new stores rearming tracking and no writers between separate query/reset operations. Those single-thread cases do not establish a safe concurrent-reset fallback.
+
+[VirtualAlloc](https://learn.microsoft.com/en-us/windows/win32/api/memoryapi/nf-memoryapi-virtualalloc) requires MEM_RESERVE with MEM_WRITE_WATCH. An arbitrary D3D12 Map pointer is not thereby an eligible allocation. Successful CPU tracking on a separate allocation cannot be transferred to the mapped heap without a valid documented allocation path.
+
+[Architecture1](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ns-d3d12-d3d12_feature_data_architecture1) defines the guarantee provided by IsolatedMMU=TRUE; FALSE removes that guarantee, rather than measuring universal absence of GPU tracking. An E_NOTIMPL heap open on a write-watch allocation leaves GPU access/tracking through that route untested.
+
+For creation/alignment review, inspect complete heap/resource descriptors, alignment-info queries, non-null output objects, legal offset-zero control, pointer-width formatting and cleanup. Invalid placements must never be mapped or submitted. Compare CPU pointer modulo separately from GPU virtual address/heap offset. Creation success does not satisfy caller preconditions. Confirm loaded DLL/framework receipts for each actual process, not a launcher setting or another Wine process. Exact B source/raw access and critical M4 reproduction remain pending.
+
+## Larger B handoff: interpretation review only
+
+B's [later handoff](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7204560629) reports seeded M5 copy sweeps, shader access, separately profiled GPU intervals, an alignment-only invalid placement check in a 128 KiB heap, same-source A texture/alias reproduction and representative footprint recalculation. These remain attributed reports pending actual source/raw publication; their locally retained status does not permit A to certify counts, rates, synchronization or joins. B explicitly has not reviewed the new A graphics supplement.
+
+A's interpretation response distinguishes end-to-end copy completion from profiled GPU interval rates, payload bytes from total read/write traffic, uninstrumented from instrumented samples, and a bound on a timed window from a proof of no hidden copies. Review will check exact shader workloads, poisoned/omitted controls, timing boundaries, outlier retention, target-process/command-buffer/encoder joins and numerator definitions. Representative footprint recalculation must preserve device-release versus process-exit distinctions. The invalid-placement negative outcomes must remain failures of the original gate in same-source reproduction. No additional B sweep is commissioned while its existing source/raw handoff is pending.
+
+## Source access and review update
+
+B subsequently published a40228747470f0d184375e451b0173769c90aef5. Actual source and raw-data review is now recorded in [A's B review](review-b.md), including an isolated stopped-run output-hash discrepancy and the requested target-only trace inputs. Earlier paragraphs describe the prior pending-access state, not a continuing source-publication blocker. M4 hardware reproduction is still pending urgent-pressure recovery.

@@ -1,0 +1,35 @@
+{
+  "scope": "source-derived logical counterexample only; no host memory allocation, shim invocation or production modification",
+  "source_revision": "c13f9c76650edded41774528b50f40798244a6f3",
+  "source_sha256": {
+    "shims/xmem/xmem.cpp": "1b0b04466b37bc0993fbdd25f0ae94c41d93592b9e4cbef6da89ec0a30cf808c",
+    "shims/xmem/physical_pages.cpp": "710fbce41356adf3db274c9777a5eadc651a86b1065fcad6900f38f13863759b",
+    "shims/d3d12_xs/vmem.cpp": "e51173310209f3a9f850b2b4c00b2d7a27841e2906de38ae1a58e491bf7c31a7",
+    "abi/include/bx_xmem_internal.h": "8a0d7202eafb2ff4f1af113858c8284315fed214594ebf33fa7f7c7b7dac206f"
+  },
+  "assumptions": [
+    "stable common configured cap",
+    "underlying host allocations succeed",
+    "distinct live CPU and D3D12 allocations, not aliases or double counting"
+  ],
+  "sequential": {
+    "cap_units": 8,
+    "graphics_request_units": 6,
+    "cpu_request_units": 3,
+    "graphics_allowed": true,
+    "cpu_allowed": true,
+    "combined_units": 9,
+    "combined_cap_exceeded": true
+  },
+  "reverse_order_control_rejects": true,
+  "snapshot_interleaving": {
+    "initial_xmem_units": 4,
+    "graphics_snapshot_units": 4,
+    "intervening_xmem_commit_units": 4,
+    "graphics_commit_units": 4,
+    "final_combined_units": 12,
+    "cap_units": 8,
+    "combined_cap_exceeded": true
+  },
+  "conclusion": "One-way visibility violates combined admission even sequentially; separate locks also permit a stale cross-DLL snapshot. Real shim/backend reproduction remains unrun."
+}

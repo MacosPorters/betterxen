@@ -1,0 +1,41 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "receipt.json",
+      "bytes": 70594,
+      "original_sha256": "0c758385570bfdcaf110b81ee5a3885093b7f8c96fcf6e7c19717f60ea3f14fc",
+      "archived_sha256": "151c33be5f63a5d909eadbe5ab541f4a1baba9db66f97b765f68386748b17f98",
+      "redacted": true
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+      "bytes": 906,
+      "original_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "archived_sha256": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/run.py",
+      "bytes": 16309,
+      "original_sha256": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da",
+      "archived_sha256": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/allocation-profiling/support.h",
+      "bytes": 14678,
+      "original_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "archived_sha256": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+      "redacted": false
+    },
+    {
+      "path": "source/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+      "bytes": 17911,
+      "original_sha256": "c74339350bd536f0e57938a2fa7f4bb7afea31e2be9e013d70ba0a929f45c2e1",
+      "archived_sha256": "c74339350bd536f0e57938a2fa7f4bb7afea31e2be9e013d70ba0a929f45c2e1",
+      "redacted": false
+    }
+  ]
+}

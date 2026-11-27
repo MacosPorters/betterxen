@@ -1,0 +1,44 @@
+{
+  "command": [
+    "/Library/Frameworks/Python.framework/Versions/3.14/bin/python3",
+    "/tmp/bx473-final-harness-check-02/parent.py",
+    "/tmp/bx473-final-harness-check-02/child.py"
+  ],
+  "timeout_seconds": 45,
+  "exit": -9,
+  "backend": {
+    "verified": true,
+    "guest_pid": "22345",
+    "scope": "actual Python fixture PID; synthetic backend identification, no graphics"
+  },
+  "pressure_ready": {
+    "allowed": false,
+    "scope": "injected process-test condition; not a bypassed GPU pressure guard"
+  },
+  "error": "RuntimeError('pressure gate at paused device before workload')",
+  "error_wineserver_stop": {
+    "kill": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+        "-k"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    "wait": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+        "-w"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  },
+  "output_hashes": {
+    "wrapper-final.txt": "d10bd84289f00be6f3a8f990713a5ff18224b01bac55c2b0afe6fcf94b664c2e",
+    "stdout.txt": "293cd277fabb4d906a575cabbc1581d76aeb582456881cc47b9b0da1a4460597",
+    "stderr.txt": "b7eab1251cc975b771929b1c6dfe6cb8511bb1ec75b3241336abe9651a151f83"
+  }
+}

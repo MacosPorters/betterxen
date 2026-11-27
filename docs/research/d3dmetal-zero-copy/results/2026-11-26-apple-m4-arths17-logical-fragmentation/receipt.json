@@ -1,0 +1,116 @@
+{
+  "protocol": "A-logical-fragmentation-1",
+  "utc": "2026-11-26T21:54:46.790305+00:00",
+  "source_hashes": {
+    "trace.cpp": "8be2dbdec35b332d4e20db84450199cc66ae285ed58342bd0a08cfd3b9c779c3",
+    "oracle.py": "ef5193fc04246ee79370a161d8aa9b2d16eb064dd04110392e34224b20340d78"
+  },
+  "executable_sha256": "37e09f5546a692101e6921813efff5d8bfc28de9c29efbbe4a23423592b6ce1f",
+  "cases": [
+    {
+      "seed": 473,
+      "command": [
+        "artifacts/workstream-a/fragmentation-01/trace",
+        "473"
+      ],
+      "exit": 0,
+      "oracle_command": [
+        "python3",
+        "docs/research/d3dmetal-zero-copy/allocation-profiling/fragmentation/oracle.py",
+        "artifacts/workstream-a/fragmentation-01/seed-473-stdout.jsonl",
+        "--output",
+        "artifacts/workstream-a/fragmentation-01/seed-473-oracle.json"
+      ],
+      "oracle_exit": 0,
+      "oracle_stdout": "verified 2004 logical snapshots\n",
+      "oracle_stderr": ""
+    },
+    {
+      "seed": 474,
+      "command": [
+        "artifacts/workstream-a/fragmentation-01/trace",
+        "474"
+      ],
+      "exit": 0,
+      "oracle_command": [
+        "python3",
+        "docs/research/d3dmetal-zero-copy/allocation-profiling/fragmentation/oracle.py",
+        "artifacts/workstream-a/fragmentation-01/seed-474-stdout.jsonl",
+        "--output",
+        "artifacts/workstream-a/fragmentation-01/seed-474-oracle.json"
+      ],
+      "oracle_exit": 0,
+      "oracle_stdout": "verified 2004 logical snapshots\n",
+      "oracle_stderr": ""
+    },
+    {
+      "seed": 475,
+      "command": [
+        "artifacts/workstream-a/fragmentation-01/trace",
+        "475"
+      ],
+      "exit": 0,
+      "oracle_command": [
+        "python3",
+        "docs/research/d3dmetal-zero-copy/allocation-profiling/fragmentation/oracle.py",
+        "artifacts/workstream-a/fragmentation-01/seed-475-stdout.jsonl",
+        "--output",
+        "artifacts/workstream-a/fragmentation-01/seed-475-oracle.json"
+      ],
+      "oracle_exit": 0,
+      "oracle_stdout": "verified 2004 logical snapshots\n",
+      "oracle_stderr": ""
+    }
+  ],
+  "tools": [
+    {
+      "command": [
+        "file",
+        "artifacts/workstream-a/fragmentation-01/trace"
+      ],
+      "exit": 0,
+      "stdout": "artifacts/workstream-a/fragmentation-01/trace: Mach-O 64-bit executable arm64\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "lipo",
+        "-archs",
+        "artifacts/workstream-a/fragmentation-01/trace"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "otool",
+        "-L",
+        "artifacts/workstream-a/fragmentation-01/trace"
+      ],
+      "exit": 0,
+      "stdout": "artifacts/workstream-a/fragmentation-01/trace:\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2000.67.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "xcrun",
+        "clang++",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin\n",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "2\n",
+      "stderr": ""
+    }
+  ]
+}

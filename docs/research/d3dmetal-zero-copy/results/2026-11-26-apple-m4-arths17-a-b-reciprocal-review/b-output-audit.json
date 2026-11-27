@@ -1,0 +1,7 @@
+{
+  "successful_graphics_backend_receipts": 60,
+  "raw_output_hashes_checked": 156,
+  "mismatches": [
+    "artifacts/workstream-a/review-b-a402/docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-01/00-wb/stderr.txt"
+  ]
+}

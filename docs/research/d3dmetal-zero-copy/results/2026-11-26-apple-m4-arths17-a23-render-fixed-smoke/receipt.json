@@ -1,0 +1,1374 @@
+{
+  "protocol": "A-local-2.3",
+  "suite": "render",
+  "allow_warning": true,
+  "utc": "2026-11-26T22:12:05.968352+00:00",
+  "ram_ceiling_bytes": 23000000000,
+  "independent_review": "pending",
+  "environment": {
+    "ROSETTA_ADVERTISE_AVX": "1",
+    "CX_GRAPHICS_BACKEND": "d3dmetal",
+    "WINEDEBUG": "-all"
+  },
+  "sources": {
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp": "a3bc97cb3164ad826e2f87f6b46719fd43af0cfab2135b2115b52d97079b84a8",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/support.h": "df6ba2201c120c80e3ce26ae0b1d21d05ea69149e0ff25c88b0abb8e1446ae69",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp": "2bb6647b16bcd9c47d2e75467fbd3e54e1cb8c00ad72b08d7ed76564e07b6475",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/run.py": "15e3d56ec2ba4530f0f8bd57b99b64a7dcb09f6e3ca4d0b103082aa25e5184da"
+  },
+  "baseline_sha256": "33e90bfee89e812f48990613cd74ced56473e5c3fc5d973f2ba1116090646a0c",
+  "tools": {
+    "chip": {
+      "command": [
+        "sysctl",
+        "-n",
+        "machdep.cpu.brand_string"
+      ],
+      "exit": 0,
+      "stdout": "Apple M4\n",
+      "stderr": "",
+      "seconds": 0.0028384170145727694
+    },
+    "ram": {
+      "command": [
+        "sysctl",
+        "-n",
+        "hw.memsize"
+      ],
+      "exit": 0,
+      "stdout": "25769803776\n",
+      "stderr": "",
+      "seconds": 0.00211312499595806
+    },
+    "host": {
+      "command": [
+        "uname",
+        "-m"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": "",
+      "seconds": 0.0021404169965535402
+    },
+    "macos": {
+      "command": [
+        "sw_vers"
+      ],
+      "exit": 0,
+      "stdout": "ProductName:\t\tmacOS\nProductVersion:\t\t27.0\nBuildVersion:\t\t26A428\n",
+      "stderr": "",
+      "seconds": 0.006511166982818395
+    },
+    "page": {
+      "command": [
+        "sysctl",
+        "-n",
+        "hw.pagesize"
+      ],
+      "exit": 0,
+      "stdout": "16384\n",
+      "stderr": "",
+      "seconds": 0.0023286660434678197
+    },
+    "swap_before": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 7168.00M  used = 6549.75M  free = 618.25M  (encrypted)\n",
+      "stderr": "",
+      "seconds": 0.0018841249984689057
+    },
+    "pressure_before": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 49%\n",
+      "stderr": "",
+      "seconds": 0.0023463749676011503
+    },
+    "vm_before": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    71567.\nPages active:                                 346701.\nPages inactive:                               336424.\nPages speculative:                              9497.\nPages throttled:                                   0.\nPages wired down:                             158916.\nPages purgeable:                                3814.\n\"Translation faults\":                     2674286462.\nPages copy-on-write:                       102180501.\nPages zero filled:                        1758546082.\nPages reactivated:                         210810909.\nPages purged:                               21970645.\nFile-backed pages:                            268542.\nAnonymous pages:                              424080.\nPages stored in compressor:                   982648.\nPages occupied by compressor:                 611046.\nDecompressions:                            174162122.\nCompressions:                              218618053.\nPageins:                                    52442745.\nPageouts:                                    1035252.\nSwapins:                                     1736470.\nSwapouts:                                    2616039.\n",
+      "stderr": "",
+      "seconds": 0.0022899170289747417
+    },
+    "load_before": {
+      "command": [
+        "ps",
+        "-axo",
+        "pid,pcpu,comm"
+      ],
+      "exit": 0,
+      "stdout": "  PID  %CPU COMM\n    1   0.1 /sbin/launchd\n  114   0.0 /usr/libexec/amfid\n  339   0.1 /usr/libexec/logd\n  342   0.0 /usr/libexec/UserEventAgent\n  344   0.5 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/FSEvents.framework/Versions/A/Support/fseventsd\n  345   0.0 /System/Library/PrivateFrameworks/MediaRemote.framework/Support/mediaremoted\n  349   0.0 /usr/sbin/systemstats\n  353   0.0 /usr/libexec/configd\n  355   0.0 /System/Library/CoreServices/powerd.bundle/powerd\n  356   0.0 /usr/libexec/IOMFB_bics_daemon\n  360   0.0 /usr/libexec/remoted\n  364   0.0 /System/Library/PrivateFrameworks/CoreSpeech.framework/corespeechd_system\n  366   0.0 /usr/libexec/watchdogd\n  369   0.1 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mds\n  371   0.0 /usr/libexec/kernelmanagerd\n  372   0.0 /usr/libexec/diskarbitrationd\n  376   0.0 /usr/sbin/syslogd\n  378   0.0 /usr/libexec/thermalmonitord\n  379   0.0 /System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/contextstored\n  380   0.0 /usr/libexec/xprotectd\n  381   0.2 /usr/libexec/opendirectoryd\n  382   0.0 /System/Library/PrivateFrameworks/ApplePushService.framework/apsd\n  383   0.0 /System/Library/CoreServices/launchservicesd\n  384   0.0 /usr/libexec/timed\n  385   0.0 /System/Library/PrivateFrameworks/MobileDevice.framework/Versions/A/Resources/usbmuxd\n  386   0.0 /usr/sbin/securityd\n  388   0.0 /usr/libexec/locationd\n  389   0.0 /usr/libexec/nesessionmanager\n  391   0.0 autofsd\n  392   0.0 /usr/libexec/dasd\n  393   0.0 /System/Library/PrivateFrameworks/Heimdal.framework/Helpers/kdc\n  396   0.0 /usr/sbin/distnoted\n  399   0.0 /System/Library/CoreServices/logind\n  400   0.0 /System/Library/PrivateFrameworks/GenerationalStorage.framework/Versions/A/Support/revisiond\n  401   0.0 /usr/sbin/KernelEventAgent\n  403   0.0 /usr/libexec/usermanagerd\n  406   0.1 /usr/sbin/notifyd\n  408   0.1 /usr/libexec/corebrightnessd\n  409   0.0 /System/Library/Frameworks/CoreMediaIO.framework/Versions/A/Resources/com.apple.cmio.registerassistantservice\n  412  12.2 /System/Library/PrivateFrameworks/SkyLight.framework/Resources/WindowServer\n  413   0.0 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n  415   0.0 /usr/sbin/cfprefsd\n  416   0.0 /System/Library/CoreServices/loginwindow.app/Contents/MacOS/loginwindow\n  417   0.0 /usr/libexec/runningboardd\n  449   0.0 /System/Library/CoreServices/coreservicesd\n  461   0.1 /usr/libexec/clocksyncd\n  462   0.0 /System/Library/PrivateFrameworks/CoreAnalytics.framework/Support/analyticsd\n  463   0.0 /usr/libexec/lsd\n  465   0.1 /usr/sbin/mDNSResponder\n  469   0.0 /usr/libexec/apfsd\n  479   0.0 /usr/libexec/airportd\n  481   0.0 /usr/libexec/symptomsd\n  485   0.0 /System/Library/PrivateFrameworks/BiomeStreams.framework/Support/biomed\n  491   0.0 /System/Library/PrivateFrameworks/SystemStatusServer.framework/Support/systemstatusd\n  495   0.0 /usr/libexec/eligibilityd\n  499   0.0 /System/Library/CoreServices/TimeMachine/backupd\n  501   0.0 /usr/libexec/ApplicationFirewall/socketfilterfw\n  502   0.0 /usr/sbin/distnoted\n  503   0.0 /System/Library/Frameworks/Security.framework/Versions/A/XPCServices/authd.xpc/Contents/MacOS/authd\n  504   0.0 /usr/sbin/mDNSResponderHelper\n  505   0.0 /usr/libexec/syspolicyd\n  507   0.0 /usr/sbin/distnoted\n  509   0.0 /System/Library/PrivateFrameworks/BackgroundTaskManagement.framework/Resources/backgroundtaskmanagementd\n  514   0.0 /usr/sbin/distnoted\n  515   0.0 /usr/sbin/WirelessRadioManagerd\n  520   0.0 /usr/sbin/distnoted\n  528   0.0 /usr/libexec/com.apple.cmio.videodriverkithostextension.systemextension/Contents/MacOS/com.apple.cmio.videodriverkithostextension\n  530   0.0 /usr/libexec/cameracaptured\n  531   0.0 /usr/libexec/searchpartyd\n  532   0.0 /System/Library/Frameworks/CoreMediaIO.framework/Versions/A/Resources/UVCAssistant.systemextension/Contents/MacOS/UVCAssistant\n  533   0.0 /usr/sbin/coreaudiod\n  539   0.0 /usr/libexec/gamepolicyd\n  544   0.0 /usr/sbin/distnoted\n  549   0.0 /System/Library/CoreServices/appleeventsd\n  551   0.0 Core Audio Driver (BlackHole2ch.driver)\n  562   0.0 /System/Library/CoreServices/Software Update.app/Contents/Resources/suhelperd\n  570   0.0 /usr/sbin/distnoted\n  574   0.0 Core Audio Driver (VoicemodAudioDevice.driver)\n  576   0.0 /usr/libexec/modelmanagerd\n  578   0.0 /System/Library/Frameworks/LocalAuthentication.framework/Support/coreauthd\n  583   0.0 /usr/sbin/distnoted\n  584   0.0 /System/Library/DriverExtensions/com.apple.DriverKit-IOUserDockChannelSerial.dext/com.apple.DriverKit-IOUserDockChannelSerial\n  585   0.7 /System/Library/DriverExtensions/com.apple.DriverKit-AppleBCMWLAN.dext/com.apple.DriverKit-AppleBCMWLAN\n  586   0.0 /System/Library/DriverExtensions/com.apple.AppleUserHIDDrivers.dext/com.apple.AppleUserHIDDrivers\n  588   0.0 /usr/sbin/distnoted\n  592   0.0 /usr/libexec/audiomxd\n  599   0.0 /usr/sbin/distnoted\n  604   0.0 /usr/sbin/distnoted\n  605   0.0 /usr/libexec/secd\n  609   0.0 /usr/sbin/cfprefsd\n  614   0.0 /usr/libexec/UserEventAgent\n  620   0.0 /System/Library/CoreServices/audioaccessoryd\n  624   0.0 /usr/sbin/universalaccessd\n  625   0.0 /usr/libexec/ContinuityCaptureAgent\n  626   0.0 /usr/libexec/pboard\n  628   0.0 /System/Library/CoreServices/WindowManager.app/Contents/MacOS/WindowManager\n  629   0.0 /System/Library/PrivateFrameworks/UserNotificationsCore.framework/Support/usernotificationsd\n  630   0.0 /System/Library/PrivateFrameworks/BiomeStreams.framework/Support/BiomeAgent\n  631   0.0 /usr/libexec/lsd\n  632   0.0 /System/Library/PrivateFrameworks/TCC.framework/Support/tccd\n  633   0.0 /System/Library/Frameworks/Accounts.framework/Versions/A/Support/accountsd\n  634   0.0 /usr/libexec/containermanagerd\n  635   1.3 /System/Library/PrivateFrameworks/IDS.framework/identityservicesd.app/Contents/MacOS/identityservicesd\n  636   0.0 /System/Library/PrivateFrameworks/CloudKitDaemon.framework/Support/cloudd\n  637   0.0 /System/Library/CoreServices/WallpaperAgent.app/Contents/MacOS/WallpaperAgent\n  639   0.0 /System/Library/CoreServices/talagentd\n  640   0.0 /System/Library/CoreServices/Dock.app/Contents/MacOS/Dock\n  642   0.1 /System/Library/CoreServices/ControlCenter.app/Contents/MacOS/ControlCenter\n  643   0.0 /System/Library/CoreServices/MenuBarAgent.app/Contents/MacOS/MenuBarAgent\n  644   0.0 /usr/libexec/linkd\n  645   0.0 /System/Library/CoreServices/SystemUIServer.app/Contents/MacOS/SystemUIServer\n  646   0.1 /System/Library/CoreServices/Finder.app/Contents/MacOS/Finder\n  653   0.0 /System/Library/CoreServices/AccessibilityUIServer.app/Contents/MacOS/AccessibilityUIServer\n  654   0.0 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/HIServices.framework/Versions/A/XPCServices/com.apple.hiservices-xpcservice.xpc/Contents/MacOS/com.apple.hiservices-xpcservice\n  658   0.0 /System/Library/Frameworks/QuickLookUI.framework/Versions/A/XPCServices/QuickLookUIService.xpc/Contents/MacOS/QuickLookUIService\n  659   0.0 /usr/sbin/usernoted\n  661   0.0 /System/Library/CoreServices/sharedfilelistd\n  663   0.0 automountd\n  664   0.0 /System/Library/PrivateFrameworks/FileProvider.framework/Support/fileproviderd\n  666   0.0 /System/Library/PrivateFrameworks/AMPDevices.framework/Versions/A/Support/AMPDeviceDiscoveryAgent\n  668   0.0 /System/Library/PrivateFrameworks/ViewBridge.framework/Versions/A/XPCServices/ViewBridgeAuxiliary.xpc/Contents/MacOS/ViewBridgeAuxiliary\n  669   0.0 /System/Library/PrivateFrameworks/UserActivity.framework/Agents/useractivityd\n  671   0.0 /System/Library/CoreServices/Dock.app/Contents/XPCServices/com.apple.dock.extra.xpc/Contents/MacOS/com.apple.dock.extra\n  672   0.0 /System/Library/Frameworks/ApplicationServices.framework/Frameworks/ATS.framework/Support/fontd\n  675   0.0 /System/Library/Frameworks/ApplicationServices.framework/Versions/A/Frameworks/ATS.framework/Versions/A/Support/fontworker\n  678   0.0 /System/Applications/Siri AI.app/Contents/MacOS/Siri AI\n  680   2.3 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/corespotlightd\n  687   0.0 /System/Library/PrivateFrameworks/CoreSuggestions.framework/Versions/A/Support/suggestd\n  692   0.0 /System/Library/PrivateFrameworks/ChronoCore.framework/Support/chronod\n  694   0.0 /System/Library/ExtensionKit/Extensions/WallpaperGradientExtension.appex/Contents/MacOS/WallpaperGradientExtension\n  696   0.2 /usr/libexec/sharingd\n  698   0.0 /usr/libexec/rosetta/oahd\n  699   0.0 /System/Library/ExtensionKit/Extensions/WallpaperAerialsExtension.appex/Contents/MacOS/WallpaperAerialsExtension\n  703   0.0 /System/Library/CoreServices/CoreLocationAgent.app/Contents/MacOS/CoreLocationAgent\n  705   0.0 /System/Library/PrivateFrameworks/CampoUIServices.framework/Versions/A/XPCServices/CampoRemoteService.xpc/Contents/MacOS/CampoRemoteService\n  707   0.0 /System/Library/PrivateFrameworks/AgentSessionKitRuntime.framework/Versions/A/agentstored\n  713   0.0 /System/Library/PrivateFrameworks/IMCore.framework/imagent.app/Contents/MacOS/imagent\n  717   0.1 /usr/libexec/rapportd\n  718   0.0 /usr/libexec/nsurlsessiond\n  719   0.0 /System/Library/PrivateFrameworks/CoreDuetContext.framework/Resources/ContextStoreAgent\n  720   0.0 /usr/libexec/routined\n  732   0.0 /System/Library/PrivateFrameworks/AssistantServices.framework/Versions/A/Support/assistantd\n  738   0.0 /usr/libexec/duetexpertd\n  741   0.0 /usr/sbin/filecoordinationd\n  746   0.0 /System/Library/CoreServices/WiFiAgent.app/Contents/MacOS/WiFiAgent\n  747   0.0 /System/Library/PrivateFrameworks/CommunicationsFilter.framework/CMFSyncAgent\n  761   0.0 /System/Library/Frameworks/LocalAuthentication.framework/Support/coreauthd\n  767   0.0 /System/Library/Frameworks/CryptoTokenKit.framework/ctkd\n  768   0.0 /usr/libexec/milod\n  769   0.0 /usr/libexec/nearbyd\n  784   0.0 /System/Library/CoreServices/NotificationCenter.app/Contents/MacOS/NotificationCenter\n  788   0.0 /System/Library/PrivateFrameworks/AuthKit.framework/Versions/A/Support/akd\n  809   0.0 /usr/libexec/avconferenced\n  810   0.0 /System/Library/PrivateFrameworks/MediaRemote.framework/Support/mediaremoteagent\n  831   0.0 /System/Library/CoreServices/SubmitDiagInfo\n  847   0.0 /usr/sbin/distnoted\n  849   0.0 /System/Library/PrivateFrameworks/CloudDocs.framework/PlugIns/com.apple.CloudDocs.iCloudDriveFileProvider.appex/Contents/MacOS/com.apple.CloudDocs.iCloudDriveFileProvider\n  851   0.0 /System/Library/Frameworks/InputMethodKit.framework/Resources/imklaunchagent\n  852   0.0 /System/Library/PrivateFrameworks/TextInputUIMacHelper.framework/Versions/A/XPCServices/CursorUIViewService.xpc/Contents/MacOS/CursorUIViewService\n  856   0.0 /System/Library/Input Methods/PressAndHold.app/Contents/PlugIns/PAH_Extension.appex/Contents/MacOS/PAH_Extension\n  857   0.0 /System/Library/PrivateFrameworks/CoreSpeech.framework/corespeechd\n  867   0.0 /System/Library/CoreServices/Siri.app/Contents/MacOS/Siri\n  868   0.0 /System/Library/Image Capture/Support/icdd\n  869   0.0 /System/Library/Frameworks/Metal.framework/Versions/A/XPCServices/MTLCompilerService.xpc/Contents/MacOS/MTLCompilerService\n  872   0.0 <HOME>/.wakatime/xcode-hackatime\n  876   0.0 /System/Library/CoreServices/AirPlayUIAgent.app/Contents/MacOS/AirPlayUIAgent\n  879   0.0 /System/Library/CoreServices/diagnostics_agent\n  881   0.0 /System/Library/CoreServices/TextInputMenuAgent.app/Contents/MacOS/TextInputMenuAgent\n  884   0.0 /System/Library/Frameworks/CryptoTokenKit.framework/ctkahp.bundle/Contents/MacOS/ctkahp\n  892   0.0 /System/Library/PrivateFrameworks/FamilyControls.framework/Resources/parentalcontrolsd\n  903   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n  906   0.0 /Applications/Rectangle.app/Contents/MacOS/Rectangle\n  913   0.0 /usr/sbin/systemstats\n  921   0.0 /usr/libexec/diagnosticd\n  943   0.0 /System/Library/Frameworks/OpenGL.framework/Versions/A/Libraries/CVMServer\n  951   0.0 /usr/libexec/InternetSharing\n 1018   0.0 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mdbulkimport\n 1058   0.0 /usr/sbin/distnoted\n 1063   0.0 /System/Library/PrivateFrameworks/CoreFP.framework/Versions/A/fairplayd\n 1067   0.0 /usr/libexec/dhcp6d\n 1126   0.0 /System/Library/PrivateFrameworks/UniversalAccess.framework/Versions/A/Resources/universalAccessAuthWarn.app/Contents/MacOS/universalAccessAuthWarn\n 1510   0.0 /usr/sbin/distnoted\n 1515   0.0 /usr/sbin/distnoted\n 1517   0.0 /System/Library/PrivateFrameworks/PassKitCore.framework/passd\n 1522   0.0 /usr/sbin/distnoted\n 1553   0.0 /System/Library/ExtensionKit/Extensions/MouseIntentsExtension.appex/Contents/MacOS/MouseIntentsExtension\n 1557   0.0 /System/Library/ExtensionKit/Extensions/DesktopSettingsIntents.appex/Contents/MacOS/DesktopSettingsIntents\n 1558   0.0 /System/Library/ExtensionKit/Extensions/SpotlightSettingsIntentsExtension.appex/Contents/MacOS/SpotlightSettingsIntentsExtension\n 1560   0.0 /System/Library/ExtensionKit/Extensions/NotificationsSettingsIntents.appex/Contents/MacOS/NotificationsSettingsIntents\n 1561   0.0 /System/Library/ExtensionKit/Extensions/PlaceholderSettingsSearchTermsIntents.appex/Contents/MacOS/PlaceholderSettingsSearchTermsIntents\n 1563   0.0 /System/Library/ExtensionKit/Extensions/StartupDiskWidgetExtension.appex/Contents/MacOS/StartupDiskWidgetExtension\n 1565   0.0 /System/Library/ExtensionKit/Extensions/ScreenTimeAppIntentsExtension.appex/Contents/MacOS/ScreenTimeAppIntentsExtension\n 1566   0.0 /System/Library/ExtensionKit/Extensions/ControlCenterSettingsIntents.appex/Contents/MacOS/ControlCenterSettingsIntents\n 1567   0.0 /System/Library/CoreServices/Shortcuts Events.app/Contents/MacOS/Shortcuts Events\n 1568   0.0 /System/Library/ExtensionKit/Extensions/ProfilesSettingsIntents.appex/Contents/MacOS/ProfilesSettingsIntents\n 1570   0.0 /System/Library/ExtensionKit/Extensions/DateTimeIntentsExtension.appex/Contents/MacOS/DateTimeIntentsExtension\n 1571   0.0 /System/Library/ExtensionKit/Extensions/DoNotDisturbAppIntents.appex/Contents/MacOS/DoNotDisturbAppIntents\n 1572   0.0 /System/Library/ExtensionKit/Extensions/FamilyIntents.appex/Contents/MacOS/FamilyIntents\n 1573   0.0 /System/Library/ExtensionKit/Extensions/CDsAndDvDsSettingsIntents.appex/Contents/MacOS/CDsAndDvDsSettingsIntents\n 1574   0.0 /System/Library/ExtensionKit/Extensions/SoftwareUpdateSettingsExtensionIntents.appex/Contents/MacOS/SoftwareUpdateSettingsExtensionIntents\n 1575   0.0 /System/Library/ExtensionKit/Extensions/AccessibilitySettingsSearchExtension.appex/Contents/MacOS/AccessibilitySettingsSearchExtension\n 1577   0.0 /System/Library/ExtensionKit/Extensions/TrackpadIntentsExtension.appex/Contents/MacOS/TrackpadIntentsExtension\n 1578   0.0 /System/Library/ExtensionKit/Extensions/WallpaperSettingsIntents.appex/Contents/MacOS/WallpaperSettingsIntents\n 1580   0.0 /System/Library/ExtensionKit/Extensions/AccountsUISettingsAppIntents.appex/Contents/MacOS/AccountsUISettingsAppIntents\n 1582   0.0 /System/Library/ExtensionKit/Extensions/PrefPaneSearchIntent.appex/Contents/MacOS/PrefPaneSearchIntent\n 1585   0.0 /System/Library/ExtensionKit/Extensions/BluetoothSettingsAppIntentsWidgetExtension.appex/Contents/MacOS/BluetoothSettingsAppIntentsWidgetExtension\n 1588   0.0 /System/Library/ExtensionKit/Extensions/ClassroomDeviceExpert.appex/Contents/MacOS/ClassroomDeviceExpert\n 1589   0.0 /System/Library/ExtensionKit/Extensions/SiriSetupSettingsIntents.appex/Contents/MacOS/SiriSetupSettingsIntents\n 1595   0.0 /System/Library/ExtensionKit/Extensions/VpnSettingsIntents.appex/Contents/MacOS/VpnSettingsIntents\n 1598   0.0 /System/Library/ExtensionKit/Extensions/GameControllerSettingsIntents.appex/Contents/MacOS/GameControllerSettingsIntents\n 1599   0.0 /System/Library/ExtensionKit/Extensions/InternationalSettingsExtension.appex/Contents/MacOS/InternationalSettingsExtension\n 1600   0.0 /System/Library/ExtensionKit/Extensions/BiometricsAndPasswordSettingsAppIntentsExtension.appex/Contents/MacOS/BiometricsAndPasswordSettingsAppIntentsExtension\n 1601   0.0 /System/Library/ExtensionKit/Extensions/GameCenterSettingsSearchExtension.appex/Contents/MacOS/GameCenterSettingsSearchExtension\n 1602   0.0 /System/Library/ExtensionKit/Extensions/WiFiMacSettingsIntents.appex/Contents/MacOS/WiFiMacSettingsIntents\n 1603   0.0 /System/Library/ExtensionKit/Extensions/AppleAccountIntents_macOS.appex/Contents/MacOS/AppleAccountIntents_macOS\n 1605   0.0 /System/Library/ExtensionKit/Extensions/StorageSettingsIntentsExtension.appex/Contents/MacOS/StorageSettingsIntentsExtension\n 1606   0.0 /System/Library/CoreServices/CrashReporterSupportHelper\n 1607   0.0 /System/Library/ExtensionKit/Extensions/KeyboardSettingsIntents.appex/Contents/MacOS/KeyboardSettingsIntents\n 1609   0.0 /System/Volumes/Preboot/Cryptexes/App/System/Applications/Safari.app/Contents/Extensions/SafariLinkExtension.appex/Contents/MacOS/SafariLinkExtension\n 1610   0.0 /System/Applications/Calendar.app/Contents/Extensions/CalendarIntentsExtension.appex/Contents/MacOS/CalendarIntentsExtension\n 1611   0.0 /System/Applications/Messages.app/Contents/Extensions/MessagesActionExtension.appex/Contents/MacOS/MessagesActionExtension\n 1612   0.0 /System/Library/ExtensionKit/Extensions/TimeMachineSettingsIntents.appex/Contents/MacOS/TimeMachineSettingsIntents\n 1613   0.0 /System/Library/ExtensionKit/Extensions/ClassKitAppIntents.appex/Contents/MacOS/ClassKitAppIntents\n 1615   0.0 /System/Library/ExtensionKit/Extensions/PasswordSettingsAppIntentsExtension.appex/Contents/MacOS/PasswordSettingsAppIntentsExtension\n 1617   0.0 /System/Library/ExtensionKit/Extensions/BatterySettingsIntentsExtension.appex/Contents/MacOS/BatterySettingsIntentsExtension\n 1648   0.0 /System/Applications/Notes.app/Contents/PlugIns/com.apple.Notes.SpotlightIndexExtension.appex/Contents/MacOS/com.apple.Notes.SpotlightIndexExtension\n 1681   0.0 /System/Library/ExtensionKit/Extensions/PCCAgentClientExtension.appex/Contents/MacOS/PCCAgentClientExtension\n 1682   0.0 /usr/sbin/distnoted\n 1700   0.0 /usr/sbin/distnoted\n 2873   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n 3040   0.0 /usr/libexec/online-auth-agent\n 3041   0.0 /usr/libexec/seputil\n 3375   0.0 /System/Library/PrivateFrameworks/CommunicationTrust.framework/Support/communicationtrustd\n 3376   0.0 /System/Library/Frameworks/Translation.framework/translationd\n 3378   0.0 /System/Library/PrivateFrameworks/CallHistory.framework/Support/CallHistoryPluginHelper\n 3379   0.0 /System/Library/PrivateFrameworks/AppIntentsLiveEntitySupport.framework/XPCServices/AppIntentsLiveEntityService.xpc/Contents/MacOS/AppIntentsLiveEntityService\n 3380   0.0 /System/Library/CoreServices/UIKitSystem.app/Contents/MacOS/UIKitSystem\n 3381   0.0 /System/Library/PrivateFrameworks/SiriTTSService.framework/sirittsd\n 3382   0.0 /usr/libexec/dmd\n 3383   0.0 /System/Library/Frameworks/Speech.framework/Versions/A/XPCServices/localspeechrecognition.xpc/Contents/MacOS/localspeechrecognition\n 3384   0.0 /System/Library/Frameworks/AudioToolbox.framework/AudioComponentRegistrar\n 3385   0.0 /System/Library/Frameworks/ManagedSettings.framework/Versions/A/ManagedSettingsAgent\n 3387   0.0 /System/Library/PrivateFrameworks/ToneLibrary.framework/Versions/A/XPCServices/com.apple.tonelibraryd.xpc/Contents/MacOS/com.apple.tonelibraryd\n 3388   0.0 /usr/libexec/remindd\n 3389   0.0 /System/Library/CoreServices/iconservicesagent\n 3390   0.0 /System/Library/CoreServices/iconservicesd\n 3392   0.0 /System/Library/Frameworks/MediaAccessibility.framework/Versions/A/XPCServices/com.apple.accessibility.mediaaccessibilityd.xpc/Contents/MacOS/com.apple.accessibility.mediaaccessibilityd\n 3393   0.0 /System/Library/PrivateFrameworks/FaceTimeMessageStore.framework/facetimemessagestored\n 3394   0.0 /System/Library/PrivateFrameworks/ModelCatalogRuntime.framework/Versions/A/modelcatalogd\n 3395   0.0 /System/Library/Frameworks/AudioToolbox.framework/XPCServices/com.apple.audio.SandboxHelper.xpc/Contents/MacOS/com.apple.audio.SandboxHelper\n 3397   0.0 /System/Library/CoreServices/ReportCrash\n 3403   0.0 /System/Library/PrivateFrameworks/TelephonyUtilities.framework/XPCServices/com.apple.FaceTime.FTConversationService.xpc/Contents/MacOS/com.apple.FaceTime.FTConversationService\n 3404   0.0 /System/Library/Frameworks/Contacts.framework/Support/postersyncd\n 3405   0.0 /System/Library/CoreServices/pbs\n 3408   0.0 /usr/libexec/textunderstandingd\n 3410   0.0 /System/Library/PrivateFrameworks/CoreSymbolication.framework/coresymbolicationd\n 3412   0.0 /System/Library/CoreServices/ReportCrash\n 3429   0.0 /System/Library/PrivateFrameworks/CallIntelligence.framework/callintelligenced\n 3430   0.0 /usr/libexec/naturallanguaged\n 3432   0.0 /System/Library/Frameworks/Speech.framework/Versions/A/XPCServices/localspeechrecognition.xpc/Contents/MacOS/localspeechrecognition\n 3450   0.0 /System/Library/PrivateFrameworks/SiriInference.framework/Versions/A/siriinferenced\n 3451   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n 3452   0.0 /System/Library/PrivateFrameworks/ContextKit.framework/Versions/A/XPCServices/ContextService.xpc/Contents/MacOS/ContextService\n 3453   0.0 /usr/libexec/inputanalyticsd\n 3454   0.0 /System/Library/PrivateFrameworks/SiriSuggestionsSupport.framework/Versions/A/XPCServices/SiriSuggestionsBookkeepingService.xpc/Contents/MacOS/SiriSuggestionsBookkeepingService\n 3613   0.0 /Applications/Raycast.app/Contents/MacOS/Raycast\n 3625   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.GPU.xpc/Contents/MacOS/com.apple.WebKit.GPU\n 3626   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent\n 3627   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.Networking.xpc/Contents/MacOS/com.apple.WebKit.Networking\n 3628   0.6 Raycast Backend\n 3637   0.0 /Applications/Raycast.app/Contents/XPCServices/Raycast Accessibility.xpc/Contents/MacOS/com.raycast.macos.Accessibility\n 3639   0.0 /Applications/Raycast.app/Contents/XPCServices/Raycast Pasteboard.xpc/Contents/MacOS/com.raycast.macos.Pasteboard\n 3800   0.0 /System/Library/PrivateFrameworks/iCloudNotification.framework/iCloudNotificationAgent\n 3801   0.0 /usr/libexec/appleaccountd\n 3921   0.0 /usr/libexec/keyboardservicesd\n 3942   0.0 /System/Library/PrivateFrameworks/ReplicatorCore.framework/Support/replicatord\n 4273   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n 4275   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n 4277   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n 4443   0.0 /System/Library/PrivateFrameworks/ScreenTimeCore.framework/Versions/A/ScreenTimeAgent\n 4449   0.0 /System/Library/PrivateFrameworks/MobileSoftwareUpdate.framework/Support/softwareupdated\n 4451   0.0 /System/Library/PrivateFrameworks/ScreenTimeSettingsFoundation.framework/Versions/A/ScreenTimeSettingsAgent\n 4452   0.0 /System/Library/PrivateFrameworks/MobileSoftwareUpdate.framework/Versions/A/XPCServices/com.apple.MobileSoftwareUpdate.CleanupPreparePathService.xpc/Contents/MacOS/com.apple.MobileSoftwareUpdate.CleanupPreparePathService\n 4456   0.0 /usr/libexec/hybridsearchd\n 4457   0.0 /System/Library/PrivateFrameworks/DeviceConfiguration.framework/Versions/A/DeviceConfigurationAgent\n 4458   0.0 /System/Library/PrivateFrameworks/MediaAnalysis.framework/Versions/A/mediaanalysisd\n 4459   0.0 /usr/libexec/promotedcontentd\n 4460   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n 4461   0.0 /System/Library/PrivateFrameworks/PhotoLibraryServices.framework/Versions/A/Support/photolibraryd\n 4462   0.0 /System/Library/PrivateFrameworks/DeviceConfiguration.framework/Versions/A/deviceconfigurationd\n 4463   0.0 /System/Library/PrivateFrameworks/CoreFollowUp.framework/Versions/A/Support/followupd\n 4464   0.0 /System/Library/Frameworks/FamilyControls.framework/Versions/A/FamilyControlsAgent\n 4468   0.0 /System/Library/CoreServices/ScopedBookmarkAgent\n 4475   0.0 /usr/libexec/fairplaydeviceidentityd\n 4477   0.0 /usr/libexec/mobileactivationd\n 4478   0.0 /System/Library/Frameworks/Speech.framework/Versions/A/XPCServices/localspeechrecognition.xpc/Contents/MacOS/localspeechrecognition\n 4490   0.0 cloudphotod\n 4527   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n 4528   0.0 /usr/libexec/textcontextd\n 4534   0.0 /usr/libexec/MTLAssetUpgraderD\n 4610   0.0 /System/Library/PrivateFrameworks/MediaAnalysisAccess.framework/Versions/A/XPCServices/mediaanalysisd-access.xpc/Contents/MacOS/mediaanalysisd-access\n 4679   0.0 /System/Library/PrivateFrameworks/JetCore.framework/Support/jetpackassetd\n 4680   0.0 /System/Library/PrivateFrameworks/CoreParsec.framework/parsecd\n 4682   0.0 /System/Library/PrivateFrameworks/iTunesCloud.framework/Support/itunescloudd\n 5292   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n 5356   0.0 /System/Library/Frameworks/WebKit.framework/Versions/A/XPCServices/com.apple.WebKit.WebContent.xpc/Contents/MacOS/com.apple.WebKit.WebContent\n 5417   0.0 /System/Library/PrivateFrameworks/SiriAnalytics.framework/Versions/A/XPCServices/SAExtensionOrchestrator.xpc/Contents/MacOS/SAExtensionOrchestrator\n 5418   0.0 /System/Library/ExtensionKit/Extensions/IFTranscriptSELFIngestor.appex/Contents/MacOS/IFTranscriptSELFIngestor\n 5419   0.0 /System/Library/ExtensionKit/Extensions/AppleIntelligenceReportingSELFIngestor.appex/Contents/MacOS/AppleIntelligenceReportingSELFIngestor\n 5420   0.0 /usr/bin/ssh-agent\n 5421   0.0 /System/Library/ExtensionKit/Extensions/BiomeSELFIngestor.appex/Contents/MacOS/BiomeSELFIngestor\n 5422   0.0 /System/Library/ExtensionKit/Extensions/IFTelemetrySELFIngestor.appex/Contents/MacOS/IFTelemetrySELFIngestor\n 5423   0.0 /System/Library/ExtensionKit/Extensions/GMSSELFIngestor.appex/Contents/MacOS/GMSSELFIngestor\n 6089   0.0 /System/Library/PrivateFrameworks/CoreEmbeddedSpeechRecognition.framework/speechmaintenanced\n 6979   0.0 /System/Library/PrivateFrameworks/DoNotDisturbServer.framework/Support/donotdisturbd\n 7457   0.0 /usr/libexec/symptomsd-diag\n 7458   0.0 /System/Library/PrivateFrameworks/AppleCredentialManager.framework/AppleCredentialManagerDaemon\n 7460   0.0 /System/Library/CoreServices/Software Update.app/Contents/Resources/softwareupdated\n 7466   0.0 /System/Library/PrivateFrameworks/MobileAssetDaemon.framework/Versions/A/XPCServices/com.apple.MobileAsset.DownloadService.Builtin.xpc/Contents/MacOS/com.apple.MobileAsset.DownloadService.Builtin\n 7469   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n 7470   0.0 /System/Library/Frameworks/LocalAuthentication.framework/Support/coreautha.bundle/Contents/MacOS/coreautha\n 7471   0.0 /usr/libexec/smd\n 7484   0.0 /System/Library/PrivateFrameworks/CoreParsec.framework/parsec-fbf\n 7736   0.0 /usr/libexec/keybagd\n 7778   0.0 /System/Library/CoreServices/osanalyticshelper\n 7779   0.0 /usr/libexec/biomesyncd\n 7835   0.0 /usr/libexec/peakpowermanagerd\n 7924   0.0 /System/Library/PrivateFrameworks/MapsSync.framework/mapssyncd\n 7970   0.0 /usr/libexec/bootpd\n 8129   0.0 /Library/Frameworks/Python.framework/Versions/3.14/Resources/Python.app/Contents/MacOS/Python\n 8148   0.0 ps\n 8692   0.0 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/mdwrite\n10103   0.0 /System/Library/PrivateFrameworks/Synapse.framework/Support/contentlinkingd\n11088   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n11111   0.0 npm exec firebase-tools@latest mcp --dir .\n11128   0.0 node\n15381   2.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n15468   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n16019   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n16020   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n16853   0.0 /System/Library/PrivateFrameworks/AmbientDisplay.framework/Versions/A/XPCServices/com.apple.AmbientDisplayAgent.xpc/Contents/MacOS/com.apple.AmbientDisplayAgent\n16971   0.2 <HOME>/.vscode/extensions/openai.chatgpt-26.1120.50957-darwin-arm64/bin/macos-aarch64/codex-code-mode-host\n17157   0.0 /Applications/Vorssaint.app/Contents/MacOS/Vorssaint\n20776   0.0 /System/Library/PrivateFrameworks/People.framework/peopled\n24422   0.0 /usr/sbin/appleh16camerad\n24765   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n25410   0.0 /System/Library/Frameworks/Security.framework/Versions/A/XPCServices/com.apple.CodeSigningHelper.xpc/Contents/MacOS/com.apple.CodeSigningHelper\n26282   0.0 /System/Library/PrivateFrameworks/IntelligencePlatformCompute.framework/Versions/A/XPCServices/IntelligencePlatformComputeService.xpc/Contents/MacOS/IntelligencePlatformComputeService\n26552   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n26569   0.0 npm exec firebase-tools@latest mcp --dir .\n26587   0.0 node\n26800   0.0 /System/Library/CoreServices/PowerChime.app/Contents/MacOS/PowerChime\n26893   0.0 /System/Library/PrivateFrameworks/CoreEmbeddedSpeechRecognition.framework/Versions/A/XPCServices/com.apple.siri.embeddedspeech.xpc/Contents/MacOS/com.apple.siri.embeddedspeech\n26909   0.0 /System/Library/ExtensionKit/Extensions/TGOnDeviceInferenceProviderService.appex/Contents/MacOS/TGOnDeviceInferenceProviderService\n26918   0.0 /System/Library/ExtensionKit/Extensions/GenerativeExperiencesSafetyInferenceProvider.appex/Contents/MacOS/GenerativeExperiencesSafetyInferenceProvider\n26920   0.0 /System/Library/ExtensionKit/Extensions/TGOnDeviceInferenceProviderService.appex/Contents/MacOS/TGOnDeviceInferenceProviderService\n26971   0.0 /System/Library/PrivateFrameworks/SocialLayer.framework/sociallayerd.app/Contents/MacOS/sociallayerd\n27275   0.4 /usr/libexec/trustd\n27277   0.0 /usr/libexec/trustd\n27637   0.0 /usr/libexec/GamePolicyAgent\n28136   0.0 /System/Applications/Mail.app/Contents/PlugIns/com.apple.mail.SpotlightIndexExtension.appex/Contents/MacOS/com.apple.mail.SpotlightIndexExtension\n28192   0.0 /usr/sbin/distnoted\n29458   0.0 /System/Library/CoreServices/GameOverlayUI.app/Contents/MacOS/GameOverlayUI\n31562   0.0 /System/Library/PrivateFrameworks/HearingCore.framework/heard\n31991   0.0 /System/Library/PrivateFrameworks/CoreAnalytics.framework/Support/analyticsagent\n32063   0.0 /System/Library/PrivateFrameworks/VoiceShortcuts.framework/Versions/A/Support/siriactionsd\n32140   0.0 /Applications/OneDrive.app/Contents/OneDrive Sync Service.app/Contents/MacOS/OneDrive Sync Service\n32260   0.0 /System/Library/PrivateFrameworks/KerberosHelper/Helpers/DiskUnmountWatcher\n33963   0.0 /System/Library/Frameworks/CoreMediaIO.framework/Resources/VDC.plugin/Contents/Resources/VDCAssistant\n33967   0.0 /System/Library/Audio/Plug-Ins/usbaudio.bundle/Contents/MacOS/usbaudiod\n37496   0.0 /usr/libexec/nsurlsessiond\n37789   0.0 /usr/libexec/pkd\n38354   0.0 /System/Library/PrivateFrameworks/EcosystemAnalytics.framework/Support/ecosystemanalyticsd\n38355   0.0 /System/Library/PrivateFrameworks/Ecosystem.framework/Support/ecosystemd\n38366   0.0 /System/Library/PrivateFrameworks/AssistantServices.framework/Versions/A/Support/assistant_service\n38440   9.2 /System/Library/ExtensionKit/Extensions/WallpaperMacintoshExtension.appex/Contents/MacOS/WallpaperMacintoshExtension\n39842   0.0 /System/Library/CoreServices/Setup Assistant.app/Contents/Resources/mbuseragent\n46827   0.0 /System/Library/CoreServices/UniversalControl.app/Contents/MacOS/UniversalControl\n47920   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n47921   0.0 /Applications/ChatGPT.app/Contents/Resources/cua_node/bin/node_repl\n50851   0.0 /System/Library/Frameworks/Contacts.framework/Support/contactsd\n51635   0.0 rtadvd\n53387   0.0 /System/Library/CoreServices/Dock.app/Contents/XPCServices/DockHelper.xpc/Contents/MacOS/DockHelper\n54708   0.3 /usr/sbin/bluetoothd\n54814   0.0 /usr/libexec/PerfPowerServices\n54828   0.0 /System/Library/DriverExtensions/IOUserBluetoothSerialDriver.dext/IOUserBluetoothSerialDriver\n55802   0.0 /usr/libexec/taskgated\n55924   0.0 natpmpd\n55945   0.0 /usr/sbin/netbiosd\n57023   0.0 /usr/libexec/gamecontrollerd\n57641   0.0 /System/Library/PrivateFrameworks/UsageTracking.framework/Versions/A/UsageTrackingAgent\n57656   0.0 /usr/libexec/securityd_system\n57931   0.0 /usr/sbin/distnoted\n57956   0.0 /usr/libexec/searchpartyuseragent\n57978   0.0 /System/Library/PrivateFrameworks/CacheDelete.framework/deleted\n58297   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n58986   0.0 /System/Library/PrivateFrameworks/ScreenTimeSettingsFoundation.framework/Versions/A/PlugIns/ScreenTimeSettingsDeviceActivityMonitorExtension.appex/Contents/MacOS/ScreenTimeSettingsDeviceActivityMonitorExtension\n59631   0.0 /System/Library/Frameworks/AppKit.framework/Versions/C/XPCServices/ThemeWidgetControlViewService.xpc/Contents/MacOS/ThemeWidgetControlViewService\n60583   0.0 /System/Library/Input Methods/CharacterPalette.app/Contents/MacOS/CharacterPalette\n60672   0.0 /System/Library/CoreServices/UserNotificationCenter.app/Contents/MacOS/UserNotificationCenter\n63917   0.1 /Applications/Brave Browser.app/Contents/MacOS/Brave Browser\n63919   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/chrome_crashpad_handler\n63926   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif).app/Contents/MacOS/Brave Browser Helper (Aperitif)\n63927   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif).app/Contents/MacOS/Brave Browser Helper (Aperitif)\n63929   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif).app/Contents/MacOS/Brave Browser Helper (Aperitif)\n63932   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n63944   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif).app/Contents/MacOS/Brave Browser Helper (Aperitif)\n63950   0.0 /System/Library/PrivateFrameworks/SafariPlatformSupport.framework/Versions/A/XPCServices/com.apple.SafariPlatformSupport.Helper.xpc/Contents/MacOS/com.apple.SafariPlatformSupport.Helper\n64359   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif).app/Contents/MacOS/Brave Browser Helper (Aperitif)\n64360   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif).app/Contents/MacOS/Brave Browser Helper (Aperitif)\n64394   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n64721   0.3 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n64739   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n64852   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n66145   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n66147   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n66149   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n66156   0.0 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools-srv2\n66341   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n66371   0.0 npm exec firebase-tools@latest mcp --dir .\n66456   0.0 node\n69867   0.0 /Applications/Visual Studio Code.app/Contents/MacOS/Code\n69872   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Electron Framework.framework/Helpers/chrome_crashpad_handler\n69873   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n69874   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n70359   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n70967   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n71184   0.0 /System/Library/PrivateFrameworks/SyncedDefaults.framework/Support/syncdefaultsd\n71185   0.0 /System/Library/PrivateFrameworks/CoreADI.framework/adid\n71264   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n71272   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n71287   0.0 /Applications/Visual Studio Code.app/Contents/Resources/app/node_modules.asar.unpacked/@microsoft/copilot-sdk-darwin-arm64/prebuilds/darwin-arm64/copilot-runtime\n72563   0.0 /usr/libexec/coreduetd\n73625   0.0 /System/Library/PrivateFrameworks/HomeKitDaemon.framework/Support/homed\n73640   0.0 /usr/libexec/secinitd\n73698   0.0 /System/Library/PrivateFrameworks/FamilyCircle.framework/Versions/A/Resources/familycircled\n73924   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n74713   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Electron Framework.framework/Helpers/chrome_crashpad_handler\n76591   0.0 /usr/libexec/swcd\n77303   0.0 /usr/libexec/spotlightknowledged.updater\n77922   0.0 /usr/libexec/biometrickitd\n79347   0.0 /usr/libexec/nehelper\n79362   0.1 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n79390   0.1 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n79391   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Renderer).app/Contents/MacOS/Code Helper (Renderer)\n79392   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper.app/Contents/MacOS/Code Helper\n79815   0.0 <HOME>/.vscode/extensions/ms-python.python-2026.10.0-darwin-arm64/python-env-tools/bin/pet\n79889   0.0 /Library/Developer/CommandLineTools/Library/Frameworks/Python3.framework/Versions/3.9/Resources/Python.app/Contents/MacOS/Python\n79926   0.0 <HOME>/.vscode/extensions/charliermarsh.ruff-2026.98.0-darwin-arm64/bundled/libs/bin/ruff\n80389   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n80525   2.9 <HOME>/.vscode/extensions/openai.chatgpt-26.1120.50957-darwin-arm64/bin/macos-aarch64/codex\n80532   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n80542   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n80981   0.0 /System/Library/PrivateFrameworks/CalendarDaemon.framework/Support/calaccessd\n81025   0.0 /System/Library/PrivateFrameworks/StatusKit.framework/StatusKitAgent\n81073   0.0 /usr/libexec/mobileassetd\n81141   0.0 /usr/libexec/containermanagerd_system\n81189   0.0 /usr/libexec/knowledge-agent\n81194   0.0 /System/Library/CoreServices/CoreServicesUIAgent.app/Contents/MacOS/CoreServicesUIAgent\n81200   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n81207   0.0 /usr/libexec/AirPlayXPCHelper\n81214   0.0 /usr/libexec/ospredictiond\n81259   0.0 /usr/libexec/powerexperienced\n81266   0.0 /System/Library/PrivateFrameworks/CloudTelemetry.framework/Support/cloudtelemetryd\n81267   0.0 /System/Library/PrivateFrameworks/AssetCacheServices.framework/Versions/A/XPCServices/AssetCacheLocatorService.xpc/Contents/MacOS/AssetCacheLocatorService\n81270   0.0 npm exec firebase-tools@latest mcp --dir .\n81276   0.0 /usr/libexec/wifip2pd\n81278   0.0 /System/Library/PrivateFrameworks/PowerLog.framework/Versions/A/XPCServices/PerfPowerTelemetryClientRegistrationService.xpc/Contents/MacOS/PerfPowerTelemetryClientRegistrationService\n81291   0.0 /System/Library/CoreServices/Keychain Circle Notification.app/Contents/MacOS/Keychain Circle Notification\n81345   0.0 /System/Library/PrivateFrameworks/XprotectFramework.framework/Versions/A/XPCServices/XprotectService.xpc/Contents/MacOS/XprotectService\n81393   0.0 node\n82130   0.0 /usr/libexec/proactived\n82132   0.0 /System/Library/PrivateFrameworks/EmailDaemon.framework/Versions/A/maild\n82175   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n83768   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n83915   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n83988   0.0 /usr/libexec/sysmond\n84279   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n84365   0.0 /System/Cryptexes/App/usr/libexec/AuthenticationServicesAgent\n84420   0.0 /usr/libexec/findmybeaconingd\n84454   0.0 /System/iOSSupport/System/Library/PrivateFrameworks/HomeEnergyDaemon.framework/Support/homeenergyd\n84489   0.0 /Applications/Claude.app/Contents/MacOS/Claude\n84493   0.0 /Applications/Claude.app/Contents/Frameworks/Electron Framework.framework/Helpers/chrome_crashpad_handler\n84494   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Contents/MacOS/Claude Helper\n84495   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Contents/MacOS/Claude Helper\n84505   0.0 /usr/libexec/sandboxd\n84516   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer)\n84541   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer)\n84743   0.0 /System/Library/Frameworks/CryptoTokenKit.framework/ctkd\n85072   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Contents/MacOS/Claude Helper\n85073   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper.app/Contents/MacOS/Claude Helper\n85107   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Plugin).app/Contents/MacOS/Claude Helper (Plugin)\n85111   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Plugin).app/Contents/MacOS/Claude Helper (Plugin)\n85140   0.0 /System/Library/Frameworks/AppKit.framework/Versions/C/XPCServices/ThemeWidgetControlViewService.xpc/Contents/MacOS/ThemeWidgetControlViewService\n85147   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n85153   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n85154   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n85289   0.0 /usr/libexec/neagent\n85486   0.0 /Applications/Claude.app/Contents/Frameworks/Claude Helper (Renderer).app/Contents/MacOS/Claude Helper (Renderer)\n86120   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n86666   0.0 /usr/libexec/audioanalyticsd\n86667   0.0 /usr/libexec/rtcreportingd\n86698   0.0 /System/Library/PrivateFrameworks/SafariSafeBrowsing.framework/com.apple.Safari.SafeBrowsing.Service\n86930   0.0 /usr/sbin/BTLEServer\n87145   0.0 /usr/libexec/SidecarRelay\n87332   0.0 /System/Library/PrivateFrameworks/iCloudDriveCore.framework/Versions/A/Support/bird\n87335   0.0 /usr/libexec/findmylocateagent\n87346   0.0 /usr/libexec/networkserviceproxy\n87348   0.0 /usr/libexec/findmydevice-user-agent\n87357   0.0 /System/Library/PrivateFrameworks/PhotoAnalysis.framework/Versions/A/Support/photoanalysisd\n87359   0.0 /usr/libexec/PowerUIAgent\n87360   0.0 /usr/libexec/storagekitd\n87371   0.0 /System/Library/PrivateFrameworks/IMDPersistence.framework/XPCServices/IMDPersistenceAgent.xpc/Contents/MacOS/IMDPersistenceAgent\n87378   0.0 /System/Library/CoreServices/TimeMachine/backupd-helper\n87433   0.0 /System/Library/PrivateFrameworks/iCloudDriveService.framework/XPCServices/ContainerMetadataExtractor.xpc/Contents/MacOS/ContainerMetadataExtractor\n87440   0.0 /System/Library/PrivateFrameworks/AppPredictionFoundation.framework/Versions/A/XPCServices/AppPredictionIntentsHelperService.xpc/Contents/MacOS/AppPredictionIntentsHelperService\n87470   0.0 /System/Library/PrivateFrameworks/WorkflowKit.framework/XPCServices/ShortcutsViewService.xpc/Contents/MacOS/ShortcutsViewService\n87471   0.0 /System/Library/PrivateFrameworks/SessionCore.framework/Support/liveactivitiesd\n87485   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n87522   0.0 /System/Library/PrivateFrameworks/IDSBlastDoorSupport.framework/Versions/A/XPCServices/IDSBlastDoorService.xpc/Contents/MacOS/IDSBlastDoorService\n87523   0.0 /System/Library/PrivateFrameworks/MessagesBlastDoorSupport.framework/Versions/A/XPCServices/UnknownSendersBlastDoorService.xpc/Contents/MacOS/UnknownSendersBlastDoorService\n87542   0.0 /usr/sbin/BTLEServerAgent\n87756   0.0 /System/Library/CoreServices/ControlCenter.app/Contents/XPCServices/ControlCenterHelper.xpc/Contents/MacOS/ControlCenterHelper\n87860   0.0 /System/Library/Services/AppleSpell.service/Contents/MacOS/AppleSpell\n88696   0.0 /usr/libexec/powerdatad\n90537   0.0 /System/Library/PrivateFrameworks/TelephonyUtilities.framework/callservicesd\n90580   0.0 /System/Library/PrivateFrameworks/CallHistory.framework/Support/CallHistorySyncHelper\n90771  99.9 <HOME>/.vscode/extensions/ms-vscode.cpptools-1.35.6-darwin-arm64/bin/cpptools\n91076   0.0 <HOME>/.vscode/extensions/anthropic.claude-code-2.1.332-darwin-arm64/resources/native-binary/claude\n91093   0.0 npm exec firebase-tools@latest mcp --dir .\n91106   0.0 node\n92532   0.0 /Applications/Visual Studio Code.app/Contents/Frameworks/Code Helper (Plugin).app/Contents/MacOS/Code Helper (Plugin)\n92969   0.0 /usr/libexec/mlhostd\n93706   0.0 /opt/homebrew/Cellar/node/25.8.1_1/bin/node\n94836   0.0 /System/Library/CoreServices/TextInputSwitcher.app/Contents/MacOS/TextInputSwitcher\n95264   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n96146   0.0 /Applications/Brave Browser.app/Contents/Frameworks/Brave Browser Framework.framework/Versions/158.1.100.59/Helpers/Brave Browser Helper (Aperitif Renderer).app/Contents/MacOS/Brave Browser Helper (Aperitif Renderer)\n97422   0.0 /System/Library/PrivateFrameworks/MobileAccessoryUpdater.framework/Support/accessoryupdaterd\n97423   0.0 /System/Library/CoreServices/liquiddetectiond.app/liquiddetectiond\n97424   0.0 /System/Library/PrivateFrameworks/MobileAccessoryUpdater.framework/XPCServices/UARPUpdaterServiceUSBPD.xpc/Contents/MacOS/UARPUpdaterServiceUSBPD\n97549   0.0 /System/Library/PrivateFrameworks/MobileTimer.framework/Executables/mobiletimerd\n97575   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n98302   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n98303   0.0 /usr/libexec/secinitd\n98305   0.0 /usr/sbin/cfprefsd\n98306   0.0 /usr/libexec/trustd\n98308   0.0 /usr/libexec/containermanagerd\n98309   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n98310   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n98311   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/Versions/A/XPCServices/com.apple.geod.xpc/Contents/MacOS/com.apple.geod\n98312   0.0 /usr/libexec/secinitd\n98313   0.0 /usr/libexec/secinitd\n98314   0.0 /usr/libexec/secinitd\n98315   0.0 /usr/sbin/cfprefsd\n98316   0.0 /usr/libexec/containermanagerd\n98317   0.0 /usr/sbin/cfprefsd\n98318   0.0 /usr/libexec/trustd\n98319   0.0 /usr/libexec/trustd\n98320   0.0 /usr/libexec/containermanagerd\n98321   0.0 /usr/libexec/containermanagerd\n99532   0.0 /usr/libexec/assessmentagent\n99543   0.0 /usr/libexec/gamecontrolleragentd\n99549   0.0 /usr/libexec/feedbackd\n99637   0.0 /System/Library/PrivateFrameworks/CommerceKit.framework/Versions/A/Resources/commerce\n99670   0.0 /System/Library/Frameworks/CoreTelephony.framework/Support/CommCenter\n99802   0.0 /usr/libexec/replayd\n99808   0.0 /usr/libexec/aned\n99849   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n99856   0.0 /System/Library/PrivateFrameworks/CacheDelete.framework/deleted_helper\n99857   0.0 /System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/Metadata.framework/Versions/A/Support/managedcorespotlightd\n99858   0.0 /usr/libexec/triald_system\n99859   0.0 /usr/libexec/AssetCache/AssetCache\n99860   0.0 /usr/libexec/triald\n99861   0.0 /System/Library/PrivateFrameworks/GeoServices.framework/geodMachServiceBridge\n99862   0.0 /System/Library/PrivateFrameworks/PackageKit.framework/Resources/installd\n99863   0.0 /System/Library/PrivateFrameworks/PackageKit.framework/Resources/system_installd\n99864   0.0 /System/Library/PrivateFrameworks/CloudKitDaemon.framework/Support/cloudd\n99865   0.0 /System/Library/Frameworks/QuickLookThumbnailing.framework/Support/com.apple.quicklook.ThumbnailsAgent\n99868   0.0 /System/Library/PrivateFrameworks/AssetCacheServicesExtensions.framework/XPCServices/AssetCacheTetheratorService.xpc/Contents/MacOS/AssetCacheTetheratorService\n99869   0.0 /System/Library/PrivateFrameworks/TrialServer.framework/Versions/A/XPCServices/TrialArchivingService.xpc/Contents/MacOS/TrialArchivingService\n99871   0.0 /System/Library/PrivateFrameworks/TrialServer.framework/Versions/A/XPCServices/TrialArchivingService.xpc/Contents/MacOS/TrialArchivingService\n99880   0.0 /System/Library/PrivateFrameworks/AppleMediaServices.framework/Resources/amsaccountsd\n99907   0.0 /System/Library/PrivateFrameworks/IMTransferServices.framework/IMTransferAgent.app/Contents/MacOS/IMTransferAgent\n99908   0.0 /System/Library/PrivateFrameworks/MessagesBlastDoorSupport.framework/Versions/A/XPCServices/MessagesBlastDoorService.xpc/Contents/MacOS/MessagesBlastDoorService\n99920   0.0 /System/Library/PrivateFrameworks/CoreRecents.framework/Versions/A/Support/recentsd\n99921   0.0 /System/Library/PrivateFrameworks/CascadeSets.framework/Versions/A/XPCServices/SetStoreUpdateService.xpc/Contents/MacOS/SetStoreUpdateService\n79932   0.0 /bin/zsh\n  113   0.0 /bin/zsh\n  820   0.0 git\n  821   0.0 /usr/bin/less\n  907   0.0 /bin/zsh\n 1781   0.0 git\n 1782   0.0 /usr/bin/less\n 1918   0.0 /bin/zsh\n",
+      "stderr": "",
+      "seconds": 0.020352040999569
+    },
+    "wine_version": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Product Name: CrossOver\nPublic Version: 26.3.0\nProduct Version: 26.3.0.39832\nBuild Tag: cxoffice-26.3.0rc2\nBuild Timestamp: 20260715T103801Z\n",
+      "stderr": "",
+      "seconds": 0.011858084006235003
+    },
+    "wine_build": {
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineloader",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "wine-11.0-8726-g2e2f5fca349\n",
+      "stderr": "",
+      "seconds": 0.012349541997537017
+    },
+    "kernel_pressure_before": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": "",
+      "seconds": 0.0025415830314159393
+    },
+    "rosetta": {
+      "command": [
+        "pkgutil",
+        "--pkg-info",
+        "com.apple.pkg.RosettaUpdateAuto"
+      ],
+      "exit": 0,
+      "stdout": "package-id: com.apple.pkg.RosettaUpdateAuto\nversion: 1.0.0.0.1788432274\nvolume: /\nlocation: /\ninstall-time: 1791147684\n",
+      "stderr": "",
+      "seconds": 0.02183837501797825
+    },
+    "gcc": {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "x86_64-w64-mingw32-g++ (GCC) 16.2.0\nCopyright (C) 2026 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+      "stderr": "",
+      "seconds": 0.004438542004209012
+    },
+    "clang": {
+      "command": [
+        "xcrun",
+        "clang++",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Apple clang version 17.0.0 (clang-1700.6.3.2)\nTarget: arm64-apple-darwin27.0.0\nThread model: posix\nInstalledDir: /Library/Developer/CommandLineTools/usr/bin\n",
+      "stderr": "",
+      "seconds": 0.013732791994698346
+    },
+    "sdk": {
+      "command": [
+        "xcrun",
+        "--show-sdk-version"
+      ],
+      "exit": 0,
+      "stdout": "26.2\n",
+      "stderr": "",
+      "seconds": 0.007731041987426579
+    },
+    "python": {
+      "command": [
+        "python3",
+        "--version"
+      ],
+      "exit": 0,
+      "stdout": "Python 3.14.3\n",
+      "stderr": "",
+      "seconds": 0.010194625006988645
+    },
+    "compiler_arch": {
+      "command": [
+        "file",
+        "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++"
+      ],
+      "exit": 0,
+      "stdout": "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++: Mach-O 64-bit executable arm64\n",
+      "stderr": "",
+      "seconds": 0.003065874974709004
+    },
+    "compiler_lipo": {
+      "command": [
+        "lipo",
+        "-archs",
+        "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": "",
+      "seconds": 0.00944262504344806
+    },
+    "compiler_links": {
+      "command": [
+        "otool",
+        "-L",
+        "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++"
+      ],
+      "exit": 0,
+      "stdout": "/opt/homebrew/Cellar/mingw-w64/14.0.0_3/toolchain-x86_64/bin/x86_64-w64-mingw32-g++:\n\t/usr/lib/libiconv.2.dylib (compatibility version 7.0.0, current version 7.0.0)\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2200.27.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1359.0.0)\n",
+      "stderr": "",
+      "seconds": 0.010954916011542082
+    },
+    "build_pe": {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+        "-o",
+        "/private/tmp/bx473-a23-render-fixed-smoke/a-probe.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "seconds": 0.9897371249971911
+    },
+    "build_observer": {
+      "command": [
+        "xcrun",
+        "clang++",
+        "-std=c++20",
+        "-O2",
+        "-arch",
+        "arm64",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "<HOME>/betterxen-473-a/docs/research/d3dmetal-zero-copy/allocation-profiling/observe.cpp",
+        "-o",
+        "/private/tmp/bx473-a23-render-fixed-smoke/observe"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": "",
+      "seconds": 0.05855566600803286
+    },
+    "formats": {
+      "command": [
+        "file",
+        "/private/tmp/bx473-a23-render-fixed-smoke/a-probe.exe",
+        "/private/tmp/bx473-a23-render-fixed-smoke/observe"
+      ],
+      "exit": 0,
+      "stdout": "/private/tmp/bx473-a23-render-fixed-smoke/a-probe.exe: PE32+ executable (console) x86-64, for MS Windows\n/private/tmp/bx473-a23-render-fixed-smoke/observe:     Mach-O 64-bit executable arm64\n",
+      "stderr": "",
+      "seconds": 0.0033146250061690807
+    },
+    "observer_arch": {
+      "command": [
+        "lipo",
+        "-archs",
+        "/private/tmp/bx473-a23-render-fixed-smoke/observe"
+      ],
+      "exit": 0,
+      "stdout": "arm64\n",
+      "stderr": "",
+      "seconds": 0.009108958998695016
+    },
+    "observer_links": {
+      "command": [
+        "otool",
+        "-L",
+        "/private/tmp/bx473-a23-render-fixed-smoke/observe"
+      ],
+      "exit": 0,
+      "stdout": "/private/tmp/bx473-a23-render-fixed-smoke/observe:\n\t/usr/lib/libc++.1.dylib (compatibility version 1.0.0, current version 2000.67.0)\n\t/usr/lib/libSystem.B.dylib (compatibility version 1.0.0, current version 1356.0.0)\n",
+      "stderr": "",
+      "seconds": 0.010515542002394795
+    },
+    "pressure_after": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 49%\n",
+      "stderr": "",
+      "seconds": 0.0030179579625837505
+    },
+    "vm_after": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                   128632.\nPages active:                                 313787.\nPages inactive:                               312152.\nPages speculative:                               786.\nPages throttled:                                   0.\nPages wired down:                             159656.\nPages purgeable:                                 543.\n\"Translation faults\":                     2681220624.\nPages copy-on-write:                       102206750.\nPages zero filled:                        1759514273.\nPages reactivated:                         210918304.\nPages purged:                               21971455.\nFile-backed pages:                            234379.\nAnonymous pages:                              392346.\nPages stored in compressor:                  1015356.\nPages occupied by compressor:                 619138.\nDecompressions:                            174177054.\nCompressions:                              218710067.\nPageins:                                    52446654.\nPageouts:                                    1035254.\nSwapins:                                     1736510.\nSwapouts:                                    2616039.\n",
+      "stderr": "",
+      "seconds": 0.002299833984579891
+    },
+    "swap_after": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 7168.00M  used = 6549.75M  free = 618.25M  (encrypted)\n",
+      "stderr": "",
+      "seconds": 0.002166457998100668
+    },
+    "kernel_pressure_after": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": "",
+      "seconds": 0.002015459001995623
+    }
+  },
+  "cases": [
+    {
+      "name": "render-s0",
+      "args": [
+        "0"
+      ],
+      "expected_exit": 0,
+      "command": [
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+        "--bottle",
+        "/private/tmp/bx473-a23-render-fixed-smoke/bottle",
+        "--no-update",
+        "--no-gui",
+        "/private/tmp/bx473-a23-render-fixed-smoke/a-probe.exe",
+        "0"
+      ],
+      "timeout_seconds": 240,
+      "pressure_before": {
+        "command": [
+          "memory_pressure",
+          "-Q"
+        ],
+        "exit": 0,
+        "stdout": "The system has 25769803776 (1572864 pages with a page size of 16384).\nSystem-wide memory free percentage: 49%\n",
+        "stderr": "",
+        "seconds": 0.0020577500108629465
+      },
+      "kernel_pressure_before": {
+        "command": [
+          "sysctl",
+          "-n",
+          "kern.memorystatus_vm_pressure_level"
+        ],
+        "exit": 0,
+        "stdout": "1\n",
+        "stderr": "",
+        "seconds": 0.00205650000134483
+      },
+      "ram_before": {
+        "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+        "occupied_bytes": 20197900288,
+        "ceiling_bytes": 23000000000,
+        "available_below_ceiling_bytes": 2802099712,
+        "vm_stat": {
+          "command": [
+            "vm_stat"
+          ],
+          "exit": 0,
+          "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    49941.\nPages active:                                 346972.\nPages inactive:                               358355.\nPages speculative:                             10064.\nPages throttled:                                   0.\nPages wired down:                             158971.\nPages purgeable:                                3436.\n\"Translation faults\":                     2674337899.\nPages copy-on-write:                       102184223.\nPages zero filled:                        1758571713.\nPages reactivated:                         210810909.\nPages purged:                               21970645.\nFile-backed pages:                            290141.\nAnonymous pages:                              425250.\nPages stored in compressor:                   980611.\nPages occupied by compressor:                 609848.\nDecompressions:                            174163389.\nCompressions:                              218618053.\nPageins:                                    52443780.\nPageouts:                                    1035252.\nSwapins:                                     1736470.\nSwapouts:                                    2616039.\n",
+          "stderr": "",
+          "seconds": 0.002596625010482967
+        },
+        "ram": {
+          "command": [
+            "sysctl",
+            "-n",
+            "hw.memsize"
+          ],
+          "exit": 0,
+          "stdout": "25769803776\n",
+          "stderr": "",
+          "seconds": 0.002215416985563934
+        }
+      },
+      "snapshots": [
+        {
+          "phase": "baseline",
+          "marker": "STAGE baseline cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35260960,\"resident_size\":54140928,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77175328}\n",
+              "stderr": "",
+              "seconds": 0.061788916995283216,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 35260960,
+                "resident_size": 54140928,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 77175328
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35260960,\"resident_size\":54140928,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77175328}\n",
+              "stderr": "",
+              "seconds": 0.002575000049546361,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 35260960,
+                "resident_size": 54140928,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 77175328
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":35260960,\"resident_size\":54140928,\"wired_size\":0,\"pageins\":0,\"max_phys_footprint\":77175328}\n",
+              "stderr": "",
+              "seconds": 0.0023984579602256417,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 35260960,
+                "resident_size": 54140928,
+                "wired_size": 0,
+                "pageins": 0,
+                "max_phys_footprint": 77175328
+              }
+            }
+          ],
+          "ram": {
+            "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+            "occupied_bytes": 20563935232,
+            "ceiling_bytes": 23000000000,
+            "available_below_ceiling_bytes": 2436064768,
+            "vm_stat": {
+              "command": [
+                "vm_stat"
+              ],
+              "exit": 0,
+              "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    27518.\nPages active:                                 368215.\nPages inactive:                               358337.\nPages speculative:                             10098.\nPages throttled:                                   0.\nPages wired down:                             160164.\nPages purgeable:                                3061.\n\"Translation faults\":                     2674490489.\nPages copy-on-write:                       102191534.\nPages zero filled:                        1758602426.\nPages reactivated:                         210810975.\nPages purged:                               21970645.\nFile-backed pages:                            290223.\nAnonymous pages:                              446427.\nPages stored in compressor:                   980558.\nPages occupied by compressor:                 609819.\nDecompressions:                            174163438.\nCompressions:                              218618053.\nPageins:                                    52443893.\nPageouts:                                    1035252.\nSwapins:                                     1736470.\nSwapouts:                                    2616039.\n",
+              "stderr": "",
+              "seconds": 0.002551332989241928
+            },
+            "ram": {
+              "command": [
+                "sysctl",
+                "-n",
+                "hw.memsize"
+              ],
+              "exit": 0,
+              "stdout": "25769803776\n",
+              "stderr": "",
+              "seconds": 0.0021656249882653356
+            }
+          },
+          "footprint": {
+            "exit": 0,
+            "file": "baseline-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "baseline-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "baseline-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "baseline-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "baseline-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "baseline-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "wb",
+          "marker": "STAGE wb cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":43793696,\"resident_size\":53624832,\"wired_size\":0,\"pageins\":16,\"max_phys_footprint\":77175328}\n",
+              "stderr": "",
+              "seconds": 0.0023729579988867044,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 43793696,
+                "resident_size": 53624832,
+                "wired_size": 0,
+                "pageins": 16,
+                "max_phys_footprint": 77175328
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":43793696,\"resident_size\":53624832,\"wired_size\":0,\"pageins\":16,\"max_phys_footprint\":77175328}\n",
+              "stderr": "",
+              "seconds": 0.002105249965097755,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 43793696,
+                "resident_size": 53624832,
+                "wired_size": 0,
+                "pageins": 16,
+                "max_phys_footprint": 77175328
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":43793696,\"resident_size\":53624832,\"wired_size\":0,\"pageins\":16,\"max_phys_footprint\":77175328}\n",
+              "stderr": "",
+              "seconds": 0.0023513330379500985,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 43793696,
+                "resident_size": 53624832,
+                "wired_size": 0,
+                "pageins": 16,
+                "max_phys_footprint": 77175328
+              }
+            }
+          ],
+          "ram": {
+            "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+            "occupied_bytes": 20151468032,
+            "ceiling_bytes": 23000000000,
+            "available_below_ceiling_bytes": 2848531968,
+            "vm_stat": {
+              "command": [
+                "vm_stat"
+              ],
+              "exit": 0,
+              "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    78436.\nPages active:                                 337137.\nPages inactive:                               335038.\nPages speculative:                               974.\nPages throttled:                                   0.\nPages wired down:                             160168.\nPages purgeable:                                1610.\n\"Translation faults\":                     2675205812.\nPages copy-on-write:                       102193604.\nPages zero filled:                        1758691886.\nPages reactivated:                         210916561.\nPages purged:                               21970649.\nFile-backed pages:                            264480.\nAnonymous pages:                              408669.\nPages stored in compressor:                  1005540.\nPages occupied by compressor:                 622398.\nDecompressions:                            174173132.\nCompressions:                              218690717.\nPageins:                                    52444699.\nPageouts:                                    1035252.\nSwapins:                                     1736478.\nSwapouts:                                    2616039.\n",
+              "stderr": "",
+              "seconds": 0.0025935000157915056
+            },
+            "ram": {
+              "command": [
+                "sysctl",
+                "-n",
+                "hw.memsize"
+              ],
+              "exit": 0,
+              "stdout": "25769803776\n",
+              "stderr": "",
+              "seconds": 0.0023333749850280583
+            }
+          },
+          "footprint": {
+            "exit": 0,
+            "file": "wb-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "wb-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "wb-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "wb-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "wb-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "wb-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "wc",
+          "marker": "STAGE wc cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633127976,\"resident_size\":54362112,\"wired_size\":0,\"pageins\":741,\"max_phys_footprint\":685458472}\n",
+              "stderr": "",
+              "seconds": 0.002582958957646042,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633127976,
+                "resident_size": 54362112,
+                "wired_size": 0,
+                "pageins": 741,
+                "max_phys_footprint": 685458472
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633127976,\"resident_size\":54362112,\"wired_size\":0,\"pageins\":741,\"max_phys_footprint\":685458472}\n",
+              "stderr": "",
+              "seconds": 0.00243291596416384,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633127976,
+                "resident_size": 54362112,
+                "wired_size": 0,
+                "pageins": 741,
+                "max_phys_footprint": 685458472
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633127976,\"resident_size\":54362112,\"wired_size\":0,\"pageins\":741,\"max_phys_footprint\":685458472}\n",
+              "stderr": "",
+              "seconds": 0.002160875010304153,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633127976,
+                "resident_size": 54362112,
+                "wired_size": 0,
+                "pageins": 741,
+                "max_phys_footprint": 685458472
+              }
+            }
+          ],
+          "ram": {
+            "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+            "occupied_bytes": 20640317440,
+            "ceiling_bytes": 23000000000,
+            "available_below_ceiling_bytes": 2359682560,
+            "vm_stat": {
+              "command": [
+                "vm_stat"
+              ],
+              "exit": 0,
+              "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    47312.\nPages active:                                 334067.\nPages inactive:                               331956.\nPages speculative:                               983.\nPages throttled:                                   0.\nPages wired down:                             196394.\nPages purgeable:                                1088.\n\"Translation faults\":                     2676209869.\nPages copy-on-write:                       102195773.\nPages zero filled:                        1758857804.\nPages reactivated:                         210917303.\nPages purged:                               21970651.\nFile-backed pages:                            265767.\nAnonymous pages:                              401239.\nPages stored in compressor:                  1013436.\nPages occupied by compressor:                 623439.\nDecompressions:                            174174884.\nCompressions:                              218700837.\nPageins:                                    52446314.\nPageouts:                                    1035252.\nSwapins:                                     1736482.\nSwapouts:                                    2616039.\n",
+              "stderr": "",
+              "seconds": 0.0027976249693892896
+            },
+            "ram": {
+              "command": [
+                "sysctl",
+                "-n",
+                "hw.memsize"
+              ],
+              "exit": 0,
+              "stdout": "25769803776\n",
+              "stderr": "",
+              "seconds": 0.0025059589534066617
+            }
+          },
+          "footprint": {
+            "exit": 0,
+            "file": "wc-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "wc-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "wc-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "wc-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "wc-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "wc-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "default",
+          "marker": "STAGE default cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633250856,\"resident_size\":54579200,\"wired_size\":0,\"pageins\":741,\"max_phys_footprint\":685577256}\n",
+              "stderr": "",
+              "seconds": 0.002454417000990361,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633250856,
+                "resident_size": 54579200,
+                "wired_size": 0,
+                "pageins": 741,
+                "max_phys_footprint": 685577256
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633250856,\"resident_size\":54579200,\"wired_size\":0,\"pageins\":741,\"max_phys_footprint\":685577256}\n",
+              "stderr": "",
+              "seconds": 0.0022553340531885624,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633250856,
+                "resident_size": 54579200,
+                "wired_size": 0,
+                "pageins": 741,
+                "max_phys_footprint": 685577256
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633250856,\"resident_size\":54579200,\"wired_size\":0,\"pageins\":741,\"max_phys_footprint\":685577256}\n",
+              "stderr": "",
+              "seconds": 0.0021273340098559856,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633250856,
+                "resident_size": 54579200,
+                "wired_size": 0,
+                "pageins": 741,
+                "max_phys_footprint": 685577256
+              }
+            }
+          ],
+          "ram": {
+            "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+            "occupied_bytes": 20540817408,
+            "ceiling_bytes": 23000000000,
+            "available_below_ceiling_bytes": 2459182592,
+            "vm_stat": {
+              "command": [
+                "vm_stat"
+              ],
+              "exit": 0,
+              "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    82979.\nPages active:                                 314377.\nPages inactive:                               312664.\nPages speculative:                               933.\nPages throttled:                                   0.\nPages wired down:                             196353.\nPages purgeable:                                 535.\n\"Translation faults\":                     2677208109.\nPages copy-on-write:                       102198030.\nPages zero filled:                        1758987969.\nPages reactivated:                         210918304.\nPages purged:                               21971451.\nFile-backed pages:                            236173.\nAnonymous pages:                              391801.\nPages stored in compressor:                  1021818.\nPages occupied by compressor:                 626845.\nDecompressions:                            174175306.\nCompressions:                              218710067.\nPageins:                                    52446392.\nPageouts:                                    1035254.\nSwapins:                                     1736482.\nSwapouts:                                    2616039.\n",
+              "stderr": "",
+              "seconds": 0.0026696249842643738
+            },
+            "ram": {
+              "command": [
+                "sysctl",
+                "-n",
+                "hw.memsize"
+              ],
+              "exit": 0,
+              "stdout": "25769803776\n",
+              "stderr": "",
+              "seconds": 0.0023147090105339885
+            }
+          },
+          "footprint": {
+            "exit": 0,
+            "file": "default-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "default-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "default-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "default-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "default-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "default-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "depth",
+          "marker": "STAGE depth cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":635900968,\"resident_size\":54910976,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.0023278750013560057,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 635900968,
+                "resident_size": 54910976,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":635900968,\"resident_size\":54910976,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.002322374959476292,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 635900968,
+                "resident_size": 54910976,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":635900968,\"resident_size\":54910976,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.0021999580203555524,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 635900968,
+                "resident_size": 54910976,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            }
+          ],
+          "ram": {
+            "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+            "occupied_bytes": 20542554112,
+            "ceiling_bytes": 23000000000,
+            "available_below_ceiling_bytes": 2457445888,
+            "vm_stat": {
+              "command": [
+                "vm_stat"
+              ],
+              "exit": 0,
+              "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    82745.\nPages active:                                 314582.\nPages inactive:                               312792.\nPages speculative:                               995.\nPages throttled:                                   0.\nPages wired down:                             196438.\nPages purgeable:                                 535.\n\"Translation faults\":                     2678204639.\nPages copy-on-write:                       102200041.\nPages zero filled:                        1759117689.\nPages reactivated:                         210918304.\nPages purged:                               21971451.\nFile-backed pages:                            236301.\nAnonymous pages:                              392068.\nPages stored in compressor:                  1021209.\nPages occupied by compressor:                 626599.\nDecompressions:                            174175872.\nCompressions:                              218710067.\nPageins:                                    52446521.\nPageouts:                                    1035254.\nSwapins:                                     1736490.\nSwapouts:                                    2616039.\n",
+              "stderr": "",
+              "seconds": 0.0027544170152395964
+            },
+            "ram": {
+              "command": [
+                "sysctl",
+                "-n",
+                "hw.memsize"
+              ],
+              "exit": 0,
+              "stdout": "25769803776\n",
+              "stderr": "",
+              "seconds": 0.0021354579948820174
+            }
+          },
+          "footprint": {
+            "exit": 0,
+            "file": "depth-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "depth-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "depth-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "depth-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "depth-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "depth-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "stencil",
+          "marker": "STAGE stencil cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633959464,\"resident_size\":55115776,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.002168332983274013,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633959464,
+                "resident_size": 55115776,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633959464,\"resident_size\":55115776,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.0022718749823980033,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633959464,
+                "resident_size": 55115776,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":633959464,\"resident_size\":55115776,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.002079416997730732,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 633959464,
+                "resident_size": 55115776,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            }
+          ],
+          "ram": {
+            "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+            "occupied_bytes": 20540571648,
+            "ceiling_bytes": 23000000000,
+            "available_below_ceiling_bytes": 2459428352,
+            "vm_stat": {
+              "command": [
+                "vm_stat"
+              ],
+              "exit": 0,
+              "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    83680.\nPages active:                                 314226.\nPages inactive:                               312481.\nPages speculative:                               995.\nPages throttled:                                   0.\nPages wired down:                             196292.\nPages purgeable:                                 535.\n\"Translation faults\":                     2679202191.\nPages copy-on-write:                       102202299.\nPages zero filled:                        1759247420.\nPages reactivated:                         210918304.\nPages purged:                               21971453.\nFile-backed pages:                            235487.\nAnonymous pages:                              392215.\nPages stored in compressor:                  1021088.\nPages occupied by compressor:                 626477.\nDecompressions:                            174176008.\nCompressions:                              218710067.\nPageins:                                    52446534.\nPageouts:                                    1035254.\nSwapins:                                     1736494.\nSwapouts:                                    2616039.\n",
+              "stderr": "",
+              "seconds": 0.0025850829551927745
+            },
+            "ram": {
+              "command": [
+                "sysctl",
+                "-n",
+                "hw.memsize"
+              ],
+              "exit": 0,
+              "stdout": "25769803776\n",
+              "stderr": "",
+              "seconds": 0.0021532090031541884
+            }
+          },
+          "footprint": {
+            "exit": 0,
+            "file": "stencil-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "stencil-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "stencil-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "stencil-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "stencil-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "stencil-kernel_pressure.json"
+          }
+        },
+        {
+          "phase": "gpu_complete",
+          "marker": "STAGE gpu_complete cpu_ptr=0",
+          "samples": [
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":634037288,\"resident_size\":55214080,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.0023882919922471046,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 634037288,
+                "resident_size": 55214080,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":634037288,\"resident_size\":55214080,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.002328582981135696,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 634037288,
+                "resident_size": 55214080,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            },
+            {
+              "command": [
+                "/private/tmp/bx473-a23-render-fixed-smoke/observe",
+                "8198"
+              ],
+              "exit": 0,
+              "stdout": "{\"pid\":8198,\"return\":0,\"errno\":0,\"host_page_size\":16384,\"phys_footprint\":634037288,\"resident_size\":55214080,\"wired_size\":0,\"pageins\":743,\"max_phys_footprint\":688227368}\n",
+              "stderr": "",
+              "seconds": 0.0021180000039748847,
+              "data": {
+                "pid": 8198,
+                "return": 0,
+                "errno": 0,
+                "host_page_size": 16384,
+                "phys_footprint": 634037288,
+                "resident_size": 55214080,
+                "wired_size": 0,
+                "pageins": 743,
+                "max_phys_footprint": 688227368
+              }
+            }
+          ],
+          "ram": {
+            "metric": "physical RAM minus free and file-backed pages; conservative non-file-cache occupied estimate",
+            "occupied_bytes": 20575617024,
+            "ceiling_bytes": 23000000000,
+            "available_below_ceiling_bytes": 2424382976,
+            "vm_stat": {
+              "command": [
+                "vm_stat"
+              ],
+              "exit": 0,
+              "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                    81397.\nPages active:                                 315105.\nPages inactive:                               313875.\nPages speculative:                              1001.\nPages throttled:                                   0.\nPages wired down:                             196310.\nPages purgeable:                                 543.\n\"Translation faults\":                     2680220397.\nPages copy-on-write:                       102204325.\nPages zero filled:                        1759388696.\nPages reactivated:                         210918304.\nPages purged:                               21971453.\nFile-backed pages:                            235631.\nAnonymous pages:                              394350.\nPages stored in compressor:                  1021042.\nPages occupied by compressor:                 626463.\nDecompressions:                            174176069.\nCompressions:                              218710067.\nPageins:                                    52446553.\nPageouts:                                    1035254.\nSwapins:                                     1736502.\nSwapouts:                                    2616039.\n",
+              "stderr": "",
+              "seconds": 0.002765374956652522
+            },
+            "ram": {
+              "command": [
+                "sysctl",
+                "-n",
+                "hw.memsize"
+              ],
+              "exit": 0,
+              "stdout": "25769803776\n",
+              "stderr": "",
+              "seconds": 0.0021320829982869327
+            }
+          },
+          "footprint": {
+            "exit": 0,
+            "file": "gpu_complete-footprint.json"
+          },
+          "vmmap": {
+            "exit": 0,
+            "file": "gpu_complete-vmmap.json"
+          },
+          "vmstat": {
+            "exit": 0,
+            "file": "gpu_complete-vmstat.json"
+          },
+          "pressure": {
+            "exit": 0,
+            "file": "gpu_complete-pressure.json"
+          },
+          "swap": {
+            "exit": 0,
+            "file": "gpu_complete-swap.json"
+          },
+          "kernel_pressure": {
+            "exit": 0,
+            "file": "gpu_complete-kernel_pressure.json"
+          }
+        }
+      ],
+      "host_pid": 8198,
+      "backend_paths_excerpt": [
+        "/usr/libexec/rosetta/runtime",
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+        "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+      ],
+      "backend_lsof_exit": 0,
+      "exit": 0,
+      "timed_out": false,
+      "seconds": 23.089394707989413,
+      "outputs": {
+        "wb-swap.json": "536242a4f5a0247e04f64fb9da443ca1e76c1bbf87cfecd5c61cbf986da0e38f",
+        "default-footprint.json": "173ecdc388263115407d4af3ff2fc59e685d4dae7c3630d061042f61d85fb82e",
+        "stdout.txt": "7f5bc099b42fd8dcd386c29375950869d5b4a71bb9d41b689db6d031964dfea3",
+        "default-swap.json": "820c38ca52e18187852b7c3948fd66c1b19a0d51a186d7d3970df958e868a70b",
+        "gpu_complete-footprint.json": "acf984b8de6693e5bc6e93f4385757f21e21a2f9c62f6f2ca42383b14b4d2581",
+        "sample_ps.dxbc": "c122074d7341267d562299c5fda2ba019b1db538c0f3c1fa104418c718311e04",
+        "wc-pressure.json": "b08205f66d81f793b737d349adf8f5ca29274269e3304c2dd2b1f3b2bbfaa6e7",
+        "sample_ps.hlsl": "ad3ed8a46a0c22fabf30d2dcb22ca203e49da7252232f53a9fdea5d3c45118f8",
+        "wc-vmstat.json": "b31f4d793ced18ff4af6fd20bc6fa343ac1157b6c7851846c8b2aae24a09dcf0",
+        "depth-vmmap.json": "d506ac46e0046195fb84ab7fffdcb213107391e234b824879d9f85d0f26c10c0",
+        "baseline-footprint.json": "f9a1eb3f6827954255c90b28cf5029f3380293c17e2dc995c54be6231b035391",
+        "depth-pressure.json": "8d9d3b9074cfc60a47a36de816bcef61cef8742376b33bdba3be34095c33db32",
+        "sample_vs.hlsl": "c0c4827b77e77228e676a7f3f8569b90d4fef410dab94f881f225c5901613d54",
+        "sample_vs.dxbc": "80069783ff7e7abca339b07b23e067ab5c8c00b75e00d81ccdef1ce21bf402b9",
+        "wb-vmmap.json": "e0033c8b4fb6eff398fda1d9fac3c517c349aa145035d9146be6e17b0ea169c0",
+        "gpu_complete-vmmap.json": "853ad2fec1899e0e0bd00af42d11edc2597a118b41b481785563a4ef05699d45",
+        "wc-swap.json": "33678f829f9ac9fb2afc8d79b8edeb5ae93e5dac86d80e0f432822f42a4fbc8c",
+        "default-pressure.json": "5fa887bb864a93fbf091515c66a15edc3553ca23e76757550b1d896a543ca4b3",
+        "depth-footprint.json": "96b98e6d2f29190533b380ca5adb66762da3e6a819693fe0695f63136d1c079f",
+        "baseline-vmmap.json": "a76c718cf1c7326725c7c6f2ad6c258e310406c12dcc7d54b385857e9a301f77",
+        "default-vmmap.json": "9ab6100e373b2bdea4cf106b304c83f4fcb99693b0cfddaba9e4770b41f4a047",
+        "baseline-vmstat.json": "9f42182da756097030dd20d914f376a67dc984badc11f69a83fc0cdc55a90e66",
+        "gpu_complete-pressure.json": "f2136de673a408c31f3d6dd085ed5b254d75e607d0109cb32f267faec0c864a3",
+        "depth-swap.json": "efe1705c0444cf1f165a5104a2d18948ade0ae01841bd8d132ab2393cc08478c",
+        "wc-footprint.json": "f9d1162162cbeb8349a6826623e08ec159f4e97e0241ca3600a76254e6fb50b5",
+        "wc-vmmap.json": "0f2b5ad8ce4763741f9502c55505c85c7ba4cfa8cab153ca4a6a3066033f772d",
+        "stderr.txt": "3da96b8332cf0270e03228b2cc642db1f6d03bb5005f962ce9f42341a3974e3e",
+        "depth-kernel_pressure.json": "2d9a13a4d83b6248305fe9121c172e1c81e18e598bf1ef1508c80f8b9c8ac87c",
+        "gpu_complete-swap.json": "7bf5c2f477f760fd7c5ab14b0a4b85a588d0a47c02b3656be0ada49c7de4f221",
+        "wb-footprint.json": "7cd65061c18ad8a69dfcc8e9de0e22d7cc788294f2ae5f24c56e379d63637d7e",
+        "stencil-vmmap.json": "ab9fb121e717f7c66210648424a2986bb08bb0ec4ac816db728572087107e171",
+        "baseline-pressure.json": "8febf7b151feafd195b527c85372741a617044825d13d1e6e14d201fea2f2bd9",
+        "wb-vmstat.json": "f23c8821660d10f24effa8888b70c1bb1e098bb1ffabb8cbd07f8c9404b88253",
+        "stencil-footprint.json": "b16027a9e56f5bf0f371487394951388f11720629a70fdac2fd19f211745ae80",
+        "depth-vmstat.json": "33ffdc20d41498167a98c6d54827f01793b75b042ee14c96b7a5ad71e296fa79",
+        "gpu_complete-kernel_pressure.json": "4d5eecaee6b15aa094562b0d1d82063987446d8f096fcbf4a775e342284fb9a8",
+        "wb-kernel_pressure.json": "5908a41a985c50bc98693a4c4b2dd81ed043568c5d4ec36a8500a2c23b0ef676",
+        "gpu_complete-vmstat.json": "105777c4ca8d73ea488f3991d04874f71f14fd60745fa2704f4a158dd627246e",
+        "default-kernel_pressure.json": "45521d92f18e599fa596ba1d695b88b9b657c583f4007849f90af643dd4cf6dd",
+        "stencil-kernel_pressure.json": "bfed90225fc1c45a60f596b10aa26e6519563671ca8efc51470e2d526ac63485",
+        "stencil-swap.json": "6bbca757f2be51680c2c01f2e49cc5d4f14858ae18af27c8d1971d53b4c3b17d",
+        "stencil-pressure.json": "a9e5e77afd91b6256e2f334fcc340a705f7e6c506cb66792ddce04cb342ee05a",
+        "default-vmstat.json": "735e8d0a3eafb320db06f99c58660a3efa8082c024a2d3d81f48a3ad8194993f",
+        "stencil-vmstat.json": "f666f8953fb43598da77a6c1ccba40e52b40abcebda010f321d341375d17b2f9",
+        "baseline-kernel_pressure.json": "62015cec5c51ebb0a8e3e60a79102302c52d7a381c03ded1533fd78b611039ce",
+        "baseline-swap.json": "13478fe8cd733438ddf2d96dcb77021d5d0bf1fe0e0212290a4975f0f6f8d6af",
+        "wc-kernel_pressure.json": "0d6be7ea3ce39ce929fcddca55981a8a64388849aa009f1e50210db6f2a4561c",
+        "wb-pressure.json": "6f17aab7c9c8043fe25ee719b709338889daa34b73f0af6dc9217fca963b5f28"
+      }
+    }
+  ],
+  "binaries": {
+    "a-probe.exe": "0c04ac674e41cec7355fc389741c630877954303539ee3ac84affdb24dc1340f",
+    "observe": "09bdf1513f982e9229ef0d2f6e1e9e397a9f14a13c244a695995e08e2b878e55"
+  },
+  "framework": {
+    "Info.plist": {
+      "DTPlatformVersion": "15.4",
+      "CFBundleIdentifier": "com.apple.D3DMetal",
+      "DTCompiler": "com.apple.compilers.llvm.clang.1_0",
+      "DTPlatformBuild": "24E241",
+      "CFBundleInfoDictionaryVersion": "6.0",
+      "CFBundleVersion": "3.0",
+      "CFBundleExecutable": "D3DMetal",
+      "DTXcodeBuild": "16E140",
+      "DTSDKName": "macosx15.4.internal",
+      "CFBundleShortVersionString": "3.0",
+      "DTXcode": "1630",
+      "CFBundleSupportedPlatforms": [
+        "MacOSX"
+      ],
+      "CFBundlePackageType": "FMWK",
+      "BuildMachineOSBuild": "23A344013",
+      "LSMinimumSystemVersion": "14.0",
+      "DTPlatformName": "macosx",
+      "DTSDKBuild": "24E241",
+      "CFBundleDevelopmentRegion": "English",
+      "CFBundleName": "D3DMetal"
+    },
+    "version.plist": {
+      "BuildVersion": "1",
+      "CFBundleShortVersionString": "3.0",
+      "CFBundleVersion": "3.0",
+      "ProjectName": "D3DRendererMetal",
+      "SourceVersion": "32047000000000"
+    }
+  },
+  "runtime_hashes": {
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll": "bbda1c4e94ee70255c528c5689b28333ca9bece2d755ede7c4197977a534704f",
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib/wine/x86_64-windows/d3dcompiler_47.dll": "0f37e0a1d637dd750daca8748761b28c0043d2edfdcd22361ec5f934d0f96a91"
+  },
+  "bottle_original_sha256": "e92241859696ad21866aa37723c255ee7aecca4c01ee8cfaee348f810ea72534",
+  "bottle_settings": [
+    "\"AllowUntrusted\" = \"1\"",
+    "\"Version\" = \"26.3.0.39832\"",
+    "\"Template\" = \"win11_64\"",
+    "\"WineArch\" = \"win64\"",
+    "\"CX_GRAPHICS_BACKEND\" = \"d3dmetal\"",
+    "\"AntiVirusScan\" = \"untrusted\""
+  ],
+  "server_stop": {
+    "command": [
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+      "-k"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.17867258400656283
+  },
+  "server_wait": {
+    "command": [
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+      "-w"
+    ],
+    "exit": 0,
+    "stdout": "",
+    "stderr": "",
+    "seconds": 0.008380250015761703
+  },
+  "source_bottle_unchanged": true
+}

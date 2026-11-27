@@ -1,0 +1,84 @@
+{
+  "scope": "real controlled Python subprocesses; Wine cleanup is simulated; not a GPU or real wineserver reproduction",
+  "b_revision": "4ba4926d2f491517c01b1e94fb8539184055dc22",
+  "old_source_sha256": "bce241601d05b67c08addbfd1dbc71008dc4226f9757d07c731d7737f83de806",
+  "new_source_sha256": "7a4599fcb8f3ebf46c830eda1334d76beed3f89c3fd05c30fb6b54d4ef64e930",
+  "results": [
+    {
+      "case": "old-stop",
+      "exit": -9,
+      "error": "RuntimeError('pressure gate at paused device before workload')",
+      "stderr_recorded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_actual_sha256": "b7eab1251cc975b771929b1c6dfe6cb8511bb1ec75b3241336abe9651a151f83",
+      "hash_matches": false,
+      "simulated_wineserver_calls": [],
+      "normal_cleanup_failure_not_propagated": false,
+      "fixture_only_no_wine_gpu": true
+    },
+    {
+      "case": "new-stop",
+      "exit": -9,
+      "error": "RuntimeError('pressure gate at paused device before workload')",
+      "stderr_recorded_sha256": "b7eab1251cc975b771929b1c6dfe6cb8511bb1ec75b3241336abe9651a151f83",
+      "stderr_actual_sha256": "b7eab1251cc975b771929b1c6dfe6cb8511bb1ec75b3241336abe9651a151f83",
+      "hash_matches": true,
+      "simulated_wineserver_calls": [
+        {
+          "command": [
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+            "-k"
+          ],
+          "exit": 0
+        },
+        {
+          "command": [
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+            "-w"
+          ],
+          "exit": 0
+        }
+      ],
+      "normal_cleanup_failure_not_propagated": false,
+      "fixture_only_no_wine_gpu": true
+    },
+    {
+      "case": "new-normal",
+      "exit": 0,
+      "error": null,
+      "stderr_recorded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hash_matches": true,
+      "simulated_wineserver_calls": [
+        {
+          "command": [
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+            "-w"
+          ],
+          "exit": 0
+        }
+      ],
+      "normal_cleanup_failure_not_propagated": false,
+      "fixture_only_no_wine_gpu": true
+    },
+    {
+      "case": "new-wait-timeout",
+      "exit": 0,
+      "error": null,
+      "stderr_recorded_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "stderr_actual_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "hash_matches": true,
+      "simulated_wineserver_calls": [
+        {
+          "command": [
+            "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wineserver",
+            "-w"
+          ],
+          "exit": 124
+        }
+      ],
+      "normal_cleanup_failure_not_propagated": true,
+      "fixture_only_no_wine_gpu": true
+    }
+  ],
+  "remaining_issue": "normal wineserver -w result is discarded; error cleanup return codes are retained but not enforced. Forced cleanup failure cannot certify output finality."
+}

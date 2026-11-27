@@ -16,8 +16,11 @@ def main():
     for p in sorted(src.rglob('*')):
         if not p.is_file() or p.is_symlink():continue
         rel=p.relative_to(src)
-        if p.suffix=='.exe' or p.name=='observe' or any(v.startswith('.wine') or v=='bottle' for v in rel.parts):continue
-        original=p.read_bytes();data=original
+        if p.suffix in ['.exe','.pyc','.pyo'] or '__pycache__' in rel.parts or p.name=='observe' or any(v.startswith('.wine') or v=='bottle' for v in rel.parts):continue
+        original=p.read_bytes()
+        if original[:2]==b'MZ' or original[:4] in [b'\xcf\xfa\xed\xfe',b'\xfe\xed\xfa\xcf',b'\xca\xfe\xba\xbe',b'\xbe\xba\xfe\xca']:
+            continue  # Executables remain in ignored artifacts, not public research records.
+        data=original
         if p.suffix=='.json':data=data.replace(str(Path.home()).encode(),b'<HOME>')
         target=dst/rel;target.parent.mkdir(parents=True,exist_ok=True);target.write_bytes(data)
         manifest['files'].append(dict(path=rel.as_posix(),bytes=len(data),original_sha256=hashlib.sha256(original).hexdigest(),archived_sha256=hashlib.sha256(data).hexdigest(),redacted=original!=data))

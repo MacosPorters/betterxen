@@ -1,0 +1,60 @@
+{
+  "file": "seed-473-stdout.jsonl",
+  "stats_checked": 2004,
+  "failed_allocation_requests": 180,
+  "labels": {
+    "alternating_holes": {
+      "op": "stats",
+      "label": "alternating_holes",
+      "capacity": 33554432,
+      "live_payload": 16777216,
+      "live_reserved": 16777216,
+      "pending_reserved": 0,
+      "internal_waste": 0,
+      "total_free": 16777216,
+      "largest_free": 4194304,
+      "largest_2MiB_aligned_span": 4194304,
+      "free_spans": 4
+    },
+    "pending_blocks_reuse": {
+      "op": "stats",
+      "label": "pending_blocks_reuse",
+      "capacity": 33554432,
+      "live_payload": 0,
+      "live_reserved": 0,
+      "pending_reserved": 16777216,
+      "internal_waste": 0,
+      "total_free": 16777216,
+      "largest_free": 4194304,
+      "largest_2MiB_aligned_span": 4194304,
+      "free_spans": 4
+    },
+    "fully_coalesced": {
+      "op": "stats",
+      "label": "fully_coalesced",
+      "capacity": 33554432,
+      "live_payload": 0,
+      "live_reserved": 0,
+      "pending_reserved": 0,
+      "internal_waste": 0,
+      "total_free": 33554432,
+      "largest_free": 33554432,
+      "largest_2MiB_aligned_span": 33554432,
+      "free_spans": 1
+    },
+    "final_empty": {
+      "op": "stats",
+      "label": "final_empty",
+      "capacity": 33554432,
+      "live_payload": 0,
+      "live_reserved": 0,
+      "pending_reserved": 0,
+      "internal_waste": 0,
+      "total_free": 33554432,
+      "largest_free": 33554432,
+      "largest_2MiB_aligned_span": 33554432,
+      "free_spans": 1
+    }
+  },
+  "scope": "logical interval model; not GPU, physical allocation or independent contributor acceptance"
+}

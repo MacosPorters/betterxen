@@ -1,0 +1,954 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+ADAPTER description=AMD Compatibility Mode vendor=0x1002 device=0x66AF subsystem=0x00000000 revision=0 flags=0 dedicated_video_bytes=19069665280 dedicated_system_bytes=19069665280 shared_system_bytes=19069665280 luid=00000000:000003F1
+OPTIONS ResourceHeapTier=2 CrossAdapterRowMajorTextureSupported=0 StandardSwizzle64KBSupported=0
+ARCH UMA=0 CacheCoherentUMA=0 TileBasedRenderer=0 IsolatedMMU=0
+CUSTOM_PROPERTIES input_type=1 Type=4 CPUPageProperty=1 MemoryPoolPreference=2 CreationNodeMask=1 VisibleNodeMask=1
+CUSTOM_PROPERTIES input_type=2 Type=4 CPUPageProperty=2 MemoryPoolPreference=1 CreationNodeMask=1 VisibleNodeMask=1
+CUSTOM_PROPERTIES input_type=3 Type=4 CPUPageProperty=3 MemoryPoolPreference=1 CreationNodeMask=1 VisibleNodeMask=1
+GUEST_PAGE_SIZE 4096 ALLOCATION_GRANULARITY 65536
+ALLOCATOR_CREATE type=wb ms=0.262600
+STAGE baseline cpu_ptr=0
+ALLOCATOR_POOL type=wb ms=7.469000 bytes=33554432 min_blocks=1 max_blocks=1
+STAGE heap_ready cpu_ptr=0
+POOL_BOUND_CONTROL requested_bytes=33554436 HRESULT=0x8007000E rejected=1
+REFERENCE_ALLOC cycle=-2 phase=0 slot=0 bytes=1048580 allocation_size=1114112 offset=0 create_resource_ms=0.724000 map_ms=0.001800
+REFERENCE_ALLOC cycle=-2 phase=0 slot=1 bytes=393220 allocation_size=458752 offset=1114112 create_resource_ms=0.006800 map_ms=0.000300
+REFERENCE_ALLOC cycle=-2 phase=0 slot=2 bytes=262148 allocation_size=327680 offset=1572864 create_resource_ms=0.002000 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=3 bytes=65540 allocation_size=131072 offset=1900544 create_resource_ms=0.001500 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=4 bytes=1048580 allocation_size=1114112 offset=2031616 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=5 bytes=1048580 allocation_size=1114112 offset=3145728 create_resource_ms=0.001400 map_ms=0.000300
+REFERENCE_ALLOC cycle=-2 phase=0 slot=6 bytes=262148 allocation_size=327680 offset=4259840 create_resource_ms=0.004400 map_ms=0.000300
+REFERENCE_ALLOC cycle=-2 phase=0 slot=7 bytes=393220 allocation_size=458752 offset=4587520 create_resource_ms=0.002700 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=8 bytes=1048580 allocation_size=1114112 offset=5046272 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=9 bytes=393220 allocation_size=458752 offset=6160384 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=10 bytes=393220 allocation_size=458752 offset=6619136 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=11 bytes=262148 allocation_size=327680 offset=7077888 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=-2 phase=0 slot=12 bytes=393220 allocation_size=458752 offset=7405568 create_resource_ms=0.001200 map_ms=0.000300
+REFERENCE_ALLOC cycle=-2 phase=0 slot=13 bytes=1048580 allocation_size=1114112 offset=7864320 create_resource_ms=0.001800 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=14 bytes=262148 allocation_size=327680 offset=8978432 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=15 bytes=262148 allocation_size=327680 offset=9306112 create_resource_ms=0.006900 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=16 bytes=262148 allocation_size=327680 offset=9633792 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=17 bytes=65540 allocation_size=131072 offset=9961472 create_resource_ms=0.008600 map_ms=0.000700
+REFERENCE_ALLOC cycle=-2 phase=0 slot=18 bytes=1048580 allocation_size=1114112 offset=10092544 create_resource_ms=0.002000 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=19 bytes=262148 allocation_size=327680 offset=11206656 create_resource_ms=0.001500 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=11534336 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=21 bytes=1048580 allocation_size=1114112 offset=11862016 create_resource_ms=0.001700 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=22 bytes=65540 allocation_size=131072 offset=12976128 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=0 slot=23 bytes=1048580 allocation_size=1114112 offset=13107200 create_resource_ms=0.001000 map_ms=0.000100
+ALLOCATOR_STATS cycle=-2 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=14221312 unused_ranges=1 largest_free=19333120
+REFERENCE_VERIFY cycle=-2 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=-2 slot=0 release_resource_and_allocation_ms=0.440300
+REFERENCE_FREE cycle=-2 slot=2 release_resource_and_allocation_ms=0.007000
+REFERENCE_FREE cycle=-2 slot=4 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=-2 slot=6 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=-2 slot=8 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=-2 slot=10 release_resource_and_allocation_ms=0.001200
+REFERENCE_FREE cycle=-2 slot=12 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-2 slot=14 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-2 slot=16 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-2 slot=18 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=-2 slot=20 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-2 slot=22 release_resource_and_allocation_ms=0.001000
+ALLOCATOR_STATS cycle=-2 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=7077888 unused_ranges=13 largest_free=19333120
+REFERENCE_ALLOC cycle=-2 phase=1 slot=0 bytes=262148 allocation_size=327680 offset=7405568 create_resource_ms=0.264700 map_ms=0.001100
+REFERENCE_ALLOC cycle=-2 phase=1 slot=2 bytes=1048580 allocation_size=1114112 offset=14221312 create_resource_ms=0.004100 map_ms=0.000300
+REFERENCE_ALLOC cycle=-2 phase=1 slot=4 bytes=1048580 allocation_size=1114112 offset=15335424 create_resource_ms=0.001500 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=1 slot=6 bytes=262148 allocation_size=327680 offset=6619136 create_resource_ms=0.001700 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=1 slot=8 bytes=65540 allocation_size=131072 offset=11534336 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=1 slot=10 bytes=1048580 allocation_size=1114112 offset=16449536 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=-2 phase=1 slot=12 bytes=65540 allocation_size=131072 offset=11665408 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=-2 phase=1 slot=14 bytes=65540 allocation_size=131072 offset=9633792 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=-2 phase=1 slot=16 bytes=65540 allocation_size=131072 offset=9764864 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=-2 phase=1 slot=18 bytes=65540 allocation_size=131072 offset=8978432 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=-2 phase=1 slot=20 bytes=393220 allocation_size=458752 offset=10092544 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=-2 phase=1 slot=22 bytes=65540 allocation_size=131072 offset=9109504 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_VERIFY cycle=-2 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=-2 slot=0 release_resource_and_allocation_ms=0.122600
+REFERENCE_FREE cycle=-2 slot=1 release_resource_and_allocation_ms=0.002600
+REFERENCE_FREE cycle=-2 slot=2 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-2 slot=3 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=-2 slot=4 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-2 slot=5 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=-2 slot=6 release_resource_and_allocation_ms=0.003000
+REFERENCE_FREE cycle=-2 slot=7 release_resource_and_allocation_ms=0.001500
+REFERENCE_FREE cycle=-2 slot=8 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-2 slot=9 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-2 slot=10 release_resource_and_allocation_ms=0.001400
+REFERENCE_FREE cycle=-2 slot=11 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-2 slot=12 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=-2 slot=13 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-2 slot=14 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-2 slot=15 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=-2 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-2 slot=17 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-2 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-2 slot=19 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-2 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-2 slot=21 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-2 slot=22 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-2 slot=23 release_resource_and_allocation_ms=0.000800
+ALLOCATOR_STATS cycle=-2 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=-2 ms=22.169700
+REFERENCE_ALLOC cycle=-1 phase=0 slot=0 bytes=262148 allocation_size=327680 offset=0 create_resource_ms=0.006900 map_ms=0.000400
+REFERENCE_ALLOC cycle=-1 phase=0 slot=1 bytes=65540 allocation_size=131072 offset=327680 create_resource_ms=0.002000 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=2 bytes=393220 allocation_size=458752 offset=458752 create_resource_ms=0.002400 map_ms=0.000300
+REFERENCE_ALLOC cycle=-1 phase=0 slot=3 bytes=262148 allocation_size=327680 offset=917504 create_resource_ms=0.004900 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=4 bytes=65540 allocation_size=131072 offset=1245184 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=5 bytes=393220 allocation_size=458752 offset=1376256 create_resource_ms=0.002700 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=6 bytes=65540 allocation_size=131072 offset=1835008 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=7 bytes=262148 allocation_size=327680 offset=1966080 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=8 bytes=65540 allocation_size=131072 offset=2293760 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=9 bytes=65540 allocation_size=131072 offset=2424832 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=10 bytes=65540 allocation_size=131072 offset=2555904 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=11 bytes=65540 allocation_size=131072 offset=2686976 create_resource_ms=0.000700 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=12 bytes=65540 allocation_size=131072 offset=2818048 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=13 bytes=65540 allocation_size=131072 offset=2949120 create_resource_ms=0.000700 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=14 bytes=1048580 allocation_size=1114112 offset=3080192 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=15 bytes=65540 allocation_size=131072 offset=4194304 create_resource_ms=0.000700 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=16 bytes=1048580 allocation_size=1114112 offset=4325376 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=17 bytes=262148 allocation_size=327680 offset=5439488 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=18 bytes=393220 allocation_size=458752 offset=5767168 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=19 bytes=393220 allocation_size=458752 offset=6225920 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=6684672 create_resource_ms=0.002000 map_ms=0.000300
+REFERENCE_ALLOC cycle=-1 phase=0 slot=21 bytes=1048580 allocation_size=1114112 offset=7012352 create_resource_ms=0.001700 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=22 bytes=393220 allocation_size=458752 offset=8126464 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=0 slot=23 bytes=65540 allocation_size=131072 offset=8585216 create_resource_ms=0.001000 map_ms=0.000100
+ALLOCATOR_STATS cycle=-1 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=8716288 unused_ranges=1 largest_free=24838144
+REFERENCE_VERIFY cycle=-1 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=-1 slot=0 release_resource_and_allocation_ms=0.003300
+REFERENCE_FREE cycle=-1 slot=2 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=4 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-1 slot=6 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=8 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-1 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=12 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-1 slot=14 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-1 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-1 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=22 release_resource_and_allocation_ms=0.000600
+ALLOCATOR_STATS cycle=-1 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=3801088 unused_ranges=13 largest_free=24838144
+REFERENCE_ALLOC cycle=-1 phase=1 slot=0 bytes=393220 allocation_size=458752 offset=4325376 create_resource_ms=0.001800 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=2 bytes=65540 allocation_size=131072 offset=6684672 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=4 bytes=65540 allocation_size=131072 offset=6815744 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=6 bytes=393220 allocation_size=458752 offset=4784128 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=8 bytes=65540 allocation_size=131072 offset=5242880 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=1 slot=10 bytes=65540 allocation_size=131072 offset=0 create_resource_ms=0.006600 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=1 slot=12 bytes=393220 allocation_size=458752 offset=3080192 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=14 bytes=65540 allocation_size=131072 offset=131072 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=16 bytes=1048580 allocation_size=1114112 offset=8716288 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=18 bytes=393220 allocation_size=458752 offset=3538944 create_resource_ms=0.003900 map_ms=0.000200
+REFERENCE_ALLOC cycle=-1 phase=1 slot=20 bytes=393220 allocation_size=458752 offset=9830400 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=-1 phase=1 slot=22 bytes=262148 allocation_size=327680 offset=8126464 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_VERIFY cycle=-1 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=-1 slot=0 release_resource_and_allocation_ms=0.002300
+REFERENCE_FREE cycle=-1 slot=1 release_resource_and_allocation_ms=0.001200
+REFERENCE_FREE cycle=-1 slot=2 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-1 slot=3 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=-1 slot=4 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=5 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-1 slot=6 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-1 slot=7 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=8 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=9 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-1 slot=10 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-1 slot=11 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=-1 slot=12 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-1 slot=13 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=14 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=-1 slot=15 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=16 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=17 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=18 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=19 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=21 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=-1 slot=22 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=-1 slot=23 release_resource_and_allocation_ms=0.000700
+ALLOCATOR_STATS cycle=-1 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=-1 ms=9.083100
+REFERENCE_ALLOC cycle=0 phase=0 slot=0 bytes=1048580 allocation_size=1114112 offset=0 create_resource_ms=0.003700 map_ms=0.000300
+REFERENCE_ALLOC cycle=0 phase=0 slot=1 bytes=65540 allocation_size=131072 offset=1114112 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=2 bytes=1048580 allocation_size=1114112 offset=1245184 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=3 bytes=65540 allocation_size=131072 offset=2359296 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=4 bytes=393220 allocation_size=458752 offset=2490368 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=5 bytes=262148 allocation_size=327680 offset=2949120 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=6 bytes=393220 allocation_size=458752 offset=3276800 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=7 bytes=65540 allocation_size=131072 offset=3735552 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=8 bytes=262148 allocation_size=327680 offset=3866624 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=9 bytes=393220 allocation_size=458752 offset=4194304 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=10 bytes=65540 allocation_size=131072 offset=4653056 create_resource_ms=0.007200 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=11 bytes=393220 allocation_size=458752 offset=4784128 create_resource_ms=0.002600 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=12 bytes=393220 allocation_size=458752 offset=5242880 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=13 bytes=65540 allocation_size=131072 offset=5701632 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=14 bytes=393220 allocation_size=458752 offset=5832704 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=15 bytes=1048580 allocation_size=1114112 offset=6291456 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=16 bytes=262148 allocation_size=327680 offset=7405568 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=17 bytes=393220 allocation_size=458752 offset=7733248 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=18 bytes=65540 allocation_size=131072 offset=8192000 create_resource_ms=0.000700 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=19 bytes=393220 allocation_size=458752 offset=8323072 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=20 bytes=1048580 allocation_size=1114112 offset=8781824 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=0 slot=21 bytes=393220 allocation_size=458752 offset=9895936 create_resource_ms=0.005900 map_ms=0.000500
+REFERENCE_ALLOC cycle=0 phase=0 slot=22 bytes=1048580 allocation_size=1114112 offset=10354688 create_resource_ms=0.001600 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=0 slot=23 bytes=262148 allocation_size=327680 offset=11468800 create_resource_ms=0.001100 map_ms=0.000200
+ALLOCATOR_STATS cycle=0 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=11796480 unused_ranges=1 largest_free=21757952
+REFERENCE_VERIFY cycle=0 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=0 slot=0 release_resource_and_allocation_ms=0.005200
+REFERENCE_FREE cycle=0 slot=2 release_resource_and_allocation_ms=0.003700
+REFERENCE_FREE cycle=0 slot=4 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=0 slot=6 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=0 slot=8 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=0 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=0 slot=12 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=0 slot=14 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=0 slot=16 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=0 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=0 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=0 slot=22 release_resource_and_allocation_ms=0.001000
+ALLOCATOR_STATS cycle=0 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=4587520 unused_ranges=13 largest_free=21757952
+REFERENCE_ALLOC cycle=0 phase=1 slot=0 bytes=262148 allocation_size=327680 offset=5832704 create_resource_ms=0.003100 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=1 slot=2 bytes=1048580 allocation_size=1114112 offset=11796480 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=1 slot=4 bytes=393220 allocation_size=458752 offset=10354688 create_resource_ms=0.001400 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=1 slot=6 bytes=262148 allocation_size=327680 offset=5242880 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=1 slot=8 bytes=65540 allocation_size=131072 offset=7405568 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=1 slot=10 bytes=393220 allocation_size=458752 offset=10813440 create_resource_ms=0.003400 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=1 slot=12 bytes=393220 allocation_size=458752 offset=8781824 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=1 slot=14 bytes=1048580 allocation_size=1114112 offset=12910592 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=1 slot=16 bytes=1048580 allocation_size=1114112 offset=14024704 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=0 phase=1 slot=18 bytes=262148 allocation_size=327680 offset=3276800 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=1 slot=20 bytes=1048580 allocation_size=1114112 offset=15138816 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=0 phase=1 slot=22 bytes=262148 allocation_size=327680 offset=2490368 create_resource_ms=0.001600 map_ms=0.000200
+REFERENCE_VERIFY cycle=0 phase=1 matched=1152/1152
+STAGE live cpu_ptr=0
+REFERENCE_FREE cycle=0 slot=0 release_resource_and_allocation_ms=0.056800
+REFERENCE_FREE cycle=0 slot=1 release_resource_and_allocation_ms=0.003000
+REFERENCE_FREE cycle=0 slot=2 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=0 slot=3 release_resource_and_allocation_ms=0.001700
+REFERENCE_FREE cycle=0 slot=4 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=0 slot=5 release_resource_and_allocation_ms=0.001500
+REFERENCE_FREE cycle=0 slot=6 release_resource_and_allocation_ms=0.001200
+REFERENCE_FREE cycle=0 slot=7 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=0 slot=8 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=0 slot=9 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=0 slot=10 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=0 slot=11 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=0 slot=12 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=0 slot=13 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=0 slot=14 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=0 slot=15 release_resource_and_allocation_ms=0.002500
+REFERENCE_FREE cycle=0 slot=16 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=0 slot=17 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=0 slot=18 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=0 slot=19 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=0 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=0 slot=21 release_resource_and_allocation_ms=0.001400
+REFERENCE_FREE cycle=0 slot=22 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=0 slot=23 release_resource_and_allocation_ms=0.000900
+ALLOCATOR_STATS cycle=0 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=0 ms=9.865900
+REFERENCE_ALLOC cycle=1 phase=0 slot=0 bytes=65540 allocation_size=131072 offset=0 create_resource_ms=0.020900 map_ms=0.001100
+REFERENCE_ALLOC cycle=1 phase=0 slot=1 bytes=393220 allocation_size=458752 offset=131072 create_resource_ms=0.001700 map_ms=0.000300
+REFERENCE_ALLOC cycle=1 phase=0 slot=2 bytes=393220 allocation_size=458752 offset=589824 create_resource_ms=0.001900 map_ms=0.000300
+REFERENCE_ALLOC cycle=1 phase=0 slot=3 bytes=65540 allocation_size=131072 offset=1048576 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=4 bytes=262148 allocation_size=327680 offset=1179648 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=5 bytes=1048580 allocation_size=1114112 offset=1507328 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=6 bytes=1048580 allocation_size=1114112 offset=2621440 create_resource_ms=0.001600 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=0 slot=7 bytes=393220 allocation_size=458752 offset=3735552 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=8 bytes=1048580 allocation_size=1114112 offset=4194304 create_resource_ms=0.004500 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=9 bytes=1048580 allocation_size=1114112 offset=5308416 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=10 bytes=65540 allocation_size=131072 offset=6422528 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=11 bytes=65540 allocation_size=131072 offset=6553600 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=0 slot=12 bytes=65540 allocation_size=131072 offset=6684672 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=13 bytes=393220 allocation_size=458752 offset=6815744 create_resource_ms=0.002300 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=0 slot=14 bytes=65540 allocation_size=131072 offset=7274496 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=15 bytes=1048580 allocation_size=1114112 offset=7405568 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=16 bytes=1048580 allocation_size=1114112 offset=8519680 create_resource_ms=0.003000 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=17 bytes=393220 allocation_size=458752 offset=9633792 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=18 bytes=1048580 allocation_size=1114112 offset=10092544 create_resource_ms=0.003100 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=19 bytes=262148 allocation_size=327680 offset=11206656 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=11534336 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=0 slot=21 bytes=393220 allocation_size=458752 offset=11862016 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=0 slot=22 bytes=1048580 allocation_size=1114112 offset=12320768 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=0 slot=23 bytes=1048580 allocation_size=1114112 offset=13434880 create_resource_ms=0.003000 map_ms=0.000300
+ALLOCATOR_STATS cycle=1 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=14548992 unused_ranges=1 largest_free=19005440
+REFERENCE_VERIFY cycle=1 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=1 slot=0 release_resource_and_allocation_ms=0.022600
+REFERENCE_FREE cycle=1 slot=2 release_resource_and_allocation_ms=0.003000
+REFERENCE_FREE cycle=1 slot=4 release_resource_and_allocation_ms=0.001500
+REFERENCE_FREE cycle=1 slot=6 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=1 slot=8 release_resource_and_allocation_ms=0.002600
+REFERENCE_FREE cycle=1 slot=10 release_resource_and_allocation_ms=0.002400
+REFERENCE_FREE cycle=1 slot=12 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=1 slot=14 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=1 slot=16 release_resource_and_allocation_ms=0.002100
+REFERENCE_FREE cycle=1 slot=18 release_resource_and_allocation_ms=0.006600
+REFERENCE_FREE cycle=1 slot=20 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=1 slot=22 release_resource_and_allocation_ms=0.000900
+ALLOCATOR_STATS cycle=1 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=7340032 unused_ranges=13 largest_free=19005440
+REFERENCE_ALLOC cycle=1 phase=1 slot=0 bytes=1048580 allocation_size=1114112 offset=14548992 create_resource_ms=0.022300 map_ms=0.000800
+REFERENCE_ALLOC cycle=1 phase=1 slot=2 bytes=393220 allocation_size=458752 offset=12320768 create_resource_ms=0.003700 map_ms=0.000400
+REFERENCE_ALLOC cycle=1 phase=1 slot=4 bytes=393220 allocation_size=458752 offset=12779520 create_resource_ms=0.001800 map_ms=0.000300
+REFERENCE_ALLOC cycle=1 phase=1 slot=6 bytes=393220 allocation_size=458752 offset=10092544 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=1 slot=8 bytes=262148 allocation_size=327680 offset=589824 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=1 slot=10 bytes=393220 allocation_size=458752 offset=10551296 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=1 slot=12 bytes=1048580 allocation_size=1114112 offset=15663104 create_resource_ms=0.001200 map_ms=0.000300
+REFERENCE_ALLOC cycle=1 phase=1 slot=14 bytes=262148 allocation_size=327680 offset=8519680 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=1 slot=16 bytes=1048580 allocation_size=1114112 offset=16777216 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=1 phase=1 slot=18 bytes=1048580 allocation_size=1114112 offset=17891328 create_resource_ms=0.003000 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=1 slot=20 bytes=65540 allocation_size=131072 offset=11010048 create_resource_ms=0.001500 map_ms=0.000200
+REFERENCE_ALLOC cycle=1 phase=1 slot=22 bytes=1048580 allocation_size=1114112 offset=19005440 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_VERIFY cycle=1 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=1 slot=0 release_resource_and_allocation_ms=0.004700
+REFERENCE_FREE cycle=1 slot=1 release_resource_and_allocation_ms=0.002500
+REFERENCE_FREE cycle=1 slot=2 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=1 slot=3 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=1 slot=4 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=1 slot=5 release_resource_and_allocation_ms=0.003300
+REFERENCE_FREE cycle=1 slot=6 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=1 slot=7 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=1 slot=8 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=1 slot=9 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=1 slot=10 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=1 slot=11 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=1 slot=12 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=1 slot=13 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=1 slot=14 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=1 slot=15 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=1 slot=16 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=1 slot=17 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=1 slot=18 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=1 slot=19 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=1 slot=20 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=1 slot=21 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=1 slot=22 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=1 slot=23 release_resource_and_allocation_ms=0.000800
+ALLOCATOR_STATS cycle=1 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=1 ms=16.156400
+REFERENCE_ALLOC cycle=2 phase=0 slot=0 bytes=262148 allocation_size=327680 offset=0 create_resource_ms=0.005800 map_ms=0.000400
+REFERENCE_ALLOC cycle=2 phase=0 slot=1 bytes=65540 allocation_size=131072 offset=327680 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=2 bytes=1048580 allocation_size=1114112 offset=458752 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=3 bytes=393220 allocation_size=458752 offset=1572864 create_resource_ms=0.007200 map_ms=0.000700
+REFERENCE_ALLOC cycle=2 phase=0 slot=4 bytes=65540 allocation_size=131072 offset=2031616 create_resource_ms=0.001800 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=5 bytes=65540 allocation_size=131072 offset=2162688 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=6 bytes=65540 allocation_size=131072 offset=2293760 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=0 slot=7 bytes=1048580 allocation_size=1114112 offset=2424832 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=0 slot=8 bytes=65540 allocation_size=131072 offset=3538944 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=9 bytes=1048580 allocation_size=1114112 offset=3670016 create_resource_ms=0.005600 map_ms=0.000300
+REFERENCE_ALLOC cycle=2 phase=0 slot=10 bytes=393220 allocation_size=458752 offset=4784128 create_resource_ms=0.003800 map_ms=0.000300
+REFERENCE_ALLOC cycle=2 phase=0 slot=11 bytes=262148 allocation_size=327680 offset=5242880 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=12 bytes=262148 allocation_size=327680 offset=5570560 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=13 bytes=1048580 allocation_size=1114112 offset=5898240 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=14 bytes=262148 allocation_size=327680 offset=7012352 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=0 slot=15 bytes=262148 allocation_size=327680 offset=7340032 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=16 bytes=65540 allocation_size=131072 offset=7667712 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=17 bytes=262148 allocation_size=327680 offset=7798784 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=18 bytes=262148 allocation_size=327680 offset=8126464 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=19 bytes=262148 allocation_size=327680 offset=8454144 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=20 bytes=1048580 allocation_size=1114112 offset=8781824 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=0 slot=21 bytes=1048580 allocation_size=1114112 offset=9895936 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=0 slot=22 bytes=262148 allocation_size=327680 offset=11010048 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=0 slot=23 bytes=1048580 allocation_size=1114112 offset=11337728 create_resource_ms=0.002100 map_ms=0.000300
+ALLOCATOR_STATS cycle=2 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=12451840 unused_ranges=1 largest_free=21102592
+REFERENCE_VERIFY cycle=2 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=2 slot=0 release_resource_and_allocation_ms=0.003300
+REFERENCE_FREE cycle=2 slot=2 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=2 slot=4 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=6 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=8 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=10 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=2 slot=12 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=2 slot=14 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=2 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=2 slot=18 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=2 slot=20 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=2 slot=22 release_resource_and_allocation_ms=0.000700
+ALLOCATOR_STATS cycle=2 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=7602176 unused_ranges=13 largest_free=21102592
+REFERENCE_ALLOC cycle=2 phase=1 slot=0 bytes=1048580 allocation_size=1114112 offset=12451840 create_resource_ms=0.002700 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=1 slot=2 bytes=262148 allocation_size=327680 offset=4784128 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=1 slot=4 bytes=262148 allocation_size=327680 offset=8781824 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=1 slot=6 bytes=65540 allocation_size=131072 offset=11010048 create_resource_ms=0.004100 map_ms=0.000400
+REFERENCE_ALLOC cycle=2 phase=1 slot=8 bytes=65540 allocation_size=131072 offset=11141120 create_resource_ms=0.003200 map_ms=0.000300
+REFERENCE_ALLOC cycle=2 phase=1 slot=10 bytes=262148 allocation_size=327680 offset=9109504 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=1 slot=12 bytes=65540 allocation_size=131072 offset=8126464 create_resource_ms=0.001700 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=1 slot=14 bytes=1048580 allocation_size=1114112 offset=13565952 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=1 slot=16 bytes=65540 allocation_size=131072 offset=8257536 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=1 slot=18 bytes=65540 allocation_size=131072 offset=7012352 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=2 phase=1 slot=20 bytes=262148 allocation_size=327680 offset=9437184 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=2 phase=1 slot=22 bytes=393220 allocation_size=458752 offset=458752 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_VERIFY cycle=2 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=2 slot=0 release_resource_and_allocation_ms=0.003400
+REFERENCE_FREE cycle=2 slot=1 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=2 slot=2 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=2 slot=3 release_resource_and_allocation_ms=0.001400
+REFERENCE_FREE cycle=2 slot=4 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=2 slot=5 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=2 slot=6 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=2 slot=7 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=2 slot=8 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=9 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=2 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=11 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=2 slot=12 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=2 slot=13 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=2 slot=14 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=15 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=2 slot=16 release_resource_and_allocation_ms=0.001600
+REFERENCE_FREE cycle=2 slot=17 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=2 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=2 slot=19 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=21 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=2 slot=22 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=2 slot=23 release_resource_and_allocation_ms=0.000700
+ALLOCATOR_STATS cycle=2 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=2 ms=9.649200
+REFERENCE_ALLOC cycle=3 phase=0 slot=0 bytes=1048580 allocation_size=1114112 offset=0 create_resource_ms=0.003600 map_ms=0.000300
+REFERENCE_ALLOC cycle=3 phase=0 slot=1 bytes=262148 allocation_size=327680 offset=1114112 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=2 bytes=393220 allocation_size=458752 offset=1441792 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=3 bytes=1048580 allocation_size=1114112 offset=1900544 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=4 bytes=393220 allocation_size=458752 offset=3014656 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=5 bytes=393220 allocation_size=458752 offset=3473408 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=6 bytes=262148 allocation_size=327680 offset=3932160 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=0 slot=7 bytes=65540 allocation_size=131072 offset=4259840 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=0 slot=8 bytes=262148 allocation_size=327680 offset=4390912 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=9 bytes=65540 allocation_size=131072 offset=4718592 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=10 bytes=262148 allocation_size=327680 offset=4849664 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=11 bytes=65540 allocation_size=131072 offset=5177344 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=12 bytes=262148 allocation_size=327680 offset=5308416 create_resource_ms=0.000700 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=0 slot=13 bytes=65540 allocation_size=131072 offset=5636096 create_resource_ms=0.000700 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=14 bytes=393220 allocation_size=458752 offset=5767168 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=0 slot=15 bytes=1048580 allocation_size=1114112 offset=6225920 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=16 bytes=65540 allocation_size=131072 offset=7340032 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=0 slot=17 bytes=65540 allocation_size=131072 offset=7471104 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=18 bytes=65540 allocation_size=131072 offset=7602176 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=19 bytes=393220 allocation_size=458752 offset=7733248 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=8192000 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=0 slot=21 bytes=262148 allocation_size=327680 offset=8519680 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=0 slot=22 bytes=393220 allocation_size=458752 offset=8847360 create_resource_ms=0.001000 map_ms=0.000300
+REFERENCE_ALLOC cycle=3 phase=0 slot=23 bytes=393220 allocation_size=458752 offset=9306112 create_resource_ms=0.001200 map_ms=0.000100
+ALLOCATOR_STATS cycle=3 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=9764864 unused_ranges=1 largest_free=23789568
+REFERENCE_VERIFY cycle=3 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=3 slot=0 release_resource_and_allocation_ms=0.002100
+REFERENCE_FREE cycle=3 slot=2 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=4 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=3 slot=6 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=3 slot=8 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=3 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=3 slot=12 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=3 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=3 slot=16 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=3 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=3 slot=20 release_resource_and_allocation_ms=0.000400
+REFERENCE_FREE cycle=3 slot=22 release_resource_and_allocation_ms=0.000500
+ALLOCATOR_STATS cycle=3 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=4915200 unused_ranges=13 largest_free=23789568
+REFERENCE_ALLOC cycle=3 phase=1 slot=0 bytes=262148 allocation_size=327680 offset=8847360 create_resource_ms=0.002700 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=1 slot=2 bytes=393220 allocation_size=458752 offset=0 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=1 slot=4 bytes=393220 allocation_size=458752 offset=458752 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=1 slot=6 bytes=65540 allocation_size=131072 offset=917504 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=1 slot=8 bytes=262148 allocation_size=327680 offset=5767168 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=1 slot=10 bytes=65540 allocation_size=131072 offset=8192000 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=1 slot=12 bytes=1048580 allocation_size=1114112 offset=9764864 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=1 slot=14 bytes=65540 allocation_size=131072 offset=8323072 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=1 slot=16 bytes=1048580 allocation_size=1114112 offset=10878976 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=3 phase=1 slot=18 bytes=1048580 allocation_size=1114112 offset=11993088 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=1 slot=20 bytes=65540 allocation_size=131072 offset=5308416 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=3 phase=1 slot=22 bytes=262148 allocation_size=327680 offset=3014656 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_VERIFY cycle=3 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=3 slot=0 release_resource_and_allocation_ms=0.002700
+REFERENCE_FREE cycle=3 slot=1 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=3 slot=2 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=3 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=4 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=3 slot=5 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=3 slot=6 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=7 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=3 slot=8 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=3 slot=9 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=3 slot=10 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=3 slot=11 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=3 slot=12 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=13 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=14 release_resource_and_allocation_ms=0.001700
+REFERENCE_FREE cycle=3 slot=15 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=3 slot=17 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=3 slot=18 release_resource_and_allocation_ms=0.003000
+REFERENCE_FREE cycle=3 slot=19 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=3 slot=20 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=3 slot=21 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=3 slot=22 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=3 slot=23 release_resource_and_allocation_ms=0.001000
+ALLOCATOR_STATS cycle=3 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=3 ms=9.223100
+REFERENCE_ALLOC cycle=4 phase=0 slot=0 bytes=1048580 allocation_size=1114112 offset=0 create_resource_ms=0.004700 map_ms=0.000300
+REFERENCE_ALLOC cycle=4 phase=0 slot=1 bytes=393220 allocation_size=458752 offset=1114112 create_resource_ms=0.001400 map_ms=0.000300
+REFERENCE_ALLOC cycle=4 phase=0 slot=2 bytes=65540 allocation_size=131072 offset=1572864 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=4 phase=0 slot=3 bytes=65540 allocation_size=131072 offset=1703936 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=4 phase=0 slot=4 bytes=1048580 allocation_size=1114112 offset=1835008 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=4 phase=0 slot=5 bytes=393220 allocation_size=458752 offset=2949120 create_resource_ms=0.006700 map_ms=0.000600
+REFERENCE_ALLOC cycle=4 phase=0 slot=6 bytes=393220 allocation_size=458752 offset=3407872 create_resource_ms=0.001900 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=7 bytes=393220 allocation_size=458752 offset=3866624 create_resource_ms=0.001400 map_ms=0.000100
+REFERENCE_ALLOC cycle=4 phase=0 slot=8 bytes=65540 allocation_size=131072 offset=4325376 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=4 phase=0 slot=9 bytes=262148 allocation_size=327680 offset=4456448 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=10 bytes=1048580 allocation_size=1114112 offset=4784128 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=11 bytes=393220 allocation_size=458752 offset=5898240 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=12 bytes=65540 allocation_size=131072 offset=6356992 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=13 bytes=65540 allocation_size=131072 offset=6488064 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=14 bytes=393220 allocation_size=458752 offset=6619136 create_resource_ms=0.002400 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=15 bytes=65540 allocation_size=131072 offset=7077888 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=16 bytes=262148 allocation_size=327680 offset=7208960 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=17 bytes=393220 allocation_size=458752 offset=7536640 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=4 phase=0 slot=18 bytes=262148 allocation_size=327680 offset=7995392 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=19 bytes=65540 allocation_size=131072 offset=8323072 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=8454144 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=21 bytes=1048580 allocation_size=1114112 offset=8781824 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=22 bytes=262148 allocation_size=327680 offset=9895936 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=0 slot=23 bytes=1048580 allocation_size=1114112 offset=10223616 create_resource_ms=0.001000 map_ms=0.000100
+ALLOCATOR_STATS cycle=4 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=11337728 unused_ranges=1 largest_free=22216704
+REFERENCE_VERIFY cycle=4 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=4 slot=0 release_resource_and_allocation_ms=0.002500
+REFERENCE_FREE cycle=4 slot=2 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=4 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=4 slot=6 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=4 slot=8 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=4 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=12 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=4 slot=16 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=18 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=22 release_resource_and_allocation_ms=0.000800
+ALLOCATOR_STATS cycle=4 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=5373952 unused_ranges=13 largest_free=22216704
+REFERENCE_ALLOC cycle=4 phase=1 slot=0 bytes=65540 allocation_size=131072 offset=9895936 create_resource_ms=0.002700 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=2 bytes=262148 allocation_size=327680 offset=6619136 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=4 bytes=65540 allocation_size=131072 offset=10027008 create_resource_ms=0.002700 map_ms=0.000300
+REFERENCE_ALLOC cycle=4 phase=1 slot=6 bytes=1048580 allocation_size=1114112 offset=11337728 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=8 bytes=262148 allocation_size=327680 offset=3407872 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=10 bytes=1048580 allocation_size=1114112 offset=12451840 create_resource_ms=0.001900 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=12 bytes=393220 allocation_size=458752 offset=4784128 create_resource_ms=0.003600 map_ms=0.000300
+REFERENCE_ALLOC cycle=4 phase=1 slot=14 bytes=1048580 allocation_size=1114112 offset=13565952 create_resource_ms=0.001500 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=16 bytes=1048580 allocation_size=1114112 offset=14680064 create_resource_ms=0.002000 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=18 bytes=1048580 allocation_size=1114112 offset=15794176 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=20 bytes=65540 allocation_size=131072 offset=8454144 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=4 phase=1 slot=22 bytes=393220 allocation_size=458752 offset=5242880 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_VERIFY cycle=4 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=4 slot=0 release_resource_and_allocation_ms=0.003000
+REFERENCE_FREE cycle=4 slot=1 release_resource_and_allocation_ms=0.001500
+REFERENCE_FREE cycle=4 slot=2 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=4 slot=3 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=4 slot=4 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=4 slot=5 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=4 slot=6 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=4 slot=7 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=4 slot=8 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=9 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=4 slot=10 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=4 slot=11 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=4 slot=12 release_resource_and_allocation_ms=0.001200
+REFERENCE_FREE cycle=4 slot=13 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=4 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=4 slot=15 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=4 slot=16 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=4 slot=17 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=4 slot=18 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=19 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=4 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=4 slot=21 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=4 slot=22 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=4 slot=23 release_resource_and_allocation_ms=0.000800
+ALLOCATOR_STATS cycle=4 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=4 ms=9.908800
+REFERENCE_ALLOC cycle=5 phase=0 slot=0 bytes=262148 allocation_size=327680 offset=0 create_resource_ms=0.003500 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=1 bytes=1048580 allocation_size=1114112 offset=327680 create_resource_ms=0.001500 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=2 bytes=65540 allocation_size=131072 offset=1441792 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=3 bytes=65540 allocation_size=131072 offset=1572864 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=4 bytes=1048580 allocation_size=1114112 offset=1703936 create_resource_ms=0.002800 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=5 bytes=65540 allocation_size=131072 offset=2818048 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=6 bytes=262148 allocation_size=327680 offset=2949120 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=7 bytes=393220 allocation_size=458752 offset=3276800 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=8 bytes=65540 allocation_size=131072 offset=3735552 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=9 bytes=1048580 allocation_size=1114112 offset=3866624 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=10 bytes=393220 allocation_size=458752 offset=4980736 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=11 bytes=1048580 allocation_size=1114112 offset=5439488 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=12 bytes=1048580 allocation_size=1114112 offset=6553600 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=13 bytes=65540 allocation_size=131072 offset=7667712 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=14 bytes=1048580 allocation_size=1114112 offset=7798784 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=15 bytes=1048580 allocation_size=1114112 offset=8912896 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=16 bytes=262148 allocation_size=327680 offset=10027008 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=17 bytes=393220 allocation_size=458752 offset=10354688 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=18 bytes=393220 allocation_size=458752 offset=10813440 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=19 bytes=262148 allocation_size=327680 offset=11272192 create_resource_ms=0.001000 map_ms=0.000400
+REFERENCE_ALLOC cycle=5 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=11599872 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=21 bytes=262148 allocation_size=327680 offset=11927552 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=0 slot=22 bytes=1048580 allocation_size=1114112 offset=12255232 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=0 slot=23 bytes=65540 allocation_size=131072 offset=13369344 create_resource_ms=0.001200 map_ms=0.000200
+ALLOCATOR_STATS cycle=5 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=13500416 unused_ranges=1 largest_free=20054016
+REFERENCE_VERIFY cycle=5 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=5 slot=0 release_resource_and_allocation_ms=0.003600
+REFERENCE_FREE cycle=5 slot=2 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=5 slot=4 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=5 slot=6 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=5 slot=8 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=5 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=12 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=5 slot=14 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=5 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=5 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=5 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=22 release_resource_and_allocation_ms=0.000500
+ALLOCATOR_STATS cycle=5 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=6553600 unused_ranges=13 largest_free=20054016
+REFERENCE_ALLOC cycle=5 phase=1 slot=0 bytes=262148 allocation_size=327680 offset=10813440 create_resource_ms=0.003700 map_ms=0.000500
+REFERENCE_ALLOC cycle=5 phase=1 slot=2 bytes=262148 allocation_size=327680 offset=4980736 create_resource_ms=0.002500 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=1 slot=4 bytes=393220 allocation_size=458752 offset=12255232 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=1 slot=6 bytes=393220 allocation_size=458752 offset=12713984 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=1 slot=8 bytes=393220 allocation_size=458752 offset=7798784 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=1 slot=10 bytes=393220 allocation_size=458752 offset=8257536 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=5 phase=1 slot=12 bytes=65540 allocation_size=131072 offset=8716288 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=1 slot=14 bytes=1048580 allocation_size=1114112 offset=13500416 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=1 slot=16 bytes=65540 allocation_size=131072 offset=13172736 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=1 slot=18 bytes=262148 allocation_size=327680 offset=6553600 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=1 slot=20 bytes=65540 allocation_size=131072 offset=11599872 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=5 phase=1 slot=22 bytes=65540 allocation_size=131072 offset=11730944 create_resource_ms=0.001800 map_ms=0.000200
+REFERENCE_VERIFY cycle=5 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=5 slot=0 release_resource_and_allocation_ms=0.001400
+REFERENCE_FREE cycle=5 slot=1 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=5 slot=2 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=3 release_resource_and_allocation_ms=0.003200
+REFERENCE_FREE cycle=5 slot=4 release_resource_and_allocation_ms=0.001400
+REFERENCE_FREE cycle=5 slot=5 release_resource_and_allocation_ms=0.001500
+REFERENCE_FREE cycle=5 slot=6 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=5 slot=7 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=8 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=9 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=11 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=12 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=5 slot=13 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=5 slot=14 release_resource_and_allocation_ms=0.001700
+REFERENCE_FREE cycle=5 slot=15 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=5 slot=16 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=5 slot=17 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=5 slot=18 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=19 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=5 slot=21 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=5 slot=22 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=5 slot=23 release_resource_and_allocation_ms=0.001000
+ALLOCATOR_STATS cycle=5 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=5 ms=9.680100
+REFERENCE_ALLOC cycle=6 phase=0 slot=0 bytes=65540 allocation_size=131072 offset=0 create_resource_ms=0.001900 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=1 bytes=393220 allocation_size=458752 offset=131072 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=0 slot=2 bytes=262148 allocation_size=327680 offset=589824 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=0 slot=3 bytes=262148 allocation_size=327680 offset=917504 create_resource_ms=0.000700 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=4 bytes=1048580 allocation_size=1114112 offset=1245184 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=5 bytes=393220 allocation_size=458752 offset=2359296 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=6 bytes=262148 allocation_size=327680 offset=2818048 create_resource_ms=0.001900 map_ms=0.000300
+REFERENCE_ALLOC cycle=6 phase=0 slot=7 bytes=65540 allocation_size=131072 offset=3145728 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=0 slot=8 bytes=393220 allocation_size=458752 offset=3276800 create_resource_ms=0.000700 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=0 slot=9 bytes=1048580 allocation_size=1114112 offset=3735552 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=10 bytes=1048580 allocation_size=1114112 offset=4849664 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=11 bytes=65540 allocation_size=131072 offset=5963776 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=12 bytes=393220 allocation_size=458752 offset=6094848 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=13 bytes=1048580 allocation_size=1114112 offset=6553600 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=14 bytes=262148 allocation_size=327680 offset=7667712 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=0 slot=15 bytes=65540 allocation_size=131072 offset=7995392 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=0 slot=16 bytes=393220 allocation_size=458752 offset=8126464 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=0 slot=17 bytes=393220 allocation_size=458752 offset=8585216 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=18 bytes=1048580 allocation_size=1114112 offset=9043968 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=19 bytes=1048580 allocation_size=1114112 offset=10158080 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=20 bytes=393220 allocation_size=458752 offset=11272192 create_resource_ms=0.002800 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=21 bytes=65540 allocation_size=131072 offset=11730944 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=22 bytes=1048580 allocation_size=1114112 offset=11862016 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=0 slot=23 bytes=393220 allocation_size=458752 offset=12976128 create_resource_ms=0.000900 map_ms=0.000200
+ALLOCATOR_STATS cycle=6 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=13434880 unused_ranges=1 largest_free=20119552
+REFERENCE_VERIFY cycle=6 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=6 slot=0 release_resource_and_allocation_ms=0.002200
+REFERENCE_FREE cycle=6 slot=2 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=4 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=6 release_resource_and_allocation_ms=0.001400
+REFERENCE_FREE cycle=6 slot=8 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=6 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=12 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=14 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=6 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=6 slot=18 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=6 slot=20 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=6 slot=22 release_resource_and_allocation_ms=0.000500
+ALLOCATOR_STATS cycle=6 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=6029312 unused_ranges=13 largest_free=20119552
+REFERENCE_ALLOC cycle=6 phase=1 slot=0 bytes=65540 allocation_size=131072 offset=7667712 create_resource_ms=0.002800 map_ms=0.000300
+REFERENCE_ALLOC cycle=6 phase=1 slot=2 bytes=65540 allocation_size=131072 offset=7798784 create_resource_ms=0.002100 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=1 slot=4 bytes=393220 allocation_size=458752 offset=11862016 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=1 slot=6 bytes=1048580 allocation_size=1114112 offset=13434880 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=1 slot=8 bytes=1048580 allocation_size=1114112 offset=14548992 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=1 slot=10 bytes=393220 allocation_size=458752 offset=12320768 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=1 slot=12 bytes=1048580 allocation_size=1114112 offset=15663104 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=1 slot=14 bytes=65540 allocation_size=131072 offset=12779520 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=1 slot=16 bytes=393220 allocation_size=458752 offset=9043968 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=6 phase=1 slot=18 bytes=65540 allocation_size=131072 offset=2818048 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=1 slot=20 bytes=65540 allocation_size=131072 offset=2949120 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=6 phase=1 slot=22 bytes=1048580 allocation_size=1114112 offset=16777216 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_VERIFY cycle=6 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=6 slot=0 release_resource_and_allocation_ms=0.006800
+REFERENCE_FREE cycle=6 slot=1 release_resource_and_allocation_ms=0.002200
+REFERENCE_FREE cycle=6 slot=2 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=6 slot=3 release_resource_and_allocation_ms=0.001200
+REFERENCE_FREE cycle=6 slot=4 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=5 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=6 slot=6 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=7 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=6 slot=8 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=9 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=6 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=11 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=6 slot=12 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=13 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=6 slot=14 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=15 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=6 slot=16 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=17 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=6 slot=18 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=19 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=6 slot=21 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=22 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=6 slot=23 release_resource_and_allocation_ms=0.000900
+ALLOCATOR_STATS cycle=6 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=6 ms=10.279100
+REFERENCE_ALLOC cycle=7 phase=0 slot=0 bytes=1048580 allocation_size=1114112 offset=0 create_resource_ms=0.005900 map_ms=0.000400
+REFERENCE_ALLOC cycle=7 phase=0 slot=1 bytes=1048580 allocation_size=1114112 offset=1114112 create_resource_ms=0.001800 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=2 bytes=393220 allocation_size=458752 offset=2228224 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=3 bytes=393220 allocation_size=458752 offset=2686976 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=4 bytes=1048580 allocation_size=1114112 offset=3145728 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=5 bytes=1048580 allocation_size=1114112 offset=4259840 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=6 bytes=65540 allocation_size=131072 offset=5373952 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=7 bytes=393220 allocation_size=458752 offset=5505024 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=8 bytes=262148 allocation_size=327680 offset=5963776 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=9 bytes=65540 allocation_size=131072 offset=6291456 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=10 bytes=393220 allocation_size=458752 offset=6422528 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=11 bytes=262148 allocation_size=327680 offset=6881280 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=12 bytes=65540 allocation_size=131072 offset=7208960 create_resource_ms=0.001400 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=13 bytes=262148 allocation_size=327680 offset=7340032 create_resource_ms=0.005200 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=14 bytes=262148 allocation_size=327680 offset=7667712 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=15 bytes=65540 allocation_size=131072 offset=7995392 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=16 bytes=393220 allocation_size=458752 offset=8126464 create_resource_ms=0.005900 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=17 bytes=65540 allocation_size=131072 offset=8585216 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=18 bytes=1048580 allocation_size=1114112 offset=8716288 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=19 bytes=393220 allocation_size=458752 offset=9830400 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=10289152 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=21 bytes=65540 allocation_size=131072 offset=10616832 create_resource_ms=0.003700 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=0 slot=22 bytes=1048580 allocation_size=1114112 offset=10747904 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=0 slot=23 bytes=262148 allocation_size=327680 offset=11862016 create_resource_ms=0.001000 map_ms=0.000200
+ALLOCATOR_STATS cycle=7 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=12189696 unused_ranges=1 largest_free=21364736
+REFERENCE_VERIFY cycle=7 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=7 slot=0 release_resource_and_allocation_ms=0.002900
+REFERENCE_FREE cycle=7 slot=2 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=7 slot=4 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=6 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=7 slot=8 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=7 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=12 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=16 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=22 release_resource_and_allocation_ms=0.000500
+ALLOCATOR_STATS cycle=7 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=5111808 unused_ranges=13 largest_free=21364736
+REFERENCE_ALLOC cycle=7 phase=1 slot=0 bytes=1048580 allocation_size=1114112 offset=12189696 create_resource_ms=0.003700 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=2 bytes=1048580 allocation_size=1114112 offset=13303808 create_resource_ms=0.001400 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=4 bytes=393220 allocation_size=458752 offset=10747904 create_resource_ms=0.003700 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=6 bytes=65540 allocation_size=131072 offset=10289152 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=8 bytes=1048580 allocation_size=1114112 offset=14417920 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=10 bytes=1048580 allocation_size=1114112 offset=15532032 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=12 bytes=1048580 allocation_size=1114112 offset=16646144 create_resource_ms=0.001800 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=14 bytes=65540 allocation_size=131072 offset=10420224 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=1 slot=16 bytes=262148 allocation_size=327680 offset=8126464 create_resource_ms=0.001100 map_ms=0.000300
+REFERENCE_ALLOC cycle=7 phase=1 slot=18 bytes=1048580 allocation_size=1114112 offset=17760256 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=7 phase=1 slot=20 bytes=393220 allocation_size=458752 offset=11206656 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=7 phase=1 slot=22 bytes=65540 allocation_size=131072 offset=11665408 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_VERIFY cycle=7 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=7 slot=0 release_resource_and_allocation_ms=0.002500
+REFERENCE_FREE cycle=7 slot=1 release_resource_and_allocation_ms=0.001300
+REFERENCE_FREE cycle=7 slot=2 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=7 slot=3 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=7 slot=4 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=7 slot=5 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=7 slot=6 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=7 slot=7 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=7 slot=8 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=9 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=7 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=11 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=12 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=7 slot=13 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=15 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=16 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=17 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=19 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=7 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=21 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=7 slot=22 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=7 slot=23 release_resource_and_allocation_ms=0.000800
+ALLOCATOR_STATS cycle=7 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=7 ms=10.183000
+REFERENCE_ALLOC cycle=8 phase=0 slot=0 bytes=65540 allocation_size=131072 offset=0 create_resource_ms=0.003000 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=1 bytes=65540 allocation_size=131072 offset=131072 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=2 bytes=65540 allocation_size=131072 offset=262144 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=3 bytes=393220 allocation_size=458752 offset=393216 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=4 bytes=262148 allocation_size=327680 offset=851968 create_resource_ms=0.001800 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=5 bytes=393220 allocation_size=458752 offset=1179648 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=6 bytes=262148 allocation_size=327680 offset=1638400 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=7 bytes=65540 allocation_size=131072 offset=1966080 create_resource_ms=0.002900 map_ms=0.000300
+REFERENCE_ALLOC cycle=8 phase=0 slot=8 bytes=262148 allocation_size=327680 offset=2097152 create_resource_ms=0.002000 map_ms=0.000300
+REFERENCE_ALLOC cycle=8 phase=0 slot=9 bytes=393220 allocation_size=458752 offset=2424832 create_resource_ms=0.002300 map_ms=0.000300
+REFERENCE_ALLOC cycle=8 phase=0 slot=10 bytes=262148 allocation_size=327680 offset=2883584 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=11 bytes=1048580 allocation_size=1114112 offset=3211264 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=12 bytes=1048580 allocation_size=1114112 offset=4325376 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=13 bytes=262148 allocation_size=327680 offset=5439488 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=14 bytes=393220 allocation_size=458752 offset=5767168 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=15 bytes=65540 allocation_size=131072 offset=6225920 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=16 bytes=262148 allocation_size=327680 offset=6356992 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=17 bytes=262148 allocation_size=327680 offset=6684672 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=18 bytes=393220 allocation_size=458752 offset=7012352 create_resource_ms=0.001800 map_ms=0.000400
+REFERENCE_ALLOC cycle=8 phase=0 slot=19 bytes=65540 allocation_size=131072 offset=7471104 create_resource_ms=0.001700 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=20 bytes=262148 allocation_size=327680 offset=7602176 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=21 bytes=262148 allocation_size=327680 offset=7929856 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=0 slot=22 bytes=1048580 allocation_size=1114112 offset=8257536 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=0 slot=23 bytes=1048580 allocation_size=1114112 offset=9371648 create_resource_ms=0.000900 map_ms=0.000100
+ALLOCATOR_STATS cycle=8 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=10485760 unused_ranges=1 largest_free=23068672
+REFERENCE_VERIFY cycle=8 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=8 slot=0 release_resource_and_allocation_ms=0.003600
+REFERENCE_FREE cycle=8 slot=2 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=8 slot=4 release_resource_and_allocation_ms=0.001200
+REFERENCE_FREE cycle=8 slot=6 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=8 slot=8 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=8 slot=10 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=8 slot=12 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=8 slot=14 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=8 slot=16 release_resource_and_allocation_ms=0.001600
+REFERENCE_FREE cycle=8 slot=18 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=8 slot=20 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=22 release_resource_and_allocation_ms=0.000500
+ALLOCATOR_STATS cycle=8 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=5111808 unused_ranges=13 largest_free=23068672
+REFERENCE_ALLOC cycle=8 phase=1 slot=0 bytes=1048580 allocation_size=1114112 offset=10485760 create_resource_ms=0.001600 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=1 slot=2 bytes=1048580 allocation_size=1114112 offset=11599872 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=1 slot=4 bytes=1048580 allocation_size=1114112 offset=12713984 create_resource_ms=0.000800 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=1 slot=6 bytes=262148 allocation_size=327680 offset=7012352 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=1 slot=8 bytes=262148 allocation_size=327680 offset=5767168 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=1 slot=10 bytes=1048580 allocation_size=1114112 offset=13828096 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=1 slot=12 bytes=65540 allocation_size=131072 offset=7602176 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=1 slot=14 bytes=65540 allocation_size=131072 offset=7733248 create_resource_ms=0.001200 map_ms=0.000200
+REFERENCE_ALLOC cycle=8 phase=1 slot=16 bytes=65540 allocation_size=131072 offset=6356992 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=1 slot=18 bytes=393220 allocation_size=458752 offset=8257536 create_resource_ms=0.001300 map_ms=0.000300
+REFERENCE_ALLOC cycle=8 phase=1 slot=20 bytes=262148 allocation_size=327680 offset=8716288 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=8 phase=1 slot=22 bytes=262148 allocation_size=327680 offset=4325376 create_resource_ms=0.001400 map_ms=0.000100
+REFERENCE_VERIFY cycle=8 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=8 slot=0 release_resource_and_allocation_ms=0.002800
+REFERENCE_FREE cycle=8 slot=1 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=8 slot=2 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=8 slot=3 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=8 slot=4 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=8 slot=5 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=8 slot=6 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=7 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=8 slot=8 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=9 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=8 slot=10 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=11 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=8 slot=12 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=13 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=8 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=15 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=8 slot=16 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=8 slot=17 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=19 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=8 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=8 slot=21 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=8 slot=22 release_resource_and_allocation_ms=0.000500
+REFERENCE_FREE cycle=8 slot=23 release_resource_and_allocation_ms=0.000800
+ALLOCATOR_STATS cycle=8 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=8 ms=9.291200
+REFERENCE_ALLOC cycle=9 phase=0 slot=0 bytes=1048580 allocation_size=1114112 offset=0 create_resource_ms=0.002300 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=1 bytes=262148 allocation_size=327680 offset=1114112 create_resource_ms=0.001500 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=2 bytes=65540 allocation_size=131072 offset=1441792 create_resource_ms=0.000700 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=3 bytes=1048580 allocation_size=1114112 offset=1572864 create_resource_ms=0.000600 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=4 bytes=1048580 allocation_size=1114112 offset=2686976 create_resource_ms=0.000900 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=0 slot=5 bytes=1048580 allocation_size=1114112 offset=3801088 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=6 bytes=262148 allocation_size=327680 offset=4915200 create_resource_ms=0.001000 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=0 slot=7 bytes=393220 allocation_size=458752 offset=5242880 create_resource_ms=0.000700 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=8 bytes=262148 allocation_size=327680 offset=5701632 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=9 bytes=1048580 allocation_size=1114112 offset=6029312 create_resource_ms=0.000600 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=10 bytes=393220 allocation_size=458752 offset=7143424 create_resource_ms=0.000800 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=11 bytes=1048580 allocation_size=1114112 offset=7602176 create_resource_ms=0.000700 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=0 slot=12 bytes=1048580 allocation_size=1114112 offset=8716288 create_resource_ms=0.002800 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=13 bytes=65540 allocation_size=131072 offset=9830400 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=0 slot=14 bytes=393220 allocation_size=458752 offset=9961472 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=15 bytes=1048580 allocation_size=1114112 offset=10420224 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=16 bytes=1048580 allocation_size=1114112 offset=11534336 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=0 slot=17 bytes=1048580 allocation_size=1114112 offset=12648448 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=0 slot=18 bytes=65540 allocation_size=131072 offset=13762560 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=19 bytes=393220 allocation_size=458752 offset=13893632 create_resource_ms=0.001100 map_ms=0.000300
+REFERENCE_ALLOC cycle=9 phase=0 slot=20 bytes=65540 allocation_size=131072 offset=14352384 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=21 bytes=1048580 allocation_size=1114112 offset=14483456 create_resource_ms=0.001100 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=22 bytes=65540 allocation_size=131072 offset=15597568 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=0 slot=23 bytes=1048580 allocation_size=1114112 offset=15728640 create_resource_ms=0.001000 map_ms=0.000200
+ALLOCATOR_STATS cycle=9 phase=full blocks=1 block_bytes=33554432 allocation_count=24 allocation_bytes=16842752 unused_ranges=1 largest_free=16711680
+REFERENCE_VERIFY cycle=9 phase=0 matched=1152/1152
+REFERENCE_FREE cycle=9 slot=0 release_resource_and_allocation_ms=0.003500
+REFERENCE_FREE cycle=9 slot=2 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=9 slot=4 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=6 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=8 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=10 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=12 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=9 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=18 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=20 release_resource_and_allocation_ms=0.001100
+REFERENCE_FREE cycle=9 slot=22 release_resource_and_allocation_ms=0.000600
+ALLOCATOR_STATS cycle=9 phase=holes blocks=1 block_bytes=33554432 allocation_count=12 allocation_bytes=10289152 unused_ranges=13 largest_free=16711680
+REFERENCE_ALLOC cycle=9 phase=1 slot=0 bytes=1048580 allocation_size=1114112 offset=16842752 create_resource_ms=0.002900 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=1 slot=2 bytes=393220 allocation_size=458752 offset=11534336 create_resource_ms=0.002200 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=1 slot=4 bytes=65540 allocation_size=131072 offset=5701632 create_resource_ms=0.002100 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=1 slot=6 bytes=1048580 allocation_size=1114112 offset=17956864 create_resource_ms=0.001800 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=1 slot=8 bytes=262148 allocation_size=327680 offset=9961472 create_resource_ms=0.002500 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=1 slot=10 bytes=262148 allocation_size=327680 offset=7143424 create_resource_ms=0.001100 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=1 slot=12 bytes=1048580 allocation_size=1114112 offset=19070976 create_resource_ms=0.001200 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=1 slot=14 bytes=1048580 allocation_size=1114112 offset=20185088 create_resource_ms=0.000900 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=1 slot=16 bytes=393220 allocation_size=458752 offset=11993088 create_resource_ms=0.002500 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=1 slot=18 bytes=393220 allocation_size=458752 offset=8716288 create_resource_ms=0.001300 map_ms=0.000100
+REFERENCE_ALLOC cycle=9 phase=1 slot=20 bytes=393220 allocation_size=458752 offset=9175040 create_resource_ms=0.001300 map_ms=0.000200
+REFERENCE_ALLOC cycle=9 phase=1 slot=22 bytes=65540 allocation_size=131072 offset=9633792 create_resource_ms=0.001000 map_ms=0.000200
+REFERENCE_VERIFY cycle=9 phase=1 matched=1152/1152
+REFERENCE_FREE cycle=9 slot=0 release_resource_and_allocation_ms=0.002100
+REFERENCE_FREE cycle=9 slot=1 release_resource_and_allocation_ms=0.001400
+REFERENCE_FREE cycle=9 slot=2 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=3 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=9 slot=4 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=9 slot=5 release_resource_and_allocation_ms=0.000900
+REFERENCE_FREE cycle=9 slot=6 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=7 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=9 slot=8 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=9 slot=9 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=10 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=9 slot=11 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=12 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=13 release_resource_and_allocation_ms=0.001000
+REFERENCE_FREE cycle=9 slot=14 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=15 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=16 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=17 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=18 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=19 release_resource_and_allocation_ms=0.000800
+REFERENCE_FREE cycle=9 slot=20 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=21 release_resource_and_allocation_ms=0.000700
+REFERENCE_FREE cycle=9 slot=22 release_resource_and_allocation_ms=0.000600
+REFERENCE_FREE cycle=9 slot=23 release_resource_and_allocation_ms=0.000600
+ALLOCATOR_STATS cycle=9 phase=empty blocks=1 block_bytes=33554432 allocation_count=0 allocation_bytes=0 unused_ranges=1 largest_free=33554432
+REFERENCE_CYCLE cycle=9 ms=10.911200
+STAGE resources_released cpu_ptr=0
+STAGE commands_retired cpu_ptr=0
+END success

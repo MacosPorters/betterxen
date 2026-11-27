@@ -1,0 +1,13 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "setup-failure.json",
+      "bytes": 223,
+      "original_sha256": "0944139cd73f6e25aad4db763fc8b4aa44c6d09b5d846648489541ea92ac04cc",
+      "archived_sha256": "0944139cd73f6e25aad4db763fc8b4aa44c6d09b5d846648489541ea92ac04cc",
+      "redacted": false
+    }
+  ]
+}

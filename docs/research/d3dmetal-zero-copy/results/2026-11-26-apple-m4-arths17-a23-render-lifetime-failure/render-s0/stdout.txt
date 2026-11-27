@@ -1,0 +1,13 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+ADAPTER description=AMD Compatibility Mode vendor=0x1002 device=0x66AF subsystem=0x00000000 revision=0 flags=0 dedicated_video_bytes=19069665280 dedicated_system_bytes=19069665280 shared_system_bytes=19069665280 luid=00000000:000003F1
+OPTIONS ResourceHeapTier=2 CrossAdapterRowMajorTextureSupported=0 StandardSwizzle64KBSupported=0
+ARCH UMA=0 CacheCoherentUMA=0 TileBasedRenderer=0 IsolatedMMU=0
+CUSTOM_PROPERTIES input_type=1 Type=4 CPUPageProperty=1 MemoryPoolPreference=2 CreationNodeMask=1 VisibleNodeMask=1
+CUSTOM_PROPERTIES input_type=2 Type=4 CPUPageProperty=2 MemoryPoolPreference=1 CreationNodeMask=1 VisibleNodeMask=1
+CUSTOM_PROPERTIES input_type=3 Type=4 CPUPageProperty=3 MemoryPoolPreference=1 CreationNodeMask=1 VisibleNodeMask=1
+GUEST_PAGE_SIZE 4096 ALLOCATION_GRANULARITY 65536
+STAGE baseline cpu_ptr=0
+STAGE wb cpu_ptr=0
+GRAPHICS_CASE source=wb mode=0 variant=0 omitted_draw=0
+WineDbg attached to pid 00d4

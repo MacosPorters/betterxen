@@ -1,0 +1,114 @@
+{
+  "scope": "compile only; no GPU launches; failure branch behavior not runtime verified; independent review pending",
+  "builds": [
+    {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "docs/research/d3dmetal-zero-copy/allocation-profiling/memory.cpp",
+        "-o",
+        "/tmp/bx473-a24-fence-build/memory.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "docs/research/d3dmetal-zero-copy/allocation-profiling/pool.cpp",
+        "-o",
+        "/tmp/bx473-a24-fence-build/pool.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/probe.cpp",
+        "-o",
+        "/tmp/bx473-a24-fence-build/probe.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/alias.cpp",
+        "-o",
+        "/tmp/bx473-a24-fence-build/alias.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    },
+    {
+      "command": [
+        "x86_64-w64-mingw32-g++",
+        "-std=c++20",
+        "-O2",
+        "-static",
+        "-static-libgcc",
+        "-static-libstdc++",
+        "-Wall",
+        "-Wextra",
+        "-Werror",
+        "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp",
+        "-o",
+        "/tmp/bx473-a24-fence-build/render.exe",
+        "-lkernel32"
+      ],
+      "exit": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "sources": {
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/support.h": "b9dfbddb6e326fc0d2e531994ec6fb49abf0e37ea90b06cdaeef76fb36bd73b7",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/memory.cpp": "d3747cdefb77bdaa0a570871895dc5cdf9683c4e807eff383d7444425184cf74",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/pool.cpp": "55fbc7fec1a7665ba2c711d923c030f01e47f6fbb91cebe6d9b63c82a6822ac8",
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/probe.cpp": "e9658020c77523916999f870ec595686fb1fe52d8271a8738dffe1dade07073a",
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/alias.cpp": "4034866cc66761076ab0ea87c7928b9d4f17bcb244adfae79c95078e4dfb614e",
+    "docs/research/d3dmetal-zero-copy/gpu-correctness/textures-and-resources/render.cpp": "c74339350bd536f0e57938a2fa7f4bb7afea31e2be9e013d70ba0a929f45c2e1",
+    "docs/research/d3dmetal-zero-copy/allocation-profiling/run.py": "3e281b5ff7f0ea2ddc8c0af5949dbb31cdd317b05bfe53889939e68ef3b3943e"
+  }
+}

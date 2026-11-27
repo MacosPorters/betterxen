@@ -1,0 +1,111 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "b-metal-copy-upload-retry.stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-copy-upload-retry.stdout.json",
+      "bytes": 7496,
+      "original_sha256": "e2001a24ac10864d03fa3f1c6f8bc801a970ddf1c38926e31acbbe13658dd903",
+      "archived_sha256": "e2001a24ac10864d03fa3f1c6f8bc801a970ddf1c38926e31acbbe13658dd903",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-copy-wb.stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-copy-wb.stdout.json",
+      "bytes": 7483,
+      "original_sha256": "a13d713f9980c3145ad8536b980396a12efee3141e1a452231b233230d51b0ab",
+      "archived_sha256": "a13d713f9980c3145ad8536b980396a12efee3141e1a452231b233230d51b0ab",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-copy-wc.stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-copy-wc.stdout.json",
+      "bytes": 7480,
+      "original_sha256": "96db4e1c86a853824987694cd3bf8a85ab48aa7cad67e414eb7c0cfdecce1c8b",
+      "archived_sha256": "96db4e1c86a853824987694cd3bf8a85ab48aa7cad67e414eb7c0cfdecce1c8b",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-default.stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-default.stdout.json",
+      "bytes": 36946,
+      "original_sha256": "3a0cba954a0c8e36a0a66ce6da98fba6908b909676a9e7083292649cbd64a4fd",
+      "archived_sha256": "3a0cba954a0c8e36a0a66ce6da98fba6908b909676a9e7083292649cbd64a4fd",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-upload-wb.stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-upload-wb.stdout.json",
+      "bytes": 37009,
+      "original_sha256": "d530d47489156ef7baa7b4aac261e0f3f8ea509d157b402f9bf63748c9140140",
+      "archived_sha256": "d530d47489156ef7baa7b4aac261e0f3f8ea509d157b402f9bf63748c9140140",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-wc.stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "b-metal-wc.stdout.json",
+      "bytes": 36992,
+      "original_sha256": "1a1e83876bb7c07d38d9737bdb1991186299876a308c72c3ba6e9a505b8eb9f5",
+      "archived_sha256": "1a1e83876bb7c07d38d9737bdb1991186299876a308c72c3ba6e9a505b8eb9f5",
+      "redacted": false
+    },
+    {
+      "path": "b-trace-02.stderr.txt",
+      "bytes": 0,
+      "original_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "archived_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "redacted": false
+    },
+    {
+      "path": "b-trace-02.stdout.json",
+      "bytes": 36997,
+      "original_sha256": "53cffcb7a3cff54b8174a3cb2bd1801cc77788a2696a54856ca9e6f68cc1a30c",
+      "archived_sha256": "53cffcb7a3cff54b8174a3cb2bd1801cc77788a2696a54856ca9e6f68cc1a30c",
+      "redacted": false
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 9041,
+      "original_sha256": "a157714a521d7e87da11b19ab63f7ea519dd800915261bb1abe65e7411d0306a",
+      "archived_sha256": "a157714a521d7e87da11b19ab63f7ea519dd800915261bb1abe65e7411d0306a",
+      "redacted": false
+    }
+  ]
+}

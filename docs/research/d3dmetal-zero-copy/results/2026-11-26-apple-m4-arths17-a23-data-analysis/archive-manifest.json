@@ -1,0 +1,41 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "allocator-analyze.py",
+      "bytes": 5410,
+      "original_sha256": "3cb3d709393723d7cdec49b54a834eb394a36ce04d34f58650764eadf0f94d70",
+      "archived_sha256": "3cb3d709393723d7cdec49b54a834eb394a36ce04d34f58650764eadf0f94d70",
+      "redacted": false
+    },
+    {
+      "path": "allocator-bounded-analysis.json",
+      "bytes": 3510,
+      "original_sha256": "b1ae29b9bff598b813c858b98c8e1f90e4ddf1da4af51b19021a1cdd459727b2",
+      "archived_sha256": "b1ae29b9bff598b813c858b98c8e1f90e4ddf1da4af51b19021a1cdd459727b2",
+      "redacted": false
+    },
+    {
+      "path": "check-render.py",
+      "bytes": 2274,
+      "original_sha256": "1b6427056193a98cb184133a8468100e0712b9433782b84f772f4aa26ca36b19",
+      "archived_sha256": "1b6427056193a98cb184133a8468100e0712b9433782b84f772f4aa26ca36b19",
+      "redacted": false
+    },
+    {
+      "path": "receipt.json",
+      "bytes": 10846,
+      "original_sha256": "131de947474f5ad2a848e3fe14c15d41b68e3f6df944452423bd54b7d2397472",
+      "archived_sha256": "72305e8e1c448123f900c0b5512c54adb44818d4b9c18baa23c93cf5cdf2bb3a",
+      "redacted": true
+    },
+    {
+      "path": "run.py",
+      "bytes": 18394,
+      "original_sha256": "480228cf7fcdd0c673ee2ae2b32fc41dabb48b4e1265e6c9be3b48c5a4ed09aa",
+      "archived_sha256": "480228cf7fcdd0c673ee2ae2b32fc41dabb48b4e1265e6c9be3b48c5a4ed09aa",
+      "redacted": false
+    }
+  ]
+}

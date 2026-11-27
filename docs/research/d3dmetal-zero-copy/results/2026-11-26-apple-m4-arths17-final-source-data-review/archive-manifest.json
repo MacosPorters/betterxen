@@ -1,0 +1,48 @@
+{
+  "originals_unchanged": true,
+  "redaction": "JSON diagnostics replace local home-directory prefix with <HOME>; raw stdout/stderr unchanged",
+  "files": [
+    {
+      "path": "budget-review.json",
+      "bytes": 1507,
+      "original_sha256": "77621b1bf9a221879b4e80dd3e49409ade4be302d8cf29c9f883d0aa4dcd8d73",
+      "archived_sha256": "77621b1bf9a221879b4e80dd3e49409ade4be302d8cf29c9f883d0aa4dcd8d73",
+      "redacted": false
+    },
+    {
+      "path": "peer-evidence-review.json",
+      "bytes": 4131,
+      "original_sha256": "9528eb8cd8d5b7d1737a7419ca460d819e6cf2834e74e629e3f3be910afe8c82",
+      "archived_sha256": "9528eb8cd8d5b7d1737a7419ca460d819e6cf2834e74e629e3f3be910afe8c82",
+      "redacted": false
+    },
+    {
+      "path": "review-peer.py",
+      "bytes": 5053,
+      "original_sha256": "ec32bdcd64bc72c4433bd40a927be2721ee123511e250d9cc5a18f3a8e24cb88",
+      "archived_sha256": "ec32bdcd64bc72c4433bd40a927be2721ee123511e250d9cc5a18f3a8e24cb88",
+      "redacted": false
+    },
+    {
+      "path": "verify-budget.py",
+      "bytes": 2977,
+      "original_sha256": "aa251f05e51d19267ac1db31adac41c042e5c19bbaede2ebf86b7e35c8555baf",
+      "archived_sha256": "aa251f05e51d19267ac1db31adac41c042e5c19bbaede2ebf86b7e35c8555baf",
+      "redacted": false
+    },
+    {
+      "path": "verify-harness.py",
+      "bytes": 4617,
+      "original_sha256": "c31eee4cecf994db066ec6fb812ca2819161664303b8a24bbbe177b514975cf0",
+      "archived_sha256": "c31eee4cecf994db066ec6fb812ca2819161664303b8a24bbbe177b514975cf0",
+      "redacted": false
+    },
+    {
+      "path": "verify-traces.py",
+      "bytes": 7586,
+      "original_sha256": "4fc1443994a109e44cc9d762b7e8904a70630e473d26fe6968eaceffd9da52d3",
+      "archived_sha256": "4fc1443994a109e44cc9d762b7e8904a70630e473d26fe6968eaceffd9da52d3",
+      "redacted": false
+    }
+  ]
+}

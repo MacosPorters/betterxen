@@ -1,0 +1,3 @@
+vkd3d:00d8:fixme:D3DCompile2VKD3D Ignoring flags 0x8000.
+vkd3d:00d8:fixme:D3DCompile2VKD3D Ignoring flags 0x8000.
+wine: Unhandled page fault on read access to 00006FFFFD0F0158 at address 000000014001F7BA (thread 00d8), starting debugger...

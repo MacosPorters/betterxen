@@ -1,0 +1,305 @@
+{
+  "guest_pid": 61014,
+  "case": "00-trace-copy-wc",
+  "matched_intervals": 15,
+  "omitted_dispatch_guest_samples": 0,
+  "distributions": {
+    "copy": {
+      "n": 12,
+      "median_gpu_us": 1236.896,
+      "minimum_gpu_us": 1042.417,
+      "maximum_gpu_us": 4681.917,
+      "mad_gpu_us": 191.6875,
+      "payload_GB_s": {
+        "workload_payload": 54.2634744514411
+      }
+    }
+  },
+  "samples": [
+    {
+      "mode": "copy",
+      "iter": -3,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 8656.6,
+      "ids": [
+        3633606418,
+        3633606419
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1177986666,
+      "gpu_duration_ns": 1380667,
+      "metal_encode_ns": 367292,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": -2,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 2055.0,
+      "ids": [
+        3633606421,
+        3633606422
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1191179375,
+      "gpu_duration_ns": 1410000,
+      "metal_encode_ns": 50542,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": -1,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 3181.5,
+      "ids": [
+        3633606424,
+        3633606425
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1201766458,
+      "gpu_duration_ns": 2393417,
+      "metal_encode_ns": 30417,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 0,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 4802.1,
+      "ids": [
+        3633606427,
+        3633606428
+      ],
+      "channel": "Compute",
+      "nested_depth": 1,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1213136583,
+      "gpu_duration_ns": 4477458,
+      "metal_encode_ns": 31250,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 1,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 2831.7,
+      "ids": [
+        3633606430,
+        3633606431
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1226553375,
+      "gpu_duration_ns": 1065041,
+      "metal_encode_ns": 49583,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 2,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 2295.5,
+      "ids": [
+        3633606433,
+        3633606434
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1237152416,
+      "gpu_duration_ns": 1747875,
+      "metal_encode_ns": 25167,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 3,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 5014.4,
+      "ids": [
+        3633606436,
+        3633606437
+      ],
+      "channel": "Compute",
+      "nested_depth": 1,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1247646333,
+      "gpu_duration_ns": 4681917,
+      "metal_encode_ns": 32250,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 4,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 1826.3,
+      "ids": [
+        3633606439,
+        3633606440
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1260984041,
+      "gpu_duration_ns": 1251542,
+      "metal_encode_ns": 25250,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 5,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 1490.4,
+      "ids": [
+        3633606442,
+        3633606443
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1270809083,
+      "gpu_duration_ns": 1042417,
+      "metal_encode_ns": 53291,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 6,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 1439.6,
+      "ids": [
+        3633606445,
+        3633606446
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1280277041,
+      "gpu_duration_ns": 1048000,
+      "metal_encode_ns": 22417,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 7,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 2864.0,
+      "ids": [
+        3633606448,
+        3633606449
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1290046125,
+      "gpu_duration_ns": 2513291,
+      "metal_encode_ns": 30375,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 8,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 1784.7,
+      "ids": [
+        3633606451,
+        3633606452
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1301977791,
+      "gpu_duration_ns": 1136875,
+      "metal_encode_ns": 33709,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 9,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 2008.3,
+      "ids": [
+        3633606454,
+        3633606455
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1312260083,
+      "gpu_duration_ns": 1222250,
+      "metal_encode_ns": 32083,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 10,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 4192.9,
+      "ids": [
+        3633606457,
+        3633606458
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1322434291,
+      "gpu_duration_ns": 3894000,
+      "metal_encode_ns": 30958,
+      "comparison": "16777216/16777216"
+    },
+    {
+      "mode": "copy",
+      "iter": 11,
+      "workload_payload": 67108864,
+      "read_bytes": 0,
+      "written_bytes": 0,
+      "guest_completion_us": 1773.4,
+      "ids": [
+        3633606460,
+        3633606461
+      ],
+      "channel": "Compute",
+      "nested_depth": 0,
+      "encoder_label": "Blit Command 0",
+      "gpu_start_ns": 1335372708,
+      "gpu_duration_ns": 1151417,
+      "metal_encode_ns": 32833,
+      "comparison": "16777216/16777216"
+    }
+  ]
+}

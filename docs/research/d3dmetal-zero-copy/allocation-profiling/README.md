@@ -1,6 +1,6 @@
 # Workstream A memory and allocation research
 
-Research for [#473](https://github.com/MacosPorters/betterxen/issues/473), on an isolated worktree based on `9ae6d1ee7092b6021aad075531f50ba60de4fd53`. This work does not change production shims, ABI, main or the six-check baseline. No commit/push has been authorized. Local runs are author observations, not independent acceptance or Xbox compatibility.
+Research for [#473](https://github.com/MacosPorters/betterxen/issues/473), on an isolated worktree based on `9ae6d1ee7092b6021aad075531f50ba60de4fd53`. This work does not change production shims, ABI, main or the six-check baseline. The requester manually published initial A work at 8cc2f8ffbc4368e38950c2e037fee4ce12fa88b8; the final-stage request now authorizes DCO-signed publication of resumed A work on the dedicated research/473-workstream-a-memory branch. Local runs are author observations, not independent acceptance or Xbox compatibility.
 
 Start with the [research report](report.md) and [existing evidence inventory](inventory/README.md), [ownership feasibility matrix](inverted-ownership.md), [resource/lifetime contract](../gpu-correctness/contracts/resource-placement-lifetime.md), [optional allocator assessment](allocator-assessment.md) and [texture fixtures](../gpu-correctness/textures-and-resources/README.md). See [footprint findings](footprint-findings.md), [pooling findings](pooling-findings.md) and [texture/alias findings](../gpu-correctness/textures-and-resources/findings.md). Findings and review status are tracked in #473.
 
@@ -53,3 +53,25 @@ For the pool omitted-copy control, add --negative-control to --suite pool; the g
 ## Bottle receipt correction
 
 Source review found that the historical/plain string insertion of AllowUntrusted matched the commented Bottle heading before the actual section. A22 run receipts preserve that malformed requested-setting line rather than claiming it was applied correctly; the appended scanner setting and actual loaded backend are separately recorded. Current run.py anchors the insertion to the actual section line and checks its construction without writing the source bottle. This configuration-only correction was made after the GPU runs; a post-correction launch is not claimed. Exact prior executed runner snapshots remain in every run bundle.
+
+## Resumed evidence
+
+[Handoff to Asufte](handoff-asufte.md) links the exact manually published pin and executed historical/A2/A22 sources. [B review expectations](b-review-expectations.md) distinguish attributed M5 reports from source-reviewed reproduction. The new [logical fragmentation study](fragmentation/README.md) exercises saturated holes and retirement without GPU/physical allocation claims. The [external allocator experiment](allocator-evaluation/README.md) adds isolated build/runtime evidence under registry/license controls, without a production dependency.
+
+## Resumed A-local-2.3 status
+
+The [Asufte handoff](handoff-asufte.md) pins the initial publication and distinguishes historical B-related sources from corrected A2/A22 work. New [logical fragmentation](fragmentation/README.md) and [isolated allocator](allocator-evaluation/README.md) studies extend allocation evidence; [B review expectations](b-review-expectations.md) and [actual B review](review-b.md) distinguish completed source/data checks from pending hardware/trace validation. The [continuation status](resume-status.md) lists completed, failed and blocked work without reclassifying interrupted profiles.
+
+Version 2.3 adds the separate graphics `--suite render`, an omitted-draw control and an early headroom/kernel-pressure check before cloning a private bottle. The default memory profile remains 64/256/1024 MiB × all four controls/types × two repeats. Explicit `--memory-sizes`, `--memory-types`, `--memory-repeats` and `--memory-repeat-start` permit a recorded subset to fill a missing case without rerunning completed cases; a subset is never a completed common profile. A 256 MiB graphics continuation can use `--memory-sizes 256 --memory-types wb,upload --memory-repeats 1 --memory-repeat-start 1` only when all safety gates permit it. Default normal-pressure and explicitly selected warning-pressure runs remain distinct. The original six-check baseline is unaffected.
+
+A-local-2.4 subsequently adds a proposed process-exit policy for unproven fence completion, following B's independent safety finding. It was initially compile-only; B subsequently independently reviewed it and ran bounded M5 positive/exit/timeout cases, accepted only for single-threaded disposable research guests. See [A review of published B](review-b.md) for the actual source/data checks and remaining reproduction/trace-input questions.
+
+## Final-stage publication and consolidation draft
+
+The remaining A research is published at `8c9eceb05ab660504ee981c2f4fcaf1728a5dbff` on the dedicated `research/473-workstream-a-memory` branch. The [pinned handoff](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7204949581) requests B's independent inspection. The [publication audit](publication-audit.md) records historical missing sources and the verbatim-snapshot whitespace warning rather than hiding them.
+
+The A-owned [consolidation draft](consolidation-draft/report.md), [joint evidence register](consolidation-draft/evidence-register.md) and [implementation proposal](consolidation-draft/implementation-roadmap.md) remain review drafts while single-author/independent-reviewer ownership is confirmed. Shared root findings, production, ABI and main are unchanged. The original fixed baseline remains frozen; publication does not imply independent acceptance.
+
+## Final reciprocal verification update (local)
+
+B's review/evidence at `4ba4926d2f491517c01b1e94fb8539184055dc22` is incorporated in the [final verification findings](final-verification/findings.md) and [joint report](consolidation-draft/report.md). All seven CPU XML extractions reproduce exactly. Thirteen register entries have narrowly scoped independent acceptance; incomplete graphics/accounting and M4 B hardware runs remain blocked. A independently confirms a combined-budget source defect and a remaining failed-cleanup propagation issue. The historical failed receipts and unsupported/unknown mechanisms remain explicit. This update is authorized for dedicated A-branch publication; branch integration, main and production changes remain unauthorized.

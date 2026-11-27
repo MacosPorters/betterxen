@@ -18,7 +18,8 @@
 
 ## Research, Testing & Licensing
 
-- [Workstream A Memory and Resource Research](research/d3dmetal-zero-copy/allocation-profiling/README.md) — Historical evidence inventory, footprint/retirement correction, xmem feasibility, pooling and texture protocols; local observations and explicit review/pressure limitations for #473.
+- [Memory Research Consolidation Draft](research/d3dmetal-zero-copy/allocation-profiling/consolidation-draft/report.md) — Pinned A/B evidence register, scoped peer decisions, CPU extraction verification, eight decision gates and implementation roadmap; hardware blockers and unresolved mechanisms remain explicit; acceptance and research-branch integration checklists are included.
+- [Workstream A Memory and Resource Research](research/d3dmetal-zero-copy/allocation-profiling/README.md) — Historical evidence, Asufte handoff and reciprocal source/data review, footprint/retirement correction, xmem feasibility, bounded fragmentation, isolated allocator evaluation and texture/graphics protocols; local observations with explicit review/pressure limitations for #473.
 
 - [D3DMetal Unified-Memory and Zero-Copy Research](research/d3dmetal-zero-copy/README.md) — Shared six-check synthetic probe, per-host raw logs and evidence limits for #473 / #464.
 

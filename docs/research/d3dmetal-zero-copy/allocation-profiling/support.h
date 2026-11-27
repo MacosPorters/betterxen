@@ -153,20 +153,39 @@ struct Queue {
     list->ResourceBarrier(1, &x);
   }
   void close() { require(list->Close(), "Close"); }
+  [[noreturn]] void stopInFlight(const char *operation, HRESULT status,
+                                UINT64 target, UINT64 completed,
+                                DWORD wait = WAIT_FAILED) {
+    std::printf("FAIL in_flight operation=%s HRESULT=0x%08lX target=%llu "
+                "completed=%llu wait=%lu process_exit=2\n",
+                operation, (unsigned long)status, target, completed,
+                (unsigned long)wait);
+    std::fflush(nullptr);
+    // The disposable guest must not unwind/recycle resources without proof of
+    // completion. Its supervising runner records exit 2 as a failed case.
+    ExitProcess(2);
+  }
+  void waitFor(UINT64 target) {
+    UINT64 completed = fence->GetCompletedValue();
+    if (completed == ~UINT64(0))
+      stopInFlight("device removed fence", E_FAIL, target, completed);
+    if (completed >= target)
+      return;
+    HRESULT armed = fence->SetEventOnCompletion(target, event);
+    if (FAILED(armed))
+      stopInFlight("SetEventOnCompletion", armed, target, completed);
+    DWORD waited = WaitForSingleObject(event, 10000);
+    completed = fence->GetCompletedValue();
+    if (waited != WAIT_OBJECT_0 || completed == ~UINT64(0) || completed < target)
+      stopInFlight("fence completion", E_FAIL, target, completed, waited);
+  }
   void executeClosed() {
     ID3D12CommandList *lists[] = {list.p};
     q->ExecuteCommandLists(1, lists);
-    require(q->Signal(fence.p, ++value), "Signal");
-    UINT64 completed = fence->GetCompletedValue();
-    if (completed == ~UINT64(0))
-      throw std::runtime_error("device removed fence");
-    if (completed < value) {
-      require(fence->SetEventOnCompletion(value, event),
-              "SetEventOnCompletion");
-      DWORD w = WaitForSingleObject(event, 10000);
-      if (w != WAIT_OBJECT_0)
-        throw std::runtime_error("fence timeout");
-    }
+    HRESULT signalled = q->Signal(fence.p, ++value);
+    if (FAILED(signalled))
+      stopInFlight("Signal", signalled, value, fence->GetCompletedValue());
+    waitFor(value);
   }
   void finish() {
     close();

@@ -1,0 +1,12 @@
+# CPU-only final verification
+
+This A-owned follow-up reviews B commit `4ba4926d2f491517c01b1e94fb8539184055dc22`. [Findings](findings.md) and the [joint report](../consolidation-draft/report.md) distinguish independently accepted scopes from historical failures, missing artifacts and pressure-blocked hardware work. The requester now authorizes DCO-signed publication of these research changes on the dedicated A branch; they do not modify or consolidate either production branch.
+
+The four original Python tools perform source/data/process checks only:
+
+- `verify-traces.py /path/to/B-worktree --output /tmp/new-trace-output`: run B's unchanged extraction on all seven sanitized XML pairs and independently check references, PIDs, ID joins, durations/units, denominators and distributions. No GPU or Instruments is used.
+- `verify-harness.py /path/to/B-worktree --output /tmp/new-process-output`: run real bounded Python parent/child processes through old and corrected B orchestration. Backend identification and Wine cleanup are explicitly simulated; these controls cannot establish GPU or actual Wine correctness. They reproduce the historical hash-race class and reveal ignored cleanup failure.
+- `review-peer.py /path/to/B-worktree --output /tmp/peer-review.json`: inspect baseline source/exit, published fault logs, the two-case M5 allocator subset and independently generated expected frame hashes. It does not inspect absent raw RGBA files or claim to have executed B's unpublished bitmap checker.
+- `verify-budget.py /path/to/c13-source-export --output /tmp/budget-review.json`: check pinned source expressions and produce small integer counterexamples, allocating no buffers or heaps. Export the pinned `shims/xmem/{xmem.cpp,physical_pages.cpp}`, `shims/d3d12_xs/vmem.cpp` and `abi/include/bx_xmem_internal.h` into that read-only root. No production code executes.
+
+The first process-fixture import setup failed before any child launched; its [record](../../results/2026-11-26-apple-m4-arths17-final-process-fixture-setup/setup-failure.json) is preserved separately. The corrected layout and successful controls are in the process-sealing bundle. Raw results and their append-only manifests remain separate from later documentation. Python cache files/native executables are excluded from public research archives. Historical receipts are not rehashed in place to suppress discrepancies.
