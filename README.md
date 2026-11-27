@@ -67,7 +67,7 @@ Legend: 🟢 **Done / Merged** · 🔵 **Active Milestone** · ⚪ **Planned**
 
 | Milestone | Scope | Status |
 | --- | --- | --- |
-| **M0 — Repo, ABI & Cross-Build** | 6-track layout, frozen `abi/`, ARM64 `bx-cli`, 16 cross-compiled PE32+ shims, live CrossOver + Rosetta 2 smoke tests (`test_veh_clwb`, `test_shim_exports`) | 🟢 **Verified complete (`#406`)** |
+| **M0 — Repo, ABI & Cross-Build** | 6-track layout, frozen `abi/`, ARM64 `bx-cli`, 16 mingw-w64 C++ PE32+ shims plus the Rust `bx_shader_bridge.dll` (17 verified DLLs), live CrossOver + Rosetta 2 smoke tests (`test_veh_clwb`, `test_shim_exports`) | 🟢 **Verified complete (`#406`)** |
 | **M1 — Boot to `D3D12XboxCreateDevice`** | Full startup shim coverage (`xmem` physical/scatter pages, `XCRDAPI` async file reads, `d3d12_xs` auto-logging COM proxy, offline `xgameruntime` + dynamic loader exports, audio queue stubs, supervised `bx-cli run`, ADR 0007, `test_integration_boot` 19 pass / 2 pending / 0 fail) | 🟢 **Verified complete ([Milestone #17](https://github.com/MacosPorters/betterxen/milestone/17))** |
 | **M2 — First Frame & Shader Gate** | Reversible `system32` staging, public GDK COM `QueryApiImpl` dispatch, `PresentX` → `IDXGISwapChain3::Present` via D3DMetal 3.0, `dxbc-accc` Windows bridge, D3DMetal GPU limits, and Shader Format Gate ADR | 🔵 **Active ([Milestone #18](https://github.com/MacosPorters/betterxen/milestone/18))** |
 | **M3 — Shaders, Streaming & Textures** | DirectStorage decompression, RDNA 2 `xg_xs` texture deswizzling, full shader pipeline | ⚪ Planned |
@@ -129,7 +129,7 @@ The repository is organized into disjoint track directories around a single froz
 
 | Directory | Track | Stack | Contents |
 | --- | --- | --- | --- |
-| [`abi/`](abi/README.md) | Shared (frozen) | C headers + `.def` | Versioned cross-DLL headers (`bx_config.h`, `bx_log.h`, `bx_xmem_internal.h`, `bx_shader_bridge.h`) and canonical export tables for all 16 shim DLLs |
+| [`abi/`](abi/README.md) | Shared (frozen) | C headers + `.def` | Versioned cross-DLL headers (`bx_config.h`, `bx_log.h`, `bx_xmem_internal.h`, `bx_shader_bridge.h`) and canonical export tables for all 17 shim DLLs (16 mingw-w64 C++ shims plus the Rust `bx_shader_bridge.dll`) |
 | `launcher/` | Track A | Rust (`arm64`) | `bx-cli` (`doctor`, `probe`, `shader`, `trace`, `run`), `bx-probe` (PE32+ import classifier), `bx-telemetry` (JSONL trace aggregator) |
 | `shims/runtime_veh/` | Track A | C++20 (`x86_64` PE) | `bx_runtime_veh.dll`: `clwb` VEH trap, `adcx`/`adox` tripwire, Lockhart/Anaconda memory profile config, structured JSONL logging |
 | `shims/win32_bridge/` | Track A | C++20 (`x86_64` PE) | `api-ms-win-core-psm-appnotify-l1-1-0/1.dll` stubs and `ext-ms-win-rtcore-ntuser-*` → `user32.dll` forwarders; CrossOver answers these API-set names itself for static imports, so the files are not loaded that way ([ADR 0007](docs/adr/0007-api-set-shims-under-crossover.md)) |
@@ -165,8 +165,9 @@ cargo build -p bx-cli
 # 2. Check host Apple Silicon, Rosetta 2, CrossOver, D3DMetal, and mingw-w64 readiness
 target/debug/bx-cli doctor
 
-# 3. Cross-compile all 16 x86-64 PE32+ shim DLLs + conformance binaries
-#    (automatically verifies every abi/defs/*.def export and zero MinGW runtime DLL deps)
+# 3. Cross-compile the 16 x86-64 PE32+ mingw-w64 shim DLLs, build the Rust
+#    bx_shader_bridge.dll with cargo, and build the conformance binaries
+#    (automatically verifies every abi/defs/*.def export across all 17 DLLs and zero MinGW runtime DLL deps)
 scripts/build-shims.sh
 
 # 4. Run live synthetic PE32+ conformance tests inside CrossOver + Rosetta 2
@@ -208,9 +209,9 @@ See [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md), [docs/architectu
 
 - **Verified (local Apple M5, macOS 27.2.1, CrossOver 26.3, Rosetta 2):**
   - Native ARM64 `bx-cli`, `bx-probe`, `bx-telemetry`, and `dxbc-accc` unit tests.
-  - All 16 x86-64 PE32+ shim DLLs cross-compile with zero warnings, pass strict PE Export Directory verification (102 exact names, ordinals, forwarders, 0 extra exports), and carry zero dynamic MinGW runtime dependencies.
+  - All 17 x86-64 PE32+ shim DLLs — the 16 mingw-w64 C++ shims plus the Rust-built `bx_shader_bridge.dll` — pass strict PE Export Directory verification (111 exact names, ordinals, forwarders, 0 extra exports) and carry zero dynamic MinGW runtime dependencies. `scripts/build-shims.sh` cross-compiles the 16 C++ shims with CMake/mingw-w64 and builds `bx_shader_bridge.dll` with `cargo` for `x86_64-pc-windows-gnu`.
   - `test_veh_clwb.exe` executes AVX2+FMA, traps and skips `clwb` via `bx_runtime_veh.dll`, and exercises starter `XMemAlloc`/`XMemTransferMemory` under CrossOver/Wine.
-  - `test_shim_exports.exe` loads all 16 shim DLLs and resolves 25 runtime exports via `LoadLibraryA` / `GetProcAddress` inside CrossOver/Wine.
+  - `test_shim_exports.exe` loads the 16 mingw-w64 C++ shim DLLs and resolves 25 runtime exports via `LoadLibraryA` / `GetProcAddress` inside CrossOver/Wine. It does **not** load `bx_shader_bridge.dll`; the Rust bridge is exercised by `test_shader_gate.exe` instead.
 - **Not yet implemented (M1–M6):**
   - `d3d12_xs.dll` COM device/command-list/PSO proxy and `PresentX` swapchain presentation.
   - `xmem.dll` physical/scatter page mapping and `XCRDAPI.dll` async DirectStorage queues.

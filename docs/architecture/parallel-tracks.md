@@ -25,7 +25,7 @@ BetterXen is organized so **5 to 8+ contributors** can develop the CrossOver-bas
 ## Milestones (M0 → M6)
 
 1. **M0 — Repo, ABI & Cross-Build:** One-command ARM64 + x86-64 PE32+ build, export verification, and `test_veh_clwb.exe` passing under CrossOver + Rosetta 2 (`ROSETTA_ADVERTISE_AVX=1`).
-2. **M1 — Boot to `D3D12XboxCreateDevice`:** Zero missing imports; all 16 shim DLLs load cleanly; auto-logging COM proxy captures startup call traces.
+2. **M1 — Boot to `D3D12XboxCreateDevice`:** Zero missing imports; all 17 shim DLLs (16 mingw-w64 C++ shims plus the Rust `bx_shader_bridge.dll`) load cleanly; auto-logging COM proxy captures startup call traces.
 3. **M2 — First Frame & Shader Format Gate:** Present real frames through D3DMetal 3.0 (`PresentX` → `IDXGISwapChain3::Present`) and classify runtime shaders (`DXIL` fast path vs. `ACCC`/`FSPX` RDNA 2 transpilation).
 4. **M3 — Full Shaders, Streaming & Texture Correctness:** Async DirectStorage decompression, accurate RDNA 2 `xg_xs` tiling/deswizzling, full shader pipeline.
 5. **M4 — 3D World, Ray Tracing & Input:** BVH4 rehydration → live D3DMetal 3.0 DXR build, FidelityFX/MetalFX upscaling shim, full `GameInput` controller/KB/M mapping.

@@ -28,7 +28,7 @@ If the user asks to contribute, get started, or pick a task (even with a short p
    - Edit **only** files inside the issue's **Exclusive file scope** (plus `CHANGELOG.md`). Add new synthetic C++ conformance tests under `tests/conformance/test_<name>/CMakeLists.txt` + `main.cpp` (auto-discovered by CMake).
 5. **Verify locally (including hosts without CrossOver):**
    - Run every command in Section 8 and fix all warnings/failures before stopping.
-   - **No CrossOver installed?** The contributor can still run all ARM64 Rust checks, `scripts/build-shims.sh` (verifying all 16 PE32+ DLLs and exact exports), and `python3 scripts/audit/docs_hygiene.py`. Report honestly in the PR that live CrossOver execution was not run locally and needs verification on a CrossOver host—never report an unrun check as passed.
+   - **No CrossOver installed?** The contributor can still run all ARM64 Rust checks, `scripts/build-shims.sh` (cross-compiling the 16 mingw-w64 C++ shim DLLs, building the Rust `bx_shader_bridge.dll` with `cargo`, and verifying the exact exports of all 17 PE32+ DLLs), and `python3 scripts/audit/docs_hygiene.py`. Report honestly in the PR that live CrossOver execution was not run locally and needs verification on a CrossOver host—never report an unrun check as passed.
 6. **Review & submit PR:**
    - Present a concise summary of changes and exact verification outputs, and ask explicit user permission before running `git commit -s` (DCO sign-off, zero AI trailers), pushing, and opening a PR (`Closes #<issue>`).
    - After opening the PR, watch CI (`gh pr checks --watch`) until both `Hybrid build and shim checks` and `Repository hygiene` pass.
@@ -129,8 +129,9 @@ cargo clippy --locked --workspace --all-targets -- -D warnings
 cargo test --locked --workspace
 cargo build --locked -p bx-cli && lipo -archs target/debug/bx-cli   # must print: arm64
 
-# 2. Cross-compile all 16 x86-64 PE32+ shim DLLs + auto-discovered conformance EXEs
-#    (strictly verifies .edata Export Directory names, ordinals, forwarders, 0 extra exports, 0 MinGW runtime DLL deps)
+# 2. Cross-compile the 16 x86-64 PE32+ mingw-w64 shim DLLs, build the Rust bx_shader_bridge.dll, and
+#    build the auto-discovered conformance EXEs
+#    (strictly verifies all 17 .edata Export Directories: names, ordinals, forwarders, 0 extra exports, 0 MinGW runtime DLL deps)
 scripts/build-shims.sh
 
 # 3. Live synthetic PE32+ conformance tests inside CrossOver 26.3 + Rosetta 2
