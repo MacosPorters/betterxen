@@ -1,0 +1,57 @@
+{
+  "wrapper_sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874",
+  "instrumentation_exit": 0,
+  "matched_sample_archive": true,
+  "recorded_trace": "/private/tmp/b473-metal-wc/00-wc/gpu.trace",
+  "trace_bundle_archived": false,
+  "target_only_excerpts": true,
+  "extractor_sha256": "8f0cf4863b19e7cee1aaabce6a2f4f475c0388a30f30ebc90b69944d552b2a52",
+  "extracts": {
+    "gpu-intervals.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-wc/00-wc/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-gpu-intervals\"]",
+        "--output",
+        "/private/tmp/b473-metal-wc/gpu-intervals.xml"
+      ],
+      "sha256": "8a9d2402cd0f6dfa84c6b585d1c7233f056cd6a4c566e56239508e2a277c32bf",
+      "exit": 0,
+      "archived": false
+    },
+    "metal-encoders.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-wc/00-wc/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-application-encoders-list\"]",
+        "--output",
+        "/private/tmp/b473-metal-wc/metal-encoders.xml"
+      ],
+      "sha256": "a8d300334e09ab8ec329c3e7ef5c946fd26a65329bc34d297fa605e9d89f6e78",
+      "exit": 0,
+      "archived": false
+    }
+  },
+  "extractor_command": [
+    "python3",
+    "docs/research/d3dmetal-zero-copy/copy-detection/summarize-trace.py",
+    "/private/tmp/b473-metal-wc",
+    "/private/tmp/b473-metal-wc/gpu-intervals.xml",
+    "/private/tmp/b473-metal-wc/metal-encoders.xml"
+  ],
+  "extractor_output_sha256": "1a1e83876bb7c07d38d9737bdb1991186299876a308c72c3ba6e9a505b8eb9f5",
+  "late_output_hashes": {
+    "00-wc/xctrace-output.txt": {
+      "early_case_sha256": "cadd5ba1b6e1f1c0c5524c86c256ba71d9afc8fc0c5f98c1368d15e43497105e",
+      "final_archive_sha256": "98fd3711a8c033dbe326600187732fd5547dddeeebf2863004cfdf8a2f04741e"
+    }
+  }
+}

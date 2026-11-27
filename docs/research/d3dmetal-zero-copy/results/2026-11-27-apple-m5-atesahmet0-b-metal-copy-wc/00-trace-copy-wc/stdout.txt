@@ -1,0 +1,18 @@
+DEVICE dll=C:\windows\system32\d3d12.dll shim=0 architecture_hr=00000000 uma=0 coherent=0 isolated_mmu=0
+BACKEND_READY
+TRACE_COPY iter=-3 gpu_payload=67108864 completion_us=8656.600 actual=c6d2b000,392d4fff expected=c6d2b000,392d4fff matches=16777216/16777216
+TRACE_COPY iter=-2 gpu_payload=67108864 completion_us=2055.000 actual=c6d2b001,392d4ffe expected=c6d2b001,392d4ffe matches=16777216/16777216
+TRACE_COPY iter=-1 gpu_payload=67108864 completion_us=3181.500 actual=c6d2b002,392d4ffd expected=c6d2b002,392d4ffd matches=16777216/16777216
+TRACE_COPY iter=0 gpu_payload=67108864 completion_us=4802.100 actual=c6d2b003,392d4ffc expected=c6d2b003,392d4ffc matches=16777216/16777216
+TRACE_COPY iter=1 gpu_payload=67108864 completion_us=2831.700 actual=c6d2b004,392d4ffb expected=c6d2b004,392d4ffb matches=16777216/16777216
+TRACE_COPY iter=2 gpu_payload=67108864 completion_us=2295.500 actual=c6d2b005,392d4ffa expected=c6d2b005,392d4ffa matches=16777216/16777216
+TRACE_COPY iter=3 gpu_payload=67108864 completion_us=5014.400 actual=c6d2b006,392d4ff9 expected=c6d2b006,392d4ff9 matches=16777216/16777216
+TRACE_COPY iter=4 gpu_payload=67108864 completion_us=1826.300 actual=c6d2b007,392d4ff8 expected=c6d2b007,392d4ff8 matches=16777216/16777216
+TRACE_COPY iter=5 gpu_payload=67108864 completion_us=1490.400 actual=c6d2b008,392d4ff7 expected=c6d2b008,392d4ff7 matches=16777216/16777216
+TRACE_COPY iter=6 gpu_payload=67108864 completion_us=1439.600 actual=c6d2b009,392d4ff6 expected=c6d2b009,392d4ff6 matches=16777216/16777216
+TRACE_COPY iter=7 gpu_payload=67108864 completion_us=2864.000 actual=c6d2b00a,392d4ff5 expected=c6d2b00a,392d4ff5 matches=16777216/16777216
+TRACE_COPY iter=8 gpu_payload=67108864 completion_us=1784.700 actual=c6d2b00b,392d4ff4 expected=c6d2b00b,392d4ff4 matches=16777216/16777216
+TRACE_COPY iter=9 gpu_payload=67108864 completion_us=2008.300 actual=c6d2b00c,392d4ff3 expected=c6d2b00c,392d4ff3 matches=16777216/16777216
+TRACE_COPY iter=10 gpu_payload=67108864 completion_us=4192.900 actual=c6d2b00d,392d4ff2 expected=c6d2b00d,392d4ff2 matches=16777216/16777216
+TRACE_COPY iter=11 gpu_payload=67108864 completion_us=1773.400 actual=c6d2b00e,392d4ff1 expected=c6d2b00e,392d4ff1 matches=16777216/16777216
+END complete

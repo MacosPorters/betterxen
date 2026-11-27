@@ -1,0 +1,8 @@
+{
+  "source_scratch": "/tmp/bx473-fence-fault-test",
+  "redactions": {},
+  "omitted_local_artifacts_sha256": {
+    "fault_probe.exe": "f658ef1af80389099315430dbac16c73c39895cd17852c67d99943167ebd587e"
+  },
+  "policy": "Replace home-directory prefix in JSON metadata with <HOME>. Copy stdout/stderr/source/shader receipts verbatim. Omit executables, private bottle, and raw .rgba dumps while retaining their SHA-256 digests."
+}

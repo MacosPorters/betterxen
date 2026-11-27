@@ -1,0 +1,261 @@
+{
+  "protocol": "B-trace-inputs-1",
+  "utc": "2026-11-26T23:00:36.675725+00:00",
+  "purpose": "Minimal target-PID-only xctrace XML exports with referenced XML nodes for independent validation of summarize-trace.py selection, staging/readback exclusion, and encoder/GPU join",
+  "tools": {
+    "docs/research/d3dmetal-zero-copy/copy-detection/export-target-trace.py": "0195ca28b0a6f7d8d30e732f4b741b19804814e00645a83ab1f4edc69ae94b6c",
+    "docs/research/d3dmetal-zero-copy/copy-detection/summarize-trace.py": "8f0cf4863b19e7cee1aaabce6a2f4f475c0388a30f30ebc90b69944d552b2a52"
+  },
+  "raw_export_commands_template": [
+    "xcrun xctrace export --input <case>/gpu.trace --xpath '/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-gpu-intervals\"]' --output gpu-intervals.xml",
+    "xcrun xctrace export --input <case>/gpu.trace --xpath '/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-application-encoders-list\"]' --output metal-encoders.xml"
+  ],
+  "reproduction_command_template": "python3 docs/research/d3dmetal-zero-copy/copy-detection/summarize-trace.py docs/research/d3dmetal-zero-copy/results/<published_run_dir> docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-inputs-01/<short_name>/target-gpu-intervals.xml docs/research/d3dmetal-zero-copy/results/2026-11-27-apple-m5-atesahmet0-b-trace-inputs-01/<short_name>/target-metal-encoders.xml",
+  "captures": [
+    {
+      "guest_pid": 60493,
+      "case": "00-wb",
+      "encoders": {
+        "raw_xml_sha256": "a9a34e9ea24b2b6b7fdea7be05736c87bf3084bbd597ce3a5a4fcd71ff79913c",
+        "raw_xml_bytes": 44897,
+        "raw_total_rows": 75,
+        "sanitized_xml": "target-metal-encoders.xml",
+        "sanitized_xml_sha256": "93b89eb944246e4c65680294c0bc3973fbf1a13465b893e0528a7cbac4b2b15c",
+        "sanitized_xml_bytes": 53615,
+        "retained_target_rows": 75,
+        "retained_referenced_nodes": 0,
+        "retained_processes": [
+          "b-coherence.exe (60493)"
+        ]
+      },
+      "gpu_intervals": {
+        "raw_xml_sha256": "de35aae068ccd52909733673ef2669fe09b17d749c8d31f5f5bff578927a4591",
+        "raw_xml_bytes": 3220164,
+        "raw_total_rows": 3178,
+        "sanitized_xml": "target-gpu-intervals.xml",
+        "sanitized_xml_sha256": "f0088f98a54d9e5241e0c17fe1fc1d0f13453d5422494d169189d5d1bf3a30b2",
+        "sanitized_xml_bytes": 108262,
+        "retained_target_rows": 75,
+        "retained_referenced_nodes": 92,
+        "retained_processes": [
+          "b-coherence.exe (60493)"
+        ]
+      },
+      "short_name": "b-trace-02",
+      "published_run_dir": "2026-11-27-apple-m5-atesahmet0-b-trace-02",
+      "published_gpu_samples_sha256": "53cffcb7a3cff54b8174a3cb2bd1801cc77788a2696a54856ca9e6f68cc1a30c",
+      "reproduced_matched_intervals": 75,
+      "exact_json_match": true
+    },
+    {
+      "guest_pid": 60634,
+      "case": "00-wc",
+      "encoders": {
+        "raw_xml_sha256": "a8d300334e09ab8ec329c3e7ef5c946fd26a65329bc34d297fa605e9d89f6e78",
+        "raw_xml_bytes": 45337,
+        "raw_total_rows": 75,
+        "sanitized_xml": "target-metal-encoders.xml",
+        "sanitized_xml_sha256": "c19534f6635ef63b193941ef6bc43e00da70abac1fb4371a9ef4348aa64f4fa4",
+        "sanitized_xml_bytes": 54040,
+        "retained_target_rows": 75,
+        "retained_referenced_nodes": 0,
+        "retained_processes": [
+          "b-coherence.exe (60634)"
+        ]
+      },
+      "gpu_intervals": {
+        "raw_xml_sha256": "8a9d2402cd0f6dfa84c6b585d1c7233f056cd6a4c566e56239508e2a277c32bf",
+        "raw_xml_bytes": 3231683,
+        "raw_total_rows": 3296,
+        "sanitized_xml": "target-gpu-intervals.xml",
+        "sanitized_xml_sha256": "ae2bbac42817ba3321a0c73aa2fa3c2c57ccdb473c8de89f3a76b72fc8e24372",
+        "sanitized_xml_bytes": 107824,
+        "retained_target_rows": 75,
+        "retained_referenced_nodes": 85,
+        "retained_processes": [
+          "b-coherence.exe (60634)"
+        ]
+      },
+      "short_name": "b-metal-wc",
+      "published_run_dir": "2026-11-27-apple-m5-atesahmet0-b-metal-wc",
+      "published_gpu_samples_sha256": "1a1e83876bb7c07d38d9737bdb1991186299876a308c72c3ba6e9a505b8eb9f5",
+      "reproduced_matched_intervals": 75,
+      "exact_json_match": true
+    },
+    {
+      "guest_pid": 60758,
+      "case": "00-upload-wb",
+      "encoders": {
+        "raw_xml_sha256": "b21bf495eab7d36881e4cbdc273c1862bf161132d0d851d95277fcf905c1b57c",
+        "raw_xml_bytes": 45521,
+        "raw_total_rows": 75,
+        "sanitized_xml": "target-metal-encoders.xml",
+        "sanitized_xml_sha256": "4f02a8313e08ec468b612ed7c54a586924ae947f299b8340b01101954c816aee",
+        "sanitized_xml_bytes": 54218,
+        "retained_target_rows": 75,
+        "retained_referenced_nodes": 0,
+        "retained_processes": [
+          "b-coherence.exe (60758)"
+        ]
+      },
+      "gpu_intervals": {
+        "raw_xml_sha256": "cf9827d50a60545d570b7989cc08121b86c2ef43d5332f4710635237f11bd626",
+        "raw_xml_bytes": 7624428,
+        "raw_total_rows": 7817,
+        "sanitized_xml": "target-gpu-intervals.xml",
+        "sanitized_xml_sha256": "2d5e33972d9346581e208ab82965b023f794d1179144299a31adc99b11cd0a89",
+        "sanitized_xml_bytes": 109261,
+        "retained_target_rows": 75,
+        "retained_referenced_nodes": 118,
+        "retained_processes": [
+          "b-coherence.exe (60758)"
+        ]
+      },
+      "short_name": "b-metal-upload-wb",
+      "published_run_dir": "2026-11-27-apple-m5-atesahmet0-b-metal-upload-wb",
+      "published_gpu_samples_sha256": "d530d47489156ef7baa7b4aac261e0f3f8ea509d157b402f9bf63748c9140140",
+      "reproduced_matched_intervals": 75,
+      "exact_json_match": true
+    },
+    {
+      "guest_pid": 60843,
+      "case": "00-default",
+      "encoders": {
+        "raw_xml_sha256": "1cb5bbfb7bc045d60de24b3673e8c72137c907846d5af73b75b529a9451c7301",
+        "raw_xml_bytes": 191223,
+        "raw_total_rows": 345,
+        "sanitized_xml": "target-metal-encoders.xml",
+        "sanitized_xml_sha256": "562d294dfc6ca60ba594610753a47f47c7e21fba90522842f923c43e5d8ddff2",
+        "sanitized_xml_bytes": 229370,
+        "retained_target_rows": 345,
+        "retained_referenced_nodes": 0,
+        "retained_processes": [
+          "b-coherence.exe (60843)"
+        ]
+      },
+      "gpu_intervals": {
+        "raw_xml_sha256": "9c73ddcf199158cdccafb9cb5fd918d705b84598686a2ed8e096ebc02186c668",
+        "raw_xml_bytes": 7756695,
+        "raw_total_rows": 8041,
+        "sanitized_xml": "target-gpu-intervals.xml",
+        "sanitized_xml_sha256": "a1566d77d19aeb9f4fead7f29759d1418a8613a0e266979a8221d2df302cedf0",
+        "sanitized_xml_bytes": 466008,
+        "retained_target_rows": 345,
+        "retained_referenced_nodes": 152,
+        "retained_processes": [
+          "b-coherence.exe (60843)"
+        ]
+      },
+      "short_name": "b-metal-default",
+      "published_run_dir": "2026-11-27-apple-m5-atesahmet0-b-metal-default",
+      "published_gpu_samples_sha256": "3a0cba954a0c8e36a0a66ce6da98fba6908b909676a9e7083292649cbd64a4fd",
+      "reproduced_matched_intervals": 75,
+      "exact_json_match": true
+    },
+    {
+      "guest_pid": 60920,
+      "case": "00-trace-copy-wb",
+      "encoders": {
+        "raw_xml_sha256": "f2bf7d7baf2abcf5243923d5137454cb2357a9d440ac06d834a64c75e5e90c27",
+        "raw_xml_bytes": 11006,
+        "raw_total_rows": 15,
+        "sanitized_xml": "target-metal-encoders.xml",
+        "sanitized_xml_sha256": "9129659f59f7203bc50e7fa9279c339a4fb1f53a94cd82c2b63eb453c6c93247",
+        "sanitized_xml_bytes": 13220,
+        "retained_target_rows": 15,
+        "retained_referenced_nodes": 0,
+        "retained_processes": [
+          "b-copy.exe (60920)"
+        ]
+      },
+      "gpu_intervals": {
+        "raw_xml_sha256": "0254e610888feefbe5a1314c50ec1b72e17f378d28a3ee5bbcaf0274ae8dbb1a",
+        "raw_xml_bytes": 9423099,
+        "raw_total_rows": 9805,
+        "sanitized_xml": "target-gpu-intervals.xml",
+        "sanitized_xml_sha256": "25a2d45f0e0929b70ae7f93cc7c754ef164a5324ded3721144b559b7de3a1ca1",
+        "sanitized_xml_bytes": 24747,
+        "retained_target_rows": 15,
+        "retained_referenced_nodes": 25,
+        "retained_processes": [
+          "b-copy.exe (60920)"
+        ]
+      },
+      "short_name": "b-metal-copy-wb",
+      "published_run_dir": "2026-11-27-apple-m5-atesahmet0-b-metal-copy-wb",
+      "published_gpu_samples_sha256": "a13d713f9980c3145ad8536b980396a12efee3141e1a452231b233230d51b0ab",
+      "reproduced_matched_intervals": 15,
+      "exact_json_match": true
+    },
+    {
+      "guest_pid": 61014,
+      "case": "00-trace-copy-wc",
+      "encoders": {
+        "raw_xml_sha256": "391d34fd37bfcb2a83737638ebca7d2e3e3187df328111f54507a0e7c9d16523",
+        "raw_xml_bytes": 11036,
+        "raw_total_rows": 15,
+        "sanitized_xml": "target-metal-encoders.xml",
+        "sanitized_xml_sha256": "655c11603c2202f2d68c7ddf0e01c80c631499570ed60ce1255cf9c396d4f12a",
+        "sanitized_xml_bytes": 13249,
+        "retained_target_rows": 15,
+        "retained_referenced_nodes": 0,
+        "retained_processes": [
+          "b-copy.exe (61014)"
+        ]
+      },
+      "gpu_intervals": {
+        "raw_xml_sha256": "cffc23119eb8116874863ce2226e17c32375b3ead3a0bba8ab092318a22fcc55",
+        "raw_xml_bytes": 8133458,
+        "raw_total_rows": 8504,
+        "sanitized_xml": "target-gpu-intervals.xml",
+        "sanitized_xml_sha256": "cf76eb248a0457d547ed6654cff0d2e84ac5b1ef96cdddd5bd3124888ef65e14",
+        "sanitized_xml_bytes": 25049,
+        "retained_target_rows": 15,
+        "retained_referenced_nodes": 33,
+        "retained_processes": [
+          "b-copy.exe (61014)"
+        ]
+      },
+      "short_name": "b-metal-copy-wc",
+      "published_run_dir": "2026-11-27-apple-m5-atesahmet0-b-metal-copy-wc",
+      "published_gpu_samples_sha256": "96db4e1c86a853824987694cd3bf8a85ab48aa7cad67e414eb7c0cfdecce1c8b",
+      "reproduced_matched_intervals": 15,
+      "exact_json_match": true
+    },
+    {
+      "guest_pid": 61276,
+      "case": "00-trace-copy-upload",
+      "encoders": {
+        "raw_xml_sha256": "1bb16d3370a6a9886e00400a768391c019b50699728cde88b3df010fae00b615",
+        "raw_xml_bytes": 11037,
+        "raw_total_rows": 15,
+        "sanitized_xml": "target-metal-encoders.xml",
+        "sanitized_xml_sha256": "f1c968826cb9e27604c22ac9d124c8cdc11420d454359bef55bf5caddc77d500",
+        "sanitized_xml_bytes": 13250,
+        "retained_target_rows": 15,
+        "retained_referenced_nodes": 0,
+        "retained_processes": [
+          "b-copy.exe (61276)"
+        ]
+      },
+      "gpu_intervals": {
+        "raw_xml_sha256": "681e09d3892da6b7ae30b4af541a79beebd1d5ba860e11662b27681084ba3f9e",
+        "raw_xml_bytes": 3452485,
+        "raw_total_rows": 3449,
+        "sanitized_xml": "target-gpu-intervals.xml",
+        "sanitized_xml_sha256": "61d1ef683e5a972388dc86187c1daf60ceec7288308a180a8ef88cdd58c1e78b",
+        "sanitized_xml_bytes": 24841,
+        "retained_target_rows": 15,
+        "retained_referenced_nodes": 28,
+        "retained_processes": [
+          "b-copy.exe (61276)"
+        ]
+      },
+      "short_name": "b-metal-copy-upload-retry",
+      "published_run_dir": "2026-11-27-apple-m5-atesahmet0-b-metal-copy-upload-retry",
+      "published_gpu_samples_sha256": "e2001a24ac10864d03fa3f1c6f8bc801a970ddf1c38926e31acbbe13658dd903",
+      "reproduced_matched_intervals": 15,
+      "exact_json_match": true
+    }
+  ]
+}

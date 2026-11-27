@@ -1,0 +1,69 @@
+{
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/b473-small-03/bottle",
+    "--no-update",
+    "--no-gui",
+    "--workdir",
+    "/private/tmp/b473-small-03/03-clock",
+    "/private/tmp/b473-small-03/b-copy.exe",
+    "clock"
+  ],
+  "timeout_seconds": 45,
+  "exit": 0,
+  "backend": {
+    "verified": true,
+    "guest_pid": "58802",
+    "lsof_exit": 0,
+    "paths": [
+      "/usr/libexec/rosetta/runtime",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+    ]
+  },
+  "pressure_ready": {
+    "allowed": true,
+    "max_kernel_level": 1,
+    "kernel": {
+      "command": [
+        "sysctl",
+        "-n",
+        "kern.memorystatus_vm_pressure_level"
+      ],
+      "exit": 0,
+      "stdout": "1\n",
+      "stderr": ""
+    },
+    "free": {
+      "command": [
+        "memory_pressure",
+        "-Q"
+      ],
+      "exit": 0,
+      "stdout": "The system has 17179869184 (1048576 pages with a page size of 16384).\nSystem-wide memory free percentage: 49%\n",
+      "stderr": ""
+    },
+    "swap": {
+      "command": [
+        "sysctl",
+        "vm.swapusage"
+      ],
+      "exit": 0,
+      "stdout": "vm.swapusage: total = 7168.00M  used = 5980.62M  free = 1187.38M  (encrypted)\n",
+      "stderr": ""
+    },
+    "vm": {
+      "command": [
+        "vm_stat"
+      ],
+      "exit": 0,
+      "stdout": "Mach Virtual Memory Statistics: (page size of 16384 bytes)\nPages free:                                     9533.\nPages active:                                 245901.\nPages inactive:                               242661.\nPages speculative:                              2098.\nPages throttled:                                   0.\nPages wired down:                             189607.\nPages purgeable:                                6512.\n\"Translation faults\":                      893627103.\nPages copy-on-write:                        15305868.\nPages zero filled:                         593202303.\nPages reactivated:                         173561563.\nPages purged:                               55771555.\nFile-backed pages:                            184548.\nAnonymous pages:                              306112.\nPages stored in compressor:                   784013.\nPages occupied by compressor:                 317409.\nDecompressions:                            248737280.\nCompressions:                              273143619.\nPageins:                                    53253853.\nPageouts:                                     430461.\nSwapins:                                     1641246.\nSwapouts:                                    2250694.\nPages tagged:                                 168895.\nPages tagged resident:                         92177.\nPages tagged compressed:                       76718.\nPages tag-storage:                             32768.\nPages tag-storage holding tags:                 4498.\nPages tag-storage free:                           55.\nPages tag-storage non-tag pageable:            28004.\nPages tag-storage non-tag wired:                 109.\nBytes of compressed tags:                   11883072.\nTagged compressions:                        15174031.\nTagged decompressions:                      14606237.\n",
+      "stderr": ""
+    }
+  },
+  "output_hashes": {
+    "stdout.txt": "68a68adb0765b290c2eaba359c4c0a957825a3bfac118f7a8ddccae5ace363a6",
+    "stderr.txt": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+  }
+}

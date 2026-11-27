@@ -1,0 +1,1206 @@
+<?xml version='1.0' encoding='utf-8'?>
+<trace-query-result>
+  <node>
+    <schema name="metal-application-encoders-list" documentation="Denotes an a list of encoders created by the tracing Metal application.">
+      <col>
+        <mnemonic>start</mnemonic>
+        <name>Creation</name>
+        <engineering-type>start-time</engineering-type>
+      </col>
+      <col>
+        <mnemonic>duration</mnemonic>
+        <name>Duration</name>
+        <engineering-type>duration</engineering-type>
+      </col>
+      <col>
+        <mnemonic>thread</mnemonic>
+        <name>Thread</name>
+        <engineering-type>thread</engineering-type>
+      </col>
+      <col>
+        <mnemonic>process</mnemonic>
+        <name>Process</name>
+        <engineering-type>process</engineering-type>
+      </col>
+      <col>
+        <mnemonic>gpu</mnemonic>
+        <name>Metal Device</name>
+        <engineering-type>metal-device-name</engineering-type>
+      </col>
+      <col>
+        <mnemonic>frame-number</mnemonic>
+        <name>Frame</name>
+        <engineering-type>gpu-frame-number</engineering-type>
+      </col>
+      <col>
+        <mnemonic>cmdbuffer-label</mnemonic>
+        <name>Command Buffer</name>
+        <engineering-type>metal-object-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>cmdbuffer-label-indexed</mnemonic>
+        <name>Command Buffer (Indexed)</name>
+        <engineering-type>metal-object-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>encoder-label</mnemonic>
+        <name>Encoder</name>
+        <engineering-type>metal-object-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>encoder-label-indexed</mnemonic>
+        <name>Encoder (Indexed)</name>
+        <engineering-type>metal-object-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>event-type</mnemonic>
+        <name>Event Type</name>
+        <engineering-type>metal-event-name</engineering-type>
+      </col>
+      <col>
+        <mnemonic>cmdbuffer-id</mnemonic>
+        <name>Commmand Buffer Id</name>
+        <engineering-type>metal-command-buffer-id</engineering-type>
+      </col>
+      <col>
+        <mnemonic>encoder-id</mnemonic>
+        <name>Encoder Id</name>
+        <engineering-type>metal-command-buffer-id</engineering-type>
+      </col>
+    </schema>
+    <row>
+      <start-time id="1" fmt="00:01.276.061">1276061791</start-time>
+      <duration id="2" fmt="446.67 µs">446667</duration>
+      <thread id="3" fmt="b-coherence.exe (0x1682d8) (b-coherence.exe, pid: 60634)">
+        <tid id="4" fmt="0x1682d8">1475288</tid>
+        <process id="5" fmt="b-coherence.exe (60634)">
+          <pid id="6" fmt="60634">60634</pid>
+          <device-session id="7" fmt="TODO">TODO</device-session>
+        </process>
+      </thread>
+      <process ref="5" />
+      <metal-device-name id="8" fmt="M5">M5</metal-device-name>
+      <gpu-frame-number id="9" fmt="Frame 1">1</gpu-frame-number>
+      <metal-object-label id="10" fmt="Command Buffer 0">Command Buffer 0</metal-object-label>
+      <metal-object-label id="11" fmt="[0] Command Buffer 0">[0] Command Buffer 0</metal-object-label>
+      <metal-object-label id="12" fmt="Compute Command 0">Compute Command 0</metal-object-label>
+      <metal-object-label id="13" fmt="[0] Compute Command 0">[0] Compute Command 0</metal-object-label>
+      <metal-event-name id="14" fmt="Encoding">Encoding</metal-event-name>
+      <metal-command-buffer-id id="15" fmt="0xd48dd5f5">3566065141</metal-command-buffer-id>
+      <metal-command-buffer-id id="16" fmt="0xd48dd5f6">3566065142</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="17" fmt="00:01.314.617">1314617666</start-time>
+      <duration id="18" fmt="47.79 µs">47792</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="19" fmt="Frame 3">3</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="20" fmt="0xd48dd5f8">3566065144</metal-command-buffer-id>
+      <metal-command-buffer-id id="21" fmt="0xd48dd5f9">3566065145</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="22" fmt="00:01.317.942">1317942000</start-time>
+      <duration id="23" fmt="35.54 µs">35541</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="24" fmt="Frame 5">5</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="25" fmt="0xd48dd5fb">3566065147</metal-command-buffer-id>
+      <metal-command-buffer-id id="26" fmt="0xd48dd5fc">3566065148</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="27" fmt="00:01.329.434">1329434000</start-time>
+      <duration id="28" fmt="46.12 µs">46125</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="29" fmt="Frame 7">7</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="30" fmt="0xd48dd5fe">3566065150</metal-command-buffer-id>
+      <metal-command-buffer-id id="31" fmt="0xd48dd5ff">3566065151</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="32" fmt="00:01.332.392">1332392458</start-time>
+      <duration id="33" fmt="30.21 µs">30208</duration>
+      <thread id="34" fmt="b-coherence.exe (0x16832c) (b-coherence.exe, pid: 60634)">
+        <tid id="35" fmt="0x16832c">1475372</tid>
+        <process ref="5" />
+      </thread>
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="36" fmt="Frame 9">9</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="37" fmt="0xd48dd601">3566065153</metal-command-buffer-id>
+      <metal-command-buffer-id id="38" fmt="0xd48dd602">3566065154</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="39" fmt="00:01.335.343">1335343166</start-time>
+      <duration id="40" fmt="25.62 µs">25625</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="41" fmt="Frame 11">11</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="42" fmt="0xd48dd604">3566065156</metal-command-buffer-id>
+      <metal-command-buffer-id id="43" fmt="0xd48dd605">3566065157</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="44" fmt="00:01.338.465">1338465875</start-time>
+      <duration id="45" fmt="23.46 µs">23458</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="46" fmt="Frame 13">13</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="47" fmt="0xd48dd607">3566065159</metal-command-buffer-id>
+      <metal-command-buffer-id id="48" fmt="0xd48dd608">3566065160</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="49" fmt="00:01.341.871">1341871458</start-time>
+      <duration id="50" fmt="16.67 µs">16667</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="51" fmt="Frame 15">15</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="52" fmt="0xd48dd60a">3566065162</metal-command-buffer-id>
+      <metal-command-buffer-id id="53" fmt="0xd48dd60b">3566065163</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="54" fmt="00:01.344.925">1344925708</start-time>
+      <duration id="55" fmt="15.33 µs">15333</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="56" fmt="Frame 17">17</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="57" fmt="0xd48dd60d">3566065165</metal-command-buffer-id>
+      <metal-command-buffer-id id="58" fmt="0xd48dd60e">3566065166</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="59" fmt="00:01.347.842">1347842416</start-time>
+      <duration id="60" fmt="13.67 µs">13667</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="61" fmt="Frame 19">19</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="62" fmt="0xd48dd610">3566065168</metal-command-buffer-id>
+      <metal-command-buffer-id id="63" fmt="0xd48dd611">3566065169</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="64" fmt="00:01.351.634">1351634458</start-time>
+      <duration id="65" fmt="14.12 µs">14125</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="66" fmt="Frame 21">21</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="67" fmt="0xd48dd613">3566065171</metal-command-buffer-id>
+      <metal-command-buffer-id id="68" fmt="0xd48dd614">3566065172</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="69" fmt="00:01.354.399">1354399625</start-time>
+      <duration id="70" fmt="14.33 µs">14333</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="71" fmt="Frame 23">23</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="72" fmt="0xd48dd616">3566065174</metal-command-buffer-id>
+      <metal-command-buffer-id id="73" fmt="0xd48dd617">3566065175</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="74" fmt="00:01.357.405">1357405333</start-time>
+      <duration id="75" fmt="17.62 µs">17625</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="76" fmt="Frame 25">25</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="77" fmt="0xd48dd619">3566065177</metal-command-buffer-id>
+      <metal-command-buffer-id id="78" fmt="0xd48dd61a">3566065178</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="79" fmt="00:01.359.866">1359866500</start-time>
+      <duration id="80" fmt="13.54 µs">13541</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="81" fmt="Frame 27">27</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="82" fmt="0xd48dd61c">3566065180</metal-command-buffer-id>
+      <metal-command-buffer-id id="83" fmt="0xd48dd61d">3566065181</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="84" fmt="00:01.362.780">1362780125</start-time>
+      <duration id="85" fmt="16.67 µs">16666</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="86" fmt="Frame 29">29</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="87" fmt="0xd48dd61f">3566065183</metal-command-buffer-id>
+      <metal-command-buffer-id id="88" fmt="0xd48dd620">3566065184</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="89" fmt="00:01.365.125">1365125583</start-time>
+      <duration id="90" fmt="15.83 µs">15833</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="91" fmt="Frame 31">31</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="92" fmt="0xd48dd622">3566065186</metal-command-buffer-id>
+      <metal-command-buffer-id id="93" fmt="0xd48dd623">3566065187</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="94" fmt="00:01.367.222">1367222541</start-time>
+      <duration id="95" fmt="15.46 µs">15459</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="96" fmt="Frame 33">33</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="97" fmt="0xd48dd625">3566065189</metal-command-buffer-id>
+      <metal-command-buffer-id id="98" fmt="0xd48dd626">3566065190</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="99" fmt="00:01.369.491">1369491708</start-time>
+      <duration id="100" fmt="13.08 µs">13083</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="101" fmt="Frame 35">35</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="102" fmt="0xd48dd628">3566065192</metal-command-buffer-id>
+      <metal-command-buffer-id id="103" fmt="0xd48dd629">3566065193</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="104" fmt="00:01.371.028">1371028375</start-time>
+      <duration id="105" fmt="14.29 µs">14291</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="106" fmt="Frame 37">37</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="107" fmt="0xd48dd62b">3566065195</metal-command-buffer-id>
+      <metal-command-buffer-id id="108" fmt="0xd48dd62c">3566065196</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="109" fmt="00:01.372.518">1372518708</start-time>
+      <duration id="110" fmt="15.38 µs">15375</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="111" fmt="Frame 39">39</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="112" fmt="0xd48dd62e">3566065198</metal-command-buffer-id>
+      <metal-command-buffer-id id="113" fmt="0xd48dd62f">3566065199</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="114" fmt="00:01.374.026">1374026208</start-time>
+      <duration id="115" fmt="13.62 µs">13625</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="116" fmt="Frame 41">41</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="117" fmt="0xd48dd631">3566065201</metal-command-buffer-id>
+      <metal-command-buffer-id id="118" fmt="0xd48dd632">3566065202</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="119" fmt="00:01.375.505">1375505708</start-time>
+      <duration id="120" fmt="13.33 µs">13333</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="121" fmt="Frame 43">43</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="122" fmt="0xd48dd634">3566065204</metal-command-buffer-id>
+      <metal-command-buffer-id id="123" fmt="0xd48dd635">3566065205</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="124" fmt="00:01.376.957">1376957666</start-time>
+      <duration id="125" fmt="13.79 µs">13792</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="126" fmt="Frame 45">45</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="127" fmt="0xd48dd637">3566065207</metal-command-buffer-id>
+      <metal-command-buffer-id id="128" fmt="0xd48dd638">3566065208</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="129" fmt="00:01.378.425">1378425208</start-time>
+      <duration id="130" fmt="11.25 µs">11250</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="131" fmt="Frame 47">47</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="132" fmt="0xd48dd63a">3566065210</metal-command-buffer-id>
+      <metal-command-buffer-id id="133" fmt="0xd48dd63b">3566065211</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="134" fmt="00:01.379.866">1379866208</start-time>
+      <duration id="135" fmt="13.42 µs">13417</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="136" fmt="Frame 49">49</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="137" fmt="0xd48dd63d">3566065213</metal-command-buffer-id>
+      <metal-command-buffer-id id="138" fmt="0xd48dd63e">3566065214</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="139" fmt="00:01.381.216">1381216833</start-time>
+      <duration id="140" fmt="12.42 µs">12417</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="141" fmt="Frame 51">51</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="142" fmt="0xd48dd640">3566065216</metal-command-buffer-id>
+      <metal-command-buffer-id id="143" fmt="0xd48dd641">3566065217</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="144" fmt="00:01.383.015">1383015500</start-time>
+      <duration id="145" fmt="13.04 µs">13041</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="146" fmt="Frame 53">53</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="147" fmt="0xd48dd643">3566065219</metal-command-buffer-id>
+      <metal-command-buffer-id id="148" fmt="0xd48dd644">3566065220</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="149" fmt="00:01.384.537">1384537250</start-time>
+      <duration id="150" fmt="13.71 µs">13708</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="151" fmt="Frame 55">55</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="152" fmt="0xd48dd646">3566065222</metal-command-buffer-id>
+      <metal-command-buffer-id id="153" fmt="0xd48dd647">3566065223</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="154" fmt="00:01.386.006">1386006541</start-time>
+      <duration id="155" fmt="10.58 µs">10584</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="156" fmt="Frame 57">57</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="157" fmt="0xd48dd649">3566065225</metal-command-buffer-id>
+      <metal-command-buffer-id id="158" fmt="0xd48dd64a">3566065226</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="159" fmt="00:01.387.449">1387449583</start-time>
+      <duration id="160" fmt="13.29 µs">13292</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="161" fmt="Frame 59">59</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="162" fmt="0xd48dd64c">3566065228</metal-command-buffer-id>
+      <metal-command-buffer-id id="163" fmt="0xd48dd64d">3566065229</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="164" fmt="00:01.388.891">1388891958</start-time>
+      <duration id="165" fmt="12.96 µs">12958</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="166" fmt="Frame 61">61</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="167" fmt="0xd48dd64f">3566065231</metal-command-buffer-id>
+      <metal-command-buffer-id id="168" fmt="0xd48dd650">3566065232</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="169" fmt="00:01.389.773">1389773750</start-time>
+      <duration id="170" fmt="9.96 µs">9958</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="171" fmt="Frame 63">63</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="172" fmt="0xd48dd652">3566065234</metal-command-buffer-id>
+      <metal-command-buffer-id id="173" fmt="0xd48dd653">3566065235</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="174" fmt="00:01.391.865">1391865458</start-time>
+      <duration id="175" fmt="13.83 µs">13833</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="176" fmt="Frame 65">65</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="177" fmt="0xd48dd655">3566065237</metal-command-buffer-id>
+      <metal-command-buffer-id id="178" fmt="0xd48dd656">3566065238</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="179" fmt="00:01.392.958">1392958125</start-time>
+      <duration id="180" fmt="12.54 µs">12541</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="181" fmt="Frame 67">67</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="182" fmt="0xd48dd658">3566065240</metal-command-buffer-id>
+      <metal-command-buffer-id id="183" fmt="0xd48dd659">3566065241</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="184" fmt="00:01.394.376">1394376458</start-time>
+      <duration id="185" fmt="13.38 µs">13375</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="186" fmt="Frame 69">69</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="187" fmt="0xd48dd65b">3566065243</metal-command-buffer-id>
+      <metal-command-buffer-id id="188" fmt="0xd48dd65c">3566065244</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="189" fmt="00:01.395.524">1395524958</start-time>
+      <duration id="190" fmt="13.88 µs">13875</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="191" fmt="Frame 71">71</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="192" fmt="0xd48dd65e">3566065246</metal-command-buffer-id>
+      <metal-command-buffer-id id="193" fmt="0xd48dd65f">3566065247</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="194" fmt="00:01.396.335">1396335625</start-time>
+      <duration ref="145" />
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="195" fmt="Frame 73">73</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="196" fmt="0xd48dd661">3566065249</metal-command-buffer-id>
+      <metal-command-buffer-id id="197" fmt="0xd48dd662">3566065250</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="198" fmt="00:01.398.323">1398323375</start-time>
+      <duration id="199" fmt="12.71 µs">12708</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="200" fmt="Frame 75">75</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="201" fmt="0xd48dd664">3566065252</metal-command-buffer-id>
+      <metal-command-buffer-id id="202" fmt="0xd48dd665">3566065253</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="203" fmt="00:01.399.627">1399627625</start-time>
+      <duration id="204" fmt="12.50 µs">12500</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="205" fmt="Frame 77">77</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="206" fmt="0xd48dd667">3566065255</metal-command-buffer-id>
+      <metal-command-buffer-id id="207" fmt="0xd48dd668">3566065256</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="208" fmt="00:01.400.617">1400617416</start-time>
+      <duration id="209" fmt="14.00 µs">14000</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="210" fmt="Frame 79">79</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="211" fmt="0xd48dd66a">3566065258</metal-command-buffer-id>
+      <metal-command-buffer-id id="212" fmt="0xd48dd66b">3566065259</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="213" fmt="00:01.401.522">1401522541</start-time>
+      <duration ref="140" />
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="214" fmt="Frame 81">81</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="215" fmt="0xd48dd66d">3566065261</metal-command-buffer-id>
+      <metal-command-buffer-id id="216" fmt="0xd48dd66e">3566065262</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="217" fmt="00:01.402.428">1402428916</start-time>
+      <duration id="218" fmt="10.62 µs">10625</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="219" fmt="Frame 83">83</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="220" fmt="0xd48dd670">3566065264</metal-command-buffer-id>
+      <metal-command-buffer-id id="221" fmt="0xd48dd671">3566065265</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="222" fmt="00:01.403.326">1403326500</start-time>
+      <duration id="223" fmt="13.75 µs">13750</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="224" fmt="Frame 85">85</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="225" fmt="0xd48dd673">3566065267</metal-command-buffer-id>
+      <metal-command-buffer-id id="226" fmt="0xd48dd674">3566065268</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="227" fmt="00:01.404.217">1404217916</start-time>
+      <duration id="228" fmt="10.67 µs">10667</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="229" fmt="Frame 87">87</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="230" fmt="0xd48dd676">3566065270</metal-command-buffer-id>
+      <metal-command-buffer-id id="231" fmt="0xd48dd677">3566065271</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="232" fmt="00:01.405.180">1405180708</start-time>
+      <duration id="233" fmt="11.88 µs">11875</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="234" fmt="Frame 89">89</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="235" fmt="0xd48dd679">3566065273</metal-command-buffer-id>
+      <metal-command-buffer-id id="236" fmt="0xd48dd67a">3566065274</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="237" fmt="00:01.406.794">1406794958</start-time>
+      <duration id="238" fmt="11.33 µs">11333</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="239" fmt="Frame 91">91</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="240" fmt="0xd48dd67c">3566065276</metal-command-buffer-id>
+      <metal-command-buffer-id id="241" fmt="0xd48dd67d">3566065277</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="242" fmt="00:01.407.771">1407771041</start-time>
+      <duration id="243" fmt="13.12 µs">13125</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="244" fmt="Frame 93">93</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="245" fmt="0xd48dd67f">3566065279</metal-command-buffer-id>
+      <metal-command-buffer-id id="246" fmt="0xd48dd680">3566065280</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="247" fmt="00:01.410.280">1410280500</start-time>
+      <duration id="248" fmt="16.29 µs">16291</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="249" fmt="Frame 95">95</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="250" fmt="0xd48dd682">3566065282</metal-command-buffer-id>
+      <metal-command-buffer-id id="251" fmt="0xd48dd683">3566065283</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="252" fmt="00:01.411.474">1411474875</start-time>
+      <duration id="253" fmt="12.83 µs">12833</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="254" fmt="Frame 97">97</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="255" fmt="0xd48dd685">3566065285</metal-command-buffer-id>
+      <metal-command-buffer-id id="256" fmt="0xd48dd686">3566065286</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="257" fmt="00:01.412.400">1412400291</start-time>
+      <duration ref="223" />
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="258" fmt="Frame 99">99</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="259" fmt="0xd48dd688">3566065288</metal-command-buffer-id>
+      <metal-command-buffer-id id="260" fmt="0xd48dd689">3566065289</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="261" fmt="00:01.413.334">1413334875</start-time>
+      <duration id="262" fmt="14.21 µs">14208</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="263" fmt="Frame 101">101</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="264" fmt="0xd48dd68b">3566065291</metal-command-buffer-id>
+      <metal-command-buffer-id id="265" fmt="0xd48dd68c">3566065292</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="266" fmt="00:01.414.265">1414265666</start-time>
+      <duration id="267" fmt="12.83 µs">12834</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="268" fmt="Frame 103">103</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="269" fmt="0xd48dd68e">3566065294</metal-command-buffer-id>
+      <metal-command-buffer-id id="270" fmt="0xd48dd68f">3566065295</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="271" fmt="00:01.415.244">1415244083</start-time>
+      <duration id="272" fmt="13.92 µs">13917</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="273" fmt="Frame 105">105</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="274" fmt="0xd48dd691">3566065297</metal-command-buffer-id>
+      <metal-command-buffer-id id="275" fmt="0xd48dd692">3566065298</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="276" fmt="00:01.416.122">1416122166</start-time>
+      <duration id="277" fmt="12.67 µs">12667</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="278" fmt="Frame 107">107</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="279" fmt="0xd48dd694">3566065300</metal-command-buffer-id>
+      <metal-command-buffer-id id="280" fmt="0xd48dd695">3566065301</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="281" fmt="00:01.417.009">1417009291</start-time>
+      <duration ref="277" />
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="282" fmt="Frame 109">109</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="283" fmt="0xd48dd697">3566065303</metal-command-buffer-id>
+      <metal-command-buffer-id id="284" fmt="0xd48dd698">3566065304</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="285" fmt="00:01.417.880">1417880166</start-time>
+      <duration ref="135" />
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="286" fmt="Frame 111">111</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="287" fmt="0xd48dd69a">3566065306</metal-command-buffer-id>
+      <metal-command-buffer-id id="288" fmt="0xd48dd69b">3566065307</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="289" fmt="00:01.418.764">1418764250</start-time>
+      <duration id="290" fmt="12.38 µs">12375</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="291" fmt="Frame 113">113</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="292" fmt="0xd48dd69d">3566065309</metal-command-buffer-id>
+      <metal-command-buffer-id id="293" fmt="0xd48dd69e">3566065310</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="294" fmt="00:01.419.636">1419636666</start-time>
+      <duration id="295" fmt="13.50 µs">13500</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="296" fmt="Frame 115">115</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="297" fmt="0xd48dd6a0">3566065312</metal-command-buffer-id>
+      <metal-command-buffer-id id="298" fmt="0xd48dd6a1">3566065313</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="299" fmt="00:01.420.480">1420480750</start-time>
+      <duration id="300" fmt="12.00 µs">12000</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="301" fmt="Frame 117">117</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="302" fmt="0xd48dd6a3">3566065315</metal-command-buffer-id>
+      <metal-command-buffer-id id="303" fmt="0xd48dd6a4">3566065316</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="304" fmt="00:01.421.319">1421319041</start-time>
+      <duration id="305" fmt="14.25 µs">14250</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="306" fmt="Frame 119">119</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="307" fmt="0xd48dd6a6">3566065318</metal-command-buffer-id>
+      <metal-command-buffer-id id="308" fmt="0xd48dd6a7">3566065319</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="309" fmt="00:01.422.288">1422288208</start-time>
+      <duration id="310" fmt="12.21 µs">12208</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="311" fmt="Frame 121">121</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="312" fmt="0xd48dd6a9">3566065321</metal-command-buffer-id>
+      <metal-command-buffer-id id="313" fmt="0xd48dd6aa">3566065322</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="314" fmt="00:01.425.601">1425601208</start-time>
+      <duration id="315" fmt="13.25 µs">13250</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="316" fmt="Frame 123">123</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="317" fmt="0xd48dd6ac">3566065324</metal-command-buffer-id>
+      <metal-command-buffer-id id="318" fmt="0xd48dd6ad">3566065325</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="319" fmt="00:01.428.063">1428063125</start-time>
+      <duration id="320" fmt="12.88 µs">12875</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="321" fmt="Frame 125">125</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="322" fmt="0xd48dd6af">3566065327</metal-command-buffer-id>
+      <metal-command-buffer-id id="323" fmt="0xd48dd6b0">3566065328</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="324" fmt="00:01.430.782">1430782833</start-time>
+      <duration ref="277" />
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="325" fmt="Frame 127">127</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="326" fmt="0xd48dd6b2">3566065330</metal-command-buffer-id>
+      <metal-command-buffer-id id="327" fmt="0xd48dd6b3">3566065331</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="328" fmt="00:01.434.260">1434260541</start-time>
+      <duration id="329" fmt="12.96 µs">12959</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="330" fmt="Frame 129">129</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="331" fmt="0xd48dd6b5">3566065333</metal-command-buffer-id>
+      <metal-command-buffer-id id="332" fmt="0xd48dd6b6">3566065334</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="333" fmt="00:01.436.229">1436229750</start-time>
+      <duration id="334" fmt="11.21 µs">11208</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="335" fmt="Frame 131">131</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="336" fmt="0xd48dd6b8">3566065336</metal-command-buffer-id>
+      <metal-command-buffer-id id="337" fmt="0xd48dd6b9">3566065337</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="338" fmt="00:01.438.710">1438710708</start-time>
+      <duration id="339" fmt="14.71 µs">14708</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="340" fmt="Frame 133">133</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="341" fmt="0xd48dd6bb">3566065339</metal-command-buffer-id>
+      <metal-command-buffer-id id="342" fmt="0xd48dd6bc">3566065340</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="343" fmt="00:01.441.703">1441703250</start-time>
+      <duration ref="290" />
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="344" fmt="Frame 135">135</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="345" fmt="0xd48dd6be">3566065342</metal-command-buffer-id>
+      <metal-command-buffer-id id="346" fmt="0xd48dd6bf">3566065343</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="347" fmt="00:01.444.567">1444567708</start-time>
+      <duration id="348" fmt="11.96 µs">11958</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="349" fmt="Frame 137">137</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="350" fmt="0xd48dd6c1">3566065345</metal-command-buffer-id>
+      <metal-command-buffer-id id="351" fmt="0xd48dd6c2">3566065346</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="352" fmt="00:01.446.917">1446917958</start-time>
+      <duration ref="120" />
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="353" fmt="Frame 139">139</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="354" fmt="0xd48dd6c4">3566065348</metal-command-buffer-id>
+      <metal-command-buffer-id id="355" fmt="0xd48dd6c5">3566065349</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="356" fmt="00:01.449.132">1449132000</start-time>
+      <duration id="357" fmt="13.00 µs">13000</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="358" fmt="Frame 141">141</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="359" fmt="0xd48dd6c7">3566065351</metal-command-buffer-id>
+      <metal-command-buffer-id id="360" fmt="0xd48dd6c8">3566065352</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="361" fmt="00:01.452.512">1452512708</start-time>
+      <duration ref="120" />
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="362" fmt="Frame 143">143</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="363" fmt="0xd48dd6ca">3566065354</metal-command-buffer-id>
+      <metal-command-buffer-id id="364" fmt="0xd48dd6cb">3566065355</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="365" fmt="00:01.454.681">1454681333</start-time>
+      <duration id="366" fmt="14.88 µs">14875</duration>
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="367" fmt="Frame 145">145</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="368" fmt="0xd48dd6cd">3566065357</metal-command-buffer-id>
+      <metal-command-buffer-id id="369" fmt="0xd48dd6ce">3566065358</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="370" fmt="00:01.457.668">1457668291</start-time>
+      <duration ref="125" />
+      <thread ref="3" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="371" fmt="Frame 147">147</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="372" fmt="0xd48dd6d0">3566065360</metal-command-buffer-id>
+      <metal-command-buffer-id id="373" fmt="0xd48dd6d1">3566065361</metal-command-buffer-id>
+    </row>
+    <row>
+      <start-time id="374" fmt="00:01.459.655">1459655833</start-time>
+      <duration id="375" fmt="13.17 µs">13167</duration>
+      <thread ref="34" />
+      <process ref="5" />
+      <metal-device-name ref="8" />
+      <gpu-frame-number id="376" fmt="Frame 149">149</gpu-frame-number>
+      <metal-object-label ref="10" />
+      <metal-object-label ref="11" />
+      <metal-object-label ref="12" />
+      <metal-object-label ref="13" />
+      <metal-event-name ref="14" />
+      <metal-command-buffer-id id="377" fmt="0xd48dd6d3">3566065363</metal-command-buffer-id>
+      <metal-command-buffer-id id="378" fmt="0xd48dd6d4">3566065364</metal-command-buffer-id>
+    </row>
+  </node>
+</trace-query-result>

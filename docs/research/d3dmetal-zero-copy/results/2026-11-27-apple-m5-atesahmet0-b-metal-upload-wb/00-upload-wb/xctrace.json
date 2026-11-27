@@ -1,0 +1,20 @@
+{
+  "command": [
+    "xcrun",
+    "xctrace",
+    "record",
+    "--template",
+    "Metal System Trace",
+    "--attach",
+    "60758",
+    "--time-limit",
+    "5s",
+    "--no-prompt",
+    "--output",
+    "/private/tmp/b473-metal-upload-wb/00-upload-wb/gpu.trace"
+  ],
+  "exit": 0,
+  "xcrun_developer_dir": "/Applications/Xcode.app/Contents/Developer",
+  "log": "xctrace-output.txt",
+  "trace_exists": true
+}

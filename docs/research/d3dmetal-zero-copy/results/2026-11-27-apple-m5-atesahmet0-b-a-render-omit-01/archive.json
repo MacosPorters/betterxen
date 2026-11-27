@@ -1,0 +1,15 @@
+{
+  "source_scratch": "/tmp/bx473-m5-render-omit",
+  "redactions": {
+    "receipt.json": {
+      "raw_sha256": "d31a2816b41dab2d7ca25ffa2ffadbef0775da834aebf84619456f3daaa720d8",
+      "archive_sha256": "b32cf89a0ebbc62fc24ac558e0ea51d47c251e824b55776416f1279b07d9db41"
+    }
+  },
+  "omitted_local_artifacts_sha256": {
+    "a-probe.exe": "fe41bf2af67bf4a2c11e534272b82ebd3cba7c52aced1ad81e3388c6c595ff93",
+    "observe": "cfa22f8c8aaa946cfe03aafeebcd66007d8814063ad4b594b849e0428f479e8e",
+    "render-omitted-draw-control/readback_default_m0_p0.rgba": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad"
+  },
+  "policy": "Replace home-directory prefix in JSON metadata with <HOME>. Copy stdout/stderr/source/shader receipts verbatim. Omit executables, private bottle, and raw .rgba dumps while retaining their SHA-256 digests."
+}

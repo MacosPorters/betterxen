@@ -1,0 +1,11 @@
+{
+  "wrapper_sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874",
+  "instrumentation_exit": 1,
+  "matched_sample_archive": false,
+  "recorded_trace": "/private/tmp/b473-metal-copy-upload/00-trace-copy-upload/gpu.trace",
+  "trace_bundle_archived": false,
+  "target_only_excerpts": true,
+  "extractor_sha256": "8f0cf4863b19e7cee1aaabce6a2f4f475c0388a30f30ebc90b69944d552b2a52",
+  "extracts": {},
+  "late_output_hashes": {}
+}

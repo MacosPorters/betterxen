@@ -1,0 +1,5 @@
+D3D12_DLL C:\windows\system32\d3d12.dll
+SHIM_LOADED 0
+STAGE ready cpu_ptr=0
+POSITIVE_GATE withheld=1 word=0xCAFE1234 completed=1
+END success

@@ -1,0 +1,31 @@
+{
+  "command": [
+    "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/bin/wine",
+    "--bottle",
+    "/private/tmp/b473-compute-01/bottle",
+    "--no-update",
+    "--no-gui",
+    "--workdir",
+    "/private/tmp/b473-compute-01/02-wc",
+    "/private/tmp/b473-compute-01/b-coherence.exe",
+    "wc"
+  ],
+  "timeout_seconds": 45,
+  "exit": 0,
+  "backend": {
+    "verified": true,
+    "guest_pid": "57068",
+    "lsof_exit": 0,
+    "paths": [
+      "/usr/libexec/rosetta/runtime",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/external/D3DMetal.framework/Versions/A/D3DMetal",
+      "/Applications/CrossOver.app/Contents/SharedSupport/CrossOver/lib64/apple_gptk/wine/x86_64-windows/d3d12.dll"
+    ]
+  },
+  "output_hashes": {
+    "stdout.txt": "7db57a3fbab31b79f5180e72f69501d375a3ea2a83a1dfca325503979176a43c",
+    "stderr.txt": "fbbf6d0bc8c651e8fdda9484b3d93833ea04f9b4060d2a6fd93bb47c36da7eaf",
+    "access.dxbc": "c237e0cb116f0fbcfb5010d0d574c6db25f9127fe261f1f801ff44d77e574ddf",
+    "access.hlsl": "72509c8a100c7c218019fa40227420726ee9e16d82ad04b15ef99fd5be092458"
+  }
+}

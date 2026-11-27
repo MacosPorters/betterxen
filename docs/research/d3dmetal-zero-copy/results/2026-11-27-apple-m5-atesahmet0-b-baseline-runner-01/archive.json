@@ -1,0 +1,8 @@
+{
+  "source_scratch": "/tmp/bx473-m5-baseline-shared-runner",
+  "redactions": {},
+  "omitted_local_artifacts_sha256": {
+    "probe.exe": "35e015a7d2ed555bdf9f34e8d376228583164455065b3e3e68a81c0715e10b83"
+  },
+  "policy": "Replace home-directory prefix in JSON metadata with <HOME>. Copy stdout/stderr/source/shader receipts verbatim. Omit executables, private bottle, and raw .rgba dumps while retaining their SHA-256 digests."
+}

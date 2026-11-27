@@ -1,0 +1,549 @@
+<?xml version='1.0' encoding='utf-8'?>
+<trace-query-result>
+  <node>
+    <schema name="metal-gpu-intervals" documentation="Denotes an interesting period of activity in the GPU.">
+      <col>
+        <mnemonic>start</mnemonic>
+        <name>Creation</name>
+        <engineering-type>start-time</engineering-type>
+      </col>
+      <col>
+        <mnemonic>duration</mnemonic>
+        <name>Duration</name>
+        <engineering-type>duration</engineering-type>
+      </col>
+      <col>
+        <mnemonic>channel-name</mnemonic>
+        <name>Channel Name</name>
+        <engineering-type>gpu-channel-name</engineering-type>
+      </col>
+      <col>
+        <mnemonic>frame-number</mnemonic>
+        <name>Frame</name>
+        <engineering-type>gpu-frame-number</engineering-type>
+      </col>
+      <col>
+        <mnemonic>start-latency</mnemonic>
+        <name>CPU to GPU Latency</name>
+        <engineering-type>duration</engineering-type>
+      </col>
+      <col>
+        <mnemonic>event-depth</mnemonic>
+        <name>Depth</name>
+        <engineering-type>metal-nesting-level</engineering-type>
+      </col>
+      <col>
+        <mnemonic>event-label</mnemonic>
+        <name>Label</name>
+        <engineering-type>formatted-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>state</mnemonic>
+        <name>State</name>
+        <engineering-type>gpu-state</engineering-type>
+      </col>
+      <col>
+        <mnemonic>connection-UUID</mnemonic>
+        <name>Connection UUID</name>
+        <engineering-type>connection-uuid64</engineering-type>
+      </col>
+      <col>
+        <mnemonic>color</mnemonic>
+        <name>Color</name>
+        <engineering-type>render-buffer-depth</engineering-type>
+      </col>
+      <col>
+        <mnemonic>process</mnemonic>
+        <name>Process</name>
+        <engineering-type>process</engineering-type>
+      </col>
+      <col>
+        <mnemonic>gpu</mnemonic>
+        <name>Metal Device</name>
+        <engineering-type>metal-device-name</engineering-type>
+      </col>
+      <col>
+        <mnemonic>channel-subtitle</mnemonic>
+        <name>Channel Subtitle</name>
+        <engineering-type>metal-object-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>iosurface-accesses</mnemonic>
+        <name>IOSurface Accesses</name>
+        <engineering-type>formatted-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>bytes</mnemonic>
+        <name>Bytes</name>
+        <engineering-type>size-in-bytes</engineering-type>
+      </col>
+      <col>
+        <mnemonic>cmdbuffer-id</mnemonic>
+        <name>Commmand Buffer Id</name>
+        <engineering-type>metal-command-buffer-id</engineering-type>
+      </col>
+      <col>
+        <mnemonic>encoder-id</mnemonic>
+        <name>Encoder Id</name>
+        <engineering-type>metal-command-buffer-id</engineering-type>
+      </col>
+      <col>
+        <mnemonic>gpu-submission-id</mnemonic>
+        <name>GPU Submission Id</name>
+        <engineering-type>uint64</engineering-type>
+      </col>
+    </schema>
+    <referenced-nodes>
+      <gpu-channel-name id="60" fmt="Compute">Compute</gpu-channel-name>
+      <gpu-frame-number id="1186" fmt="Frame 1">1</gpu-frame-number>
+      <metal-nesting-level id="5" fmt="0">0</metal-nesting-level>
+      <narrative-text id="8" fmt=" "> </narrative-text>
+      <string id="9" fmt="" />
+      <narrative-text id="10" fmt=" ("> (</narrative-text>
+      <device-session id="164" fmt="TODO">TODO</device-session>
+      <narrative-text id="11" fmt=") ">) </narrative-text>
+      <gpu-state id="13" fmt="Active">Active</gpu-state>
+      <metal-device-name id="16" fmt="M5">M5</metal-device-name>
+      <metal-object-label id="17" fmt="" />
+      <formatted-label id="18" fmt="">
+        <string ref="9" />
+      </formatted-label>
+      <size-in-bytes id="19" fmt="0 Bytes">0</size-in-bytes>
+      <gpu-frame-number id="5555" fmt="Frame 3">3</gpu-frame-number>
+      <gpu-frame-number id="9306" fmt="Frame 5">5</gpu-frame-number>
+      <gpu-frame-number id="13459" fmt="Frame 7">7</gpu-frame-number>
+      <gpu-frame-number id="17150" fmt="Frame 9">9</gpu-frame-number>
+      <gpu-frame-number id="18626" fmt="Frame 11">11</gpu-frame-number>
+      <gpu-frame-number id="20070" fmt="Frame 13">13</gpu-frame-number>
+      <duration id="11632" fmt="429.79 µs">429791</duration>
+      <gpu-frame-number id="21526" fmt="Frame 15">15</gpu-frame-number>
+      <gpu-frame-number id="22968" fmt="Frame 17">17</gpu-frame-number>
+      <gpu-frame-number id="24859" fmt="Frame 19">19</gpu-frame-number>
+      <gpu-frame-number id="28911" fmt="Frame 21">21</gpu-frame-number>
+      <gpu-frame-number id="37794" fmt="Frame 23">23</gpu-frame-number>
+    </referenced-nodes>
+    <row>
+      <start-time id="37823" fmt="00:01.212.073">1212073625</start-time>
+      <duration id="37824" fmt="2.92 ms">2923708</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="1186" />
+      <duration id="37825" fmt="9.32 ms">9323542</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="37826" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd893883b">
+        <string id="37827" fmt="Command Buffer 0:Blit Command 0">Command Buffer 0:Blit Command 0</string>
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process id="37828" fmt="b-copy.exe (60920)">
+          <pid id="37829" fmt="60920">60920</pid>
+          <device-session ref="164" />
+        </process>
+        <narrative-text ref="11" />
+        <metal-encoder-id id="37830" fmt="0xd893883b">3633547323</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="37831" fmt="8555">8555</connection-uuid64>
+      <render-buffer-depth id="37832" fmt="0">0</render-buffer-depth>
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="37833" fmt="0xd7934718">3616753432</metal-command-buffer-id>
+      <metal-command-buffer-id id="37834" fmt="0xd7934719">3616753433</metal-command-buffer-id>
+      <uint64 id="37835" fmt="3.633.547.323">3633547323</uint64>
+    </row>
+    <row>
+      <start-time id="38916" fmt="00:01.226.423">1226423708</start-time>
+      <duration id="38917" fmt="1.39 ms">1391208</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="5555" />
+      <duration id="38918" fmt="509.00 µs">509000</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="38919" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd89389dc">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="38920" fmt="0xd89389dc">3633547740</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="38921" fmt="8685">8685</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="38922" fmt="0xd793471b">3616753435</metal-command-buffer-id>
+      <metal-command-buffer-id id="38923" fmt="0xd793471c">3616753436</metal-command-buffer-id>
+      <uint64 id="38924" fmt="3.633.547.740">3633547740</uint64>
+    </row>
+    <row>
+      <start-time id="39763" fmt="00:01.238.193">1238193041</start-time>
+      <duration id="39764" fmt="2.79 ms">2792000</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="9306" />
+      <duration id="39765" fmt="445.96 µs">445958</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="39766" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938aa4">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="39767" fmt="0xd8938aa4">3633547940</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="39768" fmt="8932">8932</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="39769" fmt="0xd793471e">3616753438</metal-command-buffer-id>
+      <metal-command-buffer-id id="39770" fmt="0xd793471f">3616753439</metal-command-buffer-id>
+      <uint64 id="39771" fmt="3.633.547.940">3633547940</uint64>
+    </row>
+    <row>
+      <start-time id="40740" fmt="00:01.250.874">1250874875</start-time>
+      <duration id="40741" fmt="1.23 ms">1230708</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="13459" />
+      <duration id="40742" fmt="410.17 µs">410167</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="40743" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938b7a">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="40744" fmt="0xd8938b7a">3633548154</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="40745" fmt="9059">9059</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="40746" fmt="0xd7934721">3616753441</metal-command-buffer-id>
+      <metal-command-buffer-id id="40747" fmt="0xd7934722">3616753442</metal-command-buffer-id>
+      <uint64 id="40748" fmt="3.633.548.154">3633548154</uint64>
+    </row>
+    <row>
+      <start-time id="41323" fmt="00:01.261.219">1261219958</start-time>
+      <duration id="41324" fmt="1.06 ms">1059375</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="17150" />
+      <duration id="41325" fmt="413.54 µs">413542</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="41326" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938c04">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="41327" fmt="0xd8938c04">3633548292</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="41328" fmt="9193">9193</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="41329" fmt="0xd7934724">3616753444</metal-command-buffer-id>
+      <metal-command-buffer-id id="41330" fmt="0xd7934725">3616753445</metal-command-buffer-id>
+      <uint64 id="41331" fmt="3.633.548.292">3633548292</uint64>
+    </row>
+    <row>
+      <start-time id="42287" fmt="00:01.271.076">1271076875</start-time>
+      <duration id="42288" fmt="2.16 ms">2159708</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="18626" />
+      <duration id="42289" fmt="316.08 µs">316084</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="42290" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938d16">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="42291" fmt="0xd8938d16">3633548566</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="42292" fmt="9466">9466</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="42293" fmt="0xd7934727">3616753447</metal-command-buffer-id>
+      <metal-command-buffer-id id="42294" fmt="0xd7934728">3616753448</metal-command-buffer-id>
+      <uint64 id="42295" fmt="3.633.548.566">3633548566</uint64>
+    </row>
+    <row>
+      <start-time id="43044" fmt="00:01.282.070">1282070541</start-time>
+      <duration id="43045" fmt="1.44 ms">1436334</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="20070" />
+      <duration ref="11632" />
+      <metal-nesting-level ref="5" />
+      <formatted-label id="43046" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938da0">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="43047" fmt="0xd8938da0">3633548704</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="43048" fmt="9603">9603</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="43049" fmt="0xd793472a">3616753450</metal-command-buffer-id>
+      <metal-command-buffer-id id="43050" fmt="0xd793472b">3616753451</metal-command-buffer-id>
+      <uint64 id="43051" fmt="3.633.548.704">3633548704</uint64>
+    </row>
+    <row>
+      <start-time id="43607" fmt="00:01.292.127">1292127750</start-time>
+      <duration id="43608" fmt="1.29 ms">1293833</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="21526" />
+      <duration id="43609" fmt="365.62 µs">365625</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="43610" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938e2a">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="43611" fmt="0xd8938e2a">3633548842</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="43612" fmt="9740">9740</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="43613" fmt="0xd793472d">3616753453</metal-command-buffer-id>
+      <metal-command-buffer-id id="43614" fmt="0xd793472e">3616753454</metal-command-buffer-id>
+      <uint64 id="43615" fmt="3.633.548.842">3633548842</uint64>
+    </row>
+    <row>
+      <start-time id="44182" fmt="00:01.303.869">1303869916</start-time>
+      <duration id="44183" fmt="2.89 ms">2885334</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="22968" />
+      <duration id="44184" fmt="423.96 µs">423958</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="44185" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938eb5">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="44186" fmt="0xd8938eb5">3633548981</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="44187" fmt="10010">10010</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="44188" fmt="0xd7934730">3616753456</metal-command-buffer-id>
+      <metal-command-buffer-id id="44189" fmt="0xd7934731">3616753457</metal-command-buffer-id>
+      <uint64 id="44190" fmt="3.633.548.981">3633548981</uint64>
+    </row>
+    <row>
+      <start-time id="45316" fmt="00:01.315.804">1315804041</start-time>
+      <duration id="45317" fmt="1.12 ms">1118292</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="24859" />
+      <duration id="45318" fmt="379.62 µs">379625</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="45319" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8938fc6">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="45320" fmt="0xd8938fc6">3633549254</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="45321" fmt="10147">10147</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="45322" fmt="0xd7934733">3616753459</metal-command-buffer-id>
+      <metal-command-buffer-id id="45323" fmt="0xd7934734">3616753460</metal-command-buffer-id>
+      <uint64 id="45324" fmt="3.633.549.254">3633549254</uint64>
+    </row>
+    <row>
+      <start-time id="45911" fmt="00:01.325.702">1325702791</start-time>
+      <duration id="45912" fmt="1.35 ms">1345042</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="28911" />
+      <duration ref="45318" />
+      <metal-nesting-level ref="5" />
+      <formatted-label id="45913" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8939053">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="45914" fmt="0xd8939053">3633549395</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="45915" fmt="10286">10286</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="45916" fmt="0xd7934736">3616753462</metal-command-buffer-id>
+      <metal-command-buffer-id id="45917" fmt="0xd7934737">3616753463</metal-command-buffer-id>
+      <uint64 id="45918" fmt="3.633.549.395">3633549395</uint64>
+    </row>
+    <row>
+      <start-time id="46540" fmt="00:01.336.168">1336168916</start-time>
+      <duration id="46541" fmt="1.16 ms">1159459</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number ref="37794" />
+      <duration id="46542" fmt="158.46 µs">158458</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="46543" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd89390e7">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="46544" fmt="0xd89390e7">3633549543</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="46545" fmt="10429">10429</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="46546" fmt="0xd7934739">3616753465</metal-command-buffer-id>
+      <metal-command-buffer-id id="46547" fmt="0xd793473a">3616753466</metal-command-buffer-id>
+      <uint64 id="46548" fmt="3.633.549.543">3633549543</uint64>
+    </row>
+    <row>
+      <start-time id="47486" fmt="00:01.346.263">1346263000</start-time>
+      <duration id="47487" fmt="2.43 ms">2433125</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number id="47488" fmt="Frame 25">25</gpu-frame-number>
+      <duration id="47489" fmt="121.25 µs">121250</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="47490" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd89391f7">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="47491" fmt="0xd89391f7">3633549815</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="47492" fmt="10600">10600</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="47493" fmt="0xd793473c">3616753468</metal-command-buffer-id>
+      <metal-command-buffer-id id="47494" fmt="0xd793473d">3616753469</metal-command-buffer-id>
+      <uint64 id="47495" fmt="3.633.549.815">3633549815</uint64>
+    </row>
+    <row>
+      <start-time id="48266" fmt="00:01.357.638">1357638000</start-time>
+      <duration id="48267" fmt="1.56 ms">1557250</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number id="48268" fmt="Frame 27">27</gpu-frame-number>
+      <duration id="48269" fmt="404.29 µs">404292</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="48270" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd893927f">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="48271" fmt="0xd893927f">3633549951</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="48272" fmt="10686">10686</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="48273" fmt="0xd793473f">3616753471</metal-command-buffer-id>
+      <metal-command-buffer-id id="48274" fmt="0xd7934740">3616753472</metal-command-buffer-id>
+      <uint64 id="48275" fmt="3.633.549.951">3633549951</uint64>
+    </row>
+    <row>
+      <start-time id="48834" fmt="00:01.367.800">1367800750</start-time>
+      <duration id="48835" fmt="1.22 ms">1220833</duration>
+      <gpu-channel-name ref="60" />
+      <gpu-frame-number id="48836" fmt="Frame 29">29</gpu-frame-number>
+      <duration id="48837" fmt="392.04 µs">392042</duration>
+      <metal-nesting-level ref="5" />
+      <formatted-label id="48838" fmt="Command Buffer 0:Blit Command 0  (b-copy.exe (60920)) 0xd8939307">
+        <string ref="37827" />
+        <narrative-text ref="8" />
+        <string ref="9" />
+        <narrative-text ref="10" />
+        <process ref="37828" />
+        <narrative-text ref="11" />
+        <metal-encoder-id id="48839" fmt="0xd8939307">3633550087</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="13" />
+      <connection-uuid64 id="48840" fmt="10772">10772</connection-uuid64>
+      <render-buffer-depth ref="37832" />
+      <process ref="37828" />
+      <metal-device-name ref="16" />
+      <metal-object-label ref="17" />
+      <formatted-label ref="18" />
+      <size-in-bytes ref="19" />
+      <metal-command-buffer-id id="48841" fmt="0xd7934742">3616753474</metal-command-buffer-id>
+      <metal-command-buffer-id id="48842" fmt="0xd7934743">3616753475</metal-command-buffer-id>
+      <uint64 id="48843" fmt="3.633.550.087">3633550087</uint64>
+    </row>
+  </node>
+</trace-query-result>

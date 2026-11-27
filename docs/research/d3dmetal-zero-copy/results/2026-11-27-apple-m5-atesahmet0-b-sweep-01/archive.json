@@ -1,0 +1,5 @@
+{
+  "source_scratch": "/private/tmp/b473-sweep-01",
+  "redactions": {},
+  "policy": "Replace home-directory prefix in metadata with <HOME>. Benchmark stdout/stderr are copied byte for byte. Keep source, compiled original shader, receipts, and logs. Omit executable, bottle and full Instruments trace."
+}

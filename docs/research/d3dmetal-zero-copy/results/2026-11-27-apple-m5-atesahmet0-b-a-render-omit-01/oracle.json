@@ -1,0 +1,18 @@
+{
+  "scope": "separate author-written pixel oracle, not independent contributor acceptance",
+  "cases": [
+    {
+      "name": "render-omitted-draw-control",
+      "negative_control": true,
+      "frames": [
+        {
+          "file": "readback_default_m0_p0.rgba",
+          "matched": 0,
+          "pixels": 512,
+          "sha256": "e5a00aa9991ac8a5ee3109844d84a55583bd20572ad3ffcd42792f3c36b183ad",
+          "visible_expected": true
+        }
+      ]
+    }
+  ]
+}

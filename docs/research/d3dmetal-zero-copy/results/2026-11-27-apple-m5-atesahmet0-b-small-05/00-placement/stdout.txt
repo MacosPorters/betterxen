@@ -1,0 +1,12 @@
+DEVICE dll=C:\windows\system32\d3d12.dll shim=0 architecture_hr=00000000 uma=0 coherent=0 isolated_mmu=0
+BACKEND_READY
+PLACEMENT offset=0 heap=65536 size=65536 alignment=65536 aligned=1 in_bounds=1 eligible=1 hr=00000000 object=1
+MAP heap=wb size=65536 cpu_mod16k=0 cpu_mod64k=0 gpu_mod64k=0
+PLACEMENT offset=1 heap=65536 size=65536 alignment=65536 aligned=0 in_bounds=0 eligible=0 hr=00000000 object=1
+PLACEMENT offset=65536 heap=65536 size=65536 alignment=65536 aligned=1 in_bounds=0 eligible=0 hr=00000000 object=1
+PLACEMENT offset=1 heap=131072 size=65536 alignment=65536 aligned=0 in_bounds=1 eligible=0 hr=00000000 object=1
+MAP heap=wb size=4194304 cpu_mod16k=0 cpu_mod64k=0 gpu_mod64k=0
+MAP heap=wc size=4194304 cpu_mod16k=0 cpu_mod64k=0 gpu_mod64k=0
+MAP heap=upload size=4194304 cpu_mod16k=0 cpu_mod64k=0 gpu_mod64k=0
+MAP heap=virtualalloc size=65536 cpu_mod64k=0
+END complete

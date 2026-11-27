@@ -1,0 +1,9 @@
+{
+  "source_scratch": "/tmp/bx473-m5-d3d12ma-s473",
+  "redactions": {},
+  "omitted_local_artifacts_sha256": {
+    "observe": "cfa22f8c8aaa946cfe03aafeebcd66007d8814063ad4b594b849e0428f479e8e",
+    "reference.exe": "5705bf93a536e474efa613e5a3fb82b09c35bb9ad05170cbab3556fde55b862f"
+  },
+  "policy": "Replace home-directory prefix in JSON metadata with <HOME>. Copy stdout/stderr/source/shader receipts verbatim. Omit executables, private bottle, and raw .rgba dumps while retaining their SHA-256 digests."
+}

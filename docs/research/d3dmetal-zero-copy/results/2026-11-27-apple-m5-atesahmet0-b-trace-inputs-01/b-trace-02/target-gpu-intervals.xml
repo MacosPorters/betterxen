@@ -1,0 +1,2296 @@
+<?xml version='1.0' encoding='utf-8'?>
+<trace-query-result>
+  <node>
+    <schema name="metal-gpu-intervals" documentation="Denotes an interesting period of activity in the GPU.">
+      <col>
+        <mnemonic>start</mnemonic>
+        <name>Creation</name>
+        <engineering-type>start-time</engineering-type>
+      </col>
+      <col>
+        <mnemonic>duration</mnemonic>
+        <name>Duration</name>
+        <engineering-type>duration</engineering-type>
+      </col>
+      <col>
+        <mnemonic>channel-name</mnemonic>
+        <name>Channel Name</name>
+        <engineering-type>gpu-channel-name</engineering-type>
+      </col>
+      <col>
+        <mnemonic>frame-number</mnemonic>
+        <name>Frame</name>
+        <engineering-type>gpu-frame-number</engineering-type>
+      </col>
+      <col>
+        <mnemonic>start-latency</mnemonic>
+        <name>CPU to GPU Latency</name>
+        <engineering-type>duration</engineering-type>
+      </col>
+      <col>
+        <mnemonic>event-depth</mnemonic>
+        <name>Depth</name>
+        <engineering-type>metal-nesting-level</engineering-type>
+      </col>
+      <col>
+        <mnemonic>event-label</mnemonic>
+        <name>Label</name>
+        <engineering-type>formatted-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>state</mnemonic>
+        <name>State</name>
+        <engineering-type>gpu-state</engineering-type>
+      </col>
+      <col>
+        <mnemonic>connection-UUID</mnemonic>
+        <name>Connection UUID</name>
+        <engineering-type>connection-uuid64</engineering-type>
+      </col>
+      <col>
+        <mnemonic>color</mnemonic>
+        <name>Color</name>
+        <engineering-type>render-buffer-depth</engineering-type>
+      </col>
+      <col>
+        <mnemonic>process</mnemonic>
+        <name>Process</name>
+        <engineering-type>process</engineering-type>
+      </col>
+      <col>
+        <mnemonic>gpu</mnemonic>
+        <name>Metal Device</name>
+        <engineering-type>metal-device-name</engineering-type>
+      </col>
+      <col>
+        <mnemonic>channel-subtitle</mnemonic>
+        <name>Channel Subtitle</name>
+        <engineering-type>metal-object-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>iosurface-accesses</mnemonic>
+        <name>IOSurface Accesses</name>
+        <engineering-type>formatted-label</engineering-type>
+      </col>
+      <col>
+        <mnemonic>bytes</mnemonic>
+        <name>Bytes</name>
+        <engineering-type>size-in-bytes</engineering-type>
+      </col>
+      <col>
+        <mnemonic>cmdbuffer-id</mnemonic>
+        <name>Commmand Buffer Id</name>
+        <engineering-type>metal-command-buffer-id</engineering-type>
+      </col>
+      <col>
+        <mnemonic>encoder-id</mnemonic>
+        <name>Encoder Id</name>
+        <engineering-type>metal-command-buffer-id</engineering-type>
+      </col>
+      <col>
+        <mnemonic>gpu-submission-id</mnemonic>
+        <name>GPU Submission Id</name>
+        <engineering-type>uint64</engineering-type>
+      </col>
+    </schema>
+    <referenced-nodes>
+      <gpu-channel-name id="70" fmt="Compute">Compute</gpu-channel-name>
+      <gpu-frame-number id="4" fmt="Frame 1">1</gpu-frame-number>
+      <metal-nesting-level id="6" fmt="0">0</metal-nesting-level>
+      <narrative-text id="9" fmt=" "> </narrative-text>
+      <string id="8" fmt="" />
+      <narrative-text id="10" fmt=" ("> (</narrative-text>
+      <device-session id="13" fmt="TODO">TODO</device-session>
+      <narrative-text id="14" fmt=") ">) </narrative-text>
+      <gpu-state id="16" fmt="Active">Active</gpu-state>
+      <metal-device-name id="19" fmt="M5">M5</metal-device-name>
+      <metal-object-label id="20" fmt="" />
+      <formatted-label id="21" fmt="">
+        <string ref="8" />
+      </formatted-label>
+      <size-in-bytes id="22" fmt="0 Bytes">0</size-in-bytes>
+      <gpu-frame-number id="178" fmt="Frame 3">3</gpu-frame-number>
+      <gpu-frame-number id="347" fmt="Frame 5">5</gpu-frame-number>
+      <gpu-frame-number id="423" fmt="Frame 7">7</gpu-frame-number>
+      <gpu-frame-number id="575" fmt="Frame 9">9</gpu-frame-number>
+      <duration id="9012" fmt="64.75 µs">64750</duration>
+      <gpu-frame-number id="650" fmt="Frame 11">11</gpu-frame-number>
+      <gpu-frame-number id="816" fmt="Frame 13">13</gpu-frame-number>
+      <gpu-frame-number id="937" fmt="Frame 15">15</gpu-frame-number>
+      <gpu-frame-number id="1070" fmt="Frame 17">17</gpu-frame-number>
+      <gpu-frame-number id="1138" fmt="Frame 19">19</gpu-frame-number>
+      <gpu-frame-number id="1325" fmt="Frame 21">21</gpu-frame-number>
+      <duration id="5845" fmt="141.88 µs">141875</duration>
+      <gpu-frame-number id="1485" fmt="Frame 23">23</gpu-frame-number>
+      <gpu-frame-number id="1581" fmt="Frame 25">25</gpu-frame-number>
+      <gpu-frame-number id="1729" fmt="Frame 27">27</gpu-frame-number>
+      <gpu-frame-number id="1883" fmt="Frame 29">29</gpu-frame-number>
+      <gpu-frame-number id="1970" fmt="Frame 31">31</gpu-frame-number>
+      <gpu-frame-number id="2024" fmt="Frame 33">33</gpu-frame-number>
+      <gpu-frame-number id="2108" fmt="Frame 35">35</gpu-frame-number>
+      <gpu-frame-number id="2195" fmt="Frame 37">37</gpu-frame-number>
+      <gpu-frame-number id="2281" fmt="Frame 39">39</gpu-frame-number>
+      <gpu-frame-number id="2336" fmt="Frame 41">41</gpu-frame-number>
+      <gpu-frame-number id="2422" fmt="Frame 43">43</gpu-frame-number>
+      <gpu-frame-number id="2465" fmt="Frame 45">45</gpu-frame-number>
+      <gpu-frame-number id="2669" fmt="Frame 47">47</gpu-frame-number>
+      <gpu-frame-number id="2702" fmt="Frame 49">49</gpu-frame-number>
+      <gpu-frame-number id="2839" fmt="Frame 51">51</gpu-frame-number>
+      <gpu-frame-number id="2859" fmt="Frame 53">53</gpu-frame-number>
+      <gpu-frame-number id="2978" fmt="Frame 55">55</gpu-frame-number>
+      <gpu-frame-number id="3012" fmt="Frame 57">57</gpu-frame-number>
+      <gpu-frame-number id="3118" fmt="Frame 59">59</gpu-frame-number>
+      <gpu-frame-number id="3146" fmt="Frame 61">61</gpu-frame-number>
+      <gpu-frame-number id="3284" fmt="Frame 63">63</gpu-frame-number>
+      <gpu-frame-number id="3353" fmt="Frame 65">65</gpu-frame-number>
+      <gpu-frame-number id="3408" fmt="Frame 67">67</gpu-frame-number>
+      <gpu-frame-number id="3477" fmt="Frame 69">69</gpu-frame-number>
+      <gpu-frame-number id="3530" fmt="Frame 71">71</gpu-frame-number>
+      <gpu-frame-number id="3601" fmt="Frame 73">73</gpu-frame-number>
+      <duration id="2380" fmt="12.83 µs">12833</duration>
+      <gpu-frame-number id="3687" fmt="Frame 75">75</gpu-frame-number>
+      <gpu-frame-number id="3759" fmt="Frame 77">77</gpu-frame-number>
+      <gpu-frame-number id="3792" fmt="Frame 79">79</gpu-frame-number>
+      <gpu-frame-number id="3990" fmt="Frame 81">81</gpu-frame-number>
+      <gpu-frame-number id="4009" fmt="Frame 83">83</gpu-frame-number>
+      <gpu-frame-number id="4114" fmt="Frame 85">85</gpu-frame-number>
+      <gpu-frame-number id="4133" fmt="Frame 87">87</gpu-frame-number>
+      <gpu-frame-number id="4264" fmt="Frame 89">89</gpu-frame-number>
+      <gpu-frame-number id="4284" fmt="Frame 91">91</gpu-frame-number>
+      <gpu-frame-number id="4379" fmt="Frame 93">93</gpu-frame-number>
+      <gpu-frame-number id="4414" fmt="Frame 95">95</gpu-frame-number>
+      <gpu-frame-number id="4564" fmt="Frame 97">97</gpu-frame-number>
+      <gpu-frame-number id="4633" fmt="Frame 99">99</gpu-frame-number>
+      <gpu-frame-number id="4721" fmt="Frame 101">101</gpu-frame-number>
+      <gpu-frame-number id="4791" fmt="Frame 103">103</gpu-frame-number>
+      <gpu-frame-number id="4844" fmt="Frame 105">105</gpu-frame-number>
+      <gpu-frame-number id="4913" fmt="Frame 107">107</gpu-frame-number>
+      <duration id="7683" fmt="128.33 µs">128333</duration>
+      <gpu-frame-number id="4967" fmt="Frame 109">109</gpu-frame-number>
+      <gpu-frame-number id="5036" fmt="Frame 111">111</gpu-frame-number>
+      <gpu-frame-number id="5056" fmt="Frame 113">113</gpu-frame-number>
+      <gpu-frame-number id="5256" fmt="Frame 115">115</gpu-frame-number>
+      <gpu-frame-number id="5276" fmt="Frame 117">117</gpu-frame-number>
+      <gpu-frame-number id="5367" fmt="Frame 119">119</gpu-frame-number>
+      <gpu-frame-number id="5386" fmt="Frame 121">121</gpu-frame-number>
+      <gpu-frame-number id="5565" fmt="Frame 123">123</gpu-frame-number>
+      <gpu-frame-number id="5584" fmt="Frame 125">125</gpu-frame-number>
+      <gpu-frame-number id="5755" fmt="Frame 127">127</gpu-frame-number>
+      <gpu-frame-number id="5774" fmt="Frame 129">129</gpu-frame-number>
+      <gpu-frame-number id="6264" fmt="Frame 131">131</gpu-frame-number>
+      <duration id="7473" fmt="128.83 µs">128833</duration>
+      <gpu-frame-number id="6283" fmt="Frame 133">133</gpu-frame-number>
+      <gpu-frame-number id="6361" fmt="Frame 135">135</gpu-frame-number>
+      <gpu-frame-number id="6380" fmt="Frame 137">137</gpu-frame-number>
+      <gpu-frame-number id="6525" fmt="Frame 139">139</gpu-frame-number>
+      <gpu-frame-number id="6544" fmt="Frame 141">141</gpu-frame-number>
+      <gpu-frame-number id="6703" fmt="Frame 143">143</gpu-frame-number>
+      <gpu-frame-number id="6723" fmt="Frame 145">145</gpu-frame-number>
+      <gpu-frame-number id="7012" fmt="Frame 147">147</gpu-frame-number>
+      <gpu-frame-number id="7031" fmt="Frame 149">149</gpu-frame-number>
+    </referenced-nodes>
+    <row>
+      <start-time id="11324" fmt="00:01.454.084">1454084041</start-time>
+      <duration id="11325" fmt="73.08 µs">73084</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4" />
+      <duration id="11326" fmt="33.62 ms">33622833</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11327" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d03c">
+        <string id="11328" fmt="Command Buffer 0:Compute Command 0">Command Buffer 0:Compute Command 0</string>
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process id="11329" fmt="b-coherence.exe (60493)">
+          <pid id="11330" fmt="60493">60493</pid>
+          <device-session ref="13" />
+        </process>
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11331" fmt="0xd489d03c">3565801532</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11332" fmt="3501">3501</connection-uuid64>
+      <render-buffer-depth id="11333" fmt="0">0</render-buffer-depth>
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11334" fmt="0xd389add7">3549015511</metal-command-buffer-id>
+      <metal-command-buffer-id id="11335" fmt="0xd389add8">3549015512</metal-command-buffer-id>
+      <uint64 id="11336" fmt="3.565.801.532">3565801532</uint64>
+    </row>
+    <row>
+      <start-time id="11484" fmt="00:01.460.277">1460277291</start-time>
+      <duration id="11485" fmt="138.04 µs">138042</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="178" />
+      <duration id="11486" fmt="425.42 µs">425416</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11487" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0a8">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11488" fmt="0xd489d0a8">3565801640</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11489" fmt="3547">3547</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11490" fmt="0xd389adda">3549015514</metal-command-buffer-id>
+      <metal-command-buffer-id id="11491" fmt="0xd389addb">3549015515</metal-command-buffer-id>
+      <uint64 id="11492" fmt="3.565.801.640">3565801640</uint64>
+    </row>
+    <row>
+      <start-time id="11507" fmt="00:01.463.223">1463223666</start-time>
+      <duration id="11508" fmt="105.38 µs">105375</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="347" />
+      <duration id="11509" fmt="314.38 µs">314375</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11510" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0be">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11511" fmt="0xd489d0be">3565801662</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11512" fmt="3549">3549</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11513" fmt="0xd389addd">3549015517</metal-command-buffer-id>
+      <metal-command-buffer-id id="11514" fmt="0xd389adde">3549015518</metal-command-buffer-id>
+      <uint64 id="11515" fmt="3.565.801.662">3565801662</uint64>
+    </row>
+    <row>
+      <start-time id="11516" fmt="00:01.466.189">1466189458</start-time>
+      <duration id="11517" fmt="105.08 µs">105083</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="423" />
+      <duration id="11518" fmt="308.54 µs">308542</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11519" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0c0">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11520" fmt="0xd489d0c0">3565801664</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11521" fmt="3559">3559</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11522" fmt="0xd389ade0">3549015520</metal-command-buffer-id>
+      <metal-command-buffer-id id="11523" fmt="0xd389ade1">3549015521</metal-command-buffer-id>
+      <uint64 id="11524" fmt="3.565.801.664">3565801664</uint64>
+    </row>
+    <row>
+      <start-time id="11541" fmt="00:01.468.774">1468774083</start-time>
+      <duration id="11542" fmt="335.21 µs">335208</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="575" />
+      <duration ref="9012" />
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11543" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0c5">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11544" fmt="0xd489d0c5">3565801669</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11545" fmt="3566">3566</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11546" fmt="0xd389ade3">3549015523</metal-command-buffer-id>
+      <metal-command-buffer-id id="11547" fmt="0xd389ade4">3549015524</metal-command-buffer-id>
+      <uint64 id="11548" fmt="3.565.801.669">3565801669</uint64>
+    </row>
+    <row>
+      <start-time id="11549" fmt="00:01.471.719">1471719041</start-time>
+      <duration id="11550" fmt="119.33 µs">119334</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="650" />
+      <duration id="11551" fmt="302.54 µs">302541</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11552" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0c7">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11553" fmt="0xd489d0c7">3565801671</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11554" fmt="3574">3574</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11555" fmt="0xd389ade6">3549015526</metal-command-buffer-id>
+      <metal-command-buffer-id id="11556" fmt="0xd389ade7">3549015527</metal-command-buffer-id>
+      <uint64 id="11557" fmt="3.565.801.671">3565801671</uint64>
+    </row>
+    <row>
+      <start-time id="11558" fmt="00:01.474.444">1474444958</start-time>
+      <duration id="11559" fmt="120.58 µs">120583</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="816" />
+      <duration id="11560" fmt="290.79 µs">290792</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11561" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0c9">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11562" fmt="0xd489d0c9">3565801673</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11563" fmt="3578">3578</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11564" fmt="0xd389ade9">3549015529</metal-command-buffer-id>
+      <metal-command-buffer-id id="11565" fmt="0xd389adea">3549015530</metal-command-buffer-id>
+      <uint64 id="11566" fmt="3.565.801.673">3565801673</uint64>
+    </row>
+    <row>
+      <start-time id="11567" fmt="00:01.477.132">1477132791</start-time>
+      <duration id="11568" fmt="121.50 µs">121500</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="937" />
+      <duration id="11569" fmt="294.00 µs">294000</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11570" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0cb">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11571" fmt="0xd489d0cb">3565801675</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11572" fmt="3579">3579</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11573" fmt="0xd389adec">3549015532</metal-command-buffer-id>
+      <metal-command-buffer-id id="11574" fmt="0xd389aded">3549015533</metal-command-buffer-id>
+      <uint64 id="11575" fmt="3.565.801.675">3565801675</uint64>
+    </row>
+    <row>
+      <start-time id="11650" fmt="00:01.479.978">1479978375</start-time>
+      <duration id="11651" fmt="180.83 µs">180833</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1070" />
+      <duration id="11652" fmt="326.25 µs">326250</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11653" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0de">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11654" fmt="0xd489d0de">3565801694</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11655" fmt="3609">3609</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11656" fmt="0xd389adef">3549015535</metal-command-buffer-id>
+      <metal-command-buffer-id id="11657" fmt="0xd389adf0">3549015536</metal-command-buffer-id>
+      <uint64 id="11658" fmt="3.565.801.694">3565801694</uint64>
+    </row>
+    <row>
+      <start-time id="11659" fmt="00:01.482.660">1482660833</start-time>
+      <duration id="11660" fmt="260.50 µs">260500</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1138" />
+      <duration id="11661" fmt="313.00 µs">313000</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11662" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0e0">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11663" fmt="0xd489d0e0">3565801696</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11664" fmt="3612">3612</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11665" fmt="0xd389adf2">3549015538</metal-command-buffer-id>
+      <metal-command-buffer-id id="11666" fmt="0xd389adf3">3549015539</metal-command-buffer-id>
+      <uint64 id="11667" fmt="3.565.801.696">3565801696</uint64>
+    </row>
+    <row>
+      <start-time id="11668" fmt="00:01.485.426">1485426500</start-time>
+      <duration id="11669" fmt="123.08 µs">123083</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1325" />
+      <duration ref="5845" />
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11670" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0e2">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11671" fmt="0xd489d0e2">3565801698</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11672" fmt="3622">3622</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11673" fmt="0xd389adf5">3549015541</metal-command-buffer-id>
+      <metal-command-buffer-id id="11674" fmt="0xd389adf6">3549015542</metal-command-buffer-id>
+      <uint64 id="11675" fmt="3.565.801.698">3565801698</uint64>
+    </row>
+    <row>
+      <start-time id="11676" fmt="00:01.488.076">1488076333</start-time>
+      <duration id="11677" fmt="175.92 µs">175917</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1485" />
+      <duration id="11678" fmt="311.00 µs">311000</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11679" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0e5">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11680" fmt="0xd489d0e5">3565801701</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11681" fmt="3626">3626</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11682" fmt="0xd389adf8">3549015544</metal-command-buffer-id>
+      <metal-command-buffer-id id="11683" fmt="0xd389adf9">3549015545</metal-command-buffer-id>
+      <uint64 id="11684" fmt="3.565.801.701">3565801701</uint64>
+    </row>
+    <row>
+      <start-time id="11749" fmt="00:01.490.801">1490801416</start-time>
+      <duration id="11750" fmt="139.29 µs">139292</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1581" />
+      <duration id="11751" fmt="318.79 µs">318791</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11752" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0f9">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11753" fmt="0xd489d0f9">3565801721</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11754" fmt="3652">3652</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11755" fmt="0xd389adfb">3549015547</metal-command-buffer-id>
+      <metal-command-buffer-id id="11756" fmt="0xd389adfc">3549015548</metal-command-buffer-id>
+      <uint64 id="11757" fmt="3.565.801.721">3565801721</uint64>
+    </row>
+    <row>
+      <start-time id="11758" fmt="00:01.493.377">1493377458</start-time>
+      <duration id="11759" fmt="123.58 µs">123583</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1729" />
+      <duration id="11760" fmt="142.12 µs">142125</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11761" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d0fb">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11762" fmt="0xd489d0fb">3565801723</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11763" fmt="3655">3655</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11764" fmt="0xd389adfe">3549015550</metal-command-buffer-id>
+      <metal-command-buffer-id id="11765" fmt="0xd389adff">3549015551</metal-command-buffer-id>
+      <uint64 id="11766" fmt="3.565.801.723">3565801723</uint64>
+    </row>
+    <row>
+      <start-time id="11865" fmt="00:01.495.773">1495773833</start-time>
+      <duration id="11866" fmt="124.50 µs">124500</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1883" />
+      <duration id="11867" fmt="135.17 µs">135167</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11868" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d114">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11869" fmt="0xd489d114">3565801748</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11870" fmt="3693">3693</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11871" fmt="0xd389ae01">3549015553</metal-command-buffer-id>
+      <metal-command-buffer-id id="11872" fmt="0xd389ae02">3549015554</metal-command-buffer-id>
+      <uint64 id="11873" fmt="3.565.801.748">3565801748</uint64>
+    </row>
+    <row>
+      <start-time id="11874" fmt="00:01.498.185">1498185875</start-time>
+      <duration id="11875" fmt="139.38 µs">139375</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="1970" />
+      <duration id="11876" fmt="317.96 µs">317959</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11877" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d116">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11878" fmt="0xd489d116">3565801750</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11879" fmt="3704">3704</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11880" fmt="0xd389ae04">3549015556</metal-command-buffer-id>
+      <metal-command-buffer-id id="11881" fmt="0xd389ae05">3549015557</metal-command-buffer-id>
+      <uint64 id="11882" fmt="3.565.801.750">3565801750</uint64>
+    </row>
+    <row>
+      <start-time id="11883" fmt="00:01.499.818">1499818083</start-time>
+      <duration id="11884" fmt="112.29 µs">112292</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2024" />
+      <duration id="11885" fmt="288.38 µs">288375</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11886" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d118">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11887" fmt="0xd489d118">3565801752</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11888" fmt="3707">3707</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11889" fmt="0xd389ae07">3549015559</metal-command-buffer-id>
+      <metal-command-buffer-id id="11890" fmt="0xd389ae08">3549015560</metal-command-buffer-id>
+      <uint64 id="11891" fmt="3.565.801.752">3565801752</uint64>
+    </row>
+    <row>
+      <start-time id="11892" fmt="00:01.501.276">1501276041</start-time>
+      <duration id="11893" fmt="107.83 µs">107834</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2108" />
+      <duration id="11894" fmt="144.04 µs">144041</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11895" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d11a">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11896" fmt="0xd489d11a">3565801754</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11897" fmt="3708">3708</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11898" fmt="0xd389ae0a">3549015562</metal-command-buffer-id>
+      <metal-command-buffer-id id="11899" fmt="0xd389ae0b">3549015563</metal-command-buffer-id>
+      <uint64 id="11900" fmt="3.565.801.754">3565801754</uint64>
+    </row>
+    <row>
+      <start-time id="11901" fmt="00:01.502.743">1502743708</start-time>
+      <duration id="11902" fmt="108.33 µs">108333</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2195" />
+      <duration id="11903" fmt="141.04 µs">141042</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11904" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d11c">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11905" fmt="0xd489d11c">3565801756</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11906" fmt="3714">3714</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11907" fmt="0xd389ae0d">3549015565</metal-command-buffer-id>
+      <metal-command-buffer-id id="11908" fmt="0xd389ae0e">3549015566</metal-command-buffer-id>
+      <uint64 id="11909" fmt="3.565.801.756">3565801756</uint64>
+    </row>
+    <row>
+      <start-time id="11910" fmt="00:01.504.177">1504177208</start-time>
+      <duration id="11911" fmt="108.29 µs">108292</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2281" />
+      <duration id="11912" fmt="137.67 µs">137667</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11913" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d11e">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11914" fmt="0xd489d11e">3565801758</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11915" fmt="3721">3721</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11916" fmt="0xd389ae10">3549015568</metal-command-buffer-id>
+      <metal-command-buffer-id id="11917" fmt="0xd389ae11">3549015569</metal-command-buffer-id>
+      <uint64 id="11918" fmt="3.565.801.758">3565801758</uint64>
+    </row>
+    <row>
+      <start-time id="11919" fmt="00:01.505.746">1505746083</start-time>
+      <duration id="11920" fmt="184.04 µs">184042</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2336" />
+      <duration id="11921" fmt="295.96 µs">295958</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11922" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d120">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11923" fmt="0xd489d120">3565801760</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11924" fmt="3726">3726</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11925" fmt="0xd389ae13">3549015571</metal-command-buffer-id>
+      <metal-command-buffer-id id="11926" fmt="0xd389ae14">3549015572</metal-command-buffer-id>
+      <uint64 id="11927" fmt="3.565.801.760">3565801760</uint64>
+    </row>
+    <row>
+      <start-time id="11928" fmt="00:01.507.310">1507310416</start-time>
+      <duration id="11929" fmt="109.00 µs">109000</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2422" />
+      <duration id="11930" fmt="143.21 µs">143208</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11931" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d122">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11932" fmt="0xd489d122">3565801762</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11933" fmt="3731">3731</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11934" fmt="0xd389ae16">3549015574</metal-command-buffer-id>
+      <metal-command-buffer-id id="11935" fmt="0xd389ae17">3549015575</metal-command-buffer-id>
+      <uint64 id="11936" fmt="3.565.801.762">3565801762</uint64>
+    </row>
+    <row>
+      <start-time id="11937" fmt="00:01.508.761">1508761416</start-time>
+      <duration id="11938" fmt="110.58 µs">110584</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2465" />
+      <duration id="11939" fmt="138.04 µs">138041</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11940" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d124">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11941" fmt="0xd489d124">3565801764</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11942" fmt="3737">3737</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11943" fmt="0xd389ae19">3549015577</metal-command-buffer-id>
+      <metal-command-buffer-id id="11944" fmt="0xd389ae1a">3549015578</metal-command-buffer-id>
+      <uint64 id="11945" fmt="3.565.801.764">3565801764</uint64>
+    </row>
+    <row>
+      <start-time id="11962" fmt="00:01.510.326">1510326166</start-time>
+      <duration id="11963" fmt="448.58 µs">448584</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2669" />
+      <duration id="11964" fmt="51.83 µs">51833</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11965" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d129">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11966" fmt="0xd489d129">3565801769</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11967" fmt="3741">3741</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11968" fmt="0xd389ae1c">3549015580</metal-command-buffer-id>
+      <metal-command-buffer-id id="11969" fmt="0xd389ae1d">3549015581</metal-command-buffer-id>
+      <uint64 id="11970" fmt="3.565.801.769">3565801769</uint64>
+    </row>
+    <row>
+      <start-time id="11971" fmt="00:01.512.243">1512243541</start-time>
+      <duration id="11972" fmt="158.38 µs">158375</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2702" />
+      <duration id="11973" fmt="232.71 µs">232708</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11974" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d12b">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11975" fmt="0xd489d12b">3565801771</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11976" fmt="3750">3750</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11977" fmt="0xd389ae1f">3549015583</metal-command-buffer-id>
+      <metal-command-buffer-id id="11978" fmt="0xd389ae20">3549015584</metal-command-buffer-id>
+      <uint64 id="11979" fmt="3.565.801.771">3565801771</uint64>
+    </row>
+    <row>
+      <start-time id="11980" fmt="00:01.513.794">1513794500</start-time>
+      <duration id="11981" fmt="110.25 µs">110250</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2839" />
+      <duration id="11982" fmt="146.25 µs">146250</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11983" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d12d">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11984" fmt="0xd489d12d">3565801773</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11985" fmt="3751">3751</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11986" fmt="0xd389ae22">3549015586</metal-command-buffer-id>
+      <metal-command-buffer-id id="11987" fmt="0xd389ae23">3549015587</metal-command-buffer-id>
+      <uint64 id="11988" fmt="3.565.801.773">3565801773</uint64>
+    </row>
+    <row>
+      <start-time id="11989" fmt="00:01.515.238">1515238708</start-time>
+      <duration id="11990" fmt="107.79 µs">107792</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2859" />
+      <duration id="11991" fmt="141.38 µs">141375</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="11992" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d12f">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="11993" fmt="0xd489d12f">3565801775</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="11994" fmt="3753">3753</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="11995" fmt="0xd389ae25">3549015589</metal-command-buffer-id>
+      <metal-command-buffer-id id="11996" fmt="0xd389ae26">3549015590</metal-command-buffer-id>
+      <uint64 id="11997" fmt="3.565.801.775">3565801775</uint64>
+    </row>
+    <row>
+      <start-time id="11998" fmt="00:01.516.698">1516698916</start-time>
+      <duration id="11999" fmt="110.17 µs">110167</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="2978" />
+      <duration id="12000" fmt="138.54 µs">138541</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12001" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d131">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12002" fmt="0xd489d131">3565801777</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12003" fmt="3762">3762</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12004" fmt="0xd389ae28">3549015592</metal-command-buffer-id>
+      <metal-command-buffer-id id="12005" fmt="0xd389ae29">3549015593</metal-command-buffer-id>
+      <uint64 id="12006" fmt="3.565.801.777">3565801777</uint64>
+    </row>
+    <row>
+      <start-time id="12007" fmt="00:01.518.154">1518154166</start-time>
+      <duration id="12008" fmt="110.38 µs">110375</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3012" />
+      <duration id="12009" fmt="138.79 µs">138791</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12010" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d133">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12011" fmt="0xd489d133">3565801779</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12012" fmt="3770">3770</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12013" fmt="0xd389ae2b">3549015595</metal-command-buffer-id>
+      <metal-command-buffer-id id="12014" fmt="0xd389ae2c">3549015596</metal-command-buffer-id>
+      <uint64 id="12015" fmt="3.565.801.779">3565801779</uint64>
+    </row>
+    <row>
+      <start-time id="12016" fmt="00:01.519.580">1519580000</start-time>
+      <duration id="12017" fmt="110.21 µs">110208</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3118" />
+      <duration id="12018" fmt="130.92 µs">130917</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12019" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d135">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12020" fmt="0xd489d135">3565801781</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12021" fmt="3771">3771</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12022" fmt="0xd389ae2e">3549015598</metal-command-buffer-id>
+      <metal-command-buffer-id id="12023" fmt="0xd389ae2f">3549015599</metal-command-buffer-id>
+      <uint64 id="12024" fmt="3.565.801.781">3565801781</uint64>
+    </row>
+    <row>
+      <start-time id="12098" fmt="00:01.521.356">1521356000</start-time>
+      <duration id="12099" fmt="6.92 µs">6916</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3146" />
+      <duration id="12100" fmt="134.62 µs">134625</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12101" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d148">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12102" fmt="0xd489d148">3565801800</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12103" fmt="3799">3799</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12104" fmt="0xd389ae31">3549015601</metal-command-buffer-id>
+      <metal-command-buffer-id id="12105" fmt="0xd389ae32">3549015602</metal-command-buffer-id>
+      <uint64 id="12106" fmt="3.565.801.800">3565801800</uint64>
+    </row>
+    <row>
+      <start-time id="12107" fmt="00:01.522.249">1522249958</start-time>
+      <duration id="12108" fmt="6.71 µs">6708</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3284" />
+      <duration id="12109" fmt="135.71 µs">135708</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12110" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d14a">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12111" fmt="0xd489d14a">3565801802</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12112" fmt="3813">3813</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12113" fmt="0xd389ae34">3549015604</metal-command-buffer-id>
+      <metal-command-buffer-id id="12114" fmt="0xd389ae35">3549015605</metal-command-buffer-id>
+      <uint64 id="12115" fmt="3.565.801.802">3565801802</uint64>
+    </row>
+    <row>
+      <start-time id="12125" fmt="00:01.523.103">1523103791</start-time>
+      <duration id="12126" fmt="6.71 µs">6709</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3353" />
+      <duration id="12127" fmt="122.50 µs">122500</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12128" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d153">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12129" fmt="0xd489d153">3565801811</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12130" fmt="3815">3815</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12131" fmt="0xd389ae37">3549015607</metal-command-buffer-id>
+      <metal-command-buffer-id id="12132" fmt="0xd389ae38">3549015608</metal-command-buffer-id>
+      <uint64 id="12133" fmt="3.565.801.811">3565801811</uint64>
+    </row>
+    <row>
+      <start-time id="12180" fmt="00:01.523.943">1523943791</start-time>
+      <duration id="12181" fmt="74.33 µs">74334</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3408" />
+      <duration id="12182" fmt="78.58 µs">78583</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12183" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d161">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12184" fmt="0xd489d161">3565801825</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12185" fmt="3829">3829</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12186" fmt="0xd389ae3a">3549015610</metal-command-buffer-id>
+      <metal-command-buffer-id id="12187" fmt="0xd389ae3b">3549015611</metal-command-buffer-id>
+      <uint64 id="12188" fmt="3.565.801.825">3565801825</uint64>
+    </row>
+    <row>
+      <start-time id="12195" fmt="00:01.524.935">1524935166</start-time>
+      <duration id="12196" fmt="6.83 µs">6834</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3477" />
+      <duration id="12197" fmt="153.83 µs">153833</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12198" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d163">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12199" fmt="0xd489d163">3565801827</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12200" fmt="3832">3832</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12201" fmt="0xd389ae3d">3549015613</metal-command-buffer-id>
+      <metal-command-buffer-id id="12202" fmt="0xd389ae3e">3549015614</metal-command-buffer-id>
+      <uint64 id="12203" fmt="3.565.801.827">3565801827</uint64>
+    </row>
+    <row>
+      <start-time id="12204" fmt="00:01.525.809">1525809500</start-time>
+      <duration id="12205" fmt="5.08 µs">5083</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3530" />
+      <duration id="12206" fmt="136.50 µs">136500</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12207" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d165">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12208" fmt="0xd489d165">3565801829</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12209" fmt="3833">3833</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12210" fmt="0xd389ae40">3549015616</metal-command-buffer-id>
+      <metal-command-buffer-id id="12211" fmt="0xd389ae41">3549015617</metal-command-buffer-id>
+      <uint64 id="12212" fmt="3.565.801.829">3565801829</uint64>
+    </row>
+    <row>
+      <start-time id="12213" fmt="00:01.526.666">1526666750</start-time>
+      <duration ref="12205" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3601" />
+      <duration id="12214" fmt="129.88 µs">129875</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12215" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d167">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12216" fmt="0xd489d167">3565801831</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12217" fmt="3840">3840</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12218" fmt="0xd389ae43">3549015619</metal-command-buffer-id>
+      <metal-command-buffer-id id="12219" fmt="0xd389ae44">3549015620</metal-command-buffer-id>
+      <uint64 id="12220" fmt="3.565.801.831">3565801831</uint64>
+    </row>
+    <row>
+      <start-time id="12264" fmt="00:01.527.568">1527568333</start-time>
+      <duration ref="2380" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3687" />
+      <duration id="12265" fmt="160.92 µs">160917</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12266" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d16d">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12267" fmt="0xd489d16d">3565801837</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12268" fmt="3860">3860</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12269" fmt="0xd389ae46">3549015622</metal-command-buffer-id>
+      <metal-command-buffer-id id="12270" fmt="0xd389ae47">3549015623</metal-command-buffer-id>
+      <uint64 id="12271" fmt="3.565.801.837">3565801837</uint64>
+    </row>
+    <row>
+      <start-time id="12327" fmt="00:01.529.107">1529107750</start-time>
+      <duration id="12328" fmt="6.83 µs">6833</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3759" />
+      <duration id="12329" fmt="147.42 µs">147417</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12330" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d182">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12331" fmt="0xd489d182">3565801858</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12332" fmt="3878">3878</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12333" fmt="0xd389ae49">3549015625</metal-command-buffer-id>
+      <metal-command-buffer-id id="12334" fmt="0xd389ae4a">3549015626</metal-command-buffer-id>
+      <uint64 id="12335" fmt="3.565.801.858">3565801858</uint64>
+    </row>
+    <row>
+      <start-time id="12336" fmt="00:01.529.974">1529974416</start-time>
+      <duration id="12337" fmt="6.75 µs">6750</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3792" />
+      <duration id="12338" fmt="138.92 µs">138916</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12339" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d184">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12340" fmt="0xd489d184">3565801860</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12341" fmt="3879">3879</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12342" fmt="0xd389ae4c">3549015628</metal-command-buffer-id>
+      <metal-command-buffer-id id="12343" fmt="0xd389ae4d">3549015629</metal-command-buffer-id>
+      <uint64 id="12344" fmt="3.565.801.860">3565801860</uint64>
+    </row>
+    <row>
+      <start-time id="12345" fmt="00:01.530.861">1530861291</start-time>
+      <duration ref="12337" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="3990" />
+      <duration id="12346" fmt="139.25 µs">139250</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12347" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d186">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12348" fmt="0xd489d186">3565801862</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12349" fmt="3881">3881</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12350" fmt="0xd389ae4f">3549015631</metal-command-buffer-id>
+      <metal-command-buffer-id id="12351" fmt="0xd389ae50">3549015632</metal-command-buffer-id>
+      <uint64 id="12352" fmt="3.565.801.862">3565801862</uint64>
+    </row>
+    <row>
+      <start-time id="12353" fmt="00:01.531.720">1531720291</start-time>
+      <duration ref="12126" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4009" />
+      <duration id="12354" fmt="141.29 µs">141291</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12355" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d188">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12356" fmt="0xd489d188">3565801864</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12357" fmt="3883">3883</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12358" fmt="0xd389ae52">3549015634</metal-command-buffer-id>
+      <metal-command-buffer-id id="12359" fmt="0xd389ae53">3549015635</metal-command-buffer-id>
+      <uint64 id="12360" fmt="3.565.801.864">3565801864</uint64>
+    </row>
+    <row>
+      <start-time id="12361" fmt="00:01.532.591">1532591833</start-time>
+      <duration id="12362" fmt="6.79 µs">6792</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4114" />
+      <duration id="12363" fmt="142.46 µs">142458</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12364" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d18a">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12365" fmt="0xd489d18a">3565801866</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12366" fmt="3891">3891</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12367" fmt="0xd389ae55">3549015637</metal-command-buffer-id>
+      <metal-command-buffer-id id="12368" fmt="0xd389ae56">3549015638</metal-command-buffer-id>
+      <uint64 id="12369" fmt="3.565.801.866">3565801866</uint64>
+    </row>
+    <row>
+      <start-time id="12370" fmt="00:01.533.472">1533472958</start-time>
+      <duration id="12371" fmt="6.58 µs">6583</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4133" />
+      <duration id="12372" fmt="137.38 µs">137375</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12373" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d18c">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12374" fmt="0xd489d18c">3565801868</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12375" fmt="3892">3892</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12376" fmt="0xd389ae58">3549015640</metal-command-buffer-id>
+      <metal-command-buffer-id id="12377" fmt="0xd389ae59">3549015641</metal-command-buffer-id>
+      <uint64 id="12378" fmt="3.565.801.868">3565801868</uint64>
+    </row>
+    <row>
+      <start-time id="12379" fmt="00:01.534.360">1534360958</start-time>
+      <duration id="12380" fmt="5.17 µs">5167</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4264" />
+      <duration id="12381" fmt="133.00 µs">133000</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12382" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d18e">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12383" fmt="0xd489d18e">3565801870</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12384" fmt="3895">3895</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12385" fmt="0xd389ae5b">3549015643</metal-command-buffer-id>
+      <metal-command-buffer-id id="12386" fmt="0xd389ae5c">3549015644</metal-command-buffer-id>
+      <uint64 id="12387" fmt="3.565.801.870">3565801870</uint64>
+    </row>
+    <row>
+      <start-time id="12388" fmt="00:01.535.246">1535246083</start-time>
+      <duration id="12389" fmt="3.92 µs">3917</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4284" />
+      <duration id="12390" fmt="137.29 µs">137292</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12391" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d190">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12392" fmt="0xd489d190">3565801872</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12393" fmt="3898">3898</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12394" fmt="0xd389ae5e">3549015646</metal-command-buffer-id>
+      <metal-command-buffer-id id="12395" fmt="0xd389ae5f">3549015647</metal-command-buffer-id>
+      <uint64 id="12396" fmt="3.565.801.872">3565801872</uint64>
+    </row>
+    <row>
+      <start-time id="12397" fmt="00:01.536.119">1536119083</start-time>
+      <duration id="12398" fmt="3.96 µs">3958</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4379" />
+      <duration id="12399" fmt="132.83 µs">132833</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12400" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d192">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12401" fmt="0xd489d192">3565801874</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12402" fmt="3900">3900</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12403" fmt="0xd389ae61">3549015649</metal-command-buffer-id>
+      <metal-command-buffer-id id="12404" fmt="0xd389ae62">3549015650</metal-command-buffer-id>
+      <uint64 id="12405" fmt="3.565.801.874">3565801874</uint64>
+    </row>
+    <row>
+      <start-time id="12406" fmt="00:01.536.992">1536992208</start-time>
+      <duration ref="12389" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4414" />
+      <duration id="12407" fmt="138.25 µs">138250</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12408" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d194">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12409" fmt="0xd489d194">3565801876</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12410" fmt="3901">3901</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12411" fmt="0xd389ae64">3549015652</metal-command-buffer-id>
+      <metal-command-buffer-id id="12412" fmt="0xd389ae65">3549015653</metal-command-buffer-id>
+      <uint64 id="12413" fmt="3.565.801.876">3565801876</uint64>
+    </row>
+    <row>
+      <start-time id="12414" fmt="00:01.537.860">1537860041</start-time>
+      <duration ref="12389" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4564" />
+      <duration id="12415" fmt="132.12 µs">132125</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12416" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d196">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12417" fmt="0xd489d196">3565801878</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12418" fmt="3904">3904</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12419" fmt="0xd389ae67">3549015655</metal-command-buffer-id>
+      <metal-command-buffer-id id="12420" fmt="0xd389ae68">3549015656</metal-command-buffer-id>
+      <uint64 id="12421" fmt="3.565.801.878">3565801878</uint64>
+    </row>
+    <row>
+      <start-time id="12422" fmt="00:01.538.717">1538717625</start-time>
+      <duration id="12423" fmt="3.92 µs">3916</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4633" />
+      <duration id="12424" fmt="131.71 µs">131709</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12425" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d198">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12426" fmt="0xd489d198">3565801880</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12427" fmt="3912">3912</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12428" fmt="0xd389ae6a">3549015658</metal-command-buffer-id>
+      <metal-command-buffer-id id="12429" fmt="0xd389ae6b">3549015659</metal-command-buffer-id>
+      <uint64 id="12430" fmt="3.565.801.880">3565801880</uint64>
+    </row>
+    <row>
+      <start-time id="12431" fmt="00:01.539.589">1539589291</start-time>
+      <duration ref="12389" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4721" />
+      <duration id="12432" fmt="128.04 µs">128041</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12433" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d19a">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12434" fmt="0xd489d19a">3565801882</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12435" fmt="3913">3913</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12436" fmt="0xd389ae6d">3549015661</metal-command-buffer-id>
+      <metal-command-buffer-id id="12437" fmt="0xd389ae6e">3549015662</metal-command-buffer-id>
+      <uint64 id="12438" fmt="3.565.801.882">3565801882</uint64>
+    </row>
+    <row>
+      <start-time id="12439" fmt="00:01.540.441">1540441208</start-time>
+      <duration ref="12398" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4791" />
+      <duration id="12440" fmt="134.58 µs">134583</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12441" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d19c">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12442" fmt="0xd489d19c">3565801884</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12443" fmt="3914">3914</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12444" fmt="0xd389ae70">3549015664</metal-command-buffer-id>
+      <metal-command-buffer-id id="12445" fmt="0xd389ae71">3549015665</metal-command-buffer-id>
+      <uint64 id="12446" fmt="3.565.801.884">3565801884</uint64>
+    </row>
+    <row>
+      <start-time id="12447" fmt="00:01.541.306">1541306958</start-time>
+      <duration ref="12398" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4844" />
+      <duration id="12448" fmt="132.46 µs">132458</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12449" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d19e">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12450" fmt="0xd489d19e">3565801886</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12451" fmt="3918">3918</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12452" fmt="0xd389ae73">3549015667</metal-command-buffer-id>
+      <metal-command-buffer-id id="12453" fmt="0xd389ae74">3549015668</metal-command-buffer-id>
+      <uint64 id="12454" fmt="3.565.801.886">3565801886</uint64>
+    </row>
+    <row>
+      <start-time id="12455" fmt="00:01.542.157">1542157041</start-time>
+      <duration id="12456" fmt="3.17 µs">3167</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4913" />
+      <duration ref="7683" />
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12457" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1a0">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12458" fmt="0xd489d1a0">3565801888</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12459" fmt="3920">3920</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12460" fmt="0xd389ae76">3549015670</metal-command-buffer-id>
+      <metal-command-buffer-id id="12461" fmt="0xd389ae77">3549015671</metal-command-buffer-id>
+      <uint64 id="12462" fmt="3.565.801.888">3565801888</uint64>
+    </row>
+    <row>
+      <start-time id="12479" fmt="00:01.542.937">1542937416</start-time>
+      <duration id="12480" fmt="137.75 µs">137750</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="4967" />
+      <duration id="12481" fmt="44.29 µs">44291</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12482" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1a5">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12483" fmt="0xd489d1a5">3565801893</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12484" fmt="3922">3922</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12485" fmt="0xd389ae79">3549015673</metal-command-buffer-id>
+      <metal-command-buffer-id id="12486" fmt="0xd389ae7a">3549015674</metal-command-buffer-id>
+      <uint64 id="12487" fmt="3.565.801.893">3565801893</uint64>
+    </row>
+    <row>
+      <start-time id="12518" fmt="00:01.544.068">1544068416</start-time>
+      <duration id="12519" fmt="3.21 µs">3209</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5036" />
+      <duration id="12520" fmt="271.71 µs">271708</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12521" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1af">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12522" fmt="0xd489d1af">3565801903</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12523" fmt="3929">3929</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12524" fmt="0xd389ae7c">3549015676</metal-command-buffer-id>
+      <metal-command-buffer-id id="12525" fmt="0xd389ae7d">3549015677</metal-command-buffer-id>
+      <uint64 id="12526" fmt="3.565.801.903">3565801903</uint64>
+    </row>
+    <row>
+      <start-time id="12527" fmt="00:01.544.928">1544928166</start-time>
+      <duration ref="12456" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5056" />
+      <duration id="12528" fmt="135.04 µs">135041</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12529" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1b1">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12530" fmt="0xd489d1b1">3565801905</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12531" fmt="3931">3931</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12532" fmt="0xd389ae7f">3549015679</metal-command-buffer-id>
+      <metal-command-buffer-id id="12533" fmt="0xd389ae80">3549015680</metal-command-buffer-id>
+      <uint64 id="12534" fmt="3.565.801.905">3565801905</uint64>
+    </row>
+    <row>
+      <start-time id="12535" fmt="00:01.545.797">1545797208</start-time>
+      <duration ref="12398" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5256" />
+      <duration ref="12448" />
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12536" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1b3">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12537" fmt="0xd489d1b3">3565801907</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12538" fmt="3932">3932</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12539" fmt="0xd389ae82">3549015682</metal-command-buffer-id>
+      <metal-command-buffer-id id="12540" fmt="0xd389ae83">3549015683</metal-command-buffer-id>
+      <uint64 id="12541" fmt="3.565.801.907">3565801907</uint64>
+    </row>
+    <row>
+      <start-time id="12542" fmt="00:01.546.640">1546640750</start-time>
+      <duration ref="12423" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5276" />
+      <duration id="12543" fmt="133.67 µs">133667</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12544" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1b5">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12545" fmt="0xd489d1b5">3565801909</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12546" fmt="3937">3937</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12547" fmt="0xd389ae85">3549015685</metal-command-buffer-id>
+      <metal-command-buffer-id id="12548" fmt="0xd389ae86">3549015686</metal-command-buffer-id>
+      <uint64 id="12549" fmt="3.565.801.909">3565801909</uint64>
+    </row>
+    <row>
+      <start-time id="12550" fmt="00:01.547.504">1547504291</start-time>
+      <duration ref="12389" />
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5367" />
+      <duration id="12551" fmt="133.88 µs">133875</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12552" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1b7">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12553" fmt="0xd489d1b7">3565801911</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12554" fmt="3938">3938</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12555" fmt="0xd389ae88">3549015688</metal-command-buffer-id>
+      <metal-command-buffer-id id="12556" fmt="0xd389ae89">3549015689</metal-command-buffer-id>
+      <uint64 id="12557" fmt="3.565.801.911">3565801911</uint64>
+    </row>
+    <row>
+      <start-time id="12558" fmt="00:01.548.501">1548501916</start-time>
+      <duration id="12559" fmt="49.50 µs">49500</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5386" />
+      <duration id="12560" fmt="133.04 µs">133041</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12561" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1b9">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12562" fmt="0xd489d1b9">3565801913</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12563" fmt="3939">3939</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12564" fmt="0xd389ae8b">3549015691</metal-command-buffer-id>
+      <metal-command-buffer-id id="12565" fmt="0xd389ae8c">3549015692</metal-command-buffer-id>
+      <uint64 id="12566" fmt="3.565.801.913">3565801913</uint64>
+    </row>
+    <row>
+      <start-time id="12567" fmt="00:01.551.150">1551150875</start-time>
+      <duration id="12568" fmt="69.42 µs">69416</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5565" />
+      <duration id="12569" fmt="310.33 µs">310334</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12570" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1bb">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12571" fmt="0xd489d1bb">3565801915</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12572" fmt="3940">3940</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12573" fmt="0xd389ae8e">3549015694</metal-command-buffer-id>
+      <metal-command-buffer-id id="12574" fmt="0xd389ae8f">3549015695</metal-command-buffer-id>
+      <uint64 id="12575" fmt="3.565.801.915">3565801915</uint64>
+    </row>
+    <row>
+      <start-time id="12644" fmt="00:01.553.612">1553612708</start-time>
+      <duration id="12645" fmt="47.08 µs">47083</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5584" />
+      <duration id="12646" fmt="127.00 µs">127000</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12647" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1ce">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12648" fmt="0xd489d1ce">3565801934</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12649" fmt="3962">3962</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12650" fmt="0xd389ae91">3549015697</metal-command-buffer-id>
+      <metal-command-buffer-id id="12651" fmt="0xd389ae92">3549015698</metal-command-buffer-id>
+      <uint64 id="12652" fmt="3.565.801.934">3565801934</uint64>
+    </row>
+    <row>
+      <start-time id="12653" fmt="00:01.555.847">1555847166</start-time>
+      <duration id="12654" fmt="50.62 µs">50625</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5755" />
+      <duration id="12655" fmt="127.25 µs">127250</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12656" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1d2">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12657" fmt="0xd489d1d2">3565801938</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12658" fmt="3963">3963</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12659" fmt="0xd389ae94">3549015700</metal-command-buffer-id>
+      <metal-command-buffer-id id="12660" fmt="0xd389ae95">3549015701</metal-command-buffer-id>
+      <uint64 id="12661" fmt="3.565.801.938">3565801938</uint64>
+    </row>
+    <row>
+      <start-time id="12726" fmt="00:01.558.091">1558091541</start-time>
+      <duration id="12727" fmt="50.00 µs">50000</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="5774" />
+      <duration id="12728" fmt="133.79 µs">133791</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12729" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1e5">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12730" fmt="0xd489d1e5">3565801957</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12731" fmt="3979">3979</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12732" fmt="0xd389ae97">3549015703</metal-command-buffer-id>
+      <metal-command-buffer-id id="12733" fmt="0xd389ae98">3549015704</metal-command-buffer-id>
+      <uint64 id="12734" fmt="3.565.801.957">3565801957</uint64>
+    </row>
+    <row>
+      <start-time id="12735" fmt="00:01.560.324">1560324833</start-time>
+      <duration id="12736" fmt="51.42 µs">51417</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6264" />
+      <duration ref="7473" />
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12737" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d1e7">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12738" fmt="0xd489d1e7">3565801959</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12739" fmt="3982">3982</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12740" fmt="0xd389ae9a">3549015706</metal-command-buffer-id>
+      <metal-command-buffer-id id="12741" fmt="0xd389ae9b">3549015707</metal-command-buffer-id>
+      <uint64 id="12742" fmt="3.565.801.959">3565801959</uint64>
+    </row>
+    <row>
+      <start-time id="12841" fmt="00:01.562.605">1562605500</start-time>
+      <duration id="12842" fmt="47.62 µs">47625</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6283" />
+      <duration id="12843" fmt="125.88 µs">125875</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12844" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d200">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12845" fmt="0xd489d200">3565801984</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12846" fmt="4002">4002</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12847" fmt="0xd389ae9d">3549015709</metal-command-buffer-id>
+      <metal-command-buffer-id id="12848" fmt="0xd389ae9e">3549015710</metal-command-buffer-id>
+      <uint64 id="12849" fmt="3.565.801.984">3565801984</uint64>
+    </row>
+    <row>
+      <start-time id="12850" fmt="00:01.564.817">1564817875</start-time>
+      <duration id="12851" fmt="49.25 µs">49250</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6361" />
+      <duration id="12852" fmt="134.33 µs">134334</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12853" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d202">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12854" fmt="0xd489d202">3565801986</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12855" fmt="4010">4010</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12856" fmt="0xd389aea0">3549015712</metal-command-buffer-id>
+      <metal-command-buffer-id id="12857" fmt="0xd389aea1">3549015713</metal-command-buffer-id>
+      <uint64 id="12858" fmt="3.565.801.986">3565801986</uint64>
+    </row>
+    <row>
+      <start-time id="12859" fmt="00:01.567.046">1567046291</start-time>
+      <duration id="12860" fmt="48.25 µs">48250</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6380" />
+      <duration id="12861" fmt="135.54 µs">135541</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12862" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d204">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12863" fmt="0xd489d204">3565801988</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12864" fmt="4016">4016</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12865" fmt="0xd389aea3">3549015715</metal-command-buffer-id>
+      <metal-command-buffer-id id="12866" fmt="0xd389aea4">3549015716</metal-command-buffer-id>
+      <uint64 id="12867" fmt="3.565.801.988">3565801988</uint64>
+    </row>
+    <row>
+      <start-time id="12897" fmt="00:01.569.097">1569097083</start-time>
+      <duration id="12898" fmt="55.75 µs">55750</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6525" />
+      <duration id="12899" fmt="91.83 µs">91833</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12900" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d20c">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12901" fmt="0xd489d20c">3565801996</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12902" fmt="4023">4023</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12903" fmt="0xd389aea6">3549015718</metal-command-buffer-id>
+      <metal-command-buffer-id id="12904" fmt="0xd389aea7">3549015719</metal-command-buffer-id>
+      <uint64 id="12905" fmt="3.565.801.996">3565801996</uint64>
+    </row>
+    <row>
+      <start-time id="12906" fmt="00:01.571.229">1571229375</start-time>
+      <duration id="12907" fmt="57.42 µs">57416</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6544" />
+      <duration id="12908" fmt="139.42 µs">139417</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12909" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d210">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12910" fmt="0xd489d210">3565802000</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12911" fmt="4025">4025</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12912" fmt="0xd389aea9">3549015721</metal-command-buffer-id>
+      <metal-command-buffer-id id="12913" fmt="0xd389aeaa">3549015722</metal-command-buffer-id>
+      <uint64 id="12914" fmt="3.565.802.000">3565802000</uint64>
+    </row>
+    <row>
+      <start-time id="12915" fmt="00:01.573.323">1573323541</start-time>
+      <duration id="12916" fmt="57.62 µs">57625</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6703" />
+      <duration ref="12346" />
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12917" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d212">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12918" fmt="0xd489d212">3565802002</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12919" fmt="4030">4030</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12920" fmt="0xd389aeac">3549015724</metal-command-buffer-id>
+      <metal-command-buffer-id id="12921" fmt="0xd389aead">3549015725</metal-command-buffer-id>
+      <uint64 id="12922" fmt="3.565.802.002">3565802002</uint64>
+    </row>
+    <row>
+      <start-time id="12923" fmt="00:01.575.345">1575345250</start-time>
+      <duration id="12924" fmt="49.04 µs">49041</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="6723" />
+      <duration id="12925" fmt="132.17 µs">132167</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12926" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d214">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12927" fmt="0xd489d214">3565802004</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12928" fmt="4031">4031</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12929" fmt="0xd389aeaf">3549015727</metal-command-buffer-id>
+      <metal-command-buffer-id id="12930" fmt="0xd389aeb0">3549015728</metal-command-buffer-id>
+      <uint64 id="12931" fmt="3.565.802.004">3565802004</uint64>
+    </row>
+    <row>
+      <start-time id="12948" fmt="00:01.577.292">1577292625</start-time>
+      <duration id="12949" fmt="560.79 µs">560791</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="7012" />
+      <duration id="12950" fmt="46.33 µs">46334</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12951" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d219">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12952" fmt="0xd489d219">3565802009</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12953" fmt="4034">4034</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12954" fmt="0xd389aeb2">3549015730</metal-command-buffer-id>
+      <metal-command-buffer-id id="12955" fmt="0xd389aeb3">3549015731</metal-command-buffer-id>
+      <uint64 id="12956" fmt="3.565.802.009">3565802009</uint64>
+    </row>
+    <row>
+      <start-time id="12957" fmt="00:01.580.046">1580046083</start-time>
+      <duration id="12958" fmt="61.58 µs">61583</duration>
+      <gpu-channel-name ref="70" />
+      <gpu-frame-number ref="7031" />
+      <duration id="12959" fmt="142.00 µs">142000</duration>
+      <metal-nesting-level ref="6" />
+      <formatted-label id="12960" fmt="Command Buffer 0:Compute Command 0  (b-coherence.exe (60493)) 0xd489d21b">
+        <string ref="11328" />
+        <narrative-text ref="9" />
+        <string ref="8" />
+        <narrative-text ref="10" />
+        <process ref="11329" />
+        <narrative-text ref="14" />
+        <metal-encoder-id id="12961" fmt="0xd489d21b">3565802011</metal-encoder-id>
+      </formatted-label>
+      <gpu-state ref="16" />
+      <connection-uuid64 id="12962" fmt="4039">4039</connection-uuid64>
+      <render-buffer-depth ref="11333" />
+      <process ref="11329" />
+      <metal-device-name ref="19" />
+      <metal-object-label ref="20" />
+      <formatted-label ref="21" />
+      <size-in-bytes ref="22" />
+      <metal-command-buffer-id id="12963" fmt="0xd389aeb5">3549015733</metal-command-buffer-id>
+      <metal-command-buffer-id id="12964" fmt="0xd389aeb6">3549015734</metal-command-buffer-id>
+      <uint64 id="12965" fmt="3.565.802.011">3565802011</uint64>
+    </row>
+  </node>
+</trace-query-result>

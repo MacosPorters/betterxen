@@ -1,0 +1,20 @@
+{
+  "policy": "Target-PID-only XML exports from preserved local M5 xctrace captures; all unrelated host processes omitted; all referenced XML id nodes and target-PID staging/readback/compute/blit rows retained verbatim.",
+  "files": {
+    "b-metal-copy-upload-retry/target-gpu-intervals.xml": "61d1ef683e5a972388dc86187c1daf60ceec7288308a180a8ef88cdd58c1e78b",
+    "b-metal-copy-upload-retry/target-metal-encoders.xml": "f1c968826cb9e27604c22ac9d124c8cdc11420d454359bef55bf5caddc77d500",
+    "b-metal-copy-wb/target-gpu-intervals.xml": "25a2d45f0e0929b70ae7f93cc7c754ef164a5324ded3721144b559b7de3a1ca1",
+    "b-metal-copy-wb/target-metal-encoders.xml": "9129659f59f7203bc50e7fa9279c339a4fb1f53a94cd82c2b63eb453c6c93247",
+    "b-metal-copy-wc/target-gpu-intervals.xml": "cf76eb248a0457d547ed6654cff0d2e84ac5b1ef96cdddd5bd3124888ef65e14",
+    "b-metal-copy-wc/target-metal-encoders.xml": "655c11603c2202f2d68c7ddf0e01c80c631499570ed60ce1255cf9c396d4f12a",
+    "b-metal-default/target-gpu-intervals.xml": "a1566d77d19aeb9f4fead7f29759d1418a8613a0e266979a8221d2df302cedf0",
+    "b-metal-default/target-metal-encoders.xml": "562d294dfc6ca60ba594610753a47f47c7e21fba90522842f923c43e5d8ddff2",
+    "b-metal-upload-wb/target-gpu-intervals.xml": "2d5e33972d9346581e208ab82965b023f794d1179144299a31adc99b11cd0a89",
+    "b-metal-upload-wb/target-metal-encoders.xml": "4f02a8313e08ec468b612ed7c54a586924ae947f299b8340b01101954c816aee",
+    "b-metal-wc/target-gpu-intervals.xml": "ae2bbac42817ba3321a0c73aa2fa3c2c57ccdb473c8de89f3a76b72fc8e24372",
+    "b-metal-wc/target-metal-encoders.xml": "c19534f6635ef63b193941ef6bc43e00da70abac1fb4371a9ef4348aa64f4fa4",
+    "b-trace-02/target-gpu-intervals.xml": "f0088f98a54d9e5241e0c17fe1fc1d0f13453d5422494d169189d5d1bf3a30b2",
+    "b-trace-02/target-metal-encoders.xml": "93b89eb944246e4c65680294c0bc3973fbf1a13465b893e0528a7cbac4b2b15c",
+    "receipt.json": "99c7be642ee4bb18903363f982ef3678388985793219f8b9adaa5afa27c9139a"
+  }
+}

@@ -1,0 +1,57 @@
+{
+  "wrapper_sha256": "7ca48208511242a30cccb117a4ca51565df16ecf0eb85bfd2ced4e345175d874",
+  "instrumentation_exit": 0,
+  "matched_sample_archive": true,
+  "recorded_trace": "/private/tmp/b473-metal-default/00-default/gpu.trace",
+  "trace_bundle_archived": false,
+  "target_only_excerpts": true,
+  "extractor_sha256": "8f0cf4863b19e7cee1aaabce6a2f4f475c0388a30f30ebc90b69944d552b2a52",
+  "extracts": {
+    "gpu-intervals.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-default/00-default/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-gpu-intervals\"]",
+        "--output",
+        "/private/tmp/b473-metal-default/gpu-intervals.xml"
+      ],
+      "sha256": "9c73ddcf199158cdccafb9cb5fd918d705b84598686a2ed8e096ebc02186c668",
+      "exit": 0,
+      "archived": false
+    },
+    "metal-encoders.xml": {
+      "command": [
+        "xcrun",
+        "xctrace",
+        "export",
+        "--input",
+        "/private/tmp/b473-metal-default/00-default/gpu.trace",
+        "--xpath",
+        "/trace-toc/run[@number=\"1\"]/data/table[@schema=\"metal-application-encoders-list\"]",
+        "--output",
+        "/private/tmp/b473-metal-default/metal-encoders.xml"
+      ],
+      "sha256": "1cb5bbfb7bc045d60de24b3673e8c72137c907846d5af73b75b529a9451c7301",
+      "exit": 0,
+      "archived": false
+    }
+  },
+  "extractor_command": [
+    "python3",
+    "docs/research/d3dmetal-zero-copy/copy-detection/summarize-trace.py",
+    "/private/tmp/b473-metal-default",
+    "/private/tmp/b473-metal-default/gpu-intervals.xml",
+    "/private/tmp/b473-metal-default/metal-encoders.xml"
+  ],
+  "extractor_output_sha256": "3a0cba954a0c8e36a0a66ce6da98fba6908b909676a9e7083292649cbd64a4fd",
+  "late_output_hashes": {
+    "00-default/xctrace-output.txt": {
+      "early_case_sha256": "bbd67977c2baa629ef2d3f8fc1ef18581a2ca9298ee52f0a71d9a6fda440c188",
+      "final_archive_sha256": "35a134798a0dc0f3b7eb7613e86f7fbb6023acc0aff3388a30b98c6460abba16"
+    }
+  }
+}

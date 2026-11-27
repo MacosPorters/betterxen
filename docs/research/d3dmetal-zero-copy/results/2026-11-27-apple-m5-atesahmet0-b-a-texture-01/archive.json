@@ -1,0 +1,10 @@
+{
+  "source_scratch": "/private/tmp/b473-a-texture-01",
+  "redactions": {
+    "receipt.json": {
+      "raw_sha256": "11ce02ed108ed0faeeea6da7f2c6e84fdaf86c8da46926f7f0afe43922495e0a",
+      "archive_sha256": "96877af5bb06d5c2f8d9ff70a2c8847e60f2af9e54c0e3062f13694cb951b44c"
+    }
+  },
+  "policy": "Replace home-directory prefix in metadata with <HOME>. Benchmark stdout/stderr are copied byte for byte. Keep source, compiled original shader, receipts, and logs. Omit executable, bottle and full Instruments trace."
+}
