@@ -68,6 +68,38 @@ bool vtable_in_shim(IUnknown* obj) {
 /* An IID that no interface uses (generated for this test). */
 const GUID kUnusedIid = {0x4f0c2f6b, 0x91d3, 0x4d7e, {0xb2, 0x1a, 0x7e, 0x55, 0x03, 0xc9, 0x6a, 0x18}};
 
+/*
+ * #547: the generator (shims/d3d12_xs/tools/gen_proxy.py, PAD_SLOTS = 32) appends
+ * 32 `BxBeyondPublicVtableNN` stubs after each generated proxy's public vtable so
+ * that a caller indexing past the interface it was handed lands on a logged
+ * E_NOTIMPL stub. The first padded slot sits at index `kPublicSlotCount`
+ * (gen_proxy.py emits `slot + k` for k in [0, 32)); the last is
+ * `kPublicSlotCount + 31`. The expected indices below are derived from the
+ * public D3D12 interface inheritance chains (IUnknown + every level up to the
+ * leaf), which is exactly what the generator walks; they match the
+ * `kPublicSlotCount` constants in proxy_generated.h.
+ *
+ * Each stub is `HRESULT STDMETHODCALLTYPE fn()` with no arguments, so it is
+ * callable through the vtable as `HRESULT (WINAPI*)()`. The stub logs
+ * BX_VTABLE_STUB_LOG("<leaf>", <slot>u, "beyond_public_vtable"), which
+ * bx_log_unimpl_vtable writes as
+ *   {"sub":"com_vtable","event":"unimpl_vtable","detail":"<leaf>[<slot>]::beyond_public_vtable"}
+ */
+struct PaddedVtableExpectation {
+    const char* what;    /* fixture-facing name for messages */
+    const char* leaf;    /* generator's leaf interface name, used in the log detail */
+    unsigned first_slot; /* index of BxBeyondPublicVtable00 */
+};
+
+/* PAD_SLOTS in gen_proxy.py. */
+constexpr unsigned kPaddedSlotCount = 32;
+
+HRESULT call_vtable_slot(IUnknown* obj, unsigned index) {
+    void** vtbl = *reinterpret_cast<void***>(obj);
+    auto fn = reinterpret_cast<HRESULT(WINAPI*)()>(vtbl[index]);
+    return fn();
+}
+
 bool file_contains(const char* path, const char* needle_a, const char* needle_b) {
     HANDLE f = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE | FILE_SHARE_DELETE, nullptr,
                            OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
@@ -297,7 +329,51 @@ int main() {
         skip("BX_LOG_FILE is not set; pso_shader log record not verified");
     }
 
-    /* --- 10. Teardown: every reference must come back ------------------------------------------- */
+    /* --- 10. Padded vtable slots (#547) ---------------------------------------------------------- */
+    /*
+     * First padded slot = 3 (IUnknown) + every public method in the leaf's
+     * inheritance chain, which is how gen_proxy.py counts `slot`. Derived
+     * natively from the toolchain's d3d12.h with the generator's own
+     * chain_of()/parse_interfaces(); matches kPublicSlotCount in
+     * proxy_generated.h (79/19/9/81).
+     */
+    const PaddedVtableExpectation padded[] = {
+        {"device", "ID3D12Device10", 79u},
+        {"command queue", "ID3D12CommandQueue", 19u},
+        {"command allocator", "ID3D12CommandAllocator", 9u},
+        {"command list", "ID3D12GraphicsCommandList7", 81u},
+    };
+    IUnknown* const padded_objs[] = {device, queue, allocator, list};
+    for (unsigned i = 0; i < 4; ++i) {
+        IUnknown* obj = padded_objs[i];
+        if (!obj) {
+            check(false, "%s proxy missing; padded vtable slots not callable", padded[i].what);
+            continue;
+        }
+        const unsigned first = padded[i].first_slot;
+        const unsigned last = first + kPaddedSlotCount - 1;
+        hr = call_vtable_slot(obj, first);
+        check(hr == E_NOTIMPL, "%s padded vtable slot %u (BxBeyondPublicVtable00) hr=0x%08lx, want E_NOTIMPL",
+              padded[i].what, first, ul(hr));
+        hr = call_vtable_slot(obj, last);
+        check(hr == E_NOTIMPL, "%s padded vtable slot %u (BxBeyondPublicVtable%02u, the %u-th) hr=0x%08lx, want E_NOTIMPL",
+              padded[i].what, last, kPaddedSlotCount - 1, kPaddedSlotCount, ul(hr));
+    }
+
+    if (log_len > 0 && log_len < sizeof(log_path)) {
+        for (unsigned i = 0; i < 4; ++i) {
+            if (!padded_objs[i]) continue;
+            char needle[96];
+            std::snprintf(needle, sizeof(needle), "%s[%u]::beyond_public_vtable", padded[i].leaf,
+                          padded[i].first_slot);
+            check(file_contains(log_path, "\"event\":\"unimpl_vtable\"", needle),
+                  "BX_LOG_FILE must contain an unimpl_vtable record with %s", needle);
+        }
+    } else {
+        skip("BX_LOG_FILE is not set; beyond_public_vtable log records not verified");
+    }
+
+    /* --- 11. Teardown: every reference must come back ------------------------------------------- */
     if (rs_error) rs_error->Release();
     if (rs_blob) rs_blob->Release();
     if (root_signature) root_signature->Release();
