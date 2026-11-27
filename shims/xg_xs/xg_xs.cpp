@@ -104,7 +104,8 @@ struct Rdna2TileQuery {
     uint32_t texel_y;
 };
 
-/* Named 64 KiB tiles. The address equation is intentionally absent. */
+/* Named 64 KiB tiles. Only SW_64KB_S has its address equation implemented; see
+ * rdna2_sw64kb_prepare below for the sources and the exact scope. */
 constexpr Rdna2TileMode kRdna2TileModes[] = {
     {BX_XG_LAYOUT_SW_64KB_S, 64u * 1024u, "SW_64KB_S"},
     {BX_XG_LAYOUT_SW_64KB_D, 64u * 1024u, "SW_64KB_D"},
@@ -304,8 +305,68 @@ static TextureComputer* impl_from(bx_xg_texture_computer* self) {
     return reinterpret_cast<TextureComputer*>(self);
 }
 
-/* M3 placeholder. Validates the tile request and returns no address. */
-static HRESULT rdna2_sw64kb_prepare(const Rdna2TileQuery* query) {
+/*
+ * SW_64KB_S (AMD ADDR_SW_64KB_S, enum 9) intra-block address, for the narrow
+ * case public sources actually specify: TEXTURE2D, one array slice, one mip,
+ * one sample.
+ *
+ * Sources, both public:
+ *   [1] Microsoft, D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE, 32-bpp masks
+ *       xBytesMask = 0xAA8F and yMask = 0x5570, combined with _pdep_u32.
+ *       https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout
+ *   [2] AMD AddrLib (MIT), the GFX10 swizzle tables and equation:
+ *       src/amd/addrlib/src/gfx10/gfx10SwizzlePattern.h  (GFX10_SW_64K_S_RBPLUS_PATINFO)
+ *       src/amd/addrlib/src/gfx10/gfx10addrlib.h         (GetSwizzlePatternFromPatternInfo)
+ *       src/amd/addrlib/inc/addrtypes.h                  (ADDR_SW_64KB_S = 9)
+ *       https://gitlab.freedesktop.org/mesa/mesa/-/tree/main/src/amd/addrlib
+ *
+ * At 32 bpp the two agree bit-for-bit, which is why this mode is the one worth
+ * implementing first. The RB+ table is used because gfx1030 is Navi2x; the
+ * non-RB+ table differs for some entries.
+ *
+ * For a 64 KiB tile the intra-tile byte offset of texel (x, y) is the bit
+ * interleave below, for a 32-bpp format whose tile is 128x128 texels:
+ * pdep(x * 4, 0xAA8F) | pdep(y, 0x5570). x is multiplied by 4 because the
+ * D3D12 mask is defined over xBytes, not over texel x.
+ *
+ * SW_64KB_D differs from S at 32 bpp (AddrLib nibble01 index 39 versus 2, i.e.
+ * address bits 6 and 7 swapped), and SW_64KB_R has no public GFX10 form at all
+ * (ADDR_SW_64KB_R is Reserved on GFX10; the render-target mode is
+ * ADDR_SW_64KB_R_X, whose pipe/packer XOR is not public). Both stay E_NOTIMPL.
+ */
+static bool sw64kb_s_supported(const Rdna2TileQuery* query) {
+    return query->mode == BX_XG_LAYOUT_SW_64KB_S && query->block_bytes == 4u;
+}
+
+/* Bit-interleave one axis into a 32-bpp 64 KiB standard-swizzle tile. */
+static uint32_t sw64kb_s_pdep(uint32_t value, uint32_t mask) {
+    uint32_t out = 0;
+    for (uint32_t bit = 1; bit != 0 && mask != 0; bit <<= 1) {
+        const uint32_t lowest = mask & (0u - mask);
+        if (value & bit) {
+            out |= lowest;
+        }
+        mask ^= lowest;
+    }
+    return out;
+}
+
+/*
+ * Intra-64KiB-tile BYTE offset for SW_64KB_S at 32 bpp.
+ *
+ * 0xAA8F is the D3D12 xBytes mask: it spreads xBytes (= x * 4) over address
+ * bits 0..3, 7, 9, 11, 13, 15. 0x5570 is the y mask: y over bits 4, 5, 6, 8,
+ * 10, 12, 14. Scattering 128x128 texels this way yields 16384 distinct byte
+ * offsets, each 4-byte aligned and inside the 64 KiB tile, so the mapping is a
+ * bijection on the tile - checked exhaustively while implementing this.
+ */
+static uint32_t sw64kb_s_offset_32bpp(uint32_t x, uint32_t y) {
+    return sw64kb_s_pdep(x * 4u, 0xAA8Fu) | sw64kb_s_pdep(y, 0x5570u);
+}
+
+/* Validates the tile request and, for SW_64KB_S at 32 bpp, fills `offset`. */
+static HRESULT rdna2_sw64kb_prepare(const Rdna2TileQuery* query, uint32_t* offset) {
+    if (offset) *offset = 0u;
     if (!query || query->mip_width == 0u || query->mip_height == 0u || query->block_bytes == 0u) {
         return E_INVALIDARG;
     }
@@ -319,7 +380,15 @@ static HRESULT rdna2_sw64kb_prepare(const Rdna2TileQuery* query) {
     if (!found || found->tile_bytes != (64u * 1024u) || found->name == nullptr) {
         return E_INVALIDARG;
     }
-    return E_NOTIMPL;
+    if (!sw64kb_s_supported(query) || !offset) {
+        return E_NOTIMPL;
+    }
+    /* 32 bpp: one 64 KiB tile covers 128x128 texels. */
+    if (query->texel_x >= 128u || query->texel_y >= 128u) {
+        return E_INVALIDARG;
+    }
+    *offset = sw64kb_s_offset_32bpp(query->texel_x, query->texel_y);
+    return S_OK;
 }
 
 static HRESULT reject_if_tiled(const TextureComputer* obj, uint32_t slot, const char* method) {
@@ -333,7 +402,12 @@ static HRESULT reject_if_tiled(const TextureComputer* obj, uint32_t slot, const 
     query.block_bytes = obj->resolved.block_bytes;
     query.texel_x = 0u;
     query.texel_y = 0u;
-    const HRESULT hr = rdna2_sw64kb_prepare(&query);
+    /* Single mip only: the mip tail is adapter-specific, so a multi-mip S
+     * layout is out of scope here and still reports E_NOTIMPL. */
+    uint32_t offset = 0u;
+    const bool single_mip = obj->resolved.mip_levels == 1u && obj->resolved.array_size == 1u;
+    const HRESULT hr = single_mip ? rdna2_sw64kb_prepare(&query, &offset) : E_NOTIMPL;
+    (void)offset;
     if (hr == E_NOTIMPL) {
         const Rdna2TileMode* mode = nullptr;
         for (const Rdna2TileMode& candidate : kRdna2TileModes) {
@@ -872,6 +946,30 @@ static HRESULT WINAPI computer_get_texel_element_offset_bytes(
     }
     if (z != 0u || array_slice >= obj->resolved.array_size || mip_level >= obj->resolved.mip_levels) {
         return E_INVALIDARG;
+    }
+    if (obj->resolved.layout != BX_XG_LAYOUT_LINEAR) {
+        /* Tiled: a single 64 KiB tile at offset 0, so the element offset is the
+         * intra-tile swizzled offset. Only SW_64KB_S at 32 bpp reaches here;
+         * reject_if_tiled already returned E_NOTIMPL for every other tiled mode. */
+        if (array_slice != 0u || mip_level != 0u) {
+            return E_NOTIMPL;
+        }
+        Rdna2TileQuery query{};
+        query.mode = obj->resolved.layout;
+        query.mip_width = obj->resolved.width;
+        query.mip_height = obj->resolved.height;
+        query.block_bytes = obj->resolved.block_bytes;
+        const uint32_t block_x = x / obj->resolved.block_w;
+        const uint32_t block_y = y / obj->resolved.block_h;
+        query.texel_x = block_x;
+        query.texel_y = block_y;
+        uint32_t offset = 0u;
+        const HRESULT hr = rdna2_sw64kb_prepare(&query, &offset);
+        if (hr != S_OK) {
+            return hr;
+        }
+        *offset_bytes = offset;
+        return S_OK;
     }
     const uint32_t index = mip_level + array_slice * obj->resolved.mip_levels;
     Placement place{};

@@ -3,6 +3,7 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
+#include <vector>
 
 #include "xg_texture.h"
 
@@ -515,6 +516,119 @@ static void test_swizzle_placeholder() {
           "suggest stays on the implemented mode");
 }
 
+/*
+ * SW_64KB_S at 32 bpp, the one tiled mode BetterXen implements (#505).
+ *
+ * The expected byte offsets below are re-derived here from Microsoft's public
+ * D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE 32-bpp masks - xBytes pdep mask
+ * 0xAA8F, y pdep mask 0x5570 - using this file's own pdep, NOT read out of the
+ * shim. The two sources agree at 32 bpp, which is why this mode is the one
+ * implemented (AddrLib is the other; MIT).
+ */
+static uint32_t test_pdep(uint32_t value, uint32_t mask) {
+    uint32_t out = 0;
+    for (uint32_t bit = 1; bit != 0 && mask != 0; bit <<= 1) {
+        const uint32_t lowest = mask & (0u - mask);
+        if (value & bit) {
+            out |= lowest;
+        }
+        mask ^= lowest;
+    }
+    return out;
+}
+
+/* Expected byte offset of texel (x, y) inside a 64 KiB 32-bpp S tile. */
+static uint64_t expected_sw64kb_s_32bpp(uint32_t x, uint32_t y) {
+    return uint64_t(test_pdep(x * 4u, 0xAA8Fu) | test_pdep(y, 0x5570u));
+}
+
+static void test_sw64kb_s_32bpp() {
+    bx_xg_resource_desc desc = desc_2d(DXGI_FORMAT_R8G8B8A8_UNORM, 128, 128, 1, 0, BX_XG_LAYOUT_SW_64KB_S);
+    void* object = nullptr;
+    check_hr("s64 create", XGCreateTextureComputer(&desc, &object), S_OK);
+    auto* computer = static_cast<bx_xg_texture_computer*>(object);
+    if (!computer) {
+        return;
+    }
+
+    check_hr("s64 align", computer->lpVtbl->GetResourceBaseAlignmentBytes(computer, nullptr), E_POINTER);
+
+    /* A spread of texels, including the axes, the corners and a few interior
+     * points, checked against the independently computed expectation. */
+    const uint32_t points[][2] = {
+        {0, 0}, {1, 0}, {4, 0}, {8, 0}, {16, 0}, {64, 0}, {127, 0},
+        {0, 1}, {0, 4}, {0, 8}, {0, 16}, {0, 64}, {0, 127},
+        {3, 3}, {17, 5}, {127, 127}, {64, 64}, {100, 27},
+    };
+    for (const auto& point : points) {
+        uint64_t offset = 0xEEEEEEEEEEEEEEEEull;
+        check_hr("s64 texel",
+                 computer->lpVtbl->GetTexelElementOffsetBytes(computer, 0, 0, point[0], point[1], 0, &offset),
+                 S_OK);
+        check(offset == expected_sw64kb_s_32bpp(point[0], point[1]), "s64 texel offset matches D3D12 masks");
+    }
+
+    /* Distinct texels must map to distinct, in-tile, 4-byte-aligned offsets. */
+    bool bijective = true;
+    bool aligned = true;
+    std::vector<uint8_t> seen(65536, 0);
+    for (uint32_t y = 0; y < 128 && bijective; ++y) {
+        for (uint32_t x = 0; x < 128 && bijective; ++x) {
+            uint64_t offset = 0;
+            if (computer->lpVtbl->GetTexelElementOffsetBytes(computer, 0, 0, x, y, 0, &offset) != S_OK) {
+                bijective = false;
+                break;
+            }
+            if (offset >= 65536u || seen[size_t(offset)] != 0) {
+                bijective = false;
+                break;
+            }
+            if (offset % 4u != 0) {
+                aligned = false;
+            }
+            seen[size_t(offset)] = 1;
+        }
+    }
+    check(bijective, "s64 is a bijection over the 128x128 tile");
+    check(aligned, "s64 offsets stay 4-byte aligned");
+
+    /* Out-of-tile texels are rejected. */
+    uint64_t offset = 0;
+    check_hr("s64 x out of tile",
+             computer->lpVtbl->GetTexelElementOffsetBytes(computer, 0, 0, 128, 0, 0, &offset), E_INVALIDARG);
+    check_hr("s64 y out of tile",
+             computer->lpVtbl->GetTexelElementOffsetBytes(computer, 0, 0, 0, 128, 0, &offset), E_INVALIDARG);
+
+    release_computer(computer);
+
+    /* The modes and shapes that stay unimplemented must still say so. */
+    bx_xg_resource_desc d_desc = desc_2d(DXGI_FORMAT_R8G8B8A8_UNORM, 128, 128, 1, 0, BX_XG_LAYOUT_SW_64KB_D);
+    void* d_object = nullptr;
+    check_hr("s64 D create", XGCreateTextureComputer(&d_desc, &d_object), S_OK);
+    auto* d_computer = static_cast<bx_xg_texture_computer*>(d_object);
+    if (d_computer) {
+        uint64_t d_offset = 0;
+        check_hr("s64 D still notimpl",
+                 d_computer->lpVtbl->GetTexelElementOffsetBytes(d_computer, 0, 0, 0, 0, 0, &d_offset), E_NOTIMPL);
+        release_computer(d_computer);
+    }
+
+    bx_xg_resource_desc bc_desc = desc_2d(DXGI_FORMAT_BC7_UNORM, 32, 32, 1, 0, BX_XG_LAYOUT_SW_64KB_S);
+    void* bc_object = nullptr;
+    check_hr("s64 BC create", XGCreateTextureComputer(&bc_desc, &bc_object), S_OK);
+    auto* bc_computer = static_cast<bx_xg_texture_computer*>(bc_object);
+    if (bc_computer) {
+        uint64_t bc_offset = 0;
+        check_hr("s64 BC still notimpl (only 32 bpp implemented)",
+                 bc_computer->lpVtbl->GetTexelElementOffsetBytes(bc_computer, 0, 0, 0, 0, 0, &bc_offset), E_NOTIMPL);
+        release_computer(bc_computer);
+    }
+
+    check(XGSuggestSwizzleMode(BX_XG_DIMENSION_TEXTURE2D, DXGI_FORMAT_R8G8B8A8_UNORM, 128, 128, 1, 0, 1, 0) ==
+              BX_XG_LAYOUT_LINEAR,
+          "suggest still stays on the linear mode");
+}
+
 static bool row_is(const uint8_t* row, uint8_t value) {
     return row[0] == value && row[1] == value && row[2] == value && row[3] == value;
 }
@@ -642,6 +756,7 @@ int main() {
     test_overlapping_copies();
     test_large_array_offsets();
     test_swizzle_placeholder();
+    test_sw64kb_s_32bpp();
     test_refcount();
 
     if (g_failures != 0) {

@@ -84,3 +84,63 @@ Identification is not execution. `xenora shaders coverage` reports forms
 discovered in metadata against forms the semantic decoder accepts
 (`xenora_decoder::SEMANTIC_FORMS`); reference, Metal and native GPU evidence
 per form remains in `docs/status.toml`.
+
+## 64 KiB swizzle (`SW_64KB_S`) — public sources (#505)
+
+`xg_xs.dll` implements `SW_64KB_S` tile addressing for 32-bpp `TEXTURE2D`, one
+array slice and one mip. The two public sources below agree at 32 bpp, which is
+why this is the mode implemented first.
+
+**Microsoft, `D3D12_TEXTURE_LAYOUT_64KB_STANDARD_SWIZZLE`** (public, no NDA):
+<https://learn.microsoft.com/en-us/windows/win32/api/d3d12/ne-d3d12-d3d12_texture_layout>.
+The page gives the 32-bpp masks `xBytesMask = 0xAA8F` and `yMask = 0x5570`,
+combined with `_pdep_u32`. It states that tail-mip packing is **adapter-specific**,
+which is why only the single-mip case is implemented. It has no `D` or `R` variant.
+
+**AMD AddrLib (MIT)** — the authoritative public implementation, in both
+[Mesa `src/amd/addrlib`](https://gitlab.freedesktop.org/mesa/mesa/-/tree/main/src/amd/addrlib)
+and [AMD PAL](https://github.com/GPUOpen-Drivers/pal/tree/dev/src/core/imported/addrlib)
+(`SPDX-License-Identifier: MIT`, AMD copyright; PAL `LICENSE.txt` is MIT):
+
+- `src/amd/addrlib/inc/addrtypes.h` — `AddrSwizzleMode`: `ADDR_SW_64KB_S` = 9,
+  `_D` = 10, `_R` = 11 (Reserved on GFX10).
+- `src/amd/addrlib/src/gfx10/gfx10SwizzlePattern.h` — `GFX10_SW_64K_S_PATINFO`
+  and `GFX10_SW_64K_S_RBPLUS_PATINFO`, plus the `GFX10_SW_PATTERN_NIBBLE01/2/3/4`
+  tables. The RB+ variant is used because `gfx1030` is Navi2x.
+- `src/amd/addrlib/src/gfx10/gfx10addrlib.h` — `GetSwizzlePatternFromPatternInfo`,
+  `IsInMipTail`.
+- `src/amd/addrlib/src/gfx10/gfx10addrlib.cpp` — `GetSwizzlePatternInfo`,
+  `HwlComputeSurfaceAddrFromCoordTiled`, `ComputeSurfaceAddrFromCoordMacroTiled`.
+- `src/amd/addrlib/src/core/addrlib2.cpp` — `ComputeThinBlockDimension`,
+  `Block256_2d`.
+
+There is **no** standalone GPUOpen `addrlib` repository (404). The public
+[RDNA 2 ISA](https://gpuopen.com/download/rdna2-shader-instruction-set-architecture.pdf)
+only names a 5-bit "SW mode" field in the T# descriptor (bits 120:116) and does
+not define the patterns.
+
+### S versus D versus R
+
+- **S and D are not interchangeable.** At 32 bpp RB+, D uses nibble01 index 39
+  (`[0,0,X0,X1,Y0,Y1,X2,Y2]`) while S uses index 2
+  (`[0,0,X0,X1,Y0,Y1,Y2,X2]`) — address bits 6 and 7 swapped.
+- **`SW_64KB_R` has no public GFX10 form.** Mesa's `SwizzleModeTable` marks
+  `ADDR_SW_64KB_R` (enum 11) as Reserved; the render-target mode is
+  `ADDR_SW_64KB_R_X`, whose pipe/packer XOR depends on the console
+  `GB_ADDR_CONFIG`, which is not public.
+
+### Xbox `XG` tile modes are NDA
+
+`scarlett-tex-layouts` returns HTTP 200 with only the membership gate; all
+`/windows/win32/api/xg/*` paths 404. The numeric `XG_SWIZZLE_MODE` values are
+not public, so BetterXen's `BX_XG_LAYOUT_*` values 1/2/3 are **local** constants,
+not the console's.
+
+### Verification
+
+A native harness (not the guest DLL) checks the mapping against an independently
+written `pdep` reference: 16384 distinct, 4-byte-aligned offsets inside the
+64 KiB tile, agreeing on every texel. `test_xg_xs.exe` re-derives its expected
+offsets from the D3D12 masks rather than from the shim, and keeps asserting
+`E_NOTIMPL` for `SW_64KB_D`, `SW_64KB_R`, BC formats, 1D/3D, MSAA, and every
+multi-mip or multi-slice case. Synthetic evidence only; no Xbox-hardware claim.
