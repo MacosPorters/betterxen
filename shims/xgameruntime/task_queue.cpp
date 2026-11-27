@@ -1,5 +1,6 @@
 #include "task_queue.h"
 
+#include <algorithm>
 #include <chrono>
 #include <condition_variable>
 #include <mutex>
@@ -62,8 +63,10 @@ public:
             SubmitThreadpoolWork(worker);
         }
 
+        bool due() const { return first && (first->due_ms == 0 || GetTickCount64() >= first->due_ms); }
+
         void schedule_serial() {
-            if (mode == DispatchMode::serialized && first && !serial_running && workers == 0) {
+            if (mode == DispatchMode::serialized && due() && !serial_running && workers == 0) {
                 schedule();
             }
         }
@@ -92,11 +95,34 @@ public:
         bool dispatch(uint32_t timeout) {
             if (mode == DispatchMode::immediate) return false;
             std::unique_lock lock(mutex);
-            const auto has_task = [this] { return closed || (first && !serial_running); };
+            // FIFO: a delayed head blocks later tasks until it is due. Wait only
+            // until that deadline (or the caller's timeout), never spin.
+            // Saturating: the deadline can pass between due() and GetTickCount64(),
+            // and an unsigned subtraction there would wrap to ~584 million years.
+            const auto until_due = [this] {
+                const uint64_t now = GetTickCount64();
+                const uint64_t left = first->due_ms > now ? first->due_ms - now : 0;
+                return std::chrono::steady_clock::now() + std::chrono::milliseconds(left);
+            };
+            const auto has_task = [this] { return closed || (due() && !serial_running); };
             if (timeout == INFINITE) {
-                ready.wait(lock, has_task);
-            } else if (!ready.wait_for(lock, std::chrono::milliseconds(timeout), has_task)) {
-                return false;
+                while (!has_task()) {
+                    if (first && !serial_running) {
+                        ready.wait_until(lock, until_due());
+                    } else {
+                        ready.wait(lock);
+                    }
+                }
+            } else {
+                const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds(timeout);
+                while (!has_task()) {
+                    if (std::chrono::steady_clock::now() >= deadline) return false;
+                    auto wake = deadline;
+                    if (first && !serial_running) {
+                        wake = std::min(wake, until_due());
+                    }
+                    ready.wait_until(lock, wake);
+                }
             }
             if (closed) return false;
             auto task = pop();
@@ -190,6 +216,10 @@ bool submit(const QueueRef& queue, Port port, std::unique_ptr<Task> task, bool i
     return queue->lanes[static_cast<uint32_t>(port)].push(std::move(task), is_completion);
 }
 
+void set_due(std::unique_ptr<Task>& task, uint32_t delay_ms) {
+    if (delay_ms > 0) task->due_ms = GetTickCount64() + delay_ms;
+}
+
 } // namespace bx::gdk
 
 using namespace bx::gdk;
@@ -237,12 +267,23 @@ bool WINAPI XTaskQueueDispatch(void* handle, Port port, uint32_t timeout) {
     return queue && queue->lanes[static_cast<uint32_t>(port)].dispatch(timeout);
 }
 
+HRESULT WINAPI XTaskQueueSubmitDelayedCallback(void* handle, Port port, uint32_t delay_ms, void* context,
+                                               CallbackTask::Callback callback);
+
 HRESULT WINAPI XTaskQueueSubmitCallback(void* handle, Port port, void* context, CallbackTask::Callback callback) {
+    return XTaskQueueSubmitDelayedCallback(handle, port, 0, context, callback);
+}
+
+HRESULT WINAPI XTaskQueueSubmitDelayedCallback(void* handle, Port port, uint32_t delay_ms, void* context,
+                                               CallbackTask::Callback callback) {
     if (!handle || port > Port::completion || !callback) return E_INVALIDARG;
     const auto queue = acquire_queue(handle);
     if (!queue) return E_HANDLE;
     auto task = std::unique_ptr<Task>(new (std::nothrow) CallbackTask(callback, context));
     if (!task) return E_OUTOFMEMORY;
+    // delay_ms == 0 is due now, which is the common case and matches the old
+    // immediate-submit behaviour. A nonzero delay is a GetTickCount64 deadline.
+    task->due_ms = delay_ms == 0 ? 0 : GetTickCount64() + delay_ms;
     return submit(queue, port, std::move(task)) ? S_OK : E_HANDLE;
 }
 

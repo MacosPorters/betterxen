@@ -17,6 +17,8 @@ struct Task {
     virtual void run(const QueueRef& queue) = 0;
     virtual void cancel(const QueueRef& queue) { run(queue); }
 
+    // GetTickCount64 deadline; zero means due immediately.
+    uint64_t due_ms = 0;
     std::unique_ptr<Task> next;
 };
 

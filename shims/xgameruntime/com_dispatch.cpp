@@ -34,6 +34,8 @@ HRESULT WINAPI XTaskQueueCreate(bx::gdk::DispatchMode, bx::gdk::DispatchMode, vo
 void WINAPI XTaskQueueCloseHandle(void*);
 bool WINAPI XTaskQueueDispatch(void*, bx::gdk::Port, uint32_t);
 HRESULT WINAPI XTaskQueueSubmitCallback(void*, bx::gdk::Port, void*, void (CALLBACK*)(void*, bool));
+HRESULT WINAPI XTaskQueueSubmitDelayedCallback(void*, bx::gdk::Port, uint32_t, void*,
+                                                           void (CALLBACK*)(void*, bool));
 bool WINAPI XTaskQueueGetCurrentProcessTaskQueue(void**);
 
 HRESULT WINAPI XAsyncGetStatus(void*, bool);
@@ -184,9 +186,11 @@ HRESULT WINAPI core_tq_submit(void*, void* queue, Port port, void* ctx, void (CA
 HRESULT WINAPI core_tq_submit_delayed(void*, void* queue, Port port, uint32_t delay_ms, void* ctx,
                                       void (CALLBACK* cb)(void*, bool)) {
     if (delay_ms > 0) {
-        BX_VTABLE_STUB_LOG("IXGameRuntimeCore", 19, "XTaskQueueSubmitDelayedCallback(nonzero_delay)");
+        char detail[96];
+        std::snprintf(detail, sizeof(detail), "queued delay_ms=%lu", static_cast<unsigned long>(delay_ms));
+        bx_log_emit(BX_LOG_INFO, "xgameruntime", "XTaskQueueSubmitDelayedCallback", detail);
     }
-    return XTaskQueueSubmitCallback(queue, port, ctx, cb);
+    return XTaskQueueSubmitDelayedCallback(queue, port, delay_ms, ctx, cb);
 }
 bool WINAPI core_tq_get_process(void*, void** out) {
     return XTaskQueueGetCurrentProcessTaskQueue(out);

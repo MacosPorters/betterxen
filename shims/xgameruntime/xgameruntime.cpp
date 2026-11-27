@@ -798,6 +798,8 @@ HRESULT WINAPI XTaskQueueCreate(bx::gdk::DispatchMode, bx::gdk::DispatchMode, vo
 void WINAPI XTaskQueueCloseHandle(void*);
 bool WINAPI XTaskQueueDispatch(void*, bx::gdk::Port, uint32_t);
 HRESULT WINAPI XTaskQueueSubmitCallback(void*, bx::gdk::Port, void*, void (CALLBACK*)(void*, bool));
+HRESULT WINAPI XTaskQueueSubmitDelayedCallback(void*, bx::gdk::Port, uint32_t, void*,
+                                                           void (CALLBACK*)(void*, bool));
 bool WINAPI XTaskQueueGetCurrentProcessTaskQueue(void**);
 
 HRESULT WINAPI InitializeApiImpl(uint32_t gdk_ver, uint32_t gs_ver) {

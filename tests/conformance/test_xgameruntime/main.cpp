@@ -163,6 +163,45 @@ bool valid_utf8(const unsigned char* s, size_t n) {
 extern "C" __declspec(dllexport) void BetterXenSyntheticStoreFixture() {}
 #endif
 
+// A non-zero delay must not run early, and must run once it is due. The delayed
+// entry point is IXGameRuntimeCore slot 19, reached through QueryApiImpl; it is
+// not an export, so it is called through the COM vtable exactly as a title
+// would. Margins are generous so a slow host does not make this flaky: assert
+// "not run" a few milliseconds in, then require it within a wide window well
+// past the deadline.
+void check_delayed_callback(HRESULT(WINAPI* query_api)(const GUID*, const GUID*, void**)) {
+    constexpr GUID kCore = {0x073B7DCB, 0x1FCF, 0x4030, {0x94, 0xBE, 0xE3, 0xC9, 0xEB, 0x62, 0x34, 0x28}};
+    void* core = nullptr;
+    CHECK(SUCCEEDED(query_api(&kCore, &kCore, &core)) && core);
+    auto** vtbl = *static_cast<void***>(core);
+    using SubmitDelayed = HRESULT(WINAPI*)(void*, void*, uint32_t, uint32_t, void*, void (CALLBACK*)(void*, bool));
+    auto submit_delayed = reinterpret_cast<SubmitDelayed>(vtbl[19]);
+
+    void* queue = nullptr;
+    CHECK(XTaskQueueCreate(manual, manual, &queue) == S_OK && queue);
+
+    static std::atomic<int> runs{0};
+    auto cb = +[](void* ctx, bool) { static_cast<std::atomic<int>*>(ctx)->fetch_add(1); };
+
+    // delay_ms == 0 keeps the old immediate behaviour on the next dispatch.
+    runs.store(0);
+    CHECK(SUCCEEDED(submit_delayed(core, queue, work, 0, &runs, cb)) == true);
+    CHECK(XTaskQueueDispatch(queue, work, 0) && runs.load() == 1);
+
+    // A 100 ms delay must not run on an immediate pass, and must run later.
+    runs.store(0);
+    CHECK(SUCCEEDED(submit_delayed(core, queue, work, 100, &runs, cb)) == true);
+    CHECK(!XTaskQueueDispatch(queue, work, 0));
+    CHECK(runs.load() == 0);
+    Sleep(10);
+    CHECK(!XTaskQueueDispatch(queue, work, 0));
+    CHECK(runs.load() == 0);
+    Sleep(250);
+    CHECK(XTaskQueueDispatch(queue, work, 0) && runs.load() == 1);
+
+    XTaskQueueCloseHandle(queue);
+}
+
 int main() {
     char profile[16]{};
     CHECK(GetEnvironmentVariableA("BX_PROFILE", profile, sizeof(profile)) > 0);
@@ -568,6 +607,8 @@ int main() {
         CHECK(SUCCEEDED(reg_ev(com_user, nullptr, nullptr, reinterpret_cast<void*>(+dummy_cb), &ev_tok)) && ev_tok != 0);
         CHECK(unreg_ev(com_user, ev_tok, false));
         CHECK(!unreg_ev(com_user, ev_tok, false));
+
+        check_delayed_callback(query_api);
     }
 
     XGameRuntimeUninitialize();
