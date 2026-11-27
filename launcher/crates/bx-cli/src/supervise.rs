@@ -100,11 +100,14 @@ pub enum Outcome {
 }
 
 impl Outcome {
-    /// 0 or 1 for the guest's own result, 124 for a timeout (as `timeout(1)`), 128 + N for a
-    /// signal.
+    /// The guest's own numeric exit code (so a conformance fixture's documented exit-77 skip
+    /// stays distinguishable from a failure, #565), 124 for a timeout (as `timeout(1)`),
+    /// 128 + N for a signal.
     pub fn exit_code(&self) -> u8 {
         match self {
-            Outcome::Exited(status) => u8::from(!status.success()),
+            // Unix guest codes are already 0-255; a signalled guest has no code, which is a
+            // failure. `code.max(1)` at the call sites still turns a failed cleanup into 1.
+            Outcome::Exited(status) => status.code().map_or(1, |code| code.clamp(0, 255) as u8),
             Outcome::Stopped(Stop::TimedOut) => 124,
             Outcome::Stopped(Stop::Signalled(signal)) => 128u8.saturating_add(*signal as u8),
         }
@@ -276,7 +279,11 @@ mod tests {
         let ok = supervise(shell("exit 0"), None, || 0).unwrap();
         assert_eq!(ok.exit_code(), 0);
         let failed = supervise(shell("exit 7"), Some(Duration::from_secs(10)), || 0).unwrap();
-        assert_eq!(failed.exit_code(), 1);
+        assert_eq!(failed.exit_code(), 7);
+        // A conformance fixture's documented skip must stay distinguishable from a failure
+        // through `bx-cli run` (#565); the old `!status.success()` collapsed it to 1.
+        let skipped = supervise(shell("exit 77"), Some(Duration::from_secs(10)), || 0).unwrap();
+        assert_eq!(skipped.exit_code(), 77);
         let slow = supervise(shell("sleep 30"), Some(Duration::from_millis(200)), || 0).unwrap();
         assert!(matches!(slow, Outcome::Stopped(Stop::TimedOut)));
         assert_eq!(slow.exit_code(), 124);
