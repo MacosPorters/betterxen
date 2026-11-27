@@ -219,7 +219,6 @@ fn format_shader_gap_line(gap: &ShaderGap) -> String {
     )
 }
 
-/// The shader-gate section, or an empty string for a log with no gate evidence.
 /// One line per gate record whose decision is not a pass, naming the pipeline,
 /// stage, decision and HRESULT. These are the records a reader needs to find a
 /// blocker; the counted breakdown alone does not say which pipeline failed
@@ -252,6 +251,7 @@ fn format_non_pass_decisions(gate: &bx_telemetry::ShaderGateSummary) -> String {
     out
 }
 
+/// The shader-gate section, or an empty string for a log with no gate evidence.
 fn format_shader_gate_section(summary: &TraceSummary) -> String {
     if !has_shader_gate(summary) {
         return String::new();
