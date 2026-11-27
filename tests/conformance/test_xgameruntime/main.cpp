@@ -167,8 +167,21 @@ extern "C" __declspec(dllexport) void BetterXenSyntheticStoreFixture() {}
 // entry point is IXGameRuntimeCore slot 19, reached through QueryApiImpl; it is
 // not an export, so it is called through the COM vtable exactly as a title
 // would. Margins are generous so a slow host does not make this flaky: assert
-// "not run" a few milliseconds in, then require it within a wide window well
-// past the deadline.
+// "not run" while the deadline is far away, then require it to run after a
+// margin that is well past the deadline.
+struct DelayRecord {
+    std::atomic<unsigned> runs{0};
+    std::atomic<unsigned> cancels{0};
+    unsigned char canary = 0xA5;
+};
+
+void CALLBACK record_delay(void* context, bool canceled) {
+    auto& record = *static_cast<DelayRecord*>(context);
+    CHECK(record.canary == 0xA5);
+    if (canceled) ++record.cancels;
+    else ++record.runs;
+}
+
 void check_delayed_callback(HRESULT(WINAPI* query_api)(const GUID*, const GUID*, void**)) {
     constexpr GUID kCore = {0x073B7DCB, 0x1FCF, 0x4030, {0x94, 0xBE, 0xE3, 0xC9, 0xEB, 0x62, 0x34, 0x28}};
     void* core = nullptr;
@@ -176,30 +189,77 @@ void check_delayed_callback(HRESULT(WINAPI* query_api)(const GUID*, const GUID*,
     auto** vtbl = *static_cast<void***>(core);
     using SubmitDelayed = HRESULT(WINAPI*)(void*, void*, uint32_t, uint32_t, void*, void (CALLBACK*)(void*, bool));
     auto submit_delayed = reinterpret_cast<SubmitDelayed>(vtbl[19]);
+    // A delay of 100 ms leaves a wide band in which "not yet" is unambiguous,
+    // and a 250 ms sleep is 2.5x the deadline, so a slow host still passes.
+    constexpr uint32_t delay_ms = 100;
+    constexpr DWORD early_margin_ms = 10;
+    constexpr DWORD late_margin_ms = 250;
 
     void* queue = nullptr;
     CHECK(XTaskQueueCreate(manual, manual, &queue) == S_OK && queue);
 
-    static std::atomic<int> runs{0};
-    auto cb = +[](void* ctx, bool) { static_cast<std::atomic<int>*>(ctx)->fetch_add(1); };
+    // delay_ms == 0 keeps the old immediate behaviour: due now, runs on the
+    // next dispatch pass.
+    DelayRecord zero{};
+    CHECK(submit_delayed(core, queue, work, 0, &zero, record_delay) == S_OK);
+    CHECK(XTaskQueueDispatch(queue, work, 0));
+    CHECK(zero.runs.load() == 1 && zero.cancels.load() == 0);
 
-    // delay_ms == 0 keeps the old immediate behaviour on the next dispatch.
-    runs.store(0);
-    CHECK(SUCCEEDED(submit_delayed(core, queue, work, 0, &runs, cb)) == true);
-    CHECK(XTaskQueueDispatch(queue, work, 0) && runs.load() == 1);
-
-    // A 100 ms delay must not run on an immediate pass, and must run later.
-    runs.store(0);
-    CHECK(SUCCEEDED(submit_delayed(core, queue, work, 100, &runs, cb)) == true);
+    // A non-zero delay must not run before its deadline, and must run after it.
+    DelayRecord delayed{};
+    CHECK(submit_delayed(core, queue, work, delay_ms, &delayed, record_delay) == S_OK);
     CHECK(!XTaskQueueDispatch(queue, work, 0));
-    CHECK(runs.load() == 0);
-    Sleep(10);
+    CHECK(delayed.runs.load() == 0 && delayed.cancels.load() == 0);
+    Sleep(early_margin_ms);
     CHECK(!XTaskQueueDispatch(queue, work, 0));
-    CHECK(runs.load() == 0);
-    Sleep(250);
-    CHECK(XTaskQueueDispatch(queue, work, 0) && runs.load() == 1);
+    CHECK(delayed.runs.load() == 0);
+    Sleep(late_margin_ms);
+    CHECK(XTaskQueueDispatch(queue, work, 0));
+    CHECK(delayed.runs.load() == 1 && delayed.cancels.load() == 0 && delayed.canary == 0xA5);
 
+    // A timeout that expires before the deadline reports "nothing ran" and does
+    // not spin. 500 ms is five times the delay below, so the wait must end on
+    // the timeout, not on the deadline.
+    DelayRecord timed{};
+    CHECK(submit_delayed(core, queue, work, 500, &timed, record_delay) == S_OK);
+    CHECK(!XTaskQueueDispatch(queue, work, timeout_ms / 10));
+    CHECK(timed.runs.load() == 0);
+
+    // FIFO: a delayed head holds the lane, so a task queued behind it does not
+    // overtake it. Both run, in submission order.
+    DelayRecord fifo{};
+    CHECK(submit_delayed(core, queue, work, delay_ms, &fifo, record_delay) == S_OK);
+    CHECK(submit_delayed(core, queue, work, 0, &fifo, record_delay) == S_OK);
+    CHECK(!XTaskQueueDispatch(queue, work, 0));
+    CHECK(fifo.runs.load() == 0);
+    Sleep(late_margin_ms);
+    CHECK(XTaskQueueDispatch(queue, work, 0));
+    CHECK(fifo.runs.load() == 1);
+    CHECK(XTaskQueueDispatch(queue, work, 0));
+    CHECK(fifo.runs.load() == 2);
+
+    // A delayed submission cancelled before its due time runs as cancelled, not
+    // as a normal run: closing a manual queue drains it through Task::cancel.
+    DelayRecord cancelled{};
+    CHECK(submit_delayed(core, queue, work, 60000, &cancelled, record_delay) == S_OK);
+    CHECK(!XTaskQueueDispatch(queue, work, 0));
+    CHECK(cancelled.cancels.load() == 0 && cancelled.runs.load() == 0);
     XTaskQueueCloseHandle(queue);
+    CHECK(cancelled.cancels.load() == 1 && cancelled.runs.load() == 0);
+
+    // The pool path must honour the delay too. A parallel work lane runs tasks
+    // on a threadpool worker as soon as they are pushed, so this is the case
+    // where an ungated worker would fire early.
+    void* pooled = nullptr;
+    CHECK(XTaskQueueCreate(pool, manual, &pooled) == S_OK && pooled);
+    DelayRecord async{};
+    CHECK(submit_delayed(core, pooled, work, delay_ms, &async, record_delay) == S_OK);
+    Sleep(early_margin_ms);
+    CHECK(async.runs.load() == 0);
+    Sleep(late_margin_ms);
+    for (int i = 0; i < 100 && async.runs.load() == 0; ++i) Sleep(1);
+    CHECK(async.runs.load() == 1 && async.cancels.load() == 0);
+    XTaskQueueCloseHandle(pooled);
 }
 
 int main() {
