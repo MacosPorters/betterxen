@@ -38,8 +38,9 @@ The gate needs a classifier that guest pipeline creation actually reaches, plus 
 | DXC records `[WaveSize(64)]` as `PSV0` lanes 64/64, and 64-bit atomics on typed resources as `SFI0` `0x400000`. 64-bit atomics on raw buffers set only `INT64_OPS` (`0x8000`), the same as other 64-bit integer use. | The #453 blobs, read by the gate and by a script | Class A |
 | Public sources do not establish a console-native shader container layout. BetterXen's `FSPX` is a clean-room synthetic layout, not a description of a console compiler's format. | `CLAIM-XBOX-ISA-ABI` (class U) in [claims.toml](../claims.toml); `shader-transpiler/crates/dxbc-accc/src/fspx.rs` | Source review |
 | A serialized console pipeline path exists for Series X\|S, with no public version-independent format. | `CLAIM-XBOX-ACO-SAMPLE` (class D) | Source review |
+| A read-only structural scan of an authorized local test workload (2026-11-28) found 52 DXIL SM 6.5 compute containers with LLVM bitcode in its `XboxBvhBuilder` component, 29 ACCC-only `FSPX` containers in its AMD FidelityFX upscaler component, 10 SM 6.6 DXIL containers with four-byte `NOBC` payloads (nine pixel, one vertex) in its main executable, and no plaintext `DXBC` in its packaged shader archive. | Static container scan on this host, re-run through `dxbc-accc`; private evidence note, workload not redistributed | This host; structure only, runtime use unmeasured |
 
-No measurement of a title's shader corpus exists or is planned. BetterXen runs only original synthetic programs, so the DXIL vs. ACCC mix of real titles is unknown. Wherever the gate runs, its `shader_gate` records count it.
+Runtime gate telemetry still covers only synthetic programs; no target-workload run has reached pipeline creation, so what a run submits remains unmeasured. One static measurement now exists (2026-11-28): a read-only container scan of an authorized local test workload, re-run through `dxbc-accc`, with the counts in the table above. The scan measures what shipped components contain, not what any run submits, and the workload is not redistributed. Wherever the gate runs, its `shader_gate` records count it.
 
 ## Decision
 
@@ -57,7 +58,7 @@ Branch **D2** is deferred. It needs a documented, lawfully available description
 
 Revisit this ADR in any of these cases:
 - an authorized public source for that format appears;
-- gate telemetry from a lawful workload shows ACCC-only containers in practice;
+- gate telemetry shows a required pipeline-creation path refusing an ACCC-only container at runtime — a static scan already established that the target workload's upscaler component embeds 29, so the open question is submission, not existence;
 - D3DMetal starts running the gap cases.
 
 ## Consequences
@@ -68,8 +69,10 @@ Revisit this ADR in any of these cases:
   - **Stream PSOs:** `ID3D12Device2::CreatePipelineState` stream descriptions are still forwarded unparsed.
   - **Raw-buffer 64-bit atomics:** these cannot be flagged from `SFI0`; the DXIL bitcode would have to be read.
   - **Telemetry summary:** `bx-cli trace` now summarizes the gate's records (#496): per-decision, per-kind and per-stage counts for `shader_gate`, the `shader_d3dmetal_gap` list with its wave-width and 64-bit-atomic flags, and `shader_bridge_missing`. The summary only reflects records a run actually wrote; it adds no live run and no new compatibility claim.
+  - **Observed `FSPX` tables:** the clean-room section-table layout does not describe the 29 containers embedded in the target workload's upscaler component. `dxbc-accc` rejects them with `FspxSectionOutOfBounds` before any section body is read, so the current refusal is structural, not a measured D3DMetal incompatibility. Extending the layout against measured containers is a Track D prerequisite for any D2 trial and a maintainer provenance decision, because no public format description exists.
+  - **`NOBC` programs:** the classifier validates the `DXIL` program header's sizes but not the LLVM bitcode signature, so a container whose bitcode payload is the four-byte placeholder `NOBC` still classifies as executable DXIL and is prepared for the host unchanged. The target workload's main executable embeds 10 such containers (nine pixel, one vertex, SM 6.6). They carry no bitcode, so D1 cannot run them as-is; their signature and validation chunks are intact.
 - **Wave size:** the gate logs constraints but changes no shader. A pipeline that D3DMetal creates but does not run still behaves that way.
 
 ## Not claimed
 
-Nothing here describes any Xbox title's shaders, behaviour on Xbox hardware, or D3DMetal versions other than those named. Evidence class: local Apple Silicon runs and public-source review.
+Nothing here describes any Xbox title's shaders, behaviour on Xbox hardware, or D3DMetal versions other than those named. Evidence class: local Apple Silicon runs, one local static container scan of an authorized test workload, and public-source review. The scan counts containers embedded in shipped components on this host; it does not establish what any run submits, and it documents no console-compiled format layout beyond the stated mismatch.
