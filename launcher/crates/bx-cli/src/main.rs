@@ -166,19 +166,19 @@ fn cmd_probe(path: &str) -> ExitCode {
 
 fn format_clwb_line(clwb_events: usize, clwb_trap_lower_bound: Option<u64>) -> String {
     if let Some(lower_bound) = clwb_trap_lower_bound {
-        format!("clwb VEH traps   : at least {lower_bound} (sampled)")
+        format!("clwb VEH traps     : at least {lower_bound} (sampled)")
     } else if clwb_events == 0 {
-        "clwb VEH traps   : 0".to_string()
+        "clwb VEH traps     : 0".to_string()
     } else {
-        format!("clwb VEH samples : {clwb_events}")
+        format!("clwb VEH samples   : {clwb_events}")
     }
 }
 
 fn format_amd_trap_line(name: &str, count: &TrapCount) -> String {
     let label = format!("{name} VEH traps");
     match count.lower_bound {
-        Some(lower_bound) => format!("{label:<17}: at least {lower_bound} (sampled)"),
-        None => format!("{label:<17}: {} samples", count.events),
+        Some(lower_bound) => format!("{label:<18} : at least {lower_bound} (sampled)"),
+        None => format!("{label:<18} : {} samples", count.events),
     }
 }
 
@@ -197,7 +197,7 @@ fn cmd_trace(path: &str) -> ExitCode {
 fn render_trace(text: &str) -> String {
     let mut out = String::new();
     let summary = summarize_jsonl(text);
-    let _ = writeln!(out, "Trace events     : {}", summary.total_lines);
+    let _ = writeln!(out, "Trace events       : {}", summary.total_lines);
     let _ = writeln!(
         out,
         "{}",
@@ -206,7 +206,7 @@ fn render_trace(text: &str) -> String {
     for (name, count) in &summary.amd_traps {
         let _ = writeln!(out, "{}", format_amd_trap_line(name, count));
     }
-    let _ = writeln!(out, "ADX illegal ops  : {}", summary.adx_errors);
+    let _ = writeln!(out, "ADX illegal ops    : {}", summary.adx_errors);
     if !summary.unhandled_exceptions.is_empty() {
         let _ = writeln!(
             out,
@@ -1383,7 +1383,11 @@ sub setup_bottle_wineprefix {
         };
         assert_eq!(
             format_amd_trap_line("clzero", &sampled),
-            "clzero VEH traps : at least 4 (sampled)"
+            "clzero VEH traps   : at least 4 (sampled)"
+        );
+        assert_eq!(
+            format_amd_trap_line("monitorx", &sampled),
+            "monitorx VEH traps : at least 4 (sampled)"
         );
         let unnumbered = TrapCount {
             events: 2,
@@ -1391,17 +1395,17 @@ sub setup_bottle_wineprefix {
         };
         assert_eq!(
             format_amd_trap_line("rdpru", &unnumbered),
-            "rdpru VEH traps  : 2 samples"
+            "rdpru VEH traps    : 2 samples"
         );
     }
 
     #[test]
     fn formats_clwb_summary_lines() {
-        assert_eq!(format_clwb_line(0, None), "clwb VEH traps   : 0");
-        assert_eq!(format_clwb_line(2, None), "clwb VEH samples : 2");
+        assert_eq!(format_clwb_line(0, None), "clwb VEH traps     : 0");
+        assert_eq!(format_clwb_line(2, None), "clwb VEH samples   : 2");
         assert_eq!(
             format_clwb_line(3, Some(4)),
-            "clwb VEH traps   : at least 4 (sampled)"
+            "clwb VEH traps     : at least 4 (sampled)"
         );
     }
 }

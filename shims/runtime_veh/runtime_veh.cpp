@@ -156,145 +156,153 @@ void log_sampled_trap(const char* event, uint64_t count, uint64_t rip, size_t le
     }
 }
 
-// Whether the page holding `address` can take a plain store. A store to a
-// page Wine write-watches still succeeds: Wine handles that fault itself.
-// Callers pass a 64-byte-aligned line, which never crosses a page, so one
-// query covers the whole line.
-bool is_writable(uintptr_t address) {
-    MEMORY_BASIC_INFORMATION region{};
-    if (!VirtualQuery(reinterpret_cast<LPCVOID>(address), &region, sizeof(region)) ||
-        region.State != MEM_COMMIT || (region.Protect & (PAGE_GUARD | PAGE_NOACCESS))) {
+// The instruction encodings and architectural effects below are derived from
+// AMD APM vol. 3 (24594, rev. 3.36), Instruction Prefixes and CLZERO, MONITORX,
+// MWAITX, RDPRU, and vol. 4 (26568, rev. 3.25), EXTRQ and INSERTQ.
+struct AmdInstruction {
+    AmdKind kind = kAmdKinds;
+    size_t length = 0;
+    bool address32 = false;
+    size_t destination = 0;
+    size_t source = 0;
+    bool immediate = false;
+    uint16_t field = 0;
+};
+
+AmdInstruction decode_amd_instruction(const uint8_t* bytes, size_t size) {
+    if (size < 3) {
+        return {};
+    }
+
+    const bool address32 = bytes[0] == 0x67;
+    const bool extract = bytes[0] == 0x66;
+    const bool insert = bytes[0] == 0xF2;
+    size_t offset = (address32 || extract || insert) ? 1 : 0;
+    uint8_t rex = 0;
+    if ((bytes[offset] & 0xF0) == 0x40) {
+        rex = bytes[offset++];
+    }
+    if (size - offset < 3 || bytes[offset] != 0x0F) {
+        return {};
+    }
+
+    const uint8_t opcode = bytes[offset + 1];
+    const uint8_t operand = bytes[offset + 2];
+    const size_t length = offset + 3;
+    if (!extract && !insert && opcode == 0x01) {
+        switch (operand) {
+        case 0xFC: return {kClzero, length, address32};
+        case 0xFA: return {kMonitorx, length, address32};
+        case 0xFB: return address32 ? AmdInstruction{} : AmdInstruction{kMwaitx, length};
+        case 0xFD: return address32 ? AmdInstruction{} : AmdInstruction{kRdpru, length};
+        default: return {};
+        }
+    }
+
+    if ((!extract && !insert) || (opcode != 0x78 && opcode != 0x79) ||
+        (operand & 0xC0) != 0xC0) {
+        return {};
+    }
+    const bool immediate = opcode == 0x78;
+    const unsigned reg = (operand & 0x38) >> 3;
+    if (immediate && (size - length < 2 || (extract && reg != 0))) {
+        return {};
+    }
+
+    const size_t rm = (operand & 7) + ((rex & 1) ? 8 : 0);
+    AmdInstruction result{extract ? kExtrq : kInsertq, length};
+    result.destination = extract && immediate ? rm : reg + ((rex & 4) ? 8 : 0);
+    result.source = rm;
+    result.immediate = immediate;
+    if (immediate) {
+        result.length += 2;
+        result.field = static_cast<uint16_t>(bytes[length + 1] * 256u + bytes[length]);
+    }
+    return result;
+}
+
+void apply_sse4a(const AmdInstruction& instruction, CONTEXT& context) {
+    M128A* registers = context.FltSave.XmmRegisters;
+    M128A& destination = registers[instruction.destination];
+    const M128A source = registers[instruction.source];
+    const bool extract = instruction.kind == kExtrq;
+
+    // EXTRQ takes register controls from bits 13:0 and INSERTQ from 77:64.
+    uint64_t field = instruction.field;
+    if (!instruction.immediate) {
+        field = extract ? source.Low : static_cast<uint64_t>(source.High);
+    }
+    const unsigned index = (field & 0x3F00) >> 8;
+    const unsigned width = field & 0x3F;
+    const uint64_t low_mask = width ? UINT64_MAX >> (64 - width) : UINT64_MAX;
+    if (extract) {
+        destination.Low = (destination.Low >> index) & low_mask;
+    } else {
+        const uint64_t positioned_mask = low_mask << index;
+        destination.Low = (destination.Low & ~positioned_mask) |
+                          ((source.Low << index) & positioned_mask);
+    }
+    // The APM leaves the upper quadword and out-of-range fields undefined.
+}
+
+bool zero_guest_cache_line(uint64_t address, EXCEPTION_RECORD& exception) {
+    // The supported guest has 64-byte cache lines. An aligned line fits
+    // in one Windows page, including when the address is at the end of it.
+    constexpr uintptr_t line_size = 64;
+    const uintptr_t start = address & ~(line_size - 1);
+    constexpr DWORD write_protections = PAGE_READWRITE | PAGE_WRITECOPY |
+                                       PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
+    MEMORY_BASIC_INFORMATION page{};
+    if (VirtualQuery(reinterpret_cast<const void*>(start), &page, sizeof(page)) &&
+        page.State == MEM_COMMIT && (page.Protect & write_protections) &&
+        !(page.Protect & PAGE_GUARD)) {
+        std::memset(reinterpret_cast<void*>(start), 0, line_size);
+        return true;
+    }
+
+    // Pass the write fault on at the original guest RIP. Guard pages use
+    // the same fallback, without Windows' one-shot guard-page semantics.
+    exception.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+    exception.NumberParameters = 2;
+    exception.ExceptionInformation[0] = 1; // Write access.
+    exception.ExceptionInformation[1] = start;
+    return false;
+}
+
+bool apply_amd_instruction(const AmdInstruction& instruction, CONTEXT& context,
+                           EXCEPTION_RECORD& exception) {
+    switch (instruction.kind) {
+    case kClzero:
+        return zero_guest_cache_line(instruction.address32 ? static_cast<uint32_t>(context.Rax)
+                                                           : context.Rax, exception);
+    case kMonitorx:
+        // There is no host monitor state. MWAITX may complete immediately.
+        return true;
+    case kMwaitx:
+        // Approximate an early wakeup with one scheduler yield.
+        SwitchToThread();
+        return true;
+    case kRdpru: {
+        const uint32_t selector = static_cast<uint32_t>(context.Rcx);
+        const uint64_t counter = selector < 2 ? __rdtsc() : 0;
+        context.Rax = static_cast<uint32_t>(counter);
+        context.Rdx = static_cast<uint32_t>(counter >> 32);
+
+        // The APM specifies zero for these five flags and marks CF modified.
+        // BetterXen chooses a clear CF until its native behavior is verified.
+        constexpr DWORD arithmetic_flags = (1u << 11) | (1u << 7) | (1u << 6) |
+                                           (1u << 4) | (1u << 2) | (1u << 0);
+        context.EFlags &= ~arithmetic_flags;
+        return true;
+    }
+    case kExtrq:
+    case kInsertq:
+        apply_sse4a(instruction, context);
+        return true;
+    case kAmdKinds:
         return false;
     }
-    const DWORD writable = PAGE_READWRITE | PAGE_WRITECOPY |
-                           PAGE_EXECUTE_READWRITE | PAGE_EXECUTE_WRITECOPY;
-    return (region.Protect & writable) != 0;
-}
-
-// SSE4a EXTRQ / INSERTQ, register forms (the only ones there are):
-//   66 [REX] 0F 78 /0 ib ib   EXTRQ   xmm, len, idx
-//   66 [REX] 0F 79 /r         EXTRQ   xmm, xmm   (len, idx in src[13:0])
-//   F2 [REX] 0F 78 /r ib ib   INSERTQ xmm, xmm, len, idx
-//   F2 [REX] 0F 79 /r         INSERTQ xmm, xmm   (len, idx in src[77:64])
-// Works on the saved XMM registers. Returns the length, or 0 for anything
-// else. The upper quadword of the destination is architecturally undefined
-// and is left as it was.
-size_t emulate_sse4a(const uint8_t* ip, size_t size, CONTEXT& ctx, AmdKind& kind) {
-    if (size < 4 || (ip[0] != 0x66 && ip[0] != 0xF2)) {
-        return 0;
-    }
-    size_t idx = 1;
-    uint8_t rex = 0;
-    if ((ip[idx] & 0xF0) == 0x40) {
-        rex = ip[idx++];
-    }
-    if (size - idx < 3 || ip[idx] != 0x0F || (ip[idx + 1] != 0x78 && ip[idx + 1] != 0x79)) {
-        return 0;
-    }
-    const bool immediate = ip[idx + 1] == 0x78;
-    const uint8_t modrm = ip[idx + 2];
-    idx += 3;
-    if ((modrm >> 6) != 3) {
-        return 0;
-    }
-    const bool extract = ip[0] == 0x66;
-    if (extract && immediate && ((modrm >> 3) & 7) != 0) {
-        return 0;
-    }
-    M128A* xmm = ctx.FltSave.XmmRegisters;
-    const unsigned dst = ((modrm >> 3) & 7) | ((rex & 4) << 1);
-    const unsigned src = (modrm & 7) | ((rex & 1) << 3);
-
-    uint64_t fields;
-    if (immediate) {
-        if (size - idx < 2) {
-            return 0;
-        }
-        fields = ip[idx] | (static_cast<uint64_t>(ip[idx + 1]) << 8);
-        idx += 2;
-    } else {
-        fields = extract ? xmm[src].Low : static_cast<uint64_t>(xmm[src].High);
-    }
-    const unsigned length = fields & 63;
-    const unsigned index = (fields >> 8) & 63;
-    const uint64_t mask = length == 0 ? ~0ULL : (1ULL << length) - 1;
-
-    if (extract) {
-        // The immediate form names its one register in ModRM.rm.
-        M128A& target = xmm[immediate ? src : dst];
-        target.Low = (target.Low >> index) & mask;
-        kind = kExtrq;
-    } else {
-        const uint64_t value = (xmm[src].Low & mask) << index;
-        xmm[dst].Low = (xmm[dst].Low & ~(mask << index)) | value;
-        kind = kInsertq;
-    }
-    return idx;
-}
-
-constexpr DWORD kRdpruFlags = 0x0001 | 0x0004 | 0x0010 | 0x0040 | 0x0080 | 0x0800;
-
-// CLZERO, MONITORX, MWAITX, RDPRU (0F 01 FC/FA/FB/FD) and SSE4a: does what
-// a Zen 2 CPU would and returns the instruction length, or 0 to leave the
-// exception to the next handler. An unwritable CLZERO line also rewrites `rec`
-// into the write fault a store would raise.
-size_t emulate_amd_only(const uint8_t* ip, size_t size, CONTEXT& ctx, EXCEPTION_RECORD& rec,
-                        AmdKind& kind) {
-    // CLZERO takes an address-size override: 67 selects EAX in 64-bit mode.
-    const bool addr32 = size >= 4 && ip[0] == 0x67 && ip[1] == 0x0F && ip[2] == 0x01 &&
-                        ip[3] == 0xFC;
-    if (addr32) {
-        ip += 1;
-        size -= 1;
-    }
-    if (size >= 3 && ip[0] == 0x0F && ip[1] == 0x01) {
-        switch (ip[2]) {
-        case 0xFC: {
-            // Zeroes the 64-byte line holding rAX; a line never crosses a page.
-            const uint64_t address = addr32 ? static_cast<uint32_t>(ctx.Rax) : ctx.Rax;
-            const uintptr_t line = static_cast<uintptr_t>(address) & ~uintptr_t{63};
-            if (!is_writable(line)) {
-                // CLZERO takes the paging checks of a store: report the write
-                // fault a store to the line would have raised, not a #UD.
-                rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
-                rec.NumberParameters = 2;
-                rec.ExceptionInformation[0] = 1;
-                rec.ExceptionInformation[1] = line;
-                return 0;
-            }
-            std::memset(reinterpret_cast<void*>(line), 0, 64);
-            kind = kClzero;
-            return addr32 ? 4 : 3;
-        }
-        case 0xFA:
-            // A wait hint with nothing to arm.
-            kind = kMonitorx;
-            return 3;
-        case 0xFB:
-            // Synthetic: the EBX timer and the ECX extension bits are ignored
-            // and the wait is a single yield. The architecture lets a wait end
-            // at any time, so a loop that re-checks its condition still makes
-            // progress, but it spins where hardware would sleep.
-            SwitchToThread();
-            kind = kMwaitx;
-            return 3;
-        case 0xFD: {
-            // ECX 0 is MPERF and 1 is APERF; both count at the time-stamp
-            // rate, as on a core that never changes frequency. Other ECX
-            // values read 0. OF, SF, ZF, AF and PF are cleared and CF is
-            // modified (AMD APM vol. 3, RDPRU); CF is cleared here.
-            ctx.EFlags &= ~kRdpruFlags;
-            const uint64_t cycles = static_cast<uint32_t>(ctx.Rcx) <= 1 ? __rdtsc() : 0;
-            ctx.Rax = cycles & 0xFFFFFFFFULL;
-            ctx.Rdx = cycles >> 32;
-            kind = kRdpru;
-            return 3;
-        }
-        default:
-            return 0;
-        }
-    }
-    return emulate_sse4a(ip, size, ctx, kind);
+    return false;
 }
 
 LONG WINAPI log_unhandled_exception(PEXCEPTION_POINTERS ep) {
@@ -366,11 +374,16 @@ LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
         }
     }
 
-    AmdKind kind = kAmdKinds;
-    if (size_t len = emulate_amd_only(ip, size, *ep->ContextRecord, *ep->ExceptionRecord, kind)) {
-        uint64_t count = g_amd_traps[kind].fetch_add(1, std::memory_order_relaxed) + 1;
-        log_sampled_trap(kAmdEvents[kind], count, ep->ContextRecord->Rip, len);
-        ep->ContextRecord->Rip += len;
+    const AmdInstruction instruction = decode_amd_instruction(ip, size);
+    if (instruction.length != 0) {
+        if (!apply_amd_instruction(instruction, *ep->ContextRecord, *ep->ExceptionRecord)) {
+            return EXCEPTION_CONTINUE_SEARCH;
+        }
+        const uint64_t count =
+            g_amd_traps[instruction.kind].fetch_add(1, std::memory_order_relaxed) + 1;
+        log_sampled_trap(kAmdEvents[instruction.kind], count, ep->ContextRecord->Rip,
+                         instruction.length);
+        ep->ContextRecord->Rip += instruction.length;
         return EXCEPTION_CONTINUE_EXECUTION;
     }
 
