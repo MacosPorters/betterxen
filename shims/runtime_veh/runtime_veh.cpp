@@ -129,19 +129,26 @@ size_t decode_clwb_length(const uint8_t* ip, size_t size) {
     return idx <= size ? idx : 0;
 }
 
-bool is_adx_opcode(const uint8_t* ip, size_t size) {
+// Length of an ADCX/ADOX instruction at `ip`, or 0 when it is not one.
+// ADCX is 66 0F 38 F6 /r; ADOX is F3 0F 38 F6 /r. Both carry an optional REX
+// and one ModRM byte, so the shortest form is 4 bytes and the handler needs a
+// length, not a bool, to know where the guest resumes.
+size_t adx_instruction_length(const uint8_t* ip, size_t size) {
     size_t idx = 0;
     while (idx < size && (ip[idx] == 0x66 || ip[idx] == 0xF3)) {
         ++idx;
     }
     if (idx == 0) {
-        return false;
+        return 0;
     }
     if (idx < size && (ip[idx] & 0xF0) == 0x40) {
         ++idx;
     }
-    // Require the 3-byte ADCX/ADOX opcode (0F 38 F6) plus at least 1 ModRM byte.
-    return size - idx >= 4 && ip[idx] == 0x0F && ip[idx + 1] == 0x38 && ip[idx + 2] == 0xF6;
+    // 3-byte opcode (0F 38 F6) plus at least the ModRM byte.
+    if (size - idx < 4 || ip[idx] != 0x0F || ip[idx + 1] != 0x38 || ip[idx + 2] != 0xF6) {
+        return 0;
+    }
+    return idx + 4;
 }
 
 // Logs the first trap of a kind and then every power of two, as for clwb.
@@ -387,13 +394,21 @@ LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
         return EXCEPTION_CONTINUE_EXECUTION;
     }
 
-    if (g_config.enable_adx_tripwire && is_adx_opcode(ip, size)) {
-        char msg[160];
-        std::snprintf(msg, sizeof(msg),
-                      "rip=0x%016llx bytes=%02x %02x %02x %02x %02x",
-                      static_cast<unsigned long long>(ep->ContextRecord->Rip),
-                      ip[0], ip[1], ip[2], ip[3], ip[4]);
-        bx_log_emit(BX_LOG_ERROR, "runtime_veh", "adx_illegal_instruction", msg);
+    if (g_config.enable_adx_tripwire) {
+        const size_t adx_length = adx_instruction_length(ip, size);
+        if (adx_length > 0) {
+            char msg[160];
+            std::snprintf(msg, sizeof(msg),
+                          "rip=0x%016llx bytes=%02x %02x %02x %02x %02x",
+                          static_cast<unsigned long long>(ep->ContextRecord->Rip),
+                          ip[0], ip[1], ip[2], ip[3], ip[4]);
+            bx_log_emit(BX_LOG_ERROR, "runtime_veh", "adx_illegal_instruction", msg);
+            // Log and resume, like the clwb and AMD paths. Without this the
+            // guest re-faults the same instruction forever on a host that
+            // lacks ADCX/ADOX.
+            ep->ContextRecord->Rip += adx_length;
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
     }
 
     return EXCEPTION_CONTINUE_SEARCH;
