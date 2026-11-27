@@ -391,8 +391,16 @@ void check_bit_fields() {
 // Encodings, re-derived by assembling with x86_64-w64-mingw32-as and
 // disassembling with x86_64-w64-mingw32-objdump -d:
 //
-//   0:  66 0f 38 f6 d8   adcx %eax,%ebx   -> 5 bytes
-//   5:  f3 0f 38 f6 d8   adox %eax,%ebx   -> 5 bytes
+//   66 0f 38 f6 d8         adcx %eax,%ebx            -> 5 bytes
+//   f3 0f 38 f6 d8         adox %eax,%ebx            -> 5 bytes
+//   66 0f 38 f6 58 10      adcx 0x10(%rax),%ebx      -> 6 bytes
+//   66 0f 38 f6 1c 88      adcx (%rax,%rcx,4),%ebx   -> 6 bytes (SIB)
+//   66 0f 38 f6 1d <d32>   adcx (%rip),%ebx           -> 9 bytes (RIP-relative)
+//
+// The first revision of the shim decoder returned `idx + 4` — opcode plus one
+// ModRM byte — so every memory form advanced Rip 1-4 bytes short of the real
+// instruction (#571). The fixture therefore emits SIB, disp8 and RIP-relative
+// forms and asserts the logged `len=`, not just that a record appeared.
 //
 // Whether these trap depends on the HOST CPU, not on the shim: without ADX
 // they raise #UD and the tripwire logs; with ADX they execute and nothing is
@@ -400,26 +408,45 @@ void check_bit_fields() {
 // applies, so it never demands a trap that did not happen.
 //
 // The resume handler below is required, not cosmetic. bx_veh_handler logs
-// `adx_illegal_instruction` and then returns EXCEPTION_CONTINUE_SEARCH without
-// advancing Rip (see shims/runtime_veh/runtime_veh.cpp), so on a host without
-// ADX the same #UD would fire forever and the process would die inside the
-// first ADCX, before the log could ever be read back. This handler is added
-// with FirstHandler = 0, i.e. at the END of the chain, so it runs after the
-// tripwire has already written its record, and only then skips the 5 bytes.
-struct AdxFault {
-    unsigned hits = 0;
-    uintptr_t rip[2] = {0, 0};
-};
+// `adx_illegal_instruction` and then advances Rip itself, so on a host without
+// ADX the same #UD would otherwise fire forever and the process would die
+// inside the first ADCX, before the log could ever be read back. This handler
+// is added with FirstHandler = 0, i.e. at the END of the chain, so it runs
+// after the tripwire has already written its record.
+// Address of the first ADCX the fixture emits, captured by the label below so
+// the logged `rip=` can be compared against the real instruction address.
+uintptr_t adx_first_rip = 0;
 
-AdxFault adx_fault;
-
-// First `rip=0x...` value in the freshly appended log text, or 0 when absent.
+// Address of the first ADCX/ADOX instruction in the log text, or 0 when absent.
 uint64_t parse_first_rip(const std::string& text) {
     const size_t key = text.find("rip=0x");
     if (key == std::string::npos) {
         return 0;
     }
     return std::strtoull(text.c_str() + key + 6, nullptr, 16);
+}
+
+// Every `len=` on an `adx_illegal_instruction` record, in log order.
+static std::vector<size_t> parse_adx_lengths(const std::string& text) {
+    std::vector<size_t> lengths;
+    size_t pos = 0;
+    while (pos < text.size()) {
+        size_t nl = text.find('\n', pos);
+        if (nl == std::string::npos) {
+            nl = text.size();
+        }
+        const std::string line = text.substr(pos, nl - pos);
+        pos = nl + 1;
+        if (line.find("\"event\":\"adx_illegal_instruction\"") == std::string::npos) {
+            continue;
+        }
+        const size_t key = line.find("len=");
+        if (key == std::string::npos) {
+            continue;
+        }
+        lengths.push_back(static_cast<size_t>(std::stoull(line.substr(key + 4))));
+    }
+    return lengths;
 }
 
 void check_adx_tripwire(const LogReader& log, const std::string& before) {
@@ -429,13 +456,32 @@ void check_adx_tripwire(const LogReader& log, const std::string& before) {
         __get_cpuid_count(7, 0, &eax, &ebx, &ecx, &edx) && (ebx & (1u << 19)) != 0;
     std::printf("OBSERVED: CPUID.7.0:EBX[19] (ADX) = %u\n", host_has_adx ? 1u : 0u);
 
-    // bx_runtime_veh advances Rip past ADCX/ADOX itself, so these two execute
+    // bx_runtime_veh advances Rip past ADCX/ADOX itself, so these execute
     // either natively (host has ADX) or trap, get logged, and resume. The
     // fixture does not need a handler of its own; reaching the next statement
-    // is the check that the guest was not left re-faulting.
+    // is the check that the guest was not left re-faulting. The label names the
+    // first emitted ADCX so its address can be compared with the logged `rip=`
+    // (a GNU "address of label" extension).
+    const void* first_adcx = &&first_adcx_label;
+first_adcx_label:
     __asm__ volatile(".byte 0x66, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
     __asm__ volatile(".byte 0xf3, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
+    adx_first_rip = reinterpret_cast<uintptr_t>(first_adcx);
     expect(true, "ADCX and ADOX execute or trap-and-resume without wedging the guest");
+
+    // Memory forms. `rax` and `rcx` are set explicitly so the emitted bytes
+    // address a readable 32-bit word inside the fixture's own buffer.
+    static volatile uint32_t adx_words[8] = {0x11223344u, 0x55667788u, 0x99aabbccu, 0xddeeff00u};
+    const uintptr_t words_base = reinterpret_cast<uintptr_t>(adx_words);
+    __asm__ volatile("mov %0, %%rax\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x58, 0x10"
+                     :: "r"(words_base) : "rax", "ebx", "cc", "memory");
+    __asm__ volatile("mov %0, %%rax\n\txor %%rcx, %%rcx\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x1c, 0x88"
+                     :: "r"(words_base) : "rax", "rcx", "ebx", "cc", "memory");
+    __asm__ volatile(".byte 0x66, 0x0f, 0x38, 0xf6, 0x1d, 0x00, 0x00, 0x00, 0x00"
+                     ::: "eax", "ebx", "cc", "memory");
+    expect(true, "memory-operand ADCX forms execute or trap-and-resume");
 
     std::string after;
     if (!log.read_new(after)) {
@@ -460,8 +506,15 @@ void check_adx_tripwire(const LogReader& log, const std::string& before) {
             // The dumped rip must be the instruction that faulted, not one of
             // the earlier AMD instructions this fixture also trapped.
             const uint64_t logged = parse_first_rip(fresh);
-            expect(logged == adx_fault.rip[0],
+            expect(logged == adx_first_rip,
                    "the logged rip is the faulting ADCX address");
+            // Five forms, each logged once: 5, 5, 6, 6 and 9 bytes. The old
+            // `idx + 4` decoder reported 5 for all five, so a wrong length is
+            // visible here even though every effect check would still pass.
+            const std::vector<size_t> lengths = parse_adx_lengths(fresh);
+            const std::vector<size_t> expected{5, 5, 6, 6, 9};
+            expect(lengths == expected,
+                   "each ADCX/ADOX form logs its real length (5, 5, 6, 6, 9)");
         }
     }
 }
