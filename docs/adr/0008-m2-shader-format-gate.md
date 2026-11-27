@@ -67,7 +67,7 @@ Revisit this ADR in any of these cases:
 - **Not covered by the gate yet:**
   - **Stream PSOs:** `ID3D12Device2::CreatePipelineState` stream descriptions are still forwarded unparsed.
   - **Raw-buffer 64-bit atomics:** these cannot be flagged from `SFI0`; the DXIL bitcode would have to be read.
-  - **Telemetry summary:** `bx-cli trace` does not yet summarize `shader_gate` records (Track A).
+  - **Telemetry summary:** `bx-cli trace` now summarizes the gate's records (#496): per-decision, per-kind and per-stage counts for `shader_gate`, the `shader_d3dmetal_gap` list with its wave-width and 64-bit-atomic flags, and `shader_bridge_missing`. The summary only reflects records a run actually wrote; it adds no live run and no new compatibility claim.
 - **Wave size:** the gate logs constraints but changes no shader. A pipeline that D3DMetal creates but does not run still behaves that way.
 
 ## Not claimed

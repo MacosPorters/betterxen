@@ -13,7 +13,7 @@ use std::process::{Command, ExitCode};
 use std::time::{Duration, Instant};
 
 use bx_probe::{ShimTrack, classify_dll, probe_pe32_plus};
-use bx_telemetry::{TrapCount, summarize_jsonl};
+use bx_telemetry::{ShaderGap, TraceSummary, TrapCount, summarize_jsonl};
 use dxbc_accc::inspect_dxbc;
 use supervise::{Outcome, Stop};
 
@@ -182,6 +182,76 @@ fn format_amd_trap_line(name: &str, count: &TrapCount) -> String {
     }
 }
 
+/// True when the log carried any shader-gate evidence. A log without it must render exactly as
+/// it did before the gate summary existed.
+fn has_shader_gate(summary: &TraceSummary) -> bool {
+    summary.shader_gate.total > 0
+        || !summary.shader_gaps.is_empty()
+        || !summary.shader_bridge_missing.is_empty()
+}
+
+/// One `label : value` line in the same column as the other trace lines.
+fn format_shader_line(label: &str, value: impl std::fmt::Display) -> String {
+    format!("{label:<19} : {value}\n")
+}
+
+/// A titled block of `{count:5}x  {name}` lines, or nothing when there is nothing to count.
+fn format_count_list(title: &str, counts: &BTreeMap<String, usize>) -> String {
+    if counts.is_empty() {
+        return String::new();
+    }
+    let mut out = format!("\n{title}:\n");
+    for (name, count) in counts {
+        let _ = writeln!(out, "  {count:5}x  {name}");
+    }
+    out
+}
+
+/// One `shader_d3dmetal_gap` record: the pipeline, stage, wave width it needs, and the 64-bit
+/// atomic feature flags that made it a gap. Missing fields say `unknown` rather than being lost.
+fn format_shader_gap_line(gap: &ShaderGap) -> String {
+    format!(
+        "  pso={} stage={} wave_lanes_min={} atomic64_flags={}\n",
+        gap.pso.as_deref().unwrap_or("unknown"),
+        gap.stage.as_deref().unwrap_or("unknown"),
+        gap.wave_lanes_min.as_deref().unwrap_or("unknown"),
+        gap.atomic64_flags.as_deref().unwrap_or("unknown"),
+    )
+}
+
+/// The shader-gate section, or an empty string for a log with no gate evidence.
+fn format_shader_gate_section(summary: &TraceSummary) -> String {
+    if !has_shader_gate(summary) {
+        return String::new();
+    }
+    let gate = &summary.shader_gate;
+    let mut out = String::from("\nShader gate:\n");
+    out.push_str(&format_shader_line("shader_gate records", gate.total));
+    if gate.unparsed > 0 {
+        out.push_str(&format_shader_line("unparsed details", gate.unparsed));
+    }
+    out.push_str(&format_count_list("decisions", &gate.decisions));
+    out.push_str(&format_count_list("kinds", &gate.kinds));
+    out.push_str(&format_count_list("stages", &gate.stages));
+    if !summary.shader_gaps.is_empty() {
+        let _ = writeln!(out, "\nD3DMetal gaps ({}):", summary.shader_gaps.len());
+        for gap in &summary.shader_gaps {
+            out.push_str(&format_shader_gap_line(gap));
+        }
+    }
+    if !summary.shader_bridge_missing.is_empty() {
+        let _ = writeln!(
+            out,
+            "\nShader bridge missing ({}):",
+            summary.shader_bridge_missing.len()
+        );
+        for message in &summary.shader_bridge_missing {
+            let _ = writeln!(out, "  {message}");
+        }
+    }
+    out
+}
+
 fn cmd_trace(path: &str) -> ExitCode {
     let text = match fs::read_to_string(path) {
         Ok(s) => s,
@@ -213,7 +283,7 @@ fn render_trace(text: &str) -> String {
             "\nUnhandled exceptions ({}):",
             summary.unhandled_exceptions.len()
         );
-        for crash in summary.unhandled_exceptions {
+        for crash in &summary.unhandled_exceptions {
             let _ = writeln!(
                 out,
                 "  code={} module_base={} + RVA={} RIP={}",
@@ -226,16 +296,17 @@ fn render_trace(text: &str) -> String {
     }
     if !summary.unimpl_apis.is_empty() {
         let _ = writeln!(out, "\nUnimplemented APIs:");
-        for (api, count) in summary.unimpl_apis {
+        for (api, count) in &summary.unimpl_apis {
             let _ = writeln!(out, "  {count:5}x  {api}");
         }
     }
     if !summary.unimpl_vtables.is_empty() {
         let _ = writeln!(out, "\nUnimplemented COM vtable slots:");
-        for (slot, count) in summary.unimpl_vtables {
+        for (slot, count) in &summary.unimpl_vtables {
             let _ = writeln!(out, "  {count:5}x  {slot}");
         }
     }
+    out.push_str(&format_shader_gate_section(&summary));
     out
 }
 
@@ -1407,5 +1478,76 @@ sub setup_bottle_wineprefix {
             format_clwb_line(3, Some(4)),
             "clwb VEH traps     : at least 4 (sampled)"
         );
+    }
+
+    #[test]
+    fn a_log_without_shader_gate_records_renders_as_before() {
+        let log = r#"{"ts_ms":10,"tid":1,"level":"INFO","sub":"runtime_veh","event":"clwb_trapped","detail":"rip=0x1000 len=4 total_traps=1"}
+{"ts_ms":12,"tid":1,"level":"WARN","sub":"stub","event":"unimpl_api","detail":"d3d12_xs.dll!D3D12XboxCreateDevice"}
+{"ts_ms":16,"tid":1,"level":"WARN","sub":"com_vtable","event":"unimpl_vtable","detail":"ID3D12Device11[44]::CreatePlacedResourceX"}
+"#;
+        let rendered = render_trace(log);
+        assert!(!rendered.contains("Shader"), "{rendered}");
+        assert!(!rendered.contains("shader_gate"), "{rendered}");
+        assert_eq!(
+            rendered,
+            "Trace events       : 3\n\
+             clwb VEH traps     : at least 1 (sampled)\n\
+             ADX illegal ops    : 0\n\
+             \n\
+             Unimplemented APIs:\n\
+             \x20     1x  d3d12_xs.dll!D3D12XboxCreateDevice\n\
+             \n\
+             Unimplemented COM vtable slots:\n\
+             \x20     1x  ID3D12Device11[44]::CreatePlacedResourceX\n"
+        );
+        assert_eq!(format_shader_gate_section(&summarize_jsonl(log)), "");
+    }
+
+    #[test]
+    fn renders_decisions_kinds_stages_gaps_and_missing_bridge() {
+        // Realistic records, matching the emitter in shims/d3d12_xs/shader_gate.cpp.
+        let log = r#"{"ts_ms":10,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil hr=0x00000000 kind=dxil shader_stage=5 sm=6.6 bytes=1234 dxil=800 accc=0 sfi0=0x4000 wave_ops=1 int64_ops=0 atomic64=typed, wave_lanes=64-64"}
+{"ts_ms":12,"tid":1,"level":"WARN","sub":"d3d12_xs","event":"shader_gate","detail":"pso=graphics stage=VS decision=reject_accc_only hr=0x80004001 kind=accc_only shader_stage=0 sm=6.0 bytes=2048 dxil=0 accc=512 sfi0=0x0 wave_ops=0 int64_ops=0 atomic64= wave_lanes=none"}
+{"ts_ms":16,"tid":1,"level":"WARN","sub":"d3d12_xs","event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}
+{"ts_ms":18,"tid":1,"level":"WARN","sub":"d3d12_xs","event":"shader_bridge_missing","detail":"bx_shader_bridge.dll not found beside d3d12_xs.dll; shaders pass unclassified, ACCC-only refused"}
+"#;
+        let rendered = render_trace(log);
+        assert!(rendered.contains("Shader gate:"), "{rendered}");
+        assert!(rendered.contains("shader_gate records : 2"), "{rendered}");
+        assert!(rendered.contains("decisions:"), "{rendered}");
+        assert!(rendered.contains("    1x  pass_dxil"), "{rendered}");
+        assert!(rendered.contains("    1x  reject_accc_only"), "{rendered}");
+        assert!(rendered.contains("kinds:"), "{rendered}");
+        assert!(rendered.contains("    1x  dxil"), "{rendered}");
+        assert!(rendered.contains("    1x  accc_only"), "{rendered}");
+        assert!(rendered.contains("stages:"), "{rendered}");
+        assert!(rendered.contains("    1x  CS"), "{rendered}");
+        assert!(rendered.contains("    1x  VS"), "{rendered}");
+        assert!(rendered.contains("D3DMetal gaps (1):"), "{rendered}");
+        assert!(
+            rendered.contains("  pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000"),
+            "{rendered}"
+        );
+        assert!(
+            rendered.contains("Shader bridge missing (1):"),
+            "{rendered}"
+        );
+        assert!(
+            rendered.contains("bx_shader_bridge.dll not found beside d3d12_xs.dll"),
+            "{rendered}"
+        );
+        assert!(!rendered.contains("unparsed"), "{rendered}");
+    }
+
+    #[test]
+    fn an_unparsable_shader_gate_detail_shows_the_unparsed_count() {
+        let log = r#"{"ts_ms":20,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"garbage"}
+{"ts_ms":22,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil hr=0x00000000 kind=dxil shader_stage=5 sm=6.6 bytes=100 dxil=64 accc=0 sfi0=0x0 wave_ops=0 int64_ops=0 atomic64= wave_lanes=0-4294967295"}
+"#;
+        let rendered = render_trace(log);
+        assert!(rendered.contains("shader_gate records : 2"), "{rendered}");
+        assert!(rendered.contains("unparsed details    : 1"), "{rendered}");
+        assert!(rendered.contains("    1x  pass_dxil"), "{rendered}");
     }
 }

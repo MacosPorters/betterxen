@@ -20,6 +20,71 @@ pub struct TraceSummary {
     pub unhandled_exceptions: Vec<UnhandledException>,
     pub unimpl_apis: BTreeMap<String, usize>,
     pub unimpl_vtables: BTreeMap<String, usize>,
+    /// Aggregated `shader_gate` records from `d3d12_xs.dll` (#496).
+    pub shader_gate: ShaderGateSummary,
+    /// `shader_d3dmetal_gap` records: pipelines D3DMetal creates but does not run (#453).
+    pub shader_gaps: Vec<ShaderGap>,
+    /// `shader_bridge_missing` messages, in log order.
+    pub shader_bridge_missing: Vec<String>,
+}
+
+/// Aggregated `shader_gate` records. Decisions, kinds and stages are keyed by
+/// their emitted string so unknown values are counted rather than dropped.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct ShaderGateSummary {
+    pub total: usize,
+    /// Gate records whose `detail` could not be parsed as `key=value` pairs.
+    pub unparsed: usize,
+    pub decisions: BTreeMap<String, usize>,
+    pub kinds: BTreeMap<String, usize>,
+    pub stages: BTreeMap<String, usize>,
+    /// Individual gate records, in log order.
+    pub records: Vec<ShaderGateRecord>,
+}
+
+/// One `shader_gate` record. Fields absent from the emitted `detail` (for
+/// example on unclassified records) are `None`; `atomic64` may be `Some("")`.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct ShaderGateRecord {
+    pub pso: Option<String>,
+    pub stage: Option<String>,
+    pub decision: Option<String>,
+    pub hr: Option<String>,
+    pub kind: Option<String>,
+    pub shader_stage: Option<String>,
+    pub sm: Option<String>,
+    pub bytes: Option<String>,
+    pub dxil: Option<String>,
+    pub accc: Option<String>,
+    pub sfi0: Option<String>,
+    pub wave_ops: Option<String>,
+    pub int64_ops: Option<String>,
+    pub atomic64: Option<String>,
+    pub wave_lanes: Option<String>,
+}
+
+/// One `shader_d3dmetal_gap` record.
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct ShaderGap {
+    pub pso: Option<String>,
+    pub stage: Option<String>,
+    pub wave_lanes_min: Option<String>,
+    pub atomic64_flags: Option<String>,
+}
+
+/// Tokenize a `detail` string of space-separated `key=value` pairs. Splits on
+/// ASCII whitespace; a token without `=` ends the key=value section (the
+/// `shader_d3dmetal_gap` record appends free text). Values never contain
+/// spaces, so `atomic64=` followed by a space yields an empty value.
+fn parse_key_values(detail: &str) -> Vec<(&str, &str)> {
+    let mut pairs = Vec::new();
+    for token in detail.split_ascii_whitespace() {
+        match token.split_once('=') {
+            Some((key, value)) if !key.is_empty() => pairs.push((key, value)),
+            _ => break,
+        }
+    }
+    pairs
 }
 
 /// Sampled trap records of one instruction kind.
@@ -62,6 +127,64 @@ fn extract_json_str<'a>(line: &'a str, key: &str) -> Option<&'a str> {
     Some(&rest[..end])
 }
 
+fn get_field<'a>(pairs: &[(&'a str, &'a str)], key: &str) -> Option<String> {
+    pairs
+        .iter()
+        .find(|(k, _)| *k == key)
+        .map(|(_, v)| (*v).to_owned())
+}
+
+fn record_shader_gate(summary: &mut TraceSummary, detail: &str) {
+    let gate = &mut summary.shader_gate;
+    gate.total += 1;
+    let pairs = parse_key_values(detail);
+    if pairs.is_empty() {
+        gate.unparsed += 1;
+        return;
+    }
+    let record = ShaderGateRecord {
+        pso: get_field(&pairs, "pso"),
+        stage: get_field(&pairs, "stage"),
+        decision: get_field(&pairs, "decision"),
+        hr: get_field(&pairs, "hr"),
+        kind: get_field(&pairs, "kind"),
+        shader_stage: get_field(&pairs, "shader_stage"),
+        sm: get_field(&pairs, "sm"),
+        bytes: get_field(&pairs, "bytes"),
+        dxil: get_field(&pairs, "dxil"),
+        accc: get_field(&pairs, "accc"),
+        sfi0: get_field(&pairs, "sfi0"),
+        wave_ops: get_field(&pairs, "wave_ops"),
+        int64_ops: get_field(&pairs, "int64_ops"),
+        atomic64: get_field(&pairs, "atomic64"),
+        wave_lanes: get_field(&pairs, "wave_lanes"),
+    };
+    if let Some(decision) = &record.decision {
+        *gate.decisions.entry(decision.clone()).or_insert(0) += 1;
+    }
+    if let Some(kind) = &record.kind {
+        *gate.kinds.entry(kind.clone()).or_insert(0) += 1;
+    }
+    if let Some(stage) = &record.stage {
+        *gate.stages.entry(stage.clone()).or_insert(0) += 1;
+    }
+    gate.records.push(record);
+}
+
+fn record_shader_gap(summary: &mut TraceSummary, detail: &str) {
+    let pairs = parse_key_values(detail);
+    // The emitter appends `: D3DMetal creates such pipelines ...` directly
+    // after the flags value, so strip the trailing colon.
+    let atomic64_flags = get_field(&pairs, "atomic64_flags")
+        .map(|v| v.strip_suffix(':').map(str::to_owned).unwrap_or(v));
+    summary.shader_gaps.push(ShaderGap {
+        pso: get_field(&pairs, "pso"),
+        stage: get_field(&pairs, "stage"),
+        wave_lanes_min: get_field(&pairs, "wave_lanes_min"),
+        atomic64_flags,
+    });
+}
+
 pub fn summarize_jsonl(input: &str) -> TraceSummary {
     let mut summary = TraceSummary::default();
     for line in input.lines() {
@@ -83,6 +206,11 @@ pub fn summarize_jsonl(input: &str) -> TraceSummary {
                 let entry = summary.amd_traps.entry(name.to_string()).or_default();
                 entry.events += 1;
                 entry.lower_bound = entry.lower_bound.max(sampled_counter(detail));
+            }
+            "shader_gate" => record_shader_gate(&mut summary, detail),
+            "shader_d3dmetal_gap" => record_shader_gap(&mut summary, detail),
+            "shader_bridge_missing" => {
+                summary.shader_bridge_missing.push(detail.to_owned());
             }
             "adx_illegal_instruction" => summary.adx_errors += 1,
             "unhandled_exception" => {
@@ -228,5 +356,116 @@ mod tests {
         );
         assert!(!summary.amd_traps.contains_key("mwaitx"));
         assert_eq!(summary.clwb_events, 0);
+    }
+
+    #[test]
+    fn summarizes_full_pass_dxil_gate_record() {
+        let log = r#"{"ts_ms":10,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil hr=0x00000000 kind=dxil shader_stage=5 sm=6.6 bytes=1234 dxil=800 accc=0 sfi0=0x4000 wave_ops=1 int64_ops=0 atomic64=typed, wave_lanes=64-64"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gate.total, 1);
+        assert_eq!(summary.shader_gate.unparsed, 0);
+        assert_eq!(summary.shader_gate.decisions["pass_dxil"], 1);
+        assert_eq!(summary.shader_gate.kinds["dxil"], 1);
+        assert_eq!(summary.shader_gate.stages["CS"], 1);
+        assert_eq!(summary.shader_gate.records.len(), 1);
+        let r = &summary.shader_gate.records[0];
+        assert_eq!(r.pso.as_deref(), Some("compute"));
+        assert_eq!(r.stage.as_deref(), Some("CS"));
+        assert_eq!(r.decision.as_deref(), Some("pass_dxil"));
+        assert_eq!(r.hr.as_deref(), Some("0x00000000"));
+        assert_eq!(r.kind.as_deref(), Some("dxil"));
+        assert_eq!(r.shader_stage.as_deref(), Some("5"));
+        assert_eq!(r.sm.as_deref(), Some("6.6"));
+        assert_eq!(r.bytes.as_deref(), Some("1234"));
+        assert_eq!(r.dxil.as_deref(), Some("800"));
+        assert_eq!(r.accc.as_deref(), Some("0"));
+        assert_eq!(r.sfi0.as_deref(), Some("0x4000"));
+        assert_eq!(r.wave_ops.as_deref(), Some("1"));
+        assert_eq!(r.int64_ops.as_deref(), Some("0"));
+        assert_eq!(r.atomic64.as_deref(), Some("typed,"));
+        assert_eq!(r.wave_lanes.as_deref(), Some("64-64"));
+    }
+
+    #[test]
+    fn summarizes_reject_accc_only_gate_record() {
+        let log = r#"{"ts_ms":12,"tid":1,"level":"WARN","sub":"d3d12_xs","event":"shader_gate","detail":"pso=graphics stage=VS decision=reject_accc_only hr=0x80004001 kind=accc_only shader_stage=0 sm=6.0 bytes=2048 dxil=0 accc=512 sfi0=0x0 wave_ops=0 int64_ops=0 atomic64= wave_lanes=none"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gate.total, 1);
+        assert_eq!(summary.shader_gate.decisions["reject_accc_only"], 1);
+        assert_eq!(summary.shader_gate.kinds["accc_only"], 1);
+        assert_eq!(summary.shader_gate.stages["VS"], 1);
+        let r = &summary.shader_gate.records[0];
+        assert_eq!(r.hr.as_deref(), Some("0x80004001"));
+        assert_eq!(r.sm.as_deref(), Some("6.0"));
+        assert_eq!(r.accc.as_deref(), Some("512"));
+        assert_eq!(r.atomic64.as_deref(), Some(""));
+        assert_eq!(r.wave_lanes.as_deref(), Some("none"));
+    }
+
+    #[test]
+    fn summarizes_unclassified_gate_record_without_kind() {
+        let log = r#"{"ts_ms":14,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"pso=compute stage=CS decision=pass_unclassified hr=0x00000000 bytes=4096"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gate.total, 1);
+        assert_eq!(summary.shader_gate.decisions["pass_unclassified"], 1);
+        assert_eq!(summary.shader_gate.stages["CS"], 1);
+        assert!(summary.shader_gate.kinds.is_empty());
+        let r = &summary.shader_gate.records[0];
+        assert_eq!(r.bytes.as_deref(), Some("4096"));
+        assert_eq!(r.kind, None);
+        assert_eq!(r.sm, None);
+        assert_eq!(r.dxil, None);
+        assert_eq!(r.atomic64, None);
+        assert_eq!(r.wave_lanes, None);
+    }
+
+    #[test]
+    fn summarizes_d3dmetal_gap_with_free_text_suffix() {
+        let log = r#"{"ts_ms":16,"tid":1,"level":"WARN","sub":"d3d12_xs","event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gaps.len(), 1);
+        let gap = &summary.shader_gaps[0];
+        assert_eq!(gap.pso.as_deref(), Some("compute"));
+        assert_eq!(gap.stage.as_deref(), Some("CS"));
+        assert_eq!(gap.wave_lanes_min.as_deref(), Some("64"));
+        assert_eq!(gap.atomic64_flags.as_deref(), Some("0x400000"));
+    }
+
+    #[test]
+    fn collects_shader_bridge_missing_messages() {
+        let log = r#"{"ts_ms":18,"tid":1,"level":"WARN","sub":"d3d12_xs","event":"shader_bridge_missing","detail":"bx_shader_bridge.dll not found beside d3d12_xs.dll; shaders pass unclassified, ACCC-only refused"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_bridge_missing.len(), 1);
+        assert!(summary.shader_bridge_missing[0].contains("not found beside d3d12_xs.dll"));
+    }
+
+    #[test]
+    fn malformed_shader_gate_detail_is_counted_not_dropped() {
+        for detail in ["", "garbage", "=value", "   "] {
+            let log = format!(
+                "{{\"ts_ms\":20,\"tid\":1,\"level\":\"INFO\",\"sub\":\"d3d12_xs\",\"event\":\"shader_gate\",\"detail\":\"{detail}\"}}"
+            );
+            let summary = summarize_jsonl(&log);
+            assert_eq!(summary.shader_gate.total, 1, "detail={detail:?}");
+            assert_eq!(summary.shader_gate.unparsed, 1, "detail={detail:?}");
+            assert!(summary.shader_gate.records.is_empty(), "detail={detail:?}");
+        }
+    }
+
+    #[test]
+    fn empty_atomic64_value_is_preserved() {
+        let log = r#"{"ts_ms":22,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil hr=0x00000000 kind=dxil shader_stage=5 sm=6.6 bytes=100 dxil=64 accc=0 sfi0=0x0 wave_ops=0 int64_ops=0 atomic64= wave_lanes=0-4294967295"}"#;
+        let summary = summarize_jsonl(log);
+        let r = &summary.shader_gate.records[0];
+        assert_eq!(r.atomic64.as_deref(), Some(""));
+        assert_eq!(r.wave_lanes.as_deref(), Some("0-4294967295"));
+    }
+
+    #[test]
+    fn unknown_decisions_and_kinds_are_counted() {
+        let log = r#"{"event":"shader_gate","detail":"pso=compute stage=CS decision=some_future_decision hr=0x00000000 kind=some_future_kind bytes=1"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gate.decisions["some_future_decision"], 1);
+        assert_eq!(summary.shader_gate.kinds["some_future_kind"], 1);
     }
 }
