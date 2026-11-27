@@ -384,6 +384,49 @@ void check_bit_fields() {
 
 } // namespace
 
+// Exercise the ADX tripwire. bx_runtime_veh logs
+// `adx_illegal_instruction` when it sees ADCX/ADOX (0F 38 F6), and no fixture
+// executed one before, so the record was never observed by a test.
+//
+// ADCX r32,r/m32 = 66 0F 38 F6 /r  -> 66 0f 38 f6 d8 (5 bytes)
+// ADOX r32,r/m32 = F3 0F 38 F6 /r  -> f3 0f 38 f6 d8 (5 bytes)
+// Verified with x86_64-w64-mingw32-as + objdump -d.
+//
+// Whether these trap depends on the HOST CPU, not the shim: without ADX they
+// raise #UD and the tripwire logs; with ADX they execute and nothing is
+// logged. Assert the case that actually applies rather than assuming a trap.
+void check_adx_tripwire(const LogReader& log, const std::string& before) {
+    unsigned eax = 0, ebx = 0, ecx = 0, edx = 0;
+    // CPUID leaf 7, EBX bit 19 = ADX.
+    const bool host_has_adx =
+        __get_cpuid_count(7, 0, &eax, &ebx, &ecx, &edx) && (ebx & (1u << 19)) != 0;
+
+    __asm__ volatile(".byte 0x66, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
+    __asm__ volatile(".byte 0xf3, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
+    expect(true, "ADCX and ADOX either execute or trap-and-resume without killing the guest");
+
+    std::string after;
+    if (!log.read_new(after)) {
+        expect(false, "the ADX log could be read back");
+        return;
+    }
+    const std::string fresh = after.size() > before.size() ? after.substr(before.size()) : std::string();
+    const bool saw = fresh.find("\"event\":\"adx_illegal_instruction\"") != std::string::npos;
+
+    if (host_has_adx) {
+        // Nothing traps, so the shim must log nothing. Asserting a record here
+        // would demand a trap that did not happen.
+        expect(!saw, "a host with ADX traps nothing, so the tripwire logs nothing");
+    } else {
+        expect(saw, "a host without ADX raises #UD and the tripwire logs adx_illegal_instruction");
+        if (saw) {
+            expect(fresh.find("bytes=66 0f 38 f6 d8") != std::string::npos ||
+                   fresh.find("bytes=f3 0f 38 f6 d8") != std::string::npos,
+                   "the tripwire dumps the ADCX/ADOX bytes it saw");
+        }
+    }
+}
+
 int main() {
     // Keep the DLL import so that its VEH is installed before this fixture.
     (void)bx_veh_get_clwb_trap_count();
@@ -404,6 +447,13 @@ int main() {
     check_wait_instructions();
     check_processor_registers();
     check_bit_fields();
+
+    // The ADX check needs a snapshot of the log taken before it runs.
+    std::string adx_before;
+    if (!log.read_new(adx_before)) {
+        return 9;
+    }
+    check_adx_tripwire(log, adx_before);
 
     // -----------------------------------------------------------------------
     // Verify the decoded instruction length (`len=`) that the VEH logs and
