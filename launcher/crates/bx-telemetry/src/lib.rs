@@ -668,13 +668,16 @@ mod tests {
     /// with its own wave width and 64-bit-atomic flags.
     #[test]
     fn groups_gaps_on_different_stages_separately_in_first_seen_order() {
+        // Same pso, different stages: grouping on pso alone would collapse these, so the
+        // test discriminates the (pso, stage) key rather than only the pso.
         let log = r#"{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=VS wave_lanes_min=64 atomic64_flags=0x0: D3DMetal creates such pipelines but does not run them (#453)"}
-{"event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}"#;
+{"event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}
+{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=PS wave_lanes_min=64 atomic64_flags=0x0: D3DMetal creates such pipelines but does not run them (#453)"}"#;
         let summary = summarize_jsonl(log);
-        assert_eq!(summary.shader_gaps.len(), 2);
+        assert_eq!(summary.shader_gaps.len(), 3);
         assert_eq!(summary.shader_gaps_missing_identity, 0);
         assert_eq!(summary.shader_gaps_missing_constraints, 0);
-        assert_eq!(summary.shader_gap_groups.len(), 2);
+        assert_eq!(summary.shader_gap_groups.len(), 3);
 
         let first = &summary.shader_gap_groups[0];
         assert_eq!(first.pso.as_deref(), Some("graphics"));
@@ -693,14 +696,13 @@ mod tests {
         assert_eq!(second.pso.as_deref(), Some("compute"));
         assert_eq!(second.stage.as_deref(), Some("CS"));
         assert_eq!(second.count, 1);
-        assert_eq!(
-            second.variants,
-            [ShaderGapVariant {
-                wave_lanes_min: Some("64".into()),
-                atomic64_flags: Some("0x400000".into()),
-                count: 1,
-            }]
-        );
+
+        // A second stage of the *same* pso stays its own group, which is what separates a
+        // (pso, stage) key from a pso-only key.
+        let third = &summary.shader_gap_groups[2];
+        assert_eq!(third.pso.as_deref(), Some("graphics"));
+        assert_eq!(third.stage.as_deref(), Some("PS"));
+        assert_eq!(third.count, 1);
     }
 
     /// #590: the same `(pso, stage)` twice is one group with a count of two, even when the
