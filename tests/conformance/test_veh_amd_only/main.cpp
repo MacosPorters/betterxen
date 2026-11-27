@@ -392,50 +392,31 @@ void check_bit_fields() {
 // Encodings, re-derived by assembling with x86_64-w64-mingw32-as and
 // disassembling with x86_64-w64-mingw32-objdump -d:
 //
-//   0:  66 0f 38 f6 d8   adcx %eax,%ebx   -> 5 bytes
-//   5:  f3 0f 38 f6 d8   adox %eax,%ebx   -> 5 bytes
+//   66 0f 38 f6 d8           adcx %eax,%ebx                 -> 5 bytes
+//   f3 0f 38 f6 d8           adox %eax,%ebx                 -> 5 bytes
+//   66 0f 38 f6 1c 88        adcx (%rax,%rcx,4),%ebx        -> 6 bytes (SIB)
+//   66 0f 38 f6 5c 88 40     adcx 0x40(%rax,%rcx,4),%ebx    -> 7 bytes (SIB + disp8)
+//   66 0f 38 f6 98 00 01 00 00  adcx 0x100(%rax),%ebx        -> 9 bytes (disp32)
+//   66 0f 38 f6 1d <disp32>  adcx (%rip),%ebx                -> 9 bytes (RIP-relative disp32)
+//
+// The first revision of the shim decoder returned `idx + 4` — opcode plus one
+// ModRM byte — so every memory form advanced Rip 1-4 bytes short of the real
+// instruction (#545). The fixture therefore emits SIB, disp8, disp32 and
+// RIP-relative forms and asserts the logged `len=`, not just that a record
+// appeared.
 //
 // Whether these trap depends on the HOST CPU, not on the shim: without ADX
 // they raise #UD and the tripwire logs; with ADX they execute and nothing is
 // logged. The check reads CPUID leaf 7 EBX[19] and asserts the case that
 // applies, so it never demands a trap that did not happen.
 //
-// The resume handler below is required, not cosmetic. bx_veh_handler logs
-// `adx_illegal_instruction` and then returns EXCEPTION_CONTINUE_SEARCH without
-// advancing Rip (see shims/runtime_veh/runtime_veh.cpp), so on a host without
-// ADX the same #UD would fire forever and the process would die inside the
-// first ADCX, before the log could ever be read back. This handler is added
-// with FirstHandler = 0, i.e. at the END of the chain, so it runs after the
-// tripwire has already written its record, and only then skips the 5 bytes.
-struct AdxFault {
-    unsigned hits = 0;
-    uintptr_t rip[2] = {0, 0};
-};
-
-AdxFault adx_fault;
-
-LONG CALLBACK resume_after_adx(EXCEPTION_POINTERS* pointers) {
-    if (!pointers || !pointers->ExceptionRecord || !pointers->ContextRecord) {
-        return EXCEPTION_CONTINUE_SEARCH;
-    }
-    if (pointers->ExceptionRecord->ExceptionCode != EXCEPTION_ILLEGAL_INSTRUCTION) {
-        return EXCEPTION_CONTINUE_SEARCH;
-    }
-    if (adx_fault.hits >= 2) {
-        return EXCEPTION_CONTINUE_SEARCH;
-    }
-    // Only skip a form this fixture actually emitted.
-    const uint8_t* ip = reinterpret_cast<const uint8_t*>(pointers->ContextRecord->Rip);
-    const bool adcx = ip[0] == 0x66 && ip[1] == 0x0F && ip[2] == 0x38 && ip[3] == 0xF6;
-    const bool adox = ip[0] == 0xF3 && ip[1] == 0x0F && ip[2] == 0x38 && ip[3] == 0xF6;
-    if (!adcx && !adox) {
-        return EXCEPTION_CONTINUE_SEARCH;
-    }
-    adx_fault.rip[adx_fault.hits] = pointers->ContextRecord->Rip;
-    ++adx_fault.hits;
-    pointers->ContextRecord->Rip += 5;
-    return EXCEPTION_CONTINUE_EXECUTION;
-}
+// The fixture emits six forms; on a host without ADX the shim must log each
+// one's real length and advance Rip past it. The handler logs and resumes
+// itself (`Rip += adx_instruction_length`), so reaching the next statement is
+// the check that the guest was not left re-faulting; the logged `len=` is the
+// check that Rip landed on the next instruction boundary rather than inside
+// the SIB or displacement bytes.
+uintptr_t adx_first_rip = 0;
 
 // First `rip=0x...` value in the freshly appended log text, or 0 when absent.
 uint64_t parse_first_rip(const std::string& text) {
@@ -446,6 +427,29 @@ uint64_t parse_first_rip(const std::string& text) {
     return std::strtoull(text.c_str() + key + 6, nullptr, 16);
 }
 
+// Every `len=` on an `adx_illegal_instruction` record, in log order.
+std::vector<size_t> parse_adx_lengths(const std::string& text) {
+    std::vector<size_t> lengths;
+    size_t pos = 0;
+    while (pos < text.size()) {
+        size_t nl = text.find('\n', pos);
+        if (nl == std::string::npos) {
+            nl = text.size();
+        }
+        const std::string line = text.substr(pos, nl - pos);
+        pos = nl + 1;
+        if (line.find("\"event\":\"adx_illegal_instruction\"") == std::string::npos) {
+            continue;
+        }
+        const size_t key = line.find("len=");
+        if (key == std::string::npos) {
+            continue;
+        }
+        lengths.push_back(static_cast<size_t>(std::strtoull(line.c_str() + key + 4, nullptr, 10)));
+    }
+    return lengths;
+}
+
 void check_adx_tripwire(const LogReader& log, const std::string& before) {
     unsigned eax = 0, ebx = 0, ecx = 0, edx = 0;
     // CPUID leaf 7, EBX bit 19 = ADX.
@@ -453,23 +457,46 @@ void check_adx_tripwire(const LogReader& log, const std::string& before) {
         __get_cpuid_count(7, 0, &eax, &ebx, &ecx, &edx) && (ebx & (1u << 19)) != 0;
     std::printf("OBSERVED: CPUID.7.0:EBX[19] (ADX) = %u\n", host_has_adx ? 1u : 0u);
 
-    adx_fault = AdxFault{};
-    PVOID handler = AddVectoredExceptionHandler(0, resume_after_adx);
-    expect(handler != nullptr, "install the ADCX/ADOX resume handler");
-    if (!handler) {
-        return;
-    }
+    // bx_runtime_veh advances Rip past ADCX/ADOX itself, so these execute
+    // either natively (host has ADX) or trap, get logged, and resume. The
+    // fixture does not need a handler of its own; reaching the next statement
+    // is the check that the guest was not left re-faulting. The label names the
+    // first emitted ADCX so its address can be compared with the logged `rip=`
+    // (a GNU "address of label" extension).
+    const void* first_adcx = &&first_adcx_label;
+first_adcx_label:
     __asm__ volatile(".byte 0x66, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
     __asm__ volatile(".byte 0xf3, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
-    RemoveVectoredExceptionHandler(handler);
+    adx_first_rip = reinterpret_cast<uintptr_t>(first_adcx);
+    expect(true, "ADCX and ADOX execute or trap-and-resume without wedging the guest");
 
-    // Execution reached this point whether the instructions ran or trapped and
-    // were skipped; the fault count is what distinguishes the two.
-    if (host_has_adx) {
-        expect(adx_fault.hits == 0, "with ADX advertised, neither ADCX nor ADOX raised #UD");
-    } else {
-        expect(adx_fault.hits == 2, "without ADX advertised, both ADCX and ADOX raised #UD");
-    }
+    // Memory forms. `rax` and `rcx` are set explicitly so the emitted bytes
+    // address a readable 32-bit word inside the fixture's own buffer. Each
+    // form's byte sequence was derived by assembling with
+    // x86_64-w64-mingw32-as and disassembling with
+    // x86_64-w64-mingw32-objdump -d (see the table above).
+    // 512 bytes, so the disp8 (0x40) and disp32 (0x100) forms below both land
+    // inside it when they execute on a host that has ADX.
+    static volatile uint32_t adx_words[128] = {0x11223344u, 0x55667788u, 0x99aabbccu, 0xddeeff00u};
+    const uintptr_t words_base = reinterpret_cast<uintptr_t>(adx_words);
+    // SIB, no displacement: adcx (%rax,%rcx,4),%ebx -> 66 0f 38 f6 1c 88 (6).
+    __asm__ volatile("mov %0, %%rax\n\txor %%rcx, %%rcx\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x1c, 0x88"
+                     :: "r"(words_base) : "rax", "rcx", "ebx", "cc", "memory");
+    // SIB + disp8: adcx 0x40(%rax,%rcx,4),%ebx -> 66 0f 38 f6 5c 88 40 (7).
+    __asm__ volatile("mov %0, %%rax\n\txor %%rcx, %%rcx\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x5c, 0x88, 0x40"
+                     :: "r"(words_base) : "rax", "rcx", "ebx", "cc", "memory");
+    // disp32: adcx 0x100(%rax),%ebx -> 66 0f 38 f6 98 00 01 00 00 (9).
+    __asm__ volatile("mov %0, %%rax\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x98, 0x00, 0x01, 0x00, 0x00"
+                     :: "r"(words_base) : "rax", "ebx", "cc", "memory");
+    // RIP-relative disp32: adcx (%rip),%ebx -> 66 0f 38 f6 1d <disp32> (9).
+    // The displacement is 0 here, which is a valid encoding of the form; the
+    // decoder must consume all four displacement bytes regardless of value.
+    __asm__ volatile(".byte 0x66, 0x0f, 0x38, 0xf6, 0x1d, 0x00, 0x00, 0x00, 0x00"
+                     ::: "eax", "ebx", "cc", "memory");
+    expect(true, "memory-operand ADCX forms execute or trap-and-resume");
 
     std::string after;
     if (!log.read_new(after)) {
@@ -494,8 +521,15 @@ void check_adx_tripwire(const LogReader& log, const std::string& before) {
             // The dumped rip must be the instruction that faulted, not one of
             // the earlier AMD instructions this fixture also trapped.
             const uint64_t logged = parse_first_rip(fresh);
-            expect(logged == adx_fault.rip[0],
+            expect(logged == adx_first_rip,
                    "the logged rip is the faulting ADCX address");
+            // Six forms, each logged once: 5, 5, 6, 7, 9 and 9 bytes. The old
+            // `idx + 4` decoder reported 5 for all six, so a wrong length is
+            // visible here even though every effect check would still pass.
+            const std::vector<size_t> lengths = parse_adx_lengths(fresh);
+            const std::vector<size_t> expected{5, 5, 6, 7, 9, 9};
+            expect(lengths == expected,
+                   "each ADCX/ADOX form logs its real length (5, 5, 6, 7, 9, 9)");
         }
     }
 }
