@@ -3,6 +3,8 @@
 #include <atomic>
 #include <cstdint>
 #include <cstdio>
+#include <cstring>
+#include <string>
 #include <thread>
 
 extern "C" {
@@ -31,7 +33,41 @@ namespace {
 void WINAPI dummy_device_callback(uint64_t, void*, void*, uint64_t, uint32_t, uint32_t) {}
 } // namespace
 
+
+// Read the JSONL log the shim wrote, so the dispatcher's live-reference
+// count can be checked rather than assumed. The log is the only place the
+// count is observable: `Release` returning 0 proves the count reached zero,
+// not that the object was freed. Removing `delete this` would leave the
+// count correct while leaking, so this assertion is what catches it.
+static std::string read_log_file(const char* path) {
+    std::string text;
+    if (!path || !*path) return text;
+    HANDLE f = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE, nullptr,
+                           OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+    if (f == INVALID_HANDLE_VALUE) return text;
+    char buf[4096];
+    DWORD got = 0;
+    while (ReadFile(f, buf, sizeof(buf), &got, nullptr) && got > 0) {
+        text.append(buf, got);
+    }
+    CloseHandle(f);
+    return text;
+}
+
 int main() {
+        // `bx-cli run` sets BX_LOG_FILE for the guest. When the fixture is
+        // run directly there is no such variable, so create a temp log and
+        // point the shim at it; otherwise the assertions below would read an
+        // empty file and fail for the wrong reason.
+        char log_path[MAX_PATH]{};
+        DWORD n = GetEnvironmentVariableA("BX_LOG_FILE", log_path, sizeof(log_path));
+        if (n == 0 || n >= sizeof(log_path)) {
+            char temp_dir[MAX_PATH]{};
+            CHECK(GetTempPathA(sizeof(temp_dir), temp_dir) > 0);
+            CHECK(GetTempFileNameA(temp_dir, "bxg", 0, log_path) != 0);
+            CHECK(SetEnvironmentVariableA("BX_LOG_FILE", log_path));
+        }
+
     void* object = nullptr;
     CHECK(AcpHalCreate(&object) == S_OK && object);
     auto* hal = static_cast<IUnknown*>(object);
@@ -216,6 +252,19 @@ int main() {
     CHECK(open_wait(disp_unknown, &wait2) == S_OK && wait2 && wait2 != wait1);
     CHECK(CloseHandle(wait1) && CloseHandle(wait2));
     CHECK(disp_unknown->Release() == 0);
+
+    // The live-dispatcher count is the only observable evidence that the
+    // dispatcher was destroyed: `Release` returning 0 proves the count, not
+    // the deallocation. `dispatch_mode` logs `mode=manual live_dispatchers=N`
+    // on every transition, so a `delete this` removal that leaks the object
+    // would leave `live_dispatchers=1` behind and fail here.
+    {
+        const std::string log = read_log_file(log_path);
+        CHECK(log.find("live_dispatchers=1") != std::string::npos);
+        CHECK(log.find("live_dispatchers=0") != std::string::npos);
+        CHECK(log.find("mode=manual") != std::string::npos);
+        CHECK(log.find("mode=automatic") != std::string::npos);
+    }
 
     CHECK(v0->Release() == 1);
     CHECK(input->Release() == 0);
