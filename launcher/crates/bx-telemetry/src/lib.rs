@@ -24,8 +24,43 @@ pub struct TraceSummary {
     pub shader_gate: ShaderGateSummary,
     /// `shader_d3dmetal_gap` records: pipelines D3DMetal creates but does not run (#453).
     pub shader_gaps: Vec<ShaderGap>,
+    /// Those same gap records grouped by `(pso, stage)`, in first-seen order (#590).
+    pub shader_gap_groups: Vec<ShaderGapGroup>,
+    /// Gap records that carried no `pso` or no `stage` (or an empty value for one), so
+    /// they are grouped under `unknown`. Counted here so the group counts reconcile
+    /// with [`TraceSummary::shader_gaps`].
+    pub shader_gaps_missing_identity: usize,
+    /// Gap records that carried no `wave_lanes_min` or no `atomic64_flags` (or an empty
+    /// value for one). Counted here rather than dropped or assumed.
+    pub shader_gaps_missing_constraints: usize,
     /// `shader_bridge_missing` messages, in log order.
     pub shader_bridge_missing: Vec<String>,
+}
+
+/// One `(pso, stage)` group of `shader_d3dmetal_gap` records (#590).
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct ShaderGapGroup {
+    /// The emitted `pso=` value, or `None` when the record carried none (rendered as
+    /// `unknown`).
+    pub pso: Option<String>,
+    /// The emitted `stage=` value, or `None` when the record carried none.
+    pub stage: Option<String>,
+    /// How many gap records this `(pso, stage)` pair covers.
+    pub count: usize,
+    /// The distinct `(wave_lanes_min, atomic64_flags)` pairs seen for this pair, in
+    /// first-seen order. Two pipelines of the same kind and stage can need different
+    /// wave widths or atomic features, so a group keeps each constraint set rather than
+    /// reporting only the first and losing the rest.
+    pub variants: Vec<ShaderGapVariant>,
+}
+
+/// The constraints carried by one or more records of a [`ShaderGapGroup`].
+#[derive(Debug, Default, PartialEq, Eq)]
+pub struct ShaderGapVariant {
+    pub wave_lanes_min: Option<String>,
+    pub atomic64_flags: Option<String>,
+    /// How many records in the group carried exactly these constraints.
+    pub count: usize,
 }
 
 /// Aggregated `shader_gate` records. Decisions, kinds and stages are keyed by
@@ -200,18 +235,77 @@ fn record_shader_gate(summary: &mut TraceSummary, detail: &str) {
     gate.records.push(record);
 }
 
+/// A field value, treating an empty value (`pso= stage=CS`) as absent. The emitter
+/// always writes a value, so an empty one means the record is malformed, not that the
+/// pipeline is named "".
+fn non_empty(value: Option<String>) -> Option<String> {
+    value.filter(|v| !v.is_empty())
+}
+
+/// Adds one gap record to the per-`(pso, stage)` grouping, keeping first-seen order.
+///
+/// Nothing here panics: a record missing `pso`, `stage`, `wave_lanes_min` or
+/// `atomic64_flags` is grouped under `unknown` (and counted), never dropped or guessed.
+fn record_shader_gap_group(groups: &mut TraceSummary, gap: &ShaderGap) {
+    let pso = non_empty(gap.pso.clone());
+    let stage = non_empty(gap.stage.clone());
+    let wave_lanes_min = non_empty(gap.wave_lanes_min.clone());
+    let atomic64_flags = non_empty(gap.atomic64_flags.clone());
+    if pso.is_none() || stage.is_none() {
+        groups.shader_gaps_missing_identity += 1;
+    }
+    if wave_lanes_min.is_none() || atomic64_flags.is_none() {
+        groups.shader_gaps_missing_constraints += 1;
+    }
+
+    // The group list is small (one entry per affected pipeline stage), so a linear scan
+    // keeps first-seen order without a second index to keep in sync.
+    let group_index = match groups
+        .shader_gap_groups
+        .iter()
+        .position(|g| g.pso == pso && g.stage == stage)
+    {
+        Some(index) => index,
+        None => {
+            groups.shader_gap_groups.push(ShaderGapGroup {
+                pso,
+                stage,
+                count: 0,
+                variants: Vec::new(),
+            });
+            groups.shader_gap_groups.len() - 1
+        }
+    };
+    let group = &mut groups.shader_gap_groups[group_index];
+    group.count += 1;
+    match group
+        .variants
+        .iter()
+        .position(|v| v.wave_lanes_min == wave_lanes_min && v.atomic64_flags == atomic64_flags)
+    {
+        Some(index) => group.variants[index].count += 1,
+        None => group.variants.push(ShaderGapVariant {
+            wave_lanes_min,
+            atomic64_flags,
+            count: 1,
+        }),
+    }
+}
+
 fn record_shader_gap(summary: &mut TraceSummary, detail: &str) {
     let pairs = parse_key_values(detail, true);
     // The emitter appends `: D3DMetal creates such pipelines ...` directly
     // after the flags value, so strip the trailing colon.
     let atomic64_flags = get_field(&pairs, "atomic64_flags")
         .map(|v| v.strip_suffix(':').map(str::to_owned).unwrap_or(v));
-    summary.shader_gaps.push(ShaderGap {
+    let gap = ShaderGap {
         pso: get_field(&pairs, "pso"),
         stage: get_field(&pairs, "stage"),
         wave_lanes_min: get_field(&pairs, "wave_lanes_min"),
         atomic64_flags,
-    });
+    };
+    record_shader_gap_group(summary, &gap);
+    summary.shader_gaps.push(gap);
 }
 
 pub fn summarize_jsonl(input: &str) -> TraceSummary {
@@ -568,5 +662,178 @@ mod tests {
         let pairs = parse_key_values("pso=graphics stage=pixel and then some prose", true);
         assert_eq!(pairs.len(), 2);
         assert_eq!(pairs[1], ("stage", "pixel"));
+    }
+
+    /// #590: two gaps on different stages must stay two groups, in first-seen order, each
+    /// with its own wave width and 64-bit-atomic flags.
+    #[test]
+    fn groups_gaps_on_different_stages_separately_in_first_seen_order() {
+        let log = r#"{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=VS wave_lanes_min=64 atomic64_flags=0x0: D3DMetal creates such pipelines but does not run them (#453)"}
+{"event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gaps.len(), 2);
+        assert_eq!(summary.shader_gaps_missing_identity, 0);
+        assert_eq!(summary.shader_gaps_missing_constraints, 0);
+        assert_eq!(summary.shader_gap_groups.len(), 2);
+
+        let first = &summary.shader_gap_groups[0];
+        assert_eq!(first.pso.as_deref(), Some("graphics"));
+        assert_eq!(first.stage.as_deref(), Some("VS"));
+        assert_eq!(first.count, 1);
+        assert_eq!(
+            first.variants,
+            [ShaderGapVariant {
+                wave_lanes_min: Some("64".into()),
+                atomic64_flags: Some("0x0".into()),
+                count: 1,
+            }]
+        );
+
+        let second = &summary.shader_gap_groups[1];
+        assert_eq!(second.pso.as_deref(), Some("compute"));
+        assert_eq!(second.stage.as_deref(), Some("CS"));
+        assert_eq!(second.count, 1);
+        assert_eq!(
+            second.variants,
+            [ShaderGapVariant {
+                wave_lanes_min: Some("64".into()),
+                atomic64_flags: Some("0x400000".into()),
+                count: 1,
+            }]
+        );
+    }
+
+    /// #590: the same `(pso, stage)` twice is one group with a count of two, even when the
+    /// identical records are not adjacent.
+    #[test]
+    fn groups_identical_gaps_together() {
+        let record = r#"{"event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}"#;
+        let other = r#"{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=PS wave_lanes_min=32 atomic64_flags=0x0: D3DMetal creates such pipelines but does not run them (#453)"}"#;
+        let log = format!("{record}\n{other}\n{record}\n");
+        let summary = summarize_jsonl(&log);
+        assert_eq!(summary.shader_gaps.len(), 3);
+        assert_eq!(summary.shader_gap_groups.len(), 2);
+        let compute = &summary.shader_gap_groups[0];
+        assert_eq!(compute.stage.as_deref(), Some("CS"));
+        assert_eq!(compute.count, 2);
+        assert_eq!(
+            compute.variants,
+            [ShaderGapVariant {
+                wave_lanes_min: Some("64".into()),
+                atomic64_flags: Some("0x400000".into()),
+                count: 2,
+            }]
+        );
+        assert_eq!(summary.shader_gap_groups[1].count, 1);
+        // Every record is in exactly one group.
+        let grouped: usize = summary.shader_gap_groups.iter().map(|g| g.count).sum();
+        assert_eq!(grouped, summary.shader_gaps.len());
+    }
+
+    /// #590: one pipeline kind and stage can need different wave widths or atomic
+    /// features, so a group keeps every distinct constraint set, not only the first.
+    #[test]
+    fn one_group_keeps_each_distinct_constraint_set() {
+        let log = r#"{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=PS wave_lanes_min=64 atomic64_flags=0x0: D3DMetal creates such pipelines but does not run them (#453)"}
+{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=PS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}
+{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=PS wave_lanes_min=64 atomic64_flags=0x0: D3DMetal creates such pipelines but does not run them (#453)"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gap_groups.len(), 1);
+        let group = &summary.shader_gap_groups[0];
+        assert_eq!(group.count, 3);
+        assert_eq!(
+            group.variants,
+            [
+                ShaderGapVariant {
+                    wave_lanes_min: Some("64".into()),
+                    atomic64_flags: Some("0x0".into()),
+                    count: 2,
+                },
+                ShaderGapVariant {
+                    wave_lanes_min: Some("64".into()),
+                    atomic64_flags: Some("0x400000".into()),
+                    count: 1,
+                },
+            ]
+        );
+        assert_eq!(summary.shader_gaps_missing_constraints, 0);
+    }
+
+    /// #590: a gap record with a missing or empty field must not panic. It is grouped
+    /// under `unknown` and counted, never dropped or guessed.
+    #[test]
+    fn a_malformed_gap_record_is_grouped_under_unknown_and_counted() {
+        for (detail, missing_identity, missing_constraints) in [
+            ("", 1, 1),
+            ("garbage", 1, 1),
+            ("pso=compute", 1, 1),
+            ("stage=CS", 1, 1),
+            (
+                "pso= stage=CS wave_lanes_min=64 atomic64_flags=0x400000",
+                1,
+                0,
+            ),
+            ("pso=compute stage=CS", 0, 1),
+            (
+                "pso=compute stage=CS wave_lanes_min=64 atomic64_flags=",
+                0,
+                1,
+            ),
+        ] {
+            let log = format!(r#"{{"event":"shader_d3dmetal_gap","detail":"{detail}"}}"#);
+            let summary = summarize_jsonl(&log);
+            assert_eq!(summary.shader_gaps.len(), 1, "detail={detail:?}");
+            assert_eq!(
+                summary.shader_gap_groups.len(),
+                1,
+                "detail={detail:?} lost its record"
+            );
+            assert_eq!(
+                summary.shader_gaps_missing_identity, missing_identity,
+                "detail={detail:?}"
+            );
+            assert_eq!(
+                summary.shader_gaps_missing_constraints, missing_constraints,
+                "detail={detail:?}"
+            );
+            let group = &summary.shader_gap_groups[0];
+            assert_eq!(group.count, 1, "detail={detail:?}");
+            let recorded: usize = group.variants.iter().map(|v| v.count).sum();
+            assert_eq!(recorded, 1, "detail={detail:?}");
+        }
+    }
+
+    /// #590: the fields a malformed record does carry are still reported.
+    #[test]
+    fn a_partly_malformed_gap_record_keeps_the_fields_it_has() {
+        let log =
+            r#"{"event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64"}"#;
+        let summary = summarize_jsonl(log);
+        let group = &summary.shader_gap_groups[0];
+        assert_eq!(group.pso.as_deref(), Some("compute"));
+        assert_eq!(group.stage.as_deref(), Some("CS"));
+        assert_eq!(
+            group.variants,
+            [ShaderGapVariant {
+                wave_lanes_min: Some("64".into()),
+                atomic64_flags: None,
+                count: 1,
+            }]
+        );
+        assert_eq!(summary.shader_gaps_missing_identity, 0);
+        assert_eq!(summary.shader_gaps_missing_constraints, 1);
+    }
+
+    /// #590: a run with no gap records produces no groups and no missing-field counts, so
+    /// the trace renders as it did before the grouping existed.
+    #[test]
+    fn a_run_with_no_gaps_has_no_groups() {
+        let log = r#"{"ts_ms":10,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil hr=0x00000000 kind=dxil shader_stage=5 sm=6.6 bytes=1234 dxil=800 accc=0 sfi0=0x4000 wave_ops=1 int64_ops=0 atomic64=typed, wave_lanes=64-64"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gate.total, 1);
+        assert!(summary.shader_gaps.is_empty());
+        assert!(summary.shader_gap_groups.is_empty());
+        assert_eq!(summary.shader_gaps_missing_identity, 0);
+        assert_eq!(summary.shader_gaps_missing_constraints, 0);
     }
 }

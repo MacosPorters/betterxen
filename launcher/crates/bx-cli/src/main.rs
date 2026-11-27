@@ -13,7 +13,7 @@ use std::process::{Command, ExitCode};
 use std::time::{Duration, Instant};
 
 use bx_probe::{ShimTrack, classify_dll, probe_pe32_plus};
-use bx_telemetry::{ShaderGap, TraceSummary, TrapCount, summarize_jsonl};
+use bx_telemetry::{ShaderGap, ShaderGapGroup, TraceSummary, TrapCount, summarize_jsonl};
 use dxbc_accc::inspect_dxbc;
 use supervise::{Outcome, Stop};
 
@@ -219,6 +219,27 @@ fn format_shader_gap_line(gap: &ShaderGap) -> String {
     )
 }
 
+/// One `(pso, stage)` group of gap records, with its count and every distinct constraint set
+/// (#590). Missing fields say `unknown` rather than being lost.
+fn format_shader_gap_group(group: &ShaderGapGroup) -> String {
+    let mut out = format!(
+        "  {:5}x  pso={} stage={}\n",
+        group.count,
+        group.pso.as_deref().unwrap_or("unknown"),
+        group.stage.as_deref().unwrap_or("unknown"),
+    );
+    for variant in &group.variants {
+        let _ = writeln!(
+            out,
+            "          wave_lanes_min={} atomic64_flags={} ({}x)",
+            variant.wave_lanes_min.as_deref().unwrap_or("unknown"),
+            variant.atomic64_flags.as_deref().unwrap_or("unknown"),
+            variant.count,
+        );
+    }
+    out
+}
+
 /// One line per gate record whose decision is not a pass, naming the pipeline,
 /// stage, decision and HRESULT. These are the records a reader needs to find a
 /// blocker; the counted breakdown alone does not say which pipeline failed
@@ -276,6 +297,28 @@ fn format_shader_gate_section(summary: &TraceSummary) -> String {
         let _ = writeln!(out, "\nD3DMetal gaps ({}):", summary.shader_gaps.len());
         for gap in &summary.shader_gaps {
             out.push_str(&format_shader_gap_line(gap));
+        }
+        // #590: the same records grouped by pipeline and stage, so a reader can tell which
+        // pipelines are created-but-not-run. Additive: the per-record list above is unchanged.
+        let _ = writeln!(
+            out,
+            "\nD3DMetal gaps by pipeline/stage ({}):",
+            summary.shader_gap_groups.len()
+        );
+        for group in &summary.shader_gap_groups {
+            out.push_str(&format_shader_gap_group(group));
+        }
+        if summary.shader_gaps_missing_identity > 0 {
+            out.push_str(&format_shader_line(
+                "gaps w/o pso/stage",
+                summary.shader_gaps_missing_identity,
+            ));
+        }
+        if summary.shader_gaps_missing_constraints > 0 {
+            out.push_str(&format_shader_line(
+                "gaps w/o constraints",
+                summary.shader_gaps_missing_constraints,
+            ));
         }
     }
     if !summary.shader_bridge_missing.is_empty() {
@@ -1661,5 +1704,60 @@ sub setup_bottle_wineprefix {
         assert!(rendered.contains("shader_gate records : 2"), "{rendered}");
         assert!(rendered.contains("unparsed details    : 1"), "{rendered}");
         assert!(rendered.contains("    1x  pass_dxil"), "{rendered}");
+    }
+
+    /// #590: the grouped view names each `(pso, stage)` pair with its count, wave width and
+    /// 64-bit-atomic flags, in first-seen order, and says when a record lost its identity.
+    #[test]
+    fn renders_gaps_grouped_by_pipeline_and_stage() {
+        let log = r#"{"event":"shader_d3dmetal_gap","detail":"pso=graphics stage=VS wave_lanes_min=64 atomic64_flags=0x0: D3DMetal creates such pipelines but does not run them (#453)"}
+{"event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}
+{"event":"shader_d3dmetal_gap","detail":"pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000: D3DMetal creates such pipelines but does not run them (#453)"}
+{"event":"shader_d3dmetal_gap","detail":"garbage"}
+"#;
+        let rendered = render_trace(log);
+        // The #496 per-record list is unchanged.
+        assert!(rendered.contains("D3DMetal gaps (4):"), "{rendered}");
+        assert!(
+            rendered.contains("  pso=compute stage=CS wave_lanes_min=64 atomic64_flags=0x400000"),
+            "{rendered}"
+        );
+        // The additive grouped view.
+        assert!(
+            rendered.contains("D3DMetal gaps by pipeline/stage (3):"),
+            "{rendered}"
+        );
+        assert!(
+            rendered.contains("      1x  pso=graphics stage=VS"),
+            "{rendered}"
+        );
+        assert!(
+            rendered.contains("      2x  pso=compute stage=CS"),
+            "{rendered}"
+        );
+        assert!(
+            rendered.contains("          wave_lanes_min=64 atomic64_flags=0x400000 (2x)"),
+            "{rendered}"
+        );
+        assert!(
+            rendered.contains("      1x  pso=unknown stage=unknown"),
+            "{rendered}"
+        );
+        assert!(rendered.contains("gaps w/o pso/stage  : 1"), "{rendered}");
+        assert!(rendered.contains("gaps w/o constraints : 1"), "{rendered}");
+        // First-seen order: the graphics/VS group comes before the compute/CS one.
+        let vs = rendered.find("pso=graphics stage=VS").unwrap();
+        let cs = rendered.find("      2x  pso=compute stage=CS").unwrap();
+        assert!(vs < cs, "{rendered}");
+    }
+
+    /// #590: a run with no gap records renders no grouped section at all.
+    #[test]
+    fn a_run_with_no_gaps_renders_no_grouped_section() {
+        let log = r#"{"ts_ms":10,"tid":1,"level":"INFO","sub":"d3d12_xs","event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil hr=0x00000000 kind=dxil shader_stage=5 sm=6.6 bytes=1234 dxil=800 accc=0 sfi0=0x4000 wave_ops=1 int64_ops=0 atomic64=typed, wave_lanes=64-64"}"#;
+        let rendered = render_trace(log);
+        assert!(rendered.contains("Shader gate:"), "{rendered}");
+        assert!(!rendered.contains("D3DMetal gaps"), "{rendered}");
+        assert!(!rendered.contains("gaps w/o"), "{rendered}");
     }
 }
