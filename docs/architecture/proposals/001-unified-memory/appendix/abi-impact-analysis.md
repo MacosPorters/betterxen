@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 No frozen file is changed by this proposal. Anything below would need its own `[ABI]` pull request.
 
 **Observing needs no ABI change.** `d3d12_xs` can count the objects it sees. A change is needed only to enforce one cap.

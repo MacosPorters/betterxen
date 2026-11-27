@@ -1,4 +1,4 @@
-# Proposed unified memory architecture and roadmap (#473)
+# Unified memory proposal (#473): deferred until before M3
 
 > [!IMPORTANT]
 > **ARCHITECTURE DRAFT — DO NOT MERGE OR MARK READY FOR REVIEW**
@@ -7,103 +7,69 @@
 
 **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
-Prepared 2026-11-26, updated 2026-11-27, against `main` `cd945ba`, with AI assistance (Claude Code, for @Arths17). Not independently reviewed. No production code, ABI file or issue is changed by it.
+**The proposed memory architecture is deferred to a maintainer discussion held after M2 is complete and before M3 begins.** The [roadmap](../../../roadmap.md) (M0–M6) stays as it is. Nothing here adds an M2 requirement. **Nobody needs to read this before M2 is done.**
 
-## How it fits the roadmap
-
-No new milestone or track, and **no existing roadmap exit gate has to change**. The one open point is the "`xmem`-backed" wording in issues #464 and #469. M0–M6 are [roadmap milestones](../../../roadmap.md); 0a–6 are this proposal's stages. Full mapping and diagrams: [roadmap integration](roadmap-integration.md).
-
-| Existing milestone | Existing objective | Proposed memory work | Affected tracks | Prerequisites | Impact on exit gate | Status |
-| --- | --- | --- | --- | --- | --- | --- |
-| M0 | Repo, ABI, cross-build | None | None | — | Unchanged | Complete |
-| M1 | Startup shims | None added. Follow-up: `XMemVirtualAlloc` parameters | B (follow-up) | Lawful source | Unchanged; not reopened | Complete |
-| M2 | First frame, shader gate | Optional 0a observation; settle #464/#469 questions; design admission | C; A, B, F support | Coordinate with #486 | Unchanged | In development |
-| M3 | Shaders, streaming, textures | Contract (1), staging reuse (4); **conditional** 0b, 2, 3 | B, C; A, F support | Eligibility and consumer ABI for 2; `[ABI]` for 0b | Unchanged; provider does not gate | Planned |
-| M4 | 3D, DXR, upscaling | Validate on larger workloads | C; B, F support | Whatever M3 built | Unchanged | Planned |
-| M5 | Audio, saves, stability | Stress qualification (5) | B, C, F; A supports | Correctness rules already in place | Optional wording clarification | Planned |
-| M6 | Cache, 16 GB, polish | Tuning; adopt, revise or reject (6) | B, C, F; A supports | Independent matched evidence | Unchanged | Planned |
-
-**Tracks D (shaders) and E (runtime services) are independent at every milestone.**
-
-| Kind of work | What falls in it |
-| --- | --- |
-| Mandatory correctness | Only what claimed M2 work already promises; fence, destruction and admission rules before any provider |
-| Optional, research-derived | Observation, the written contract, staging reuse |
-| Conditional | Enforcement, mapped provider, pooling |
-| Independent | Shaders, tiling, DirectStorage interfaces and decompression, runtime services, presentation |
-| Deferred to M6 | Tuning, storage selection, adoption decision |
-
-## Start here
-
-| If you have | Read |
-| --- | --- |
-| 5 minutes | [Meeting briefing](meeting-briefing.md), [roadmap integration](roadmap-integration.md#short-answer) |
-| 15 minutes | [Executive summary](executive-summary.md), then [eligibility](eligibility.md) |
-| An hour | [Self-audit](self-audit.md), [alternatives](architecture-alternatives.md), [design](proposed-memory-architecture.md), [migration](migration-proposal.md) |
-
-## Position in one table
-
-| Question | Answer (proposal) |
-| --- | --- |
-| Do now | Observe graphics allocations and real destruction |
-| Do next, if justified | One admission authority behind a switch |
-| Do not do yet | Any mapped-buffer provider or provider interface |
-| Blocking unknown | [A reliable eligibility mechanism](eligibility.md) |
-| Check first | [`XMemVirtualAlloc` parameter list on `main`](eligibility.md#a-discrepancy-on-main-that-needs-maintainer-attention) |
-
-## Today and proposed
-
-```mermaid
-flowchart LR
-  subgraph Today
-    X1["xmem: budgeted"]
-    D1["D3D12: forwarded,<br/>uncounted"]
-  end
-  subgraph Proposed_next["Proposed next"]
-    X2["xmem: budgeted"]
-    D2["D3D12: forwarded,<br/>counted and destruction seen"]
-  end
-  Today ==> Proposed_next
-```
+## Sequence
 
 ```mermaid
 flowchart TB
-  S0A["0a Observe"] --> G{Reason to<br/>enforce a cap?}
-  G -->|yes| S0B["0b Enforce behind a switch"] --> S1["1 Contract and diagnostics"]
-  G -->|no| S1
-  S1 --> Q{Eligibility<br/>solved?}
-  Q -->|no| HALT[Stop here]
-  Q -->|yes| LATER["2 to 6: provider, pooling,<br/>transfers, qualification, decision"]
+  A["Complete M2<br/>existing roadmap and criteria"] --> B["Independently verify<br/>M2 exit conditions"]
+  B --> C["Review #473 research<br/>and this draft"]
+  C --> D["Revise the roadmap together"]
+  D --> E["Approve architecture decisions"]
+  E --> F["Begin authorized M3 work"]
 ```
 
-## What is evidence and what is proposal
+## What M2 needs
 
-| Kind | Where | Weight |
-| --- | --- | --- |
-| Research observations | [#473 publication](https://github.com/MacosPorters/betterxen/blob/0aaa81ab81309d64432d97d3005284c8b13cd285/docs/research/publications/001-unified-memory/README.md), [evidence audit](https://github.com/MacosPorters/betterxen/blob/0aaa81ab81309d64432d97d3005284c8b13cd285/docs/research/publications/001-unified-memory/evidence-audit.md) (research revision `f8810a48`) | Scoped to the tested versions and hosts; the publication itself is not independently reviewed. These files are on the research branch, not `main`. A [contributor review](https://github.com/MacosPorters/betterxen/discussions/493) asks for fixes to the publication |
-| Source facts | [Current architecture](current-architecture.md) | `main` at `cd945ba` |
-| New observations for this draft | [Executive summary](executive-summary.md#new-observations-made-for-this-draft) | One host, author-run |
-| Everything described as proposed | All other documents | **Opinion until the maintainers decide** |
+Checked 2026-11-27 (about 04:15 UTC) against `main` `b8724bf`. Please recheck; this moves quickly.
 
-Not established anywhere: physical zero-copy, memory savings, performance gains, console allocation semantics, game execution, or Xbox hardware behaviour.
+M2's exit gate, from the roadmap: a synthetic D3D12 `PresentX` workload renders and verifies pixel readback through D3DMetal 3.0, **and** the M2 gate ADR selects Branch D1 or D2.
 
-## Documents
+| Needed | Where | State | Remaining |
+| --- | --- | --- | --- |
+| Placed resources (in the M2 objective) | #464 / PR #486 | **Merged**, #464 closed | No independent live run of merged `main` was found |
+| `PresentX` rendering and readback | #465 / PR #471 | Open | Conflicts in `CHANGELOG.md` and `d3d12_xs/CMakeLists.txt`; two open review findings (concurrent `Present`; signal failure after present); an earlier change request still recorded; rerun after changes |
+| Combined exit-gate fixture | #469 / PR #494 | Open | Needs #471; `CHANGELOG.md` conflict; its CI build skips the fixture until then; independent run on `main` |
+| "`xmem`-backed" wording | #464, #469 | **Maintainer reading needed** | The merged design uses a separate D3D12 heap, not `xmem` memory |
+| Shader branch selected | [ADR 0008](../../../adr/0008-m2-shader-format-gate.md) | File still says **Proposed** | Record the maintainers' decision in the ADR |
+| Verification of the exit gate | Roadmap rule | Not started | Someone other than the authors, then update the roadmap status |
 
-| Group | Document | Contents |
-| --- | --- | --- |
-| Decide | [Roadmap integration](roadmap-integration.md) | Milestones, tracks, issues, six diagrams, proposed wording |
-| Decide | [Meeting briefing](meeting-briefing.md) | Recommendation, objections, five decisions, abandon conditions |
-| Decide | [Maintainer decisions](maintainer-decisions.md) | Thirteen decisions, four proposed records |
-| Decide | [Executive summary](executive-summary.md) | Problem, recommendation, observations |
-| Challenge | [Self-audit](self-audit.md) | Errors found in the first revision; traceability |
-| Challenge | [Eligibility investigation](eligibility.md) | Public signals and their limits |
-| Challenge | [Risk register](risk-register.md) | Twenty-nine risks |
-| Design | [Current architecture](current-architecture.md) | Source map and allocation lifecycle |
-| Design | [Alternatives](architecture-alternatives.md) | Decision matrix |
-| Design | [Proposed memory architecture](proposed-memory-architecture.md) | Admission, provider selection, diagnostics |
-| Design | [Resource lifecycle](resource-lifecycle.md) | States and synchronization |
-| Design | [ABI impact](abi-impact-analysis.md) | With and without ABI change |
-| Plan | [Migration proposal](migration-proposal.md) | Stages |
-| Plan | [Validation strategy](validation-strategy.md) | Gates and benchmarks |
-| Plan | [Cross-track dependencies](cross-track-dependencies.md) | Tracks and open work |
-| Record | [Evidence record](evidence.md) | Probe sources, patches, commands, environment |
+```mermaid
+flowchart LR
+  P486["PR 486 merged"] --> P494["PR 494 fixture"]
+  P471["PR 471 PresentX"] --> P494
+  P494 --> V["Independent gate verification"]
+  ADR["ADR 0008 decision recorded"] --> V
+  V --> DONE["M2 verified complete"]
+```
+
+### Known defects in merged M2 code
+
+These are correctness fixes to existing work, not new requirements. Whether any must land before M2 closes is the maintainers' call. `devil8blade` [announced a follow-up](https://github.com/MacosPorters/betterxen/pull/486) for them.
+
+| Defect on `main` | Basis |
+| --- | --- |
+| The budget can be exceeded depending on allocation order | `try_charge` unchanged; reproduced earlier on `bd546d8` |
+| `CreatePlacedResource1` and `2` do not keep their heap's charge | Source; `CreatePlacedResource` itself is fixed |
+| `CreateHeap1` and committed resources are not charged | Reproduced on `bd546d8`; listed in #486 |
+| A returned `cpu_pointer` goes stale on reconfigure or device change | Source; listed in #486 |
+
+### Open milestone items outside the exit gate
+
+#483, #450, #407 and #473 are on the M2 milestone, and the roadmap gate does not require them. Whether to finish or move them is a maintainer decision.
+
+## Not part of M2
+
+All research-driven work waits for the pre-M3 discussion: allocation observation, a combined admission authority, any mapped-buffer provider, pooling and transfer optimization. See the [pre-M3 checklist](pre-m3-checklist.md).
+
+One item is not research-driven and someone should triage it: Microsoft's public samples call [`XMemVirtualAlloc` with five arguments](appendix/eligibility.md#a-discrepancy-on-main-that-needs-maintainer-attention), and `main` declares four. It is inferred from call sites and unverified. **It is not proposed as an M2 requirement.**
+
+## Reading
+
+| Document | When |
+| --- | --- |
+| This page | Now, if anything |
+| [Pre-M3 checklist](pre-m3-checklist.md) | At the pre-M3 discussion |
+| [Review feedback](review-feedback.md) | At the pre-M3 discussion |
+| [Appendix](appendix/README.md) | Only for detail |

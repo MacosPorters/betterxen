@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 Conceptual design. No names, layouts or signatures here are agreed.
 
 ## Target shape, if it is ever built
@@ -26,7 +28,7 @@ flowchart TB
   A --> T[Trace events]
 ```
 
-**Roadmap placement:** observation in M2 (optional); enforcement and any provider no earlier than M3 and conditional; pooling tuning in M6. See [roadmap integration](roadmap-integration.md).
+**Roadmap placement:** nothing in M2; observation no earlier than M3 after approval; enforcement and any provider conditional. See [roadmap integration](roadmap-integration.md).
 
 ## 1. Budget authority
 

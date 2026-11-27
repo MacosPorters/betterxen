@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 These rules apply to anything BetterXen itself owns or reuses. They are derived from public D3D12 contracts ([placement and lifetime](https://github.com/MacosPorters/betterxen/blob/f8810a48af384d13c594b9fba954200bfdb944f1/docs/research/d3dmetal-zero-copy/gpu-correctness/contracts/resource-placement-lifetime.md), [synchronization](https://github.com/MacosPorters/betterxen/blob/f8810a48af384d13c594b9fba954200bfdb944f1/docs/research/d3dmetal-zero-copy/gpu-correctness/contracts/synchronization-mapping-tracking.md)). Guest-owned synchronization remains the guest's responsibility.
 
 ## States

@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 Stages are conceptual. They carry no dates and no owners, and each needs separate authorization. Every stage must be able to ship alone and be turned off or reverted.
 
 ```mermaid
@@ -24,18 +26,7 @@ flowchart TB
 
 ## Stages mapped to milestones
 
-Stages are not milestones. The full table is in [roadmap integration](roadmap-integration.md#two-numbering-systems).
-
-| Stage | Earliest milestone |
-| --- | --- |
-| 0a | M2, optional |
-| 0b | M3, conditional |
-| 1 | M3 (drafting may start in M2) |
-| 2 | M3, conditional |
-| 3 | M3 if needed, otherwise M6 |
-| 4 | M3 staging reuse; M6 tuning |
-| 5 | M5 (workloads from M4) |
-| 6 | M6 |
+No stage is part of M2. See [the mapping](roadmap-integration.md#possible-placement).
 
 ## Stage 0a — Observe
 
@@ -85,7 +76,7 @@ Memory pressure, multi-queue, failure injection, long runs, representative synth
 
 ## Conditions for abandoning the provider architecture
 
-See [the meeting briefing](meeting-briefing.md#when-to-abandon-it).
+See [the checklist](../pre-m3-checklist.md#abandon-the-provider-idea-if).
 
 ## Stage 6 — Adoption decision
 

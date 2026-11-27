@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 Nothing below is decided. The proposed records are **not** registered ADRs and have no ADR numbers.
 
 ## Open decisions
@@ -14,9 +16,9 @@ A mapped D3D12 buffer must be chosen before the guest sees a pointer. [Candidate
 
 C entered through A, versus A alone. **Draft view:** do A now; hold C as a target shape only.
 
-### D3. What happens to #486?
+### D3. What happens to #486's budgeting?
 
-(a) Merge after its blocking findings, accepting a known order-dependent cap until Stage 0b; (b) merge without charging; (c) hold charging for the authority. **Draft view:** its owner and the maintainers decide; this draft only supplies the evidence. Whatever is chosen, document the cap limitation.
+#486 has merged with a one-way, order-dependent cap. Known defects are listed on the [main page](../README.md#known-defects-in-merged-m2-code). Open: whether the later authority replaces it.
 
 ### D4. Authority location and contract
 
@@ -56,7 +58,7 @@ Public samples pass five arguments; `main` declares four. Who verifies it, from 
 
 ### D13. Roadmap placement
 
-Accept the [mapping](roadmap-integration.md): no gate changes; 0a optional in M2; conditional work from M3; decision in M6? Should any of the [proposed roadmap wording](roadmap-integration.md#proposed-roadmap-wording-for-discussion-only) be taken up? **Draft view:** adopt no wording until D1 and D12 are settled.
+**Maintainer direction (Asufte, relayed 2026-11-27):** finish M2 under the existing roadmap; revise the roadmap together immediately before M3. Open: which of the [candidate wording](roadmap-integration.md#candidate-roadmap-wording) to take up then.
 
 ## Proposed decision records
 

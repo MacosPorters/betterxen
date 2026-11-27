@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 | # | Risk | Cause | Impact | Detection | Mitigation |
 | --- | --- | --- | --- | --- | --- |
 | R1 | ABI incompatibility | Extending an existing struct or changing a signature | Shim load or memory corruption | Export verifier, `static_assert` on layouts | Additive functions and new structs; `[ABI]` PR first |

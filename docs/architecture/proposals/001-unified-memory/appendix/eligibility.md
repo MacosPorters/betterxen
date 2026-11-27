@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 Question: can BetterXen know, from public contracts and existing code, that an allocation will be used by the GPU, before the guest receives its pointer?
 
 **Answer: there is a candidate signal, but no reliable end-to-end mechanism yet.** The migration should stop at the provider-abstraction stage.
@@ -41,13 +43,13 @@ So the console programming model, as far as these samples show it, decides GPU u
 
 ## A discrepancy on `main` that needs maintainer attention
 
-BetterXen declares `XMemVirtualAlloc(address, size, alloc_type, protect)` ([`xmem.cpp:180`](../../../../shims/xmem/xmem.cpp#L180)). The three official call sites pass five arguments. If their declaration matches those calls, on x86-64:
+BetterXen declares `XMemVirtualAlloc(address, size, alloc_type, protect)` ([`xmem.cpp:180`](../../../../../shims/xmem/xmem.cpp#L180)). The three official call sites pass five arguments. If their declaration matches those calls, on x86-64:
 
 - BetterXen reads the **attribute** argument as the page protection;
 - the real protection, including the graphics bits, is passed on the stack and ignored;
 - the existing fallback to `PAGE_READWRITE` may hide this when the attribute is not a single protection bit.
 
-The comment at [`xmem.cpp:184`](../../../../shims/xmem/xmem.cpp#L184) and `test_xmem` assume a value such as `0x21` arrives in argument 4; the origin of that value is not recorded in the file.
+The comment at [`xmem.cpp:184`](../../../../../shims/xmem/xmem.cpp#L184) and `test_xmem` assume a value such as `0x21` arrives in argument 4; the origin of that value is not recorded in the file.
 
 **Limits:** this is inferred from call sites. The declaration itself is in restricted documentation or SDK headers and was not read. It was not tested with any real title. This proposal changes nothing; it is for the maintainers to assess (Track B).
 

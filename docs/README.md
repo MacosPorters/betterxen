@@ -9,7 +9,7 @@
 - [Frozen ABI Contracts](../abi/README.md) — Cross-DLL C headers (`abi/include/`) and canonical `.def` export tables (`abi/defs/`).
 - [Synthetic Conformance Suite](../tests/conformance/README.md) — Auto-discovered PE32+ conformance binaries.
 - [Changelog](../CHANGELOG.md) — Unreleased and historical changes.
-- [Unified memory architecture proposal (draft, #473)](architecture/proposals/001-unified-memory/README.md) — **For maintainer discussion only; not approved for implementation.** Current ownership, alternatives, migration stages, validation gates and open decisions.
+- [Unified memory proposal (draft, #473)](architecture/proposals/001-unified-memory/README.md) — **Deferred to a maintainer discussion after M2 and before M3; not approved for implementation.**
 
 ## Architecture Decision Records
 

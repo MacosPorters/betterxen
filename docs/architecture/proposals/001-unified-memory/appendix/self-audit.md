@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 The author challenged the first revision (`e478ef9`) against source and evidence. **This is self-review, not independent review.** Corrections are applied in the other documents.
 
 ## Errors and weaknesses found
@@ -10,7 +12,7 @@ The author challenged the first revision (`e478ef9`) against source and evidence
 | --- | --- | --- | --- |
 | 1 | Nothing identifies eligible allocations; attribute meaning not public | **Wrong in part.** Public samples and headers give a candidate signal | [Eligibility investigation](eligibility.md) |
 | 2 | (not noticed) | `XMemVirtualAlloc` may have the wrong parameter list on `main` | Recorded in the investigation; not changed |
-| 3 | Admission covers every D3D12 creation path | **Not achievable by proxy interception.** Resources are host objects, so `resource->GetDevice` returns the host device; `xcrdapi` creates staging resources that way ([`xcrdapi.cpp:330`](../../../../shims/xcrdapi/xcrdapi.cpp#L330)); a guest can also call `d3d12.dll` directly (source reading, not tested) | The cap is best-effort unless more objects are wrapped |
+| 3 | Admission covers every D3D12 creation path | **Not achievable by proxy interception.** Resources are host objects, so `resource->GetDevice` returns the host device; `xcrdapi` creates staging resources that way ([`xcrdapi.cpp:330`](../../../../../shims/xcrdapi/xcrdapi.cpp#L330)); a guest can also call `d3d12.dll` directly (source reading, not tested) | The cap is best-effort unless more objects are wrapped |
 | 4 | Stage 0 adds enforcement; new providers must not change default behaviour | **Contradiction.** On `main` graphics allocations never fail on the title cap, so enforcement is itself a behaviour change and can cause new failures | Stage 0 split into observe (0a) and enforce (0b) |
 | 5 | An ABI change is needed first | Not for observing: `d3d12_xs` can count its own objects | ABI only at 0b |
 | 6 | An unsatisfiable explicit request fails | The selection diagram sent it to the default path | Diagram separates preference from requirement |

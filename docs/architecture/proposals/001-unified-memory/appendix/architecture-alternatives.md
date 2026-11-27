@@ -2,6 +2,8 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
 The research recommends *investigating* inverted ownership. It does not establish that it is better, so it is compared here with two other options. Assessments are qualitative; no scores or performance numbers are implied.
 
 ## The options

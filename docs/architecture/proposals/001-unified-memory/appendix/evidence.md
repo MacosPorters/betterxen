@@ -2,7 +2,9 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
-Heads have since moved (#486 to `7056671`, #494 to `fbd2f8c`). Results below apply to the commits listed and were not re-run on the new ones.
+*Appendix. Deferred to the pre-M3 discussion; the [main page](../README.md) governs.*
+
+#486 has since merged (`b8724bf`) after further commits that remove the two extra `AddRef` calls and retain the charge for `CreatePlacedResource`; #494 has also moved. Results below apply only to the commits listed and were not re-run.
 
 **One Apple M4, run by one AI agent for @Arths17. Nothing here is independently reproduced.** It does not modify the #473 research evidence. Raw logs are kept outside the repository (they contain local paths); their SHA-256 values are listed so a copy can be checked.
 
