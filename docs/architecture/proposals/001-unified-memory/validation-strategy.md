@@ -6,28 +6,43 @@ A gate is met only by the evidence it names, reviewed by someone who did not wri
 
 ## Gates by stage
 
-### Stage 0
+### Stage 0a
 
 | Item | Content |
 | --- | --- |
-| Objective | The cap holds in any order and under concurrency; charges end only on destruction |
-| Dependencies | `[ABI]` change or the shadow-commit fallback; coordination with #486 |
-| Components | `xmem`, `d3d12_xs`, their fixtures |
+| Objective | See graphics allocations and their destruction without changing behaviour |
+| Dependencies | Coordination with #486 |
+| Components | `d3d12_xs`, trace |
+| Expected behaviour | Identical HRESULTs; would-reject and unseen-path records |
+| Fixtures | Release heap while a placed resource lives; each creation path; GPU work in flight; device removal if obtainable |
+| Negative controls | An uncounted path or an early release must fail the fixture |
+| Regression | All conformance binaries |
+| Independent review | Second operator and a second chip generation for the release signal |
+| Rollback | Revert; nothing depends on it |
+| Uncertainties | Sentinel timing and thread; paths outside the proxy |
+
+### Stage 0b
+
+| Item | Content |
+| --- | --- |
+| Objective | The cap holds in any order and under concurrency for visible paths |
+| Dependencies | 0a results; `[ABI]` change, or the interim in [ABI impact](abi-impact-analysis.md) |
+| Components | `xmem`, `d3d12_xs`, launcher switch |
 | Expected behaviour | Over-cap requests fail with a logged reason; host failures roll back |
-| Synthetic fixtures | Both allocation orders; the 6 + 3 over cap 8 schedule scaled down; release heap while a placed resource lives; every creation path; concurrent reserve from many threads |
-| Negative controls | A build with the lock removed or a path left uncharged must fail the fixture |
+| Fixtures | Both allocation orders; concurrent reserve; the research 6 + 3 over cap 8 schedule, scaled |
+| Negative controls | Removing the lock or a path must fail the fixture |
 | Regression | `test_xmem`, `test_xmem_physical`, `test_d3d12_xs`, `test_integration_boot`, export verification |
-| Independent review | Re-derive ledger transitions for every path |
-| Hardware | At least two Apple Silicon generations for the release signal |
-| Rollback | Revert; ABI additions are inert if unused |
-| Uncertainties | Sentinel behaviour with GPU work in flight and after device removal; swap-chain accounting |
+| Independent review | Re-derive ledger transitions |
+| Hardware | Two generations |
+| Rollback | Switch off, then revert |
+| Uncertainties | Whether host allocation sizes resemble console ones; new failures |
 
 ### Stage 1
 
 | Item | Content |
 | --- | --- |
 | Objective | Provider boundary and diagnostics with no behaviour change |
-| Dependencies | Stage 0 |
+| Dependencies | Stage 0a (and 0b if taken) |
 | Components | `d3d12_xs`, `bx-telemetry`, `bx-cli trace` |
 | Expected behaviour | Identical results and HRESULTs; reason codes in the trace |
 | Fixtures | Forwarded-call HRESULT and descriptor parity with the host device |
@@ -64,7 +79,7 @@ A gate is met only by the evidence it names, reviewed by someone who did not wri
 | Expected behaviour | Bounded blocks; no reuse before completion |
 | Fixtures | Seeded churn; fragmentation with failing large requests; delayed-fence withholding; alignment |
 | Negative controls | Premature recycle detected by guard data in a CPU-side policy test |
-| Regression | Stage 0–2 suites |
+| Regression | Stage 0a–2 suites |
 | Independent review | Upstream files and notices; span arithmetic |
 | Hardware | Two generations; one 16 GB host under normal pressure |
 | Rollback | Disable pooling, keep the unpooled provider |
@@ -133,6 +148,10 @@ A performance claim needs: the same workload and data on old and new paths; sepa
 One GPU workload at a time, at most four build jobs, check memory pressure first, stop and record rather than push through.
 
 ## Appendix: destruction signal probe
+
+Full source, commands and logs: [evidence record](evidence.md).
+
+### Summary
 
 Original synthetic program run for this draft. **One host, author-run, three runs, not independently reproduced.** Apple M4 24 GiB, macOS 27.0, CrossOver 26.3 with D3DMetal. It attaches a counting `IUnknown` with `SetPrivateDataInterface`, releases the object and watches the count (2 while held, 1 once the runtime drops it), waiting 200 ms after each release.
 

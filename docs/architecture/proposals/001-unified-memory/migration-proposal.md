@@ -5,35 +5,44 @@
 Stages are conceptual. They carry no dates and no owners, and each needs separate authorization. Every stage must be able to ship alone and be turned off or reverted.
 
 ```mermaid
-flowchart LR
-  ABI[ABI: charge exports] --> S0
-  S0[Stage 0<br/>correctness] --> S1[Stage 1<br/>provider boundary<br/>and diagnostics]
-  S1 --> D1{Eligibility signal<br/>exists?}
-  D1 -->|no| STOP[Stop: keep default path,<br/>continue transfer work]
-  D1 -->|yes| S2[Stage 2<br/>opt-in mapped provider]
-  S2 --> S3[Stage 3<br/>pooling]
-  S2 --> S4[Stage 4<br/>storage and transfers]
-  S1 --> S4
-  S3 --> S5[Stage 5<br/>qualification]
+flowchart TB
+  S0A["0a Observe<br/>no ABI, no behaviour change"] --> G{Evidence that a cap<br/>should be enforced?}
+  ABI[ABI: charge exports] --> S0B
+  G -->|yes| S0B["0b Enforce<br/>behind a switch"]
+  G -->|no| S1
+  S0B --> S1["1 Contract and diagnostics"]
+  S1 --> D1{Reliable eligibility<br/>and consumer ABI?}
+  D1 -->|no| STOP[Stop here]
+  D1 -->|yes| S2["2 Opt-in mapped provider"]
+  S2 --> S3["3 Pooling"]
+  S2 --> S4["4 Transfers"]
+  S3 --> S5["5 Qualification"]
   S4 --> S5
-  S5 --> S6[Stage 6<br/>adopt, revise or reject]
-  W["Open PR 486"] -.input.-> S0
+  S5 --> S6["6 Adopt, revise or reject"]
+  W["Open PR 486"] -.input.-> S0A
 ```
 
-## Stage 0 — Correctness foundations
+## Stage 0a — Observe
 
-Needed even if no new provider is ever built.
+- Count graphics allocations that pass through the proxy; log which paths cannot be seen.
+- Detect real destruction (candidate: private-data sentinel).
+- Log what a combined cap **would** have refused. Refuse nothing.
 
-- One admission authority covering `xmem` and every D3D12 creation path.
+## Stage 0b — Enforce
+
+Only if 0a shows a reason to.
+
+- One admission authority (`[ABI]` change), covering every path the proxy can see.
+- Off by default until reviewed; a switch that `bx-cli` passes through.
 - Release charges on confirmed destruction.
 - Validate offset, alignment and span at any placement boundary BetterXen owns, without a global 64 KiB rule.
-- Make failures visible: propagate cleanup failures; no reuse on unproven completion.
+- Make cleanup failures visible; no reuse on unproven completion.
 
-## Stage 1 — Provider abstraction
+## Stage 1 — Contract and diagnostics
 
-- A selection function whose only result is "default", with a recorded reason.
+- A written compatibility and fallback contract, and reason codes in the trace.
 - Diagnostics from [the design](proposed-memory-architecture.md#5-diagnostics).
-- Written compatibility and fallback contract. **No allocation moves.**
+- **No allocation moves, and no provider interface is coded until a second provider exists.** The work stops here unless eligibility is solved.
 
 ## Stage 2 — Experimental mapped-buffer provider
 
@@ -53,11 +62,15 @@ Needed even if no new provider is ever built.
 - Staging-object reuse in `xcrdapi` (today each staged request creates its own queue and fence).
 - Optional write-watch for CPU-owned sources only; GPU write tracking stays unknown.
 
-Parts of Stage 4 do not depend on Stage 2 and are Architecture A work.
+Staging-object reuse does not depend on Stage 2 and can be proposed on its own if measurement shows it matters.
 
 ## Stage 5 — Production qualification
 
 Memory pressure, multi-queue, failure injection, long runs, representative synthetic graphics workloads, several chip generations.
+
+## Conditions for abandoning the provider architecture
+
+See [the meeting briefing](meeting-briefing.md#when-to-abandon-it).
 
 ## Stage 6 — Adoption decision
 

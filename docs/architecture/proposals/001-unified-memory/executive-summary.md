@@ -15,18 +15,20 @@ Research [#473](https://github.com/MacosPorters/betterxen/issues/473) found that
 
 ## The recommendation (proposal, not a decision)
 
-**Architecture C: a hybrid resource provider, built correctness-first, with today's behaviour as the default.**
+**Commit only to correctness and visibility now. Keep a hybrid provider as the target shape, but do not build it yet.**
 
-1. **First fix accounting and lifetime**, whatever happens to ownership: one atomic admission authority, every graphics allocation path counted, and a charge released only when the object is really destroyed.
-2. **Then add a provider boundary** that records why each allocation took its path, without changing where anything is allocated.
-3. **Only then try D3D12-owned mapped buffers**, behind an opt-in, for a narrowly defined eligible class.
-4. **Pooling and transfer optimization come after measurement**, not before.
+1. **Stage 0a, observe:** count graphics allocations and detect real destruction. No ABI change, no behaviour change.
+2. **Stage 0b, enforce:** one atomic admission authority, behind a switch, after 0a shows what would be rejected.
+3. **Stage 1:** record a written provider contract and reason-coded diagnostics, then **stop**.
+4. A mapped-buffer provider (Stage 2 onwards) waits for a reliable [eligibility mechanism](eligibility.md) and a measurement that justifies it.
 
-## The most important thing this audit adds
+## Eligibility in one paragraph
 
-**Nothing currently tells BetterXen which allocations are eligible.** A D3D12-owned buffer must be chosen *before* the guest receives its pointer. `xmem` hands out pointers before D3D12 is involved, and it discards the high attribute bits that might have described intent, whose console meaning is not publicly established. PR #486's opt-in is a BetterXen-defined block that no existing title would send.
+Microsoft's public samples mark graphics memory at allocation time, and public Windows headers give values for the `PAGE_GRAPHICS_*` protection bits. That is a candidate signal. It is not yet usable: BetterXen's `XMemVirtualAlloc` appears not to read the argument that carries it, the method that consumes the address has no public ABI here, and textures placed at that address cannot be backed by a host buffer. **The first revision of this draft wrongly said no signal existed.**
 
-So Stage 2 has no real-world trigger today. Whether to build it at all depends on the answer to [decision D1](maintainer-decisions.md#d1-what-makes-an-allocation-eligible). Stages 0 and 1 are worth doing either way.
+## Most urgent item for maintainers
+
+The public samples call `XMemVirtualAlloc` with five arguments; BetterXen declares four. See [the discrepancy](eligibility.md#a-discrepancy-on-main-that-needs-maintainer-attention). It concerns `main` today, independently of this proposal.
 
 ## New observations made for this draft
 
@@ -54,3 +56,7 @@ All are single-host, author-run checks on one Apple M4 (macOS 27.0, CrossOver 26
 | [Validation strategy](validation-strategy.md) | Gates, fixtures, measurements |
 | [Risk register](risk-register.md) | Causes, detection, mitigation |
 | [Maintainer decisions](maintainer-decisions.md) | Open questions and proposed decision records |
+| [Meeting briefing](meeting-briefing.md) | One-page agenda |
+| [Eligibility investigation](eligibility.md) | Public signals and why they are not enough |
+| [Self-audit](self-audit.md) | Errors found in the first revision; case against |
+| [Evidence record](evidence.md) | Probe sources, patches, commands, environment |

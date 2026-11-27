@@ -6,7 +6,7 @@ The research recommends *investigating* inverted ownership. It does not establis
 
 ## The options
 
-**A — Existing ownership, better transfers.** `xmem` and D3D12 stay separate. Improve staging reuse, copy scheduling and selective copying.
+**A — Keep existing ownership, fix correctness.** `xmem` and D3D12 stay separate. Count and track graphics allocations. BetterXen performs no transfer between the two today; only `xcrdapi` staging copies could be optimized.
 
 **B — Fully inverted ownership for eligible buffers.** For eligible allocations D3D12 creates the memory; `xmem` hands out the mapped pointer.
 
@@ -25,7 +25,7 @@ The research recommends *investigating* inverted ownership. It does not establis
 
 ## Decision matrix
 
-| Criterion | A: optimized transfers | B: inverted ownership | C: hybrid provider |
+| Criterion | A: keep ownership | B: inverted ownership | C: hybrid provider |
 | --- | --- | --- | --- |
 | Compatibility | Highest: no allocation semantics change | Weakest: several `xmem` contracts cannot be met, so B needs fallbacks and becomes C | High if the default path is unchanged and fallback is explicit |
 | ABI stability | Only the budget fix needs `abi/` | Needs a cross-DLL provider contract | Same budget change, plus a provider contract at Stage 2 |
@@ -42,12 +42,14 @@ The research recommends *investigating* inverted ownership. It does not establis
 
 ## Recommendation (needs maintainer approval)
 
-**C, entered through A.** Do the correctness work that A also requires, add the boundary, and let a mapped-buffer provider earn its place with measurement.
+**Do A now. Treat C as the shape to adopt if a second provider is ever justified.** Do not build the boundary in code before then.
 
 Reasons:
 
 1. B's unsupported cases force a fallback path, so B is not actually simpler than C.
 2. No evidence yet shows a memory or performance benefit, so the default must not change.
-3. Eligibility has no real-world signal today ([D1](maintainer-decisions.md#d1-what-makes-an-allocation-eligible)). If none is found, C stops after Stage 1 and has still delivered A.
+3. [Eligibility](eligibility.md) has only a candidate signal and no usable consumer today, so work stops after Stage 1 and has still delivered A.
 
-What would change this recommendation: a public, established eligibility signal plus a matched measurement showing a benefit would favour widening the mapped path; no signal would favour A and dropping Stages 2 and 3.
+A fourth route, **translation by copy** (keep `xmem` memory, create host resources, copy at synchronization points), is inside C as "explicit transfer". It is the only route that works for textures placed at a console address without memory import. Where its synchronization points would be is unknown and is probably the largest performance risk.
+
+What would change this recommendation: a lawful public contract for the consuming API, plus a matched measurement showing a mapped path beats copying.

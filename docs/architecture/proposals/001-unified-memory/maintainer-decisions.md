@@ -8,15 +8,15 @@ Nothing below is decided. The proposed records are **not** registered ADRs and h
 
 ### D1. What makes an allocation eligible?
 
-A mapped D3D12 buffer must be chosen before the guest sees a pointer. Candidates: (a) a public, established allocation attribute — none is currently established; (b) an explicit BetterXen opt-in, which no existing title uses; (c) interception at a D3D12-level API where the title already asks the graphics runtime for memory; (d) no mapped provider. **Draft view:** do not start Stage 2 until one of these is concrete.
+A mapped D3D12 buffer must be chosen before the guest sees a pointer. [Candidates](eligibility.md#possible-signals): `PAGE_GRAPHICS_*` bits (public values, not read today); attribute words (no public values); a BetterXen opt-in (no existing title); or no mapped provider. **Draft view:** none is usable end to end; stop after Stage 1.
 
 ### D2. Is the recommended direction right?
 
-C entered through A, versus A alone. **Draft view:** C, with a stop after Stage 1 if D1 has no answer.
+C entered through A, versus A alone. **Draft view:** do A now; hold C as a target shape only.
 
 ### D3. What happens to #486?
 
-(a) Merge after its blocking findings, accepting a known order-dependent cap until Stage 0; (b) merge without charging; (c) hold charging for the authority. **Draft view:** its owner and the maintainers decide; this draft only supplies the evidence. Whatever is chosen, document the cap limitation.
+(a) Merge after its blocking findings, accepting a known order-dependent cap until Stage 0b; (b) merge without charging; (c) hold charging for the authority. **Draft view:** its owner and the maintainers decide; this draft only supplies the evidence. Whatever is chosen, document the cap limitation.
 
 ### D4. Authority location and contract
 
@@ -49,6 +49,10 @@ What measurement counts as a benefit, on which hosts, and who runs it?
 ### D11. Correcting the record
 
 Whether "true shared memory, no extra copy" in #486 and the "true zero-copy" comment on #464 should be corrected by their authors.
+
+### D12. The `XMemVirtualAlloc` parameter list
+
+Public samples pass five arguments; `main` declares four. Who verifies it, from which lawful source, and what happens to the existing tests? **Draft view:** decide this first.
 
 ## Proposed decision records
 

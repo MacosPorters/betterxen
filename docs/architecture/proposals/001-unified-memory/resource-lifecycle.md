@@ -6,13 +6,15 @@ These rules apply to anything BetterXen itself owns or reuses. They are derived 
 
 ## States
 
+This applies **only to objects BetterXen creates and recycles itself** (staging and any future pool). For guest-owned D3D12 objects BetterXen sees creation and destruction, not GPU use.
+
 ```mermaid
 stateDiagram-v2
   [*] --> Reserved: admitted
   Reserved --> [*]: host failure, rollback
   Reserved --> Live: host success
-  Live --> Pending: guest frees, GPU use not proven complete
-  Live --> Released: guest frees, no GPU use
+  Live --> Pending: owner frees, GPU use not proven complete
+  Live --> Released: owner frees, no GPU use
   Pending --> Released: all final-use fences complete
   Pending --> Quarantined: device removed, signal or wait failure
   Released --> Live: pool reuse

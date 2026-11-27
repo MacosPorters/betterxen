@@ -4,6 +4,8 @@
 
 No frozen file is changed by this proposal. Anything below would need its own `[ABI]` pull request.
 
+**Observing needs no ABI change.** `d3d12_xs` can count the objects it sees. A change is needed only to enforce one cap.
+
 ## Can admission be unified without an ABI change?
 
 | Option | How | Verdict |

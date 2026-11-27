@@ -24,3 +24,8 @@
 | R18 | Migration conflicts | Parallel edits to `proxy.cpp` and generated files | Rework | Claim and PR checks | Provider code in new files; one owner per stage |
 | R19 | Vtable patching | #486 rewrites two proxy vtable slots at run time | Races; surprising dispatch | Concurrency review | Use ordinary overrides |
 | R20 | Accounting presented as improvement | Lower ledger numbers without real savings | Wrong decisions | Compare footprint and transfers | Report all layers together |
+| R21 | Wrong `XMemVirtualAlloc` parameter list | Four declared, five at public call sites | Wrong protection; graphics bits lost | Maintainer review; synthetic fixture once the contract is agreed | Resolve before relying on attributes |
+| R22 | Enforcement causes new failures | A cap now applies to allocations that never failed | Titles stop where they ran before | Would-reject log in Stage 0a | Observe first; switch |
+| R23 | Release callback timing or re-entrancy | Thread and moment unspecified | Deadlock, or charge held long enough to refuse a reallocation | Stress with immediate free and reallocate | Lock-free release path |
+| R24 | Allocations outside the proxy | Host `GetDevice`, direct `d3d12.dll` | Cap silently incomplete | Compare ledger with footprint | State the cap is best-effort |
+| R25 | Lock contention | Admission shares `xmem`'s lock, which walks all commits on virtual allocation | Slower allocation | Churn benchmark with many commits | Keep the walk off the charge path |

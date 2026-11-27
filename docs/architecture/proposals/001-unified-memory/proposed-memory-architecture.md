@@ -4,7 +4,9 @@
 
 Conceptual design. No names, layouts or signatures here are agreed.
 
-## Proposed ownership
+## Target shape, if it is ever built
+
+Only the budget and destruction-signal edges are in Stages 0a and 0b. Provider selection and the new providers are **not** to be built until [eligibility](eligibility.md) is solved.
 
 ```mermaid
 flowchart TB
@@ -20,7 +22,7 @@ flowchart TB
   M --> H[Host D3D12]
   F --> H
   P --> H
-  H -.destruction signal.-> A
+  H -.destruction signal.-> D
   A --> T[Trace events]
 ```
 
@@ -32,11 +34,14 @@ flowchart TB
 
 | Operation | Meaning |
 | --- | --- |
-| Reserve | Atomically admit `n` bytes for a class, or fail. Returns a token |
-| Commit | The host allocation succeeded; the token is now live |
+| Reserve | Atomically admit `n` bytes for a class, or fail |
+| Commit | The host allocation succeeded |
 | Rollback | The host allocation failed; return the bytes |
-| Retire | The guest freed it but the GPU or driver may still use it; still counted, reported as pending |
 | Release | Destruction confirmed; return the bytes |
+
+Nothing proposed here needs a separate "retire" or "migrate" operation. In **observe mode (Stage 0a)** the same calls only count and log what would have been refused; they need no `xmem` export.
+
+This is the enforcing form (Stage 0b).
 
 ```mermaid
 sequenceDiagram
@@ -56,9 +61,15 @@ sequenceDiagram
       D->>A: rollback(token)
       D-->>G: host HRESULT
     else host succeeds
-      D->>A: commit(token)
       D->>H: attach destruction sentinel
-      D-->>G: heap
+      alt sentinel attach fails
+        D->>H: release object
+        D->>A: rollback(token)
+        D-->>G: failure HRESULT, logged
+      else attached
+        D->>A: commit(token)
+        D-->>G: heap
+      end
     end
   end
   Note over H: heap destroyed (after last placed resource)
@@ -72,7 +83,7 @@ sequenceDiagram
 - **Overflow:** compare `n > limit - used` after checking `used <= limit`, as `can_commit` already does. Never sum untrusted sizes.
 - **Double counting:** a placed resource or slice is not charged when its heap is. A pool is charged once, for the block.
 - **Shared backing:** aliases (section views, aliased placed resources) are one charge.
-- **Migration:** if data ever moves between providers, old and new both stay charged until the old one is released. Exposed guest pointers are never migrated.
+- **No migration:** exposed guest pointers never move between providers.
 - **Failure:** every path from reserve ends in commit-then-release or rollback. A failed release is logged and the bytes stay counted (fail closed).
 - **What size:** use `GetResourceAllocationInfo` for committed and reserved resources, and `SizeInBytes` rounded to the heap alignment for heaps. Driver-retained memory is **not** inferred; it is measured separately.
 
@@ -87,32 +98,36 @@ sequenceDiagram
 
 `ID3DDestructionNotifier` is not available on the tested runtime (`QueryInterface` returned `E_NOINTERFACE`).
 
-### Creation paths that must be covered
+### Creation paths, and what interception cannot see
 
 `CreateHeap`, `CreateHeap1`, `CreateCommittedResource` and its `1`–`3` forms, reserved-resource tile heaps, `OpenSharedHandle` (decide: counted or not). DXGI swap-chain buffers are host-created and need an explicit estimate or an explicit exclusion.
+
+**Coverage is best-effort.** Resources and fences are host objects, so their `GetDevice` returns the host device and anything created through it is invisible to the proxy; `xcrdapi` staging does exactly this. A guest calling `d3d12.dll` directly is also invisible. Closing that needs wrapping far more objects, which this proposal does not recommend.
+
+**The release signal's contract.** `SetPrivateDataInterface` releases the interface when the object is destroyed or the same GUID is overwritten ([Microsoft](https://learn.microsoft.com/en-us/windows/win32/api/d3d12/nf-d3d12-id3d12object-setprivatedatainterface)). When, and on which thread, is unspecified: the callback must be non-blocking and take no lock that a host call is made under.
 
 ## 2. Provider selection and eligibility
 
 ```mermaid
 flowchart TD
   Q[Allocation request] --> S{Explicit eligibility signal?}
-  S -->|no| DEF[Default path: unchanged]
-  S -->|yes| B{Buffer, not texture?}
-  B -->|no| TEX[Format-aware texture path]
-  B -->|yes| R{Needs requested address, reserve/commit,<br/>sections, guard pages or existing contents?}
-  R -->|yes| DEF
-  R -->|no| DV{Device available and alive?}
-  DV -->|no| DEF
-  DV -->|yes| ADM{Budget admits?}
-  ADM -->|no| FAIL[Fail the allocation, log the reason]
-  ADM -->|yes| AL{Returned Map pointer meets<br/>required alignment?}
-  AL -->|no| UNDO[Release, roll back] --> DEF
-  AL -->|yes| USE[Mapped provider; pointer fixed for life]
+  S -->|none| DEF[Default path]
+  S -->|preference or requirement| OK{Buffer, no address or<br/>reserve or section needs,<br/>device alive?}
+  OK -->|yes| ADM{Budget admits?}
+  OK -->|no| K{Was it a requirement?}
+  ADM -->|no| FAIL[Fail and log the reason]
+  ADM -->|yes| AL{Map pointer meets alignment?}
+  AL -->|yes| USE[Mapped provider, pointer fixed]
+  AL -->|no| UNDO[Release and roll back] --> K
+  K -->|preference| DEF
+  K -->|requirement| FAIL
 ```
+
+This diagram is hypothetical until [eligibility](eligibility.md) is solved.
 
 Eligibility inputs: allocation type, required alignment, **the actual returned pointer**, address stability, flags, existing contents, device availability, mapping restrictions, lifetime and CPU/GPU access pattern. Every fallback records one reason code. A fallback happens only **before** a pointer is exposed.
 
-An unsatisfiable explicit request (for example one that demands the mapped path) fails; it is not silently downgraded.
+A requirement that cannot be met fails; only a preference may fall back, and the fallback is logged.
 
 ## 3. Pooling
 
