@@ -87,6 +87,24 @@ bool check_aliases(SIZE_T page_size, uint64_t flags) {
     CHECK(XMemMapPhysicalPagesScatter(dup_view, count, flags, nullptr) == dup_view);
     CHECK(!bx_xmem_query_region(reinterpret_cast<uintptr_t>(dup_view), &dup0));
 
+    // A remap over live views can leave duplicate views for one page and
+    // no view for another. The old count-only unmap accepted that partial
+    // coverage and left a dangling View for the missing page.
+    ULONG_PTR dup_then_second[] = {pages[0], pages[1]};
+    auto* overlap = static_cast<BYTE*>(
+        XMemMapPhysicalPagesScatter(nullptr, count, flags, dup_map));
+    CHECK(overlap && reinterpret_cast<uintptr_t>(overlap) % page_size == 0);
+    CHECK(XMemMapPhysicalPagesScatter(overlap, count, flags, dup_then_second) == overlap);
+    CHECK(!XMemMapPhysicalPagesScatter(overlap, count, flags, nullptr));
+    CHECK(GetLastError() == ERROR_INVALID_PARAMETER);
+    bx_xmem_region_info_t overlap0{};
+    bx_xmem_region_info_t overlap1{};
+    CHECK(bx_xmem_query_region(reinterpret_cast<uintptr_t>(overlap), &overlap0));
+    CHECK(bx_xmem_query_region(reinterpret_cast<uintptr_t>(overlap + page_size), &overlap1));
+    CHECK(overlap0.physical_tag == pages[0] && overlap1.physical_tag == pages[1]);
+    CHECK(XMemMapPhysicalPagesScatter(overlap, count, flags, nullptr) == overlap);
+    CHECK(!bx_xmem_query_region(reinterpret_cast<uintptr_t>(overlap), &overlap0));
+
     bx_xmem_region_info_t first{};
     bx_xmem_region_info_t alias{};
     CHECK(bx_xmem_query_region(reinterpret_cast<uintptr_t>(linear + 7), &first));

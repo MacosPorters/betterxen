@@ -127,16 +127,22 @@ PVOID unmap_span(BYTE* base, SIZE_T count, SIZE_T size) {
     const auto begin = reinterpret_cast<uintptr_t>(base);
     const auto end = begin + count * size;
 
-    SIZE_T matched = 0;
-    for (const View* view = views; view; view = view->next) {
-        const auto address = reinterpret_cast<uintptr_t>(view->address);
-        if (address >= begin && address < end && view->page->block->size == size) {
-            ++matched;
+    // Counting matching views is insufficient: duplicate tags can put two
+    // views for one page in the span while another page slot is unmapped.
+    // Require exactly one view at each page-sized slot before modifying any.
+    for (SIZE_T i = 0; i < count; ++i) {
+        const auto slot = begin + i * size;
+        SIZE_T matched = 0;
+        for (const View* view = views; view; view = view->next) {
+            const auto address = reinterpret_cast<uintptr_t>(view->address);
+            if (address == slot && view->page->block->size == size) {
+                ++matched;
+            }
         }
-    }
-    if (matched != count) {
-        SetLastError(ERROR_INVALID_PARAMETER);
-        return nullptr;
+        if (matched != 1) {
+            SetLastError(ERROR_INVALID_PARAMETER);
+            return nullptr;
+        }
     }
 
     for (View** link = &views; *link;) {
