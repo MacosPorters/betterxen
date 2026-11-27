@@ -18,6 +18,7 @@
 
 ## Research, Testing & Licensing
 
+- [Research Report #001: Apple Silicon Unified Memory](research/publications/001-unified-memory/README.md) — Accessible summary of #473 with figures, an evidence and hallucination audit, reproduction steps and open architecture questions. AI-assisted; not independently reviewed.
 - [Joint D3DMetal Memory Research Record](research/d3dmetal-zero-copy/integration.md) — Integrated A/B results for #473: report, evidence register, acceptance checklist, implementation roadmap, reproduction routes and limitations. Physical zero-copy and production performance are unproven.
 - [Workstream A Memory and Resource Research](research/d3dmetal-zero-copy/allocation-profiling/README.md) — Historical evidence, Asufte handoff and reciprocal source/data review, footprint/retirement correction, xmem feasibility, bounded fragmentation, isolated allocator evaluation and texture/graphics protocols; local observations with explicit review/pressure limitations for #473.
 

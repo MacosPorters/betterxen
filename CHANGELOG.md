@@ -10,6 +10,7 @@ Guest execution uses original, purpose-built test programs. Commercial Xbox game
 remains unsupported.
 
 ### Added
+- Added Research Report #001 on the #473 unified-memory findings (`docs/research/publications/001-unified-memory/`), with figures generated from the raw logs, a recomputation script and an evidence audit. The audit records that the integration record omits eight mismatched Instruments log digests. The report has not been independently reviewed; no production or ABI code changes.
 - Integrated the two #473 research workstreams into one record (`docs/research/d3dmetal-zero-copy/integration.md`), with the joint report, evidence register, checklist, roadmap, reproduction routes, limitations and #464 handoff. Thirteen findings have scoped independent acceptance; failed, blocked, unsupported and unknown results are unchanged. Documentation and research files only.
 - Added the #473 final research acceptance checklist and a proposed two-branch research integration sequence, with prioritized production recommendations. Publication does not authorize merging, issue closure, implementation issues, ABI changes or production work; all failed and unresolved research remains recorded.
 - Published the remaining #473 Workstream A research on its dedicated branch and prepared an evidence register, consolidation draft and prioritized implementation proposal. Historical source gaps, blocked hardware checks and pending independent acceptance remain explicit; no production or ABI behavior changes.
