@@ -2,6 +2,7 @@
 // come from the AMD APM vol. 3 (24594, rev. 3.36), CLZERO, MONITORX, MWAITX,
 // and RDPRU, and vol. 4 (26568, rev. 3.25), EXTRQ and INSERTQ.
 #include <windows.h>
+#include <cpuid.h>
 #include <cstdint>
 #include <cstdio>
 #include <cstring>
@@ -59,7 +60,7 @@ void check_address_override() {
             break;
         }
     }
-    expect(page != nullptr, "allocate a page below 4 GiB for CLZERO address-size coverage");
+    expect(page != nullptr, "allocate a page below 4 GiB for address-size coverage");
     if (!page) {
         return;
     }
@@ -69,6 +70,9 @@ void check_address_override() {
     __asm__ volatile(".byte 0x67, 0x0f, 0x01, 0xfc" :: "a"(address) : "memory");
     expect(equals(page + 64, 64, 0) && equals(page, 64, 0x6C) && equals(page + 128, 64, 0x6C),
            "CLZERO address-size override selects EAX and resumes after four bytes");
+    __asm__ volatile(".byte 0x67, 0x0f, 0x01, 0xfa"
+                     :: "a"(address), "c"(0), "d"(0) : "memory");
+    expect(page[75] == 0, "MONITORX with an address-size override resumes after four bytes");
     VirtualFree(page, 0, MEM_RELEASE);
 }
 
@@ -173,7 +177,12 @@ void check_processor_registers() {
                      "popq %0"
                      : "=r"(flags) : "c"(0) : "rax", "rdx", "cc", "memory");
     expect((flags & 0x8D4) == 0, "RDPRU clears the five flags specified by the APM");
-    expect((flags & 1) == 0, "RDPRU clears CF as BetterXen's emulation choice");
+    // CF has no specified value on hardware. Check the shim's choice when
+    // CPUID Fn8000_0008 EBX[4] does not advertise native RDPRU.
+    unsigned eax, ebx, ecx, edx;
+    if (!__get_cpuid(0x80000008, &eax, &ebx, &ecx, &edx) || !(ebx & (1u << 4))) {
+        expect((flags & 1) == 0, "emulated RDPRU clears CF");
+    }
 }
 
 struct Quadwords {
@@ -181,17 +190,16 @@ struct Quadwords {
     uint64_t high;
 };
 
-// Each vector uses XMM11 as the destination and XMM12 as the register source.
 // The upper result quadword is undefined and is outside the assertion.
-#define CHECK_SSE4A(encoding, initial, field, expected, name)                              \
-    do {                                                                                  \
-        uint64_t result;                                                                  \
-        __asm__ volatile("movdqu %1, %%xmm11\n\t"                                         \
-                         "movdqu %2, %%xmm12\n\t"                                         \
-                         ".byte " encoding "\n\t"                                        \
-                         "movq %%xmm11, %0"                                               \
-                         : "=r"(result) : "m"(initial), "m"(field) : "xmm11", "xmm12");     \
-        expect(result == (expected), name);                                               \
+#define CHECK_SSE4A(dst, src, encoding, initial, field, expected, name)           \
+    do {                                                                          \
+        uint64_t result;                                                          \
+        __asm__ volatile("movdqu %1, %%" dst "\n\t"                               \
+                         "movdqu %2, %%" src "\n\t"                               \
+                         ".byte " encoding "\n\t"                                 \
+                         "movq %%" dst ", %0"                                     \
+                         : "=r"(result) : "m"(initial), "m"(field) : dst, src);   \
+        expect(result == (expected), name);                                       \
     } while (false)
 
 void check_bit_fields() {
@@ -200,17 +208,26 @@ void check_bit_fields() {
     const Quadwords extract_field{0x3C04, 0};
     // Insert source nibble 5 into [63:60], or low byte 0xB5 into [15:8].
     const Quadwords insert_field{0x9876543210FEDCB5ULL, 0x3C04};
-    CHECK_SSE4A("0x66, 0x49, 0x0f, 0x78, 0xc3, 12, 12", initial, extract_field, 0xF60,
+    CHECK_SSE4A("xmm3", "xmm4", "0x66, 0x0f, 0x78, 0xc3, 12, 12", initial, extract_field, 0xF60,
+                "EXTRQ immediate without REX uses the destination low quadword");
+    CHECK_SSE4A("xmm3", "xmm4", "0x66, 0x0f, 0x79, 0xdc", initial, extract_field, 0xA,
+                "EXTRQ register without REX reads the source low quadword");
+    CHECK_SSE4A("xmm3", "xmm4", "0xf2, 0x0f, 0x78, 0xdc, 8, 8", initial, insert_field,
+                0xA1B2C3D4E5F6B518ULL, "INSERTQ immediate without REX preserves surrounding bits");
+    CHECK_SSE4A("xmm3", "xmm4", "0xf2, 0x0f, 0x79, 0xdc", initial, insert_field,
+                0x51B2C3D4E5F60718ULL, "INSERTQ register without REX reads the source high quadword");
+    CHECK_SSE4A("xmm11", "xmm12", "0x66, 0x49, 0x0f, 0x78, 0xc3, 12, 12",
+                initial, extract_field, 0xF60,
                 "EXTRQ immediate uses REX.B and ignores REX.W");
-    CHECK_SSE4A("0x66, 0x45, 0x0f, 0x79, 0xdc", initial, extract_field, 0xA,
+    CHECK_SSE4A("xmm11", "xmm12", "0x66, 0x45, 0x0f, 0x79, 0xdc", initial, extract_field, 0xA,
                 "EXTRQ register reads the source low quadword");
-    CHECK_SSE4A("0xf2, 0x45, 0x0f, 0x78, 0xdc, 8, 8", initial, insert_field,
+    CHECK_SSE4A("xmm11", "xmm12", "0xf2, 0x45, 0x0f, 0x78, 0xdc, 8, 8", initial, insert_field,
                 0xA1B2C3D4E5F6B518ULL, "INSERTQ immediate preserves bits outside the field");
-    CHECK_SSE4A("0xf2, 0x4d, 0x0f, 0x79, 0xdc", initial, insert_field,
+    CHECK_SSE4A("xmm11", "xmm12", "0xf2, 0x4d, 0x0f, 0x79, 0xdc", initial, insert_field,
                 0x51B2C3D4E5F60718ULL, "INSERTQ register reads the source high quadword");
-    CHECK_SSE4A("0x66, 0x41, 0x0f, 0x78, 0xc3, 0, 0", initial, extract_field,
+    CHECK_SSE4A("xmm11", "xmm12", "0x66, 0x41, 0x0f, 0x78, 0xc3, 0, 0", initial, extract_field,
                 0xA1B2C3D4E5F60718ULL, "EXTRQ length zero selects all 64 bits");
-    CHECK_SSE4A("0xf2, 0x45, 0x0f, 0x78, 0xdc, 0, 0", initial, insert_field,
+    CHECK_SSE4A("xmm11", "xmm12", "0xf2, 0x45, 0x0f, 0x78, 0xdc, 0, 0", initial, insert_field,
                 0x9876543210FEDCB5ULL, "INSERTQ length zero replaces all 64 bits");
 }
 
