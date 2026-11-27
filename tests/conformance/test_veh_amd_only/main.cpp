@@ -40,6 +40,68 @@ void test_clzero() {
     check(kept, "clzero leaves the neighbouring lines", buf[0], 0xAB);
 }
 
+void test_clzero_address_size_override() {
+    // 67 0F 01 FC selects EAX, so the line must sit below 4 GiB. Ask for a low
+    // address; if it is taken, skip rather than fail.
+    uint8_t* buf = static_cast<uint8_t*>(VirtualAlloc(reinterpret_cast<void*>(0x20000000),
+                                                      4096, MEM_COMMIT | MEM_RESERVE,
+                                                      PAGE_READWRITE));
+    if (!buf || (reinterpret_cast<uintptr_t>(buf) >> 32) != 0) {
+        std::printf("skip: clzero with 67 prefix: no buffer below 4 GiB\n");
+        return;
+    }
+    std::memset(buf, 0xAB, 256);
+    // The high half of RAX must not matter.
+    const uint64_t rax = (0xDEADBEEFULL << 32) | static_cast<uint32_t>(
+                             reinterpret_cast<uintptr_t>(buf + 64 + 5));
+    __asm__ volatile(".byte 0x67, 0x0f, 0x01, 0xfc" /* clzero (EAX) */
+                     :: "a"(rax) : "memory");
+    bool zeroed = true;
+    for (int i = 64; i < 128; ++i) zeroed &= buf[i] == 0;
+    bool kept = buf[63] == 0xAB && buf[128] == 0xAB;
+    check(zeroed && kept, "67 clzero zeroes exactly the line held in eax", buf[64], 0);
+    VirtualFree(buf, 0, MEM_RELEASE);
+}
+
+DWORD g_fault_code = 0;
+ULONG_PTR g_fault_write = ~0ULL;
+ULONG_PTR g_fault_address = 0;
+
+LONG CALLBACK record_fault(PEXCEPTION_POINTERS ep) {
+    // Added last, so it runs after bx_runtime_veh and sees what that left.
+    if (ep->ExceptionRecord->ExceptionCode != EXCEPTION_ACCESS_VIOLATION &&
+        ep->ExceptionRecord->ExceptionCode != EXCEPTION_ILLEGAL_INSTRUCTION) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    g_fault_code = ep->ExceptionRecord->ExceptionCode;
+    if (ep->ExceptionRecord->NumberParameters >= 2) {
+        g_fault_write = ep->ExceptionRecord->ExceptionInformation[0];
+        g_fault_address = ep->ExceptionRecord->ExceptionInformation[1];
+    }
+    ep->ContextRecord->Rip += 3;  // step over the 3-byte clzero
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+void test_clzero_fault() {
+    void* page = VirtualAlloc(nullptr, 4096, MEM_COMMIT | MEM_RESERVE, PAGE_READONLY);
+    if (!page) {
+        check(false, "clzero fault: VirtualAlloc", 0, 1);
+        return;
+    }
+    PVOID handler = AddVectoredExceptionHandler(0, record_fault);
+    __asm__ volatile(".byte 0x0f, 0x01, 0xfc" /* clzero */
+                     :: "a"(static_cast<char*>(page) + 100) : "memory");
+    RemoveVectoredExceptionHandler(handler);
+    check(g_fault_code == EXCEPTION_ACCESS_VIOLATION,
+          "clzero on a read-only page raises an access violation", g_fault_code,
+          EXCEPTION_ACCESS_VIOLATION);
+    check(g_fault_write == 1, "the access violation is a write", g_fault_write, 1);
+    check(g_fault_address == (reinterpret_cast<uintptr_t>(page) + 64),
+          "the access violation names the line", g_fault_address,
+          reinterpret_cast<uintptr_t>(page) + 64);
+    VirtualFree(page, 0, MEM_RELEASE);
+}
+
 void test_waits() {
     alignas(64) volatile uint64_t word = 0;
     // monitorx rax, ecx, edx; mwaitx eax, ecx, ebx with the timer enabled
@@ -69,6 +131,21 @@ void test_rdpru() {
     check(m0 != 0 && m1 >= m0, "rdpru ecx=0 (MPERF) does not go backwards", m1, m0);
     check(a0 != 0 && a1 >= a0, "rdpru ecx=1 (APERF) does not go backwards", a1, a0);
     check(rdpru(2) == 0, "rdpru with an unknown ecx reads 0", rdpru(2), 0);
+}
+
+void test_rdpru_flags() {
+    // Every arithmetic flag set going in; the manual lists OF, SF, ZF, AF and PF
+    // as cleared and CF as modified, so only those five are asserted.
+    uint64_t flags;
+    __asm__ volatile("pushfq\n\t"
+                     "orq $0x8d5, (%%rsp)\n\t"
+                     "popfq\n\t"
+                     ".byte 0x0f, 0x01, 0xfd\n\t"
+                     "pushfq\n\t"
+                     "popq %0"
+                     : "=r"(flags) : "c"(0) : "rax", "rdx", "cc", "memory");
+    const uint64_t cleared = 0x800 | 0x80 | 0x40 | 0x10 | 0x4;
+    check((flags & cleared) == 0, "rdpru clears OF, SF, ZF, AF and PF", flags & cleared, 0);
 }
 
 struct Xmm {
@@ -174,8 +251,11 @@ int main() {
     (void)bx_veh_get_clwb_trap_count();
 
     test_clzero();
+    test_clzero_address_size_override();
+    test_clzero_fault();
     test_waits();
     test_rdpru();
+    test_rdpru_flags();
     test_sse4a();
 
     if (g_failures != 0) {

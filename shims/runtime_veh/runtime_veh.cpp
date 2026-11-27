@@ -232,21 +232,39 @@ size_t emulate_sse4a(const uint8_t* ip, size_t size, CONTEXT& ctx, AmdKind& kind
     return idx;
 }
 
+constexpr DWORD kRdpruFlags = 0x0001 | 0x0004 | 0x0010 | 0x0040 | 0x0080 | 0x0800;
+
 // CLZERO, MONITORX, MWAITX, RDPRU (0F 01 FC/FA/FB/FD) and SSE4a: does what
 // a Zen 2 CPU would and returns the instruction length, or 0 to leave the
-// exception to the next handler.
-size_t emulate_amd_only(const uint8_t* ip, size_t size, CONTEXT& ctx, AmdKind& kind) {
+// exception to the next handler. An unwritable CLZERO line also rewrites `rec`
+// into the write fault a store would raise.
+size_t emulate_amd_only(const uint8_t* ip, size_t size, CONTEXT& ctx, EXCEPTION_RECORD& rec,
+                        AmdKind& kind) {
+    // CLZERO takes an address-size override: 67 selects EAX in 64-bit mode.
+    const bool addr32 = size >= 4 && ip[0] == 0x67 && ip[1] == 0x0F && ip[2] == 0x01 &&
+                        ip[3] == 0xFC;
+    if (addr32) {
+        ip += 1;
+        size -= 1;
+    }
     if (size >= 3 && ip[0] == 0x0F && ip[1] == 0x01) {
         switch (ip[2]) {
         case 0xFC: {
-            // Zeroes the 64-byte line holding RAX; a line never crosses a page.
-            const uintptr_t line = static_cast<uintptr_t>(ctx.Rax) & ~uintptr_t{63};
+            // Zeroes the 64-byte line holding rAX; a line never crosses a page.
+            const uint64_t address = addr32 ? static_cast<uint32_t>(ctx.Rax) : ctx.Rax;
+            const uintptr_t line = static_cast<uintptr_t>(address) & ~uintptr_t{63};
             if (!is_writable(line)) {
+                // CLZERO takes the paging checks of a store: report the write
+                // fault a store to the line would have raised, not a #UD.
+                rec.ExceptionCode = EXCEPTION_ACCESS_VIOLATION;
+                rec.NumberParameters = 2;
+                rec.ExceptionInformation[0] = 1;
+                rec.ExceptionInformation[1] = line;
                 return 0;
             }
             std::memset(reinterpret_cast<void*>(line), 0, 64);
             kind = kClzero;
-            return 3;
+            return addr32 ? 4 : 3;
         }
         case 0xFA:
             // A wait hint with nothing to arm.
@@ -263,7 +281,9 @@ size_t emulate_amd_only(const uint8_t* ip, size_t size, CONTEXT& ctx, AmdKind& k
         case 0xFD: {
             // ECX 0 is MPERF and 1 is APERF; both count at the time-stamp
             // rate, as on a core that never changes frequency. Other ECX
-            // values read 0. Flags are left unchanged.
+            // values read 0. OF, SF, ZF, AF and PF are cleared and CF is
+            // modified (AMD APM vol. 3, RDPRU); CF is cleared here.
+            ctx.EFlags &= ~kRdpruFlags;
             const uint64_t cycles = static_cast<uint32_t>(ctx.Rcx) <= 1 ? __rdtsc() : 0;
             ctx.Rax = cycles & 0xFFFFFFFFULL;
             ctx.Rdx = cycles >> 32;
@@ -347,7 +367,7 @@ LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
     }
 
     AmdKind kind = kAmdKinds;
-    if (size_t len = emulate_amd_only(ip, size, *ep->ContextRecord, kind)) {
+    if (size_t len = emulate_amd_only(ip, size, *ep->ContextRecord, *ep->ExceptionRecord, kind)) {
         uint64_t count = g_amd_traps[kind].fetch_add(1, std::memory_order_relaxed) + 1;
         log_sampled_trap(kAmdEvents[kind], count, ep->ContextRecord->Rip, len);
         ep->ContextRecord->Rip += len;

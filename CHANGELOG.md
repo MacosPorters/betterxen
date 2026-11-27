@@ -49,9 +49,9 @@ remains unsupported.
 - Updated `README.md` and `docs/roadmap.md` to record Milestone M0 and Milestone M1 (`#17`, 16/16 issues) as verified complete on synthetic workloads and activate Milestone M2 (`#18`, First Rendered Frame & Shader Format Gate).
 - Implemented clean-room COM `IUnknown` vtable dispatch in `xgameruntime.dll!QueryApiImpl` for the core public Microsoft PC GDK (`Microsoft.GDK.Windows 2610.0.9661`) interface families (`XAsync`/`XTaskQueue`/`XThread`, `XGameRuntimeIsFeatureAvailable`, `XSystem`, `XError`, `XPersistentLocalStorage`, `XUser`, `XStore`, `XGameUi`, `XNetworking`, `XGame`), with auto-logging `BX_VTABLE_STUB_LOG` fallback on unimplemented slots. Validated live on CrossOver 26.3 with an independently authored caller linked against Microsoft's public `xgameruntime.lib` (#456).
 - `bx_runtime_veh.dll` now emulates the other AMD-only instructions that Rosetta 2 and Intel CPUs raise `#UD` on (#451):
-  - `clzero` zeroes the 64-byte line holding `rax`. It is checked first with `VirtualQuery`; an unwritable line is left to the next handler.
+  - `clzero` zeroes the 64-byte line holding `rax`, or `eax` with the `67` address-size prefix. The line is checked first with `VirtualQuery`; for an unwritable line the exception is rewritten into the write access violation a store would raise (guard pages are not distinguished) and left to the next handler.
   - `monitorx` / `mwaitx` are stepped over. `mwaitx` is a single yield: the EBX timer and the ECX extension bits are ignored, so a guest that bounds a wait with the timer spins instead of sleeping.
-  - `rdpru` reads MPERF and APERF from the time-stamp counter, and 0 for any other `ecx`.
+  - `rdpru` reads MPERF and APERF from the time-stamp counter, and 0 for any other `ecx`. It clears OF, SF, ZF, AF and PF as the AMD APM (vol. 3, rev. 3.36) lists; CF is "modified" there without a stated value and is cleared.
   - SSE4a `extrq` / `insertq`, in all four register forms, work on the saved XMM registers.
   - Each kind logs a sampled `<name>_trapped` record, as `clwb` does, and `bx-cli trace` prints a per-kind count. The trace record is the observable: the frozen `.def` is unchanged, so the fixture checks architectural results, not trap counts.
   - `tests/conformance/test_veh_amd_only/` checks the result of every instruction, including REX-extended XMM registers.
