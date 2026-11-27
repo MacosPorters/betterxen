@@ -250,6 +250,10 @@ public:
     // Slot 4: HRESULT OpenWaitHandle(HANDLE* waitHandle).
     // Returns a fresh manual-reset event on every call. The dispatcher owns
     // nothing after returning it: the caller closes it via CloseHandle.
+    // LIMIT: the handle is created non-signaled and this shim never signals
+    // it, because there is no background input work to make it ready. A
+    // caller that waits on it with INFINITE will block forever; poll with a
+    // timeout, or call Dispatch, instead.
     virtual HRESULT WINAPI OpenWaitHandle(HANDLE* out) {
         if (!out) return E_POINTER;
         *out = nullptr;
