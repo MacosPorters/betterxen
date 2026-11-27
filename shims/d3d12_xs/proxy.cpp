@@ -4,6 +4,7 @@
 #include <cstdio>
 #include <cstring>
 #include <new>
+#include <vector>
 
 #include "shader_gate.h"
 
@@ -429,6 +430,95 @@ HRESULT STDMETHODCALLTYPE BxDeviceProxy::CreateComputePipelineState(const D3D12_
     return hr;
 }
 
+/* Stream PSO subobjects (#576). A stream is a sequence of 8-byte-aligned records: a SIZE_T
+ * type tag followed by a type-dependent payload, each padded to 8 bytes. The payload sizes
+ * below are the public <d3d12.h> structure sizes for those tags; only the shader tags are
+ * interpreted, and every other payload is copied verbatim. */
+struct StreamSubobject {
+    D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type;
+    size_t payload;
+    const char* stage; /* non-null only for a shader subobject */
+};
+constexpr StreamSubobject kStreamSubobjects[] = {
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, sizeof(void*), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS, sizeof(D3D12_SHADER_BYTECODE), "VS"},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS, sizeof(D3D12_SHADER_BYTECODE), "PS"},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DS, sizeof(D3D12_SHADER_BYTECODE), "DS"},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_HS, sizeof(D3D12_SHADER_BYTECODE), "HS"},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_GS, sizeof(D3D12_SHADER_BYTECODE), "GS"},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, sizeof(D3D12_SHADER_BYTECODE), "CS"},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT, sizeof(D3D12_STREAM_OUTPUT_DESC), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND, sizeof(D3D12_BLEND_DESC), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK, sizeof(UINT), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER, sizeof(D3D12_RASTERIZER_DESC), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL, sizeof(D3D12_DEPTH_STENCIL_DESC), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT, sizeof(D3D12_INPUT_LAYOUT_DESC), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_IB_STRIP_CUT_VALUE, sizeof(UINT), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY, sizeof(UINT), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS, sizeof(D3D12_RT_FORMAT_ARRAY), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT, sizeof(DXGI_FORMAT), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC, sizeof(DXGI_SAMPLE_DESC), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_NODE_MASK, sizeof(UINT), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CACHED_PSO, sizeof(D3D12_CACHED_PIPELINE_STATE), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS, sizeof(UINT), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL1, sizeof(D3D12_DEPTH_STENCIL_DESC1), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING, sizeof(D3D12_VIEW_INSTANCING_DESC), nullptr},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS, sizeof(D3D12_SHADER_BYTECODE), "AS"},
+    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS, sizeof(D3D12_SHADER_BYTECODE), "MS"},
+};
+
+const StreamSubobject* find_subobject(uint32_t type) {
+    for (const StreamSubobject& entry : kStreamSubobjects) {
+        if (static_cast<uint32_t>(entry.type) == type) return &entry;
+    }
+    return nullptr;
+}
+
+constexpr size_t align8(size_t value) { return (value + 7) & ~static_cast<size_t>(7); }
+
+/* Copies the caller's stream into `copy` so the gate can substitute prepared bytecode without
+ * touching memory it does not own, and records where each shader payload sits. An unknown tag,
+ * or a payload that overruns SizeInBytes, is rejected. */
+HRESULT copy_stream(const D3D12_PIPELINE_STATE_STREAM_DESC& desc, std::vector<uint8_t>& copy,
+                    std::vector<size_t>& stage_offsets, std::vector<const char*>& stage_names) {
+    if (desc.SizeInBytes == 0 || !desc.pPipelineStateSubobjectStream) return E_INVALIDARG;
+    const auto* source = static_cast<const uint8_t*>(desc.pPipelineStateSubobjectStream);
+    copy.assign(source, source + desc.SizeInBytes);
+    size_t offset = 0;
+    while (offset < copy.size()) {
+        if (copy.size() - offset < sizeof(SIZE_T)) return E_INVALIDARG;
+        /* The tag is a 4-byte enum at the start of an 8-byte-aligned record; the rest of
+         * those 8 bytes is padding a caller may leave uninitialized, so read only the enum
+         * and step to the payload at offset sizeof(SIZE_T). */
+        uint32_t raw = 0;
+        std::memcpy(&raw, &copy[offset], sizeof(raw));
+        if (raw >= static_cast<uint32_t>(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MAX_VALID)) return E_INVALIDARG;
+        const StreamSubobject* entry = find_subobject(raw);
+        if (!entry) return E_INVALIDARG;
+        /* Microsoft's ID3D12Device2 rules reject a duplicated subobject type. */
+        for (size_t seen = 0; seen < offset; ) {
+            uint32_t prior = 0;
+            std::memcpy(&prior, &copy[seen], sizeof(prior));
+            if (prior == raw) return E_INVALIDARG;
+            const StreamSubobject* prior_entry = find_subobject(prior);
+            if (!prior_entry) return E_INVALIDARG;
+            seen += align8(sizeof(SIZE_T) + prior_entry->payload);
+        }
+        const size_t payload = offset + sizeof(SIZE_T);
+        const size_t record = align8(sizeof(SIZE_T) + entry->payload);
+        if (copy.size() - offset < record) return E_INVALIDARG;
+        if (entry->stage) {
+            D3D12_SHADER_BYTECODE code{};
+            std::memcpy(&code, &copy[payload], sizeof(code));
+            if (code.BytecodeLength != 0 && !code.pShaderBytecode) return E_INVALIDARG;
+            stage_offsets.push_back(payload);
+            stage_names.push_back(entry->stage);
+        }
+        offset += record;
+    }
+    return S_OK;
+}
+
 HRESULT STDMETHODCALLTYPE BxDeviceProxy::CreatePipelineState(const D3D12_PIPELINE_STATE_STREAM_DESC* desc, REFIID riid, void** ppv) {
     BX_D3D_TRACE("ID3D12Device2", "CreatePipelineState");
     if (!h_ID3D12Device2) {
@@ -436,12 +526,50 @@ HRESULT STDMETHODCALLTYPE BxDeviceProxy::CreatePipelineState(const D3D12_PIPELIN
         if (ppv) *ppv = nullptr;
         return E_NOTIMPL;
     }
-    /* The stream form is forwarded unparsed: only its size is recorded (sub-object walking is M2 work). */
-    char detail[96];
-    std::snprintf(detail, sizeof(detail), "pso=stream bytes=%llu shaders_not_parsed=1",
-                  static_cast<unsigned long long>(desc ? desc->SizeInBytes : 0));
-    bx_log_emit(BX_LOG_INFO, "d3d12_xs", "pso_stream", detail);
-    HRESULT hr = h_ID3D12Device2->CreatePipelineState(desc, riid, ppv);
+    if (ppv) *ppv = nullptr;
+    if (!desc) {
+        bx_log_emit(BX_LOG_INFO, "d3d12_xs", "pso_stream", "pso=stream bytes=0 shaders_not_parsed=1");
+        const HRESULT hr = h_ID3D12Device2->CreatePipelineState(desc, riid, ppv);
+        log_created("stream pipeline state", hr);
+        return hr;
+    }
+
+    /* M2 shader format gate (#576): the stream form classifies its stages like the desc forms,
+     * so an ACCC-only container is refused instead of reaching D3DMetal unparsed. */
+    std::vector<uint8_t> stream;
+    std::vector<size_t> offsets;
+    std::vector<const char*> names;
+    const HRESULT copied = copy_stream(*desc, stream, offsets, names);
+    {
+        char detail[96];
+        std::snprintf(detail, sizeof(detail), "pso=stream bytes=%llu shaders_not_parsed=%d",
+                      static_cast<unsigned long long>(desc->SizeInBytes), offsets.empty() ? 1 : 0);
+        bx_log_emit(BX_LOG_INFO, "d3d12_xs", "pso_stream", detail);
+    }
+    if (FAILED(copied) || offsets.empty()) {
+        const HRESULT hr = FAILED(copied) ? copied : h_ID3D12Device2->CreatePipelineState(desc, riid, ppv);
+        log_created("stream pipeline state", hr);
+        return hr;
+    }
+
+    BxShaderGate gate;
+    HRESULT gated = S_OK;
+    for (size_t i = 0; i < offsets.size() && SUCCEEDED(gated); ++i) {
+        D3D12_SHADER_BYTECODE in{};
+        std::memcpy(&in, &stream[offsets[i]], sizeof(in));
+        D3D12_SHADER_BYTECODE out = in;
+        gated = gate.admit("stream", names[i], in, out);
+        /* `out` is either the caller's bytes or the gate's copy, which lives until `gate`
+         * is destroyed, so only the pointer/length inside our own copy change. */
+        if (SUCCEEDED(gated)) std::memcpy(&stream[offsets[i]], &out, sizeof(out));
+    }
+    if (FAILED(gated)) {
+        log_created("stream pipeline state", gated);
+        return gated;
+    }
+    D3D12_PIPELINE_STATE_STREAM_DESC admitted = *desc;
+    admitted.pPipelineStateSubobjectStream = stream.data();
+    const HRESULT hr = h_ID3D12Device2->CreatePipelineState(&admitted, riid, ppv);
     log_created("stream pipeline state", hr);
     return hr;
 }

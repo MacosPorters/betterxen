@@ -188,6 +188,39 @@ HRESULT create_compute(ID3D12Device* device, ID3D12RootSignature* root, const vo
     return device->CreateComputePipelineState(&desc, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(pso));
 }
 
+/* Builds a compute stream PSO from shader bytecode and the root signature. Subobjects are
+ * 8-byte-aligned records: a SIZE_T type tag, the payload, then padding to 8 bytes. */
+struct StreamBuilder {
+    std::vector<uint8_t> bytes;
+    void add(SIZE_T type, const void* payload, size_t size) {
+        const size_t at = bytes.size();
+        bytes.resize(at + sizeof(SIZE_T) + ((size + 7) & ~static_cast<size_t>(7)), 0);
+        std::memcpy(bytes.data() + at, &type, sizeof(SIZE_T));
+        if (size) std::memcpy(bytes.data() + at + sizeof(SIZE_T), payload, size);
+    }
+    D3D12_PIPELINE_STATE_STREAM_DESC desc() const {
+        D3D12_PIPELINE_STATE_STREAM_DESC d = {};
+        d.SizeInBytes = bytes.size();
+        d.pPipelineStateSubobjectStream = const_cast<uint8_t*>(bytes.data());
+        return d;
+    }
+};
+
+StreamBuilder compute_stream(const void* code, size_t size, ID3D12RootSignature* root) {
+    StreamBuilder stream;
+    D3D12_SHADER_BYTECODE cs = {code, size};
+    stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, &cs, sizeof(cs));
+    stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, &root, sizeof(root));
+    return stream;
+}
+
+HRESULT create_stream(ID3D12Device* device, const D3D12_PIPELINE_STATE_STREAM_DESC& desc,
+                      ID3D12PipelineState** pso) {
+    *pso = nullptr;
+    auto* device2 = static_cast<ID3D12Device2*>(device);
+    return device2->CreatePipelineState(&desc, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(pso));
+}
+
 /* Runs fill_cs66 and checks every output word. */
 void run_dxil(ID3D12Device* device, ID3D12RootSignature* root, ID3D12PipelineState* pso) {
     D3D12_COMMAND_QUEUE_DESC queue_desc = {};
@@ -301,6 +334,12 @@ int no_bridge_main() {
     graphics.SampleDesc.Count = 1;
     hr = device->CreateGraphicsPipelineState(&graphics, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(&pso));
     check(hr == E_NOTIMPL && !pso, "no-bridge: ACCC-only graphics VS hr=0x%08lx (want E_NOTIMPL)", ul(hr));
+    if (pso) pso->Release();
+    // The stream form refuses ACCC-only with or without the bridge (#576).
+    StreamBuilder accc_stream = compute_stream(accc.data(), accc.size(), root);
+    const D3D12_PIPELINE_STATE_STREAM_DESC accc_desc = accc_stream.desc();
+    hr = create_stream(device, accc_desc, &pso);
+    check(hr == E_NOTIMPL && !pso, "no-bridge: ACCC-only stream CS hr=0x%08lx (want E_NOTIMPL)", ul(hr));
     if (pso) pso->Release();
     root->Release();
     device->Release();
@@ -425,6 +464,51 @@ int main() {
     check(SUCCEEDED(hr) && pso, "DXIL PSO after a refusal hr=0x%08lx", ul(hr));
     if (pso) pso->Release();
 
+    // 2b. The stream form (ID3D12Device2::CreatePipelineState) is gated too (#576): the same
+    //     ACCC-only container is refused through the stream, and DXIL passes and runs.
+    {
+        StreamBuilder refused = compute_stream(accc.data(), accc.size(), root_uav);
+        const D3D12_PIPELINE_STATE_STREAM_DESC stream = refused.desc();
+        hr = create_stream(device, stream, &pso);
+        check(hr == E_NOTIMPL && !pso,
+              "ACCC-only stream PSO: hr=0x%08lx (want E_NOTIMPL) pso=%p", ul(hr), static_cast<void*>(pso));
+        if (pso) pso->Release();
+
+        StreamBuilder accepted = compute_stream(g_fill_cs66, sizeof(g_fill_cs66), root_uav);
+        const D3D12_PIPELINE_STATE_STREAM_DESC stream_dxil = accepted.desc();
+        hr = create_stream(device, stream_dxil, &pso);
+        check(SUCCEEDED(hr) && pso, "DXIL stream PSO hr=0x%08lx", ul(hr));
+        if (pso) {
+            run_dxil(device, root_uav, pso);
+            pso->Release();
+        }
+
+        // A truncated stream, and an unknown subobject type, are rejected before the host.
+        StreamBuilder truncated = compute_stream(g_fill_cs66, sizeof(g_fill_cs66), root_uav);
+        D3D12_PIPELINE_STATE_STREAM_DESC short_desc = truncated.desc();
+        short_desc.SizeInBytes -= 8;
+        hr = create_stream(device, short_desc, &pso);
+        check(hr == E_INVALIDARG && !pso, "truncated stream hr=0x%08lx (want E_INVALIDARG)", ul(hr));
+        if (pso) pso->Release();
+
+        StreamBuilder unknown = compute_stream(g_fill_cs66, sizeof(g_fill_cs66), root_uav);
+        const SIZE_T bogus = 0x7f;
+        unknown.add(bogus, nullptr, 0);
+        const D3D12_PIPELINE_STATE_STREAM_DESC bogus_desc = unknown.desc();
+        hr = create_stream(device, bogus_desc, &pso);
+        check(hr == E_INVALIDARG && !pso, "unknown-subobject stream hr=0x%08lx (want E_INVALIDARG)", ul(hr));
+        if (pso) pso->Release();
+
+        // A duplicated subobject type is rejected by ID3D12Device2's own rules.
+        StreamBuilder duplicate = compute_stream(g_fill_cs66, sizeof(g_fill_cs66), root_uav);
+        D3D12_SHADER_BYTECODE again = {g_fill_cs66, sizeof(g_fill_cs66)};
+        duplicate.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, &again, sizeof(again));
+        const D3D12_PIPELINE_STATE_STREAM_DESC dup_desc = duplicate.desc();
+        hr = create_stream(device, dup_desc, &pso);
+        check(hr == E_INVALIDARG && !pso, "duplicate-CS stream hr=0x%08lx (want E_INVALIDARG)", ul(hr));
+        if (pso) pso->Release();
+    }
+
     // 3. Constraint-carrying DXIL still passes; its constraints are logged (results not dispatched).
     hr = create_compute(device, root_uav, g_wave64_lanes_cs, sizeof(g_wave64_lanes_cs), &pso);
     std::printf("wave64 PSO hr=0x%08lx\n", ul(hr));
@@ -448,6 +532,12 @@ int main() {
           "shader_gate record rejecting the ACCC-only compute shader");
     check(log_has(log, {"\"event\":\"shader_gate\"", "pso=graphics", "stage=VS", "decision=reject_accc_only"}),
           "shader_gate record rejecting the ACCC-only vertex shader");
+    check(log_has(log, {"\"event\":\"shader_gate\"", "pso=stream", "stage=CS", "decision=reject_accc_only"}),
+          "shader_gate record rejecting the ACCC-only stream compute shader");
+    check(log_has(log, {"\"event\":\"shader_gate\"", "pso=stream", "stage=CS", "decision=pass_dxil"}),
+          "shader_gate record passing the DXIL stream compute shader");
+    check(log_has(log, {"\"event\":\"pso_stream\"", "shaders_not_parsed=0"}),
+          "pso_stream record says the stream's shaders were parsed");
     check(log_has(log, {"\"event\":\"shader_gate\"", "decision=pass_dxil", "wave_ops=1", "wave_lanes=64-64"}),
           "shader_gate record with WaveSize(64)");
     check(log_has(log, {"\"event\":\"shader_d3dmetal_gap\"", "wave_lanes_min=64"}),
