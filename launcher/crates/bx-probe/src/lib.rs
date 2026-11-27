@@ -73,7 +73,7 @@ pub fn classify_dll(dll_name: &str) -> ShimTrack {
     }
 }
 
-#[derive(Debug, Clone)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub struct PeSummary {
     pub image_base: u64,
     pub size_of_image: u32,
@@ -133,7 +133,7 @@ fn rva_to_off(sections: &[Section], rva: u32) -> Option<usize> {
         if rva >= s.vaddr && rva < s.vaddr.saturating_add(span) {
             let delta = rva - s.vaddr;
             if delta < s.raw_size {
-                return Some((s.raw_ptr + delta) as usize);
+                return (s.raw_ptr as usize).checked_add(delta as usize);
             }
         }
     }
@@ -167,8 +167,14 @@ pub fn probe_pe32_plus(bytes: &[u8]) -> Result<PeSummary, ProbeError> {
     let size_of_image = u32_le(bytes, opt + 56).ok_or(ProbeError::NotPe32Plus("size_of_image"))?;
     let num_rvas = u32_le(bytes, opt + 108).ok_or(ProbeError::NotPe32Plus("num_rvas"))?;
 
-    let mut sections = Vec::with_capacity(section_count as usize);
     let sec_base = opt + opt_size;
+    let section_table_size = (section_count as usize)
+        .checked_mul(40)
+        .ok_or(ProbeError::NotPe32Plus("section table size overflow"))?;
+    bytes
+        .get(sec_base..sec_base + section_table_size)
+        .ok_or(ProbeError::NotPe32Plus("truncated section table"))?;
+    let mut sections = Vec::with_capacity(section_count as usize);
     for i in 0..section_count as usize {
         let so = sec_base + i * 40;
         let vsize = u32_le(bytes, so + 8).ok_or(ProbeError::NotPe32Plus("sec vsize"))?;
@@ -185,15 +191,20 @@ pub fn probe_pe32_plus(bytes: &[u8]) -> Result<PeSummary, ProbeError> {
 
     let mut imports: BTreeMap<String, Vec<String>> = BTreeMap::new();
     if num_rvas > 1 {
-        let imp_rva = u32_le(bytes, opt + 112 + 8).unwrap_or(0);
+        let imp_rva = u32_le(bytes, opt + 112 + 8)
+            .ok_or(ProbeError::NotPe32Plus("truncated import directory"))?;
         if imp_rva != 0
             && let Some(mut desc_off) = rva_to_off(&sections, imp_rva)
         {
-            while let (Some(orig_thunk), Some(name_rva), Some(first_thunk)) = (
-                u32_le(bytes, desc_off),
-                u32_le(bytes, desc_off + 12),
-                u32_le(bytes, desc_off + 16),
-            ) {
+            let max_descriptors = bytes.len() / 20 + 1;
+            for _ in 0..max_descriptors {
+                let (Some(orig_thunk), Some(name_rva), Some(first_thunk)) = (
+                    u32_le(bytes, desc_off),
+                    u32_le(bytes, desc_off + 12),
+                    u32_le(bytes, desc_off + 16),
+                ) else {
+                    break;
+                };
                 if orig_thunk == 0 && name_rva == 0 && first_thunk == 0 {
                     break;
                 }
@@ -224,7 +235,10 @@ pub fn probe_pe32_plus(bytes: &[u8]) -> Result<PeSummary, ProbeError> {
                     }
                     imports.entry(dll).or_default().extend(syms);
                 }
-                desc_off += 20;
+                desc_off = match desc_off.checked_add(20) {
+                    Some(off) => off,
+                    None => break,
+                };
             }
         }
     }
@@ -241,6 +255,78 @@ pub fn probe_pe32_plus(bytes: &[u8]) -> Result<PeSummary, ProbeError> {
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    const PE_OFF: usize = 0x80;
+    const COFF: usize = PE_OFF + 4;
+    const OPT: usize = COFF + 20;
+    const OPT_SIZE: usize = 0xF0;
+    const SEC: usize = OPT + OPT_SIZE;
+    const SECTION_RVA: u32 = 0x1000;
+    const RAW_PTR: u32 = 0x200;
+
+    fn put_u16(bytes: &mut [u8], off: usize, value: u16) {
+        bytes[off..off + 2].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn put_u32(bytes: &mut [u8], off: usize, value: u32) {
+        bytes[off..off + 4].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn put_u64(bytes: &mut [u8], off: usize, value: u64) {
+        bytes[off..off + 8].copy_from_slice(&value.to_le_bytes());
+    }
+
+    fn minimal_pe32_plus() -> Vec<u8> {
+        let mut bytes = vec![0u8; 0x400];
+        bytes[0..2].copy_from_slice(b"MZ");
+        put_u32(&mut bytes, 0x3C, PE_OFF as u32);
+        bytes[PE_OFF..PE_OFF + 4].copy_from_slice(b"PE\0\0");
+        put_u16(&mut bytes, COFF, 0x8664);
+        put_u16(&mut bytes, COFF + 2, 1);
+        put_u16(&mut bytes, COFF + 16, OPT_SIZE as u16);
+        put_u16(&mut bytes, OPT, 0x020B);
+        put_u32(&mut bytes, OPT + 16, 0x1234);
+        put_u64(&mut bytes, OPT + 24, 0x0000_0001_4000_0000);
+        put_u32(&mut bytes, OPT + 56, 0x2000);
+        put_u32(&mut bytes, OPT + 108, 16);
+        bytes[SEC..SEC + 8].copy_from_slice(b".rdata\0\0");
+        put_u32(&mut bytes, SEC + 8, 0x200);
+        put_u32(&mut bytes, SEC + 12, SECTION_RVA);
+        put_u32(&mut bytes, SEC + 16, 0x200);
+        put_u32(&mut bytes, SEC + 20, RAW_PTR);
+        bytes
+    }
+
+    fn two_import_pe32_plus() -> Vec<u8> {
+        let mut bytes = minimal_pe32_plus();
+        let import_rva = SECTION_RVA;
+        put_u32(&mut bytes, OPT + 112 + 8, import_rva);
+        put_u32(&mut bytes, OPT + 112 + 12, 0x140);
+
+        // Two descriptors followed by the required all-zero terminator.
+        put_u32(&mut bytes, RAW_PTR as usize, SECTION_RVA + 0x80);
+        put_u32(&mut bytes, RAW_PTR as usize + 12, SECTION_RVA + 0x40);
+        put_u32(&mut bytes, RAW_PTR as usize + 16, SECTION_RVA + 0x80);
+        put_u32(&mut bytes, RAW_PTR as usize + 20, SECTION_RVA + 0xA0);
+        put_u32(&mut bytes, RAW_PTR as usize + 32, SECTION_RVA + 0x50);
+        put_u32(&mut bytes, RAW_PTR as usize + 36, SECTION_RVA + 0xA0);
+
+        bytes[RAW_PTR as usize + 0x40..RAW_PTR as usize + 0x4A].copy_from_slice(b"ALPHA.DLL\0");
+        bytes[RAW_PTR as usize + 0x50..RAW_PTR as usize + 0x59].copy_from_slice(b"BETA.DLL\0");
+
+        put_u64(
+            &mut bytes,
+            RAW_PTR as usize + 0x80,
+            u64::from(SECTION_RVA + 0x60),
+        );
+        put_u64(&mut bytes, RAW_PTR as usize + 0x88, 0);
+        put_u64(&mut bytes, RAW_PTR as usize + 0xA0, (1u64 << 63) | 7);
+        put_u64(&mut bytes, RAW_PTR as usize + 0xA8, 0);
+
+        put_u16(&mut bytes, RAW_PTR as usize + 0x60, 0x1234);
+        bytes[RAW_PTR as usize + 0x62..RAW_PTR as usize + 0x6C].copy_from_slice(b"NamedFunc\0");
+        bytes
+    }
 
     #[test]
     fn classifies_tracks_accurately() {
@@ -262,5 +348,99 @@ mod tests {
             ShimTrack::TrackAWin32Bridge
         );
         assert_eq!(classify_dll("KERNEL32.dll"), ShimTrack::WineBuiltin);
+    }
+
+    #[test]
+    fn parses_minimal_pe32_plus_without_imports() {
+        let summary = probe_pe32_plus(&minimal_pe32_plus()).unwrap();
+        assert_eq!(summary.entry_point_rva, 0x1234);
+        assert_eq!(summary.image_base, 0x0000_0001_4000_0000);
+        assert_eq!(summary.size_of_image, 0x2000);
+        assert_eq!(summary.section_count, 1);
+        assert!(summary.imports.is_empty());
+    }
+
+    #[test]
+    fn parses_named_and_ordinal_imports_from_two_dlls() {
+        let summary = probe_pe32_plus(&two_import_pe32_plus()).unwrap();
+        let expected = BTreeMap::from([
+            ("ALPHA.DLL".to_owned(), vec!["NamedFunc".to_owned()]),
+            ("BETA.DLL".to_owned(), vec!["ORDINAL:7".to_owned()]),
+        ]);
+        assert_eq!(summary.imports, expected);
+    }
+
+    #[test]
+    fn rejects_truncation_at_every_header_boundary() {
+        let image = minimal_pe32_plus();
+        for len in 0..=0x100 {
+            let result = std::panic::catch_unwind(|| probe_pe32_plus(&image[..len]));
+            assert!(result.is_ok(), "panic at truncation 0x{len:X}");
+            assert!(result.unwrap().is_err(), "accepted truncation 0x{len:X}");
+        }
+    }
+
+    #[test]
+    fn rejects_section_rva_mapping_that_would_wrap_u32() {
+        let mut image = minimal_pe32_plus();
+        put_u32(&mut image, OPT + 112 + 8, SECTION_RVA + 1);
+        put_u32(&mut image, SEC + 20, u32::MAX);
+        let result = std::panic::catch_unwind(|| probe_pe32_plus(&image));
+        assert!(result.is_ok(), "raw pointer addition panicked");
+        assert!(result.unwrap().unwrap().imports.is_empty());
+    }
+
+    #[test]
+    fn rejects_section_count_larger_than_file() {
+        let mut image = minimal_pe32_plus();
+        put_u16(&mut image, COFF + 2, u16::MAX);
+        assert!(probe_pe32_plus(&image).is_err());
+    }
+
+    #[test]
+    fn rejects_pe32_magic() {
+        let mut image = minimal_pe32_plus();
+        put_u16(&mut image, OPT, 0x010B);
+        assert_eq!(
+            probe_pe32_plus(&image),
+            Err(ProbeError::NotPe32Plus("not PE32+ (0x020B)"))
+        );
+    }
+
+    #[test]
+    fn import_directory_outside_all_sections_is_safe() {
+        let mut image = minimal_pe32_plus();
+        put_u32(&mut image, OPT + 112 + 8, 0x8000);
+        let summary = probe_pe32_plus(&image).unwrap();
+        assert!(summary.imports.is_empty());
+    }
+
+    #[test]
+    fn rejects_truncated_import_directory() {
+        let mut image = minimal_pe32_plus();
+        image.truncate(OPT + 112 + 8 + 2);
+        assert!(probe_pe32_plus(&image).is_err());
+    }
+
+    #[test]
+    fn bounds_unterminated_import_descriptor_walk() {
+        let mut image = minimal_pe32_plus();
+        put_u32(&mut image, OPT + 112 + 8, SECTION_RVA);
+        put_u32(&mut image, SEC + 8, 0x200);
+        put_u32(&mut image, SEC + 16, 0x200);
+        for off in (RAW_PTR as usize..image.len().saturating_sub(20)).step_by(20) {
+            put_u32(&mut image, off, SECTION_RVA + 0x80);
+            put_u32(&mut image, off + 12, SECTION_RVA + 0x40);
+            put_u32(&mut image, off + 16, SECTION_RVA + 0x80);
+        }
+        bytes_at(&mut image, RAW_PTR as usize + 0x40, b"NOEND.DLL\0");
+        put_u64(&mut image, RAW_PTR as usize + 0x80, 0);
+        let result = std::panic::catch_unwind(|| probe_pe32_plus(&image));
+        assert!(result.is_ok(), "unterminated descriptor table panicked");
+        assert!(result.unwrap().is_ok());
+    }
+
+    fn bytes_at(image: &mut [u8], off: usize, value: &[u8]) {
+        image[off..off + value.len()].copy_from_slice(value);
     }
 }
