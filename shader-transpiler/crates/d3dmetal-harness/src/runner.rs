@@ -112,7 +112,14 @@ pub fn run_probe(probe: &Path, framework_binary: &Path, timeout: Duration) -> io
             command.env(key, value);
         }
     }
-    let deadline = Instant::now() + timeout;
+    // `--timeout` takes any u64 seconds, and `Instant + Duration` panics on overflow, so a
+    // huge value would abort the harness with exit 101 instead of one of its verdict codes
+    // (#586). Saturate at the platform maximum instead: the probe then simply never times out.
+    let deadline = Instant::now().checked_add(timeout).unwrap_or_else(|| {
+        Instant::now()
+            .checked_add(Duration::from_secs(1 << 62))
+            .expect("a 2^62 second deadline fits every supported platform")
+    });
     let mut child = command.spawn()?;
     let (tx, rx) = mpsc::channel();
     pump(
@@ -159,6 +166,19 @@ mod tests {
         fn drop(&mut self) {
             let _ = std::fs::remove_file(&self.0);
         }
+    }
+
+    #[test]
+    fn an_overflowing_timeout_does_not_panic() {
+        // u64::MAX seconds overflows `Instant + Duration`; before #586 this panicked.
+        let script = Script::new("overflow", "exit 0");
+        let run = run_probe(
+            &script.0,
+            std::path::Path::new("/nonexistent/framework"),
+            Duration::from_secs(u64::MAX),
+        );
+        let run = run.expect("an overflowing timeout must still run the probe, not panic");
+        assert_eq!(run.status.and_then(|s| s.code()), Some(0));
     }
 
     #[test]
