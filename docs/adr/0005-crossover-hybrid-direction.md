@@ -26,7 +26,7 @@ BetterXen provides integration, configuration, environment management, diagnosti
 
 ## Verified implementation capabilities
 
-None for the hybrid architecture. Verified native-research capabilities (synthetic evidence only) are unchanged and listed in `docs/progress.md`.
+None for the hybrid architecture. Verified native-research capabilities (synthetic evidence only) are unchanged and listed in `docs/progress.md` at tag `native-first-final`, the archive ADR 0006 makes canonical; the file is retired from `main`.
 
 ## Planning consequence
 
