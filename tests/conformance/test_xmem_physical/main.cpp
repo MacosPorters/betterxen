@@ -87,10 +87,10 @@ bool check_aliases(SIZE_T page_size, uint64_t flags) {
     CHECK(XMemMapPhysicalPagesScatter(dup_view, count, flags, nullptr) == dup_view);
     CHECK(!bx_xmem_query_region(reinterpret_cast<uintptr_t>(dup_view), &dup0));
 
-    // A remap over a live span fails at the placeholder reserve, so duplicate
-    // views at one address cannot coexist and the ex-slot check below is what
-    // keeps unmap_span honest; assert the remap itself is rejected and the
-    // live views survive untouched.
+    // A remap over a live span fails at the placeholder reserve, before any view
+    // is published. This test proves that reachable behaviour only: the remap is
+    // rejected and the live views survive untouched. It does not reach
+    // unmap_span's per-slot loop, which is defensive (see the note there).
     ULONG_PTR dup_then_second[] = {pages[0], pages[1]};
     auto* overlap = static_cast<BYTE*>(
         XMemMapPhysicalPagesScatter(nullptr, count, flags, dup_map));

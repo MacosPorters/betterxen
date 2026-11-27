@@ -127,9 +127,14 @@ PVOID unmap_span(BYTE* base, SIZE_T count, SIZE_T size) {
     const auto begin = reinterpret_cast<uintptr_t>(base);
     const auto end = begin + count * size;
 
-    // Counting matching views is insufficient: duplicate tags can put two
-    // views for one page in the span while another page slot is unmapped.
     // Require exactly one view at each page-sized slot before modifying any.
+    // This is defensive rather than a fix for a reachable state: every view's
+    // address is assigned only after a placeholder reserve succeeds at the
+    // requested base, and valid_span requires base % size == 0, so view
+    // addresses are unique and size-aligned. Inside an aligned span they can
+    // therefore only sit at begin + k * size, which makes the old
+    // `matched == count` test equivalent to this one. The per-slot form states
+    // the invariant directly instead of relying on that argument.
     for (SIZE_T i = 0; i < count; ++i) {
         const auto slot = begin + i * size;
         SIZE_T matched = 0;
