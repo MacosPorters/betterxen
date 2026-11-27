@@ -14,4 +14,11 @@ This narrow handoff informs [#464](https://github.com/MacosPorters/betterxen/iss
 | Does pooling justify adoption? | It reduces the allocation-call component in this synthetic trace, with cold setup/slack costs and small/noisy cycle differences. It is not a demonstrated production speedup or memory reduction. |
 | What may be claimed about copies? | Synchronized access, same-address alias behavior, footprint slopes and region labels do not establish physical page identity or universal absence of copies. The inspected PR's stronger “true shared”/“no extra copy” language is not established by #473. |
 
-The maintainer's #464 claim remains respected. No forced ADR/ABI sequence, new dependency/blocking gate, production patch or approval of PR #486 is implied. Independent acceptance of A and actual source/raw review of B are pending. The underlying research is limited to original synthetic workloads on stated versions, with no Xbox hardware or game-execution claim.
+The maintainer's #464 claim remains respected. No forced ADR/ABI sequence, new dependency/blocking gate, production patch or approval of PR #486 is implied. Scoped independent acceptance is recorded per finding in the [evidence register](consolidation-draft/evidence-register.md); unlisted scopes are not accepted. The underlying research is limited to original synthetic workloads on stated versions, with no Xbox hardware or game-execution claim.
+
+## Update after reciprocal review
+
+PR #486 was re-inspected at `c13f9c76650edded41774528b50f40798244a6f3` (vmem files unchanged from `c44ae4e`).
+
+- **Combined budget admission can exceed the cap.** `xmem` admission cannot see `d3d12_xs` private heap charges, and the two use separate locks. Source-derived: private 6 then CPU 3 admits 9 against a cap of 8; a stale-snapshot schedule admits 12 against 8. Both assume successful, distinct underlying allocations. This is arithmetic from source, not a production run. A reported it and B confirmed it. See [the findings](final-verification/findings.md#independently-confirmed-combined-budget-defect) and roadmap item R3 in [the roadmap](consolidation-draft/implementation-roadmap.md). Any fix needs its owner's agreement and separate authorization.
+- **Accepted scopes that bear on placement:** A-6 (placement alignment does not give 64 KiB CPU alignment), A-8 to A-10 (bounded alias, mip-transfer and clear positives). A-7, the invalid-placement rejection gate, is Failed: validate before forwarding.

@@ -1,6 +1,6 @@
-# Proposed integration of the two research branches
+# Integration plan for the two research branches
 
-**Proposal only. No merge, merge-tree construction, shared-branch update or main integration has been executed.** The requester authorized publication of A's research, while reserving integration for separate authorization. This plan preserves both contributors' histories and leaves #473 open.
+**Historical plan, since accepted.** B [confirmed it](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7206014568) and Arths17 authorized research-only integration. The text below is kept as proposed; the [integration record](../../integration.md) states the actual inputs, including A `62c7702` rather than the `d3ae607` revision B signed off, and where review stands.
 
 ## Inputs and ownership
 

@@ -1,6 +1,6 @@
 # Final research acceptance checklist
 
-This checklist separates publication integrity, narrowly accepted findings, unresolved research and permission to act. It does not close #473 or accept an implementation. A consolidates the report; Asufte/@atesahmet0 independently reviewed the prior published draft. The newly published delta requires B's final review. The current request authorizes research-only commits/pushes on A's dedicated branch, not branch integration, main/ABI/production changes or implementation issues.
+This checklist separates publication integrity, narrowly accepted findings, unresolved research and permission to act. It does not close #473 or accept an implementation. A consolidates the report; Asufte/@atesahmet0 is the independent reviewer. Arths17 authorized research-only integration into `research/d3dmetal-zero-copy`, not main/ABI/production changes or implementation issues.
 
 ## Publication and evidence integrity
 
@@ -10,11 +10,11 @@ This checklist separates publication integrity, narrowly accepted findings, unre
 - [x] Verify all 29 register entries, reviewer attribution, acceptance scope and pinned raw-evidence paths. Match B review/trace inputs to `4ba4926d2f491517c01b1e94fb8539184055dc22` and the inspected budget source to `c13f9c76650edded41774528b50f40798244a6f3`.
 - [x] Check documentation, Python sources, credential/personal-path scans and excluded executable/cache artifacts. Preserve byte-exact source snapshots; any retained whitespace warning is documented rather than silently reformatted.
 - [x] Preserve per-file allocator MIT provenance/notices and external-only vendor/runtime status; no proprietary runtime or executable payload is published.
-- [x] Confirm no production, ABI, main or shared-branch source modification. Research publication is confined to `research/473-workstream-a-memory`.
+- [x] Confirm that the A-branch publication made no production, ABI, main or shared-branch source modification. That publication was confined to `research/473-workstream-a-memory`.
 - [x] Publish the DCO-signed research update at `d3ae607fb68865fb5cd449f11d43d36543d1432a`, verify the remote HEAD and post the [pinned issue handoff](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7205840779). The handoff records the latest verified publication SHA, including this checklist completion; it does not substitute for final independent review.
-- [ ] Obtain Asufte's final review of this exact new consolidation revision. Prior endorsement is not automatically an endorsement of later changes.
+- [x] Obtain Asufte's final review of the new consolidation: [signed off at `d3ae607`](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7206014568). The later `62c7702` commit changes two publication-checklist lines only and is submitted for acknowledgment with the integrated commit.
 
-The first seven checks are mechanical/source checks, not self-certification of experimental results. Publication is recorded separately from independent review; the latter remains pending, and an unchecked item is not a passing result.
+The first seven checks are mechanical/source checks, not self-certification of experimental results. Publication is recorded separately from independent review, and an unchecked item is not a passing result.
 
 ## Thirteen independently accepted scopes
 
@@ -53,8 +53,8 @@ Unknown mechanisms do not erase scoped functional results, and a scoped acceptan
 
 ## Integration and implementation permission gates
 
-- [ ] Obtain explicit authorization for exact A/B commits and destination `research/d3dmetal-zero-copy` before any merge or shared-branch push. Follow the [integration proposal](integration-proposal.md); no merge has been performed.
-- [ ] Have the independent reviewer examine the integrated result and its mechanical checks if integration is later authorized.
+- [x] Obtain authorization and reviewer agreement for exact A/B inputs and destination `research/d3dmetal-zero-copy`: [B's confirmation](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7206014568) and Arths17's authorization. See the [integration record](../../integration.md).
+- [ ] Independent reviewer examines the exact integrated commit and its mechanical checks. This box cannot be ticked inside the commit under review; the decision is recorded in #473.
 - [ ] Obtain separate implementation/ABI authorization and affected-owner agreement before acting on production recommendations.
 - [ ] Obtain separate authorization before opening implementation issues or closing #473. This publication does neither.
 

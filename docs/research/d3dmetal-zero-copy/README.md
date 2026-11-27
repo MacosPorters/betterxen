@@ -4,6 +4,8 @@ Collaborative research for [#473](https://github.com/MacosPorters/betterxen/issu
 
 This directory contains an original synthetic probe, a runner, separate run records and [consolidated findings](findings.md). It neither imports nor tests the production `xmem` or `d3d12_xs` implementation. @devil8blade retains the implementation of #464. Findings here do not certify that implementation or establish Xbox compatibility.
 
+Start with the [integration record](integration.md): it lists the joint report, evidence register, acceptance checklist, roadmap, reproduction routes, limitations and the #464 handoff from both workstreams. The sections below describe the six-check baseline only.
+
 ## Build and run
 
 Requirements: Apple Silicon macOS, an externally installed licensed CrossOver with D3DMetal, supported Rosetta 2, Python 3.11+, and native ARM64 MinGW-w64 cross-compiler tools. Nothing proprietary is downloaded or bundled. The compiler is an ARM64 host executable; its output is a Windows x86-64 guest executable.

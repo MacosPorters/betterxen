@@ -1,5 +1,7 @@
 # Version-scoped findings
 
+> Initial one-host baseline record, kept as written. Later review and reproduction status is in the [evidence register](allocation-profiling/consolidation-draft/evidence-register.md); see the [integration record](integration.md).
+
 Research issue [#473](https://github.com/MacosPorters/betterxen/issues/473); methodology and limitations are in the [research README](README.md). This is a one-host observation, independent of #464's production implementation. The newly written probe still needs independent source review and reproduction by another contributor.
 
 ## Recorded host and runtime

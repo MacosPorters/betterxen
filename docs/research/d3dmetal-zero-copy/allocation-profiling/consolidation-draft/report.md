@@ -1,6 +1,6 @@
-# Joint memory architecture research report — final verification update
+# Joint memory architecture research report
 
-BetterXen #473, 2026-11-26. Author: Workstream A under Arths17. Independent reviewer of the published prior draft: Workstream B under Asufte/@atesahmet0, whose explicit review is published at 4ba4926. This local update incorporates that review and A's new verification; its new delta awaits peer review and is authorized for dedicated A-branch publication. This draft stays in A's directory and does not replace shared findings, merge branches or declare the entire research accepted. The [evidence register](evidence-register.md) and [complete records](evidence-register.json) identify each source, platform, raw receipt, review, reproduction, limitation and acceptance state.
+BetterXen #473, 2026-11-26. Author: Workstream A under Arths17. Independent reviewer: Workstream B under Asufte/@atesahmet0, who reviewed the prior draft at 4ba4926 and [signed off the updated consolidation at d3ae607](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7206014568) within its narrowed scopes. This integrated copy changes only status, authorization and navigation text relative to that revision; see the [integration record](../../integration.md), whose own review is recorded in #473. Sign-off does not mean the whole research is accepted. The [evidence register](evidence-register.md) and [complete records](evidence-register.json) identify each source, platform, raw receipt, review, reproduction, limitation and acceptance state.
 
 ## 1. Executive summary
 
@@ -103,7 +103,7 @@ flowchart TD
   B --> H[Separate host footprint and retained-charge observation]
 ```
 
-B endorsed the prior architectural recommendation; the source-proven budget correction and current local delta await renewed review. It is not a new frozen ABI or working production provider. Existing/pre-device/fixed-address data must retain its original owner unless an independently validated transfer of ownership can preserve the required contract.
+B endorsed the architectural recommendation and confirmed the source-derived budget correction at d3ae607. It is not a new frozen ABI or working production provider. Existing/pre-device/fixed-address data must retain its original owner unless an independently validated transfer of ownership can preserve the required contract.
 
 ## 11. Allocation and pooling recommendations
 
@@ -153,6 +153,6 @@ This report can be published and reviewed with blocked work explicitly identifie
 
 ## Final verification record
 
-[Detailed findings](../final-verification/findings.md) identify exact new replay receipts, fault-test scope, the corrected stencil-stop description, source-budget counterexamples and unresolved packaging/cleanup limitations. B's prior report/roadmap endorsement is a real independent review; the latest local changes are not automatically endorsed. All 29 register records are updated, with scoped acceptance attributed to the actual reviewer. Dedicated A-branch publication is authorized; merge, branch consolidation and production/ABI changes remain unauthorized.
+[Detailed findings](../final-verification/findings.md) identify exact new replay receipts, fault-test scope, the corrected stencil-stop description, source-budget counterexamples and unresolved packaging/cleanup limitations. B [signed off d3ae607](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7206014568), confirming the A-12 correction, the R3 admission analysis and the R4 cleanup follow-up. All 29 register records are retained, with scoped acceptance attributed to the actual reviewer. Research branch integration is authorized; main and production/ABI changes remain unauthorized.
 
-The [final research acceptance checklist](acceptance-checklist.md) distinguishes scoped findings, blocked work, publication and future permission gates. The [integration proposal](integration-proposal.md) specifies exact-ref coordination and prioritized production recommendations without performing a merge or authorizing implementation.
+The [final research acceptance checklist](acceptance-checklist.md) distinguishes scoped findings, blocked work, publication and future permission gates. The [integration proposal](integration-proposal.md) specifies exact-ref coordination and prioritized production recommendations; the [integration record](../../integration.md) states how it was carried out. Neither authorizes implementation.

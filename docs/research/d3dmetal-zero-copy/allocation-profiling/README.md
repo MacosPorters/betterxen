@@ -75,3 +75,7 @@ The A-owned [consolidation draft](consolidation-draft/report.md), [joint evidenc
 ## Final reciprocal verification update (local)
 
 B's review/evidence at `4ba4926d2f491517c01b1e94fb8539184055dc22` is incorporated in the [final verification findings](final-verification/findings.md) and [joint report](consolidation-draft/report.md). All seven CPU XML extractions reproduce exactly. Thirteen register entries have narrowly scoped independent acceptance; incomplete graphics/accounting and M4 B hardware runs remain blocked. A independently confirms a combined-budget source defect and a remaining failed-cleanup propagation issue. The historical failed receipts and unsupported/unknown mechanisms remain explicit. This update is authorized for dedicated A-branch publication; branch integration, main and production changes remain unauthorized.
+
+## Integrated record
+
+The sections above are a dated history of Workstream A's branch; their "pending", "draft" and "unauthorized" statements describe the time they were written. B [signed off the consolidation at d3ae607](https://github.com/MacosPorters/betterxen/issues/473#issuecomment-7206014568). Current inputs, deliverables and limitations are in the [integration record](../integration.md).

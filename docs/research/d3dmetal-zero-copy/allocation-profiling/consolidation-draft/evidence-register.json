@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "status": "Joint research update: dedicated A-branch publication authorized; B final review of latest delta pending; integration/production changes unauthorized",
+  "status": "Integrated research record: B signed off consolidation d3ae607; review of the integrated commit is recorded in #473; main/production/ABI changes unauthorized",
   "source_pins": {
     "baseline": "9ae6d1ee7092b6021aad075531f50ba60de4fd53",
     "A": "8c9eceb05ab660504ee981c2f4fcaf1728a5dbff",
