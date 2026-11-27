@@ -4,11 +4,15 @@
 Checks only tracked files:
   1. no merge-conflict markers in tracked text files;
   2. every relative Markdown link points at a tracked file or directory;
-  3. every workflow file under .github/workflows parses as YAML.
+  3. every fragment (``#heading``) in a Markdown link resolves to a real
+     heading in the target Markdown file, including in-page ``](#foo)``
+     links validated against the same file's headings;
+  4. every workflow file under .github/workflows parses as YAML.
 
-External URLs and in-page anchors are not fetched or validated, so the result
-does not depend on the network. Exit status is 1 when a problem is found. Pass --require-yaml to fail, not skip,
-when PyYAML is missing.
+External URLs (http:, https:, mailto:, //) and bare ``#`` links are not
+fetched or validated, so the result does not depend on the network.
+Exit status is 1 when a problem is found. Pass --require-yaml to fail,
+not skip, when PyYAML is missing.
 """
 import re
 import subprocess
@@ -20,6 +24,7 @@ ROOT = Path(__file__).resolve().parents[2]
 MARKER = re.compile(r"^(<{7}( |$)|={7}$|>{7}( |$))")
 LINK = re.compile(r"(?<!\!)\[[^\]]*\]\(([^)\s]+)(?:\s+\"[^\"]*\")?\)")
 FENCE = re.compile(r"^\s*(```|~~~)")
+HEADING = re.compile(r"^(#{1,6})\s+(.+?)\s*#*\s*$")
 
 
 def tracked():
@@ -35,6 +40,41 @@ def text(path):
     return data.decode("utf-8", "replace")
 
 
+def _slug(text):
+    """GitHub-style slug: lowercase, strip non-alnum/-/_/space, spaces -> -."""
+    text = text.lower()
+    text = re.sub(r"[^\w\- ]", "", text, flags=re.UNICODE)
+    return text.replace(" ", "-")
+
+
+def markdown_slugs(body):
+    """Return the set of GitHub-style heading slugs in a Markdown document.
+
+    Duplicate headings get ``-1``, ``-2``, ... suffixes. Headings inside
+    fenced code blocks are ignored.
+    """
+    slugs = set()
+    seen = {}
+    in_fence = False
+    for line in body.splitlines():
+        if FENCE.match(line):
+            in_fence = not in_fence
+            continue
+        if in_fence:
+            continue
+        m = HEADING.match(line)
+        if not m:
+            continue
+        base = _slug(m.group(2))
+        if not base:
+            continue
+        count = seen.get(base, 0)
+        slug = base if count == 0 else f"{base}-{count}"
+        seen[base] = count + 1
+        slugs.add(slug)
+    return slugs
+
+
 def check_markers(files, problems):
     for path in files:
         if path.endswith((".patch", ".diff")):
@@ -47,9 +87,30 @@ def check_markers(files, problems):
                 problems.append(f"{path}:{number}: merge conflict marker")
 
 
+def _resolve_link(path, target):
+    """Resolve a relative link target to a repo-root-relative POSIX path."""
+    base = PurePosixPath(path).parent
+    resolved = PurePosixPath(target.lstrip("/")) if target.startswith("/") else base / target
+    parts = []
+    for part in resolved.parts:
+        if part == "..":
+            if parts:
+                parts.pop()
+        elif part != ".":
+            parts.append(part)
+    return "/".join(parts)
+
+
 def check_links(files, problems):
     known = set(files)
     dirs = {str(d) for f in files for d in PurePosixPath(f).parents}
+    slug_cache = {}
+
+    def slugs_for(md_path):
+        if md_path not in slug_cache:
+            slug_cache[md_path] = markdown_slugs(text(md_path) or "")
+        return slug_cache[md_path]
+
     for path in files:
         if not path.endswith(".md") or path.startswith(("artifacts/", "third_party/")):
             continue
@@ -61,24 +122,31 @@ def check_links(files, problems):
             if in_fence:
                 continue
             line = re.sub(r"`[^`]*`", "", line)
-            for target in LINK.findall(line):
-                if re.match(r"^([a-z][a-z0-9+.-]*:|#|//)", target, re.I):
+            for raw_target in LINK.findall(line):
+                if re.match(r"^([a-z][a-z0-9+.-]*:|//)", raw_target, re.I):
                     continue
-                target = unquote(target.split("#", 1)[0].split("?", 1)[0])
-                if not target:
+                if raw_target == "#":
                     continue
-                base = PurePosixPath(path).parent
-                resolved = PurePosixPath(target.lstrip("/")) if target.startswith("/") else base / target
-                parts = []
-                for part in resolved.parts:
-                    if part == "..":
-                        if parts:
-                            parts.pop()
-                    elif part != ".":
-                        parts.append(part)
-                norm = "/".join(parts)
-                if norm and norm not in known and norm not in dirs:
-                    problems.append(f"{path}:{number}: broken relative link '{target}'")
+                fragment = ""
+                if "#" in raw_target:
+                    fragment = unquote(raw_target.split("#", 1)[1])
+                target = unquote(raw_target.split("#", 1)[0].split("?", 1)[0])
+                if not target and not fragment:
+                    continue
+                if target:
+                    norm = _resolve_link(path, target)
+                    if norm and norm not in known and norm not in dirs:
+                        problems.append(f"{path}:{number}: broken relative link '{target}'")
+                        continue
+                else:
+                    norm = path
+                if fragment and norm.endswith(".md") and norm in known:
+                    if fragment not in slugs_for(norm):
+                        shown = raw_target
+                        problems.append(
+                            f"{path}:{number}: broken fragment '#{fragment}' "
+                            f"in link '{shown}' (heading not found)"
+                        )
 
 
 def check_workflows(files, problems, require_yaml):
