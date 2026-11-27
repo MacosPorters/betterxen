@@ -188,15 +188,25 @@ HRESULT create_compute(ID3D12Device* device, ID3D12RootSignature* root, const vo
     return device->CreateComputePipelineState(&desc, __uuidof(ID3D12PipelineState), reinterpret_cast<void**>(pso));
 }
 
-/* Builds a compute stream PSO from shader bytecode and the root signature. Subobjects are
- * 8-byte-aligned records: a SIZE_T type tag, the payload, then padding to 8 bytes. */
+/* Builds a stream PSO using the REAL subobject layout: alignas(void*) on the class, so a
+ * 4-byte-aligned payload sits at offset 4, not 8. Encoding the layout from the compiler,
+ * rather than from the shim's own assumption, is what lets these tests catch a desync in the
+ * shim's walker (#576 review). */
+template<class Payload>
+struct alignas(void*) TestSubobject {
+    D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type;
+    Payload payload;
+};
+
 struct StreamBuilder {
     std::vector<uint8_t> bytes;
-    void add(SIZE_T type, const void* payload, size_t size) {
+    template<class Payload>
+    void add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type, const Payload& payload) {
+        using Record = TestSubobject<Payload>;
         const size_t at = bytes.size();
-        bytes.resize(at + sizeof(SIZE_T) + ((size + 7) & ~static_cast<size_t>(7)), 0);
-        std::memcpy(bytes.data() + at, &type, sizeof(SIZE_T));
-        if (size) std::memcpy(bytes.data() + at + sizeof(SIZE_T), payload, size);
+        bytes.resize(at + sizeof(Record), 0);
+        std::memcpy(bytes.data() + at + offsetof(Record, type), &type, sizeof(type));
+        std::memcpy(bytes.data() + at + offsetof(Record, payload), &payload, sizeof(payload));
     }
     D3D12_PIPELINE_STATE_STREAM_DESC desc() const {
         D3D12_PIPELINE_STATE_STREAM_DESC d = {};
@@ -209,8 +219,8 @@ struct StreamBuilder {
 StreamBuilder compute_stream(const void* code, size_t size, ID3D12RootSignature* root) {
     StreamBuilder stream;
     D3D12_SHADER_BYTECODE cs = {code, size};
-    stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, &cs, sizeof(cs));
-    stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, &root, sizeof(root));
+    stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, cs);
+    stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, root);
     return stream;
 }
 
@@ -492,17 +502,50 @@ int main() {
         if (pso) pso->Release();
 
         StreamBuilder unknown = compute_stream(g_fill_cs66, sizeof(g_fill_cs66), root_uav);
-        const SIZE_T bogus = 0x7f;
-        unknown.add(bogus, nullptr, 0);
+        /* Append a record whose type tag is not a known subobject. */
+        const size_t at = unknown.bytes.size();
+        const uint32_t bogus = 0x7f;
+        unknown.bytes.resize(at + 8, 0);
+        std::memcpy(unknown.bytes.data() + at, &bogus, sizeof(bogus));
         const D3D12_PIPELINE_STATE_STREAM_DESC bogus_desc = unknown.desc();
         hr = create_stream(device, bogus_desc, &pso);
         check(hr == E_INVALIDARG && !pso, "unknown-subobject stream hr=0x%08lx (want E_INVALIDARG)", ul(hr));
         if (pso) pso->Release();
 
+        // A graphics stream whose non-shader payloads are 4-byte aligned (SAMPLE_MASK,
+        // RENDER_TARGET_FORMATS, RASTERIZER, BLEND, FLAGS) must still reach the host. The
+        // first version of this change assumed every payload sat at offset 8 and desynced
+        // here, rejecting a valid stream with E_INVALIDARG (#576 review).
+        {
+            StreamBuilder graphics_stream;
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, root_uav);
+            D3D12_SHADER_BYTECODE vs = {g_fill_cs66, sizeof(g_fill_cs66)};
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS, vs);
+            D3D12_BLEND_DESC blend = {};
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND, blend);
+            UINT sample_mask = UINT_MAX;
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK, sample_mask);
+            D3D12_RASTERIZER_DESC rasterizer = {};
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER, rasterizer);
+            D3D12_RT_FORMAT_ARRAY formats = {};
+            formats.NumRenderTargets = 1;
+            formats.RTFormats[0] = DXGI_FORMAT_R8G8B8A8_UNORM;
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS, formats);
+            DXGI_SAMPLE_DESC sample_desc = {1, 0};
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC, sample_desc);
+            UINT node_mask = 0, flags = 0;
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_NODE_MASK, node_mask);
+            graphics_stream.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS, flags);
+            const D3D12_PIPELINE_STATE_STREAM_DESC graphics_desc = graphics_stream.desc();
+            hr = create_stream(device, graphics_desc, &pso);
+            check(SUCCEEDED(hr) && pso, "graphics stream with 4-byte-aligned payloads hr=0x%08lx", ul(hr));
+            if (pso) pso->Release();
+        }
+
         // A duplicated subobject type is rejected by ID3D12Device2's own rules.
         StreamBuilder duplicate = compute_stream(g_fill_cs66, sizeof(g_fill_cs66), root_uav);
         D3D12_SHADER_BYTECODE again = {g_fill_cs66, sizeof(g_fill_cs66)};
-        duplicate.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, &again, sizeof(again));
+        duplicate.add(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, again);
         const D3D12_PIPELINE_STATE_STREAM_DESC dup_desc = duplicate.desc();
         hr = create_stream(device, dup_desc, &pso);
         check(hr == E_INVALIDARG && !pso, "duplicate-CS stream hr=0x%08lx (want E_INVALIDARG)", ul(hr));

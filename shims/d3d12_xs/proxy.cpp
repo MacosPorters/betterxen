@@ -430,42 +430,77 @@ HRESULT STDMETHODCALLTYPE BxDeviceProxy::CreateComputePipelineState(const D3D12_
     return hr;
 }
 
-/* Stream PSO subobjects (#576). A stream is a sequence of 8-byte-aligned records: a SIZE_T
- * type tag followed by a type-dependent payload, each padded to 8 bytes. The payload sizes
- * below are the public <d3d12.h> structure sizes for those tags; only the shader tags are
- * interpreted, and every other payload is copied verbatim. */
+/* Stream PSO subobjects (#576). A stream is a sequence of 8-byte-aligned records, each a
+ * subobject type and a type-dependent payload. The real layout aligns the record, not the
+ * payload: a payload whose type is only 4-byte aligned starts at offset 4, not 8. Measured
+ * with the shim's own toolchain, that is the case for BLEND, SAMPLE_MASK, RASTERIZER,
+ * DEPTH_STENCIL, DEPTH_STENCIL1, IB_STRIP_CUT_VALUE, PRIMITIVE_TOPOLOGY,
+ * RENDER_TARGET_FORMATS, DEPTH_STENCIL_FORMAT, SAMPLE_DESC, NODE_MASK and FLAGS. Deriving
+ * both the payload offset and the record size from the compiler keeps this table honest. */
+template<class Payload>
+struct alignas(void*) StreamRecord {
+    /* alignas is on the CLASS, as in CD3DX12_PIPELINE_STATE_STREAM_SUBOBJECT: it pads the
+     * whole record to 8 bytes but does not move a 4-byte-aligned payload off offset 4. */
+    D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type;
+    Payload payload;
+};
+template<class Payload>
+constexpr size_t payload_at() { return offsetof(StreamRecord<Payload>, payload); }
+template<class Payload>
+constexpr size_t record_size() {
+    return (offsetof(StreamRecord<Payload>, payload) + sizeof(Payload) + 7) & ~static_cast<size_t>(7);
+}
+
 struct StreamSubobject {
     D3D12_PIPELINE_STATE_SUBOBJECT_TYPE type;
-    size_t payload;
+    size_t payload_offset;
+    size_t record_size;
     const char* stage; /* non-null only for a shader subobject */
 };
+
+#define BX_SUBOBJECT(tag, type, stage) \
+    {tag, payload_at<type>(), record_size<type>(), stage}
 constexpr StreamSubobject kStreamSubobjects[] = {
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, sizeof(void*), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS, sizeof(D3D12_SHADER_BYTECODE), "VS"},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS, sizeof(D3D12_SHADER_BYTECODE), "PS"},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DS, sizeof(D3D12_SHADER_BYTECODE), "DS"},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_HS, sizeof(D3D12_SHADER_BYTECODE), "HS"},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_GS, sizeof(D3D12_SHADER_BYTECODE), "GS"},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, sizeof(D3D12_SHADER_BYTECODE), "CS"},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT, sizeof(D3D12_STREAM_OUTPUT_DESC), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND, sizeof(D3D12_BLEND_DESC), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK, sizeof(UINT), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER, sizeof(D3D12_RASTERIZER_DESC), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL, sizeof(D3D12_DEPTH_STENCIL_DESC), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT, sizeof(D3D12_INPUT_LAYOUT_DESC), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_IB_STRIP_CUT_VALUE, sizeof(UINT), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY, sizeof(UINT), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS, sizeof(D3D12_RT_FORMAT_ARRAY), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT, sizeof(DXGI_FORMAT), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC, sizeof(DXGI_SAMPLE_DESC), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_NODE_MASK, sizeof(UINT), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CACHED_PSO, sizeof(D3D12_CACHED_PIPELINE_STATE), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS, sizeof(UINT), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL1, sizeof(D3D12_DEPTH_STENCIL_DESC1), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING, sizeof(D3D12_VIEW_INSTANCING_DESC), nullptr},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS, sizeof(D3D12_SHADER_BYTECODE), "AS"},
-    {D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS, sizeof(D3D12_SHADER_BYTECODE), "MS"},
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_ROOT_SIGNATURE, void*, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VS, D3D12_SHADER_BYTECODE, "VS"),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PS, D3D12_SHADER_BYTECODE, "PS"),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DS, D3D12_SHADER_BYTECODE, "DS"),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_HS, D3D12_SHADER_BYTECODE, "HS"),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_GS, D3D12_SHADER_BYTECODE, "GS"),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CS, D3D12_SHADER_BYTECODE, "CS"),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_STREAM_OUTPUT, D3D12_STREAM_OUTPUT_DESC, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_BLEND, D3D12_BLEND_DESC, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_MASK, UINT, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RASTERIZER, D3D12_RASTERIZER_DESC, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL, D3D12_DEPTH_STENCIL_DESC, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_INPUT_LAYOUT, D3D12_INPUT_LAYOUT_DESC, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_IB_STRIP_CUT_VALUE, UINT, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_PRIMITIVE_TOPOLOGY, UINT, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_RENDER_TARGET_FORMATS, D3D12_RT_FORMAT_ARRAY, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL_FORMAT, DXGI_FORMAT, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_SAMPLE_DESC, DXGI_SAMPLE_DESC, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_NODE_MASK, UINT, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_CACHED_PSO, D3D12_CACHED_PIPELINE_STATE, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_FLAGS, UINT, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_DEPTH_STENCIL1, D3D12_DEPTH_STENCIL_DESC1, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_VIEW_INSTANCING, D3D12_VIEW_INSTANCING_DESC, nullptr),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_AS, D3D12_SHADER_BYTECODE, "AS"),
+    BX_SUBOBJECT(D3D12_PIPELINE_STATE_SUBOBJECT_TYPE_MS, D3D12_SHADER_BYTECODE, "MS"),
 };
+#undef BX_SUBOBJECT
+
+/* Pin the layout facts the walker depends on, measured with this toolchain. A header change
+ * that moves a payload must fail to compile rather than desync the walk (#576 review). */
+static_assert(payload_at<D3D12_SHADER_BYTECODE>() == 8, "shader payloads sit at offset 8");
+static_assert(record_size<D3D12_SHADER_BYTECODE>() == 24, "a shader record is 24 bytes");
+static_assert(payload_at<UINT>() == 4, "4-byte payloads sit at offset 4, not 8");
+static_assert(record_size<UINT>() == 8, "a UINT record is 8 bytes");
+static_assert(payload_at<D3D12_BLEND_DESC>() == 4, "BLEND payload sits at offset 4");
+static_assert(payload_at<D3D12_RASTERIZER_DESC>() == 4, "RASTERIZER payload sits at offset 4");
+static_assert(payload_at<D3D12_RT_FORMAT_ARRAY>() == 4, "RT_FORMAT_ARRAY payload sits at offset 4");
+static_assert(payload_at<D3D12_DEPTH_STENCIL_DESC1>() == 4, "DEPTH_STENCIL1 payload sits at offset 4");
+static_assert(payload_at<void*>() == 8 && record_size<void*>() == 16, "root signature record");
+static_assert(payload_at<D3D12_INPUT_LAYOUT_DESC>() == 8, "INPUT_LAYOUT payload sits at offset 8");
 
 const StreamSubobject* find_subobject(uint32_t type) {
     for (const StreamSubobject& entry : kStreamSubobjects) {
@@ -473,8 +508,6 @@ const StreamSubobject* find_subobject(uint32_t type) {
     }
     return nullptr;
 }
-
-constexpr size_t align8(size_t value) { return (value + 7) & ~static_cast<size_t>(7); }
 
 /* Copies the caller's stream into `copy` so the gate can substitute prepared bytecode without
  * touching memory it does not own, and records where each shader payload sits. An unknown tag,
@@ -502,10 +535,10 @@ HRESULT copy_stream(const D3D12_PIPELINE_STATE_STREAM_DESC& desc, std::vector<ui
             if (prior == raw) return E_INVALIDARG;
             const StreamSubobject* prior_entry = find_subobject(prior);
             if (!prior_entry) return E_INVALIDARG;
-            seen += align8(sizeof(SIZE_T) + prior_entry->payload);
+            seen += prior_entry->record_size;
         }
-        const size_t payload = offset + sizeof(SIZE_T);
-        const size_t record = align8(sizeof(SIZE_T) + entry->payload);
+        const size_t payload = offset + entry->payload_offset;
+        const size_t record = entry->record_size;
         if (copy.size() - offset < record) return E_INVALIDARG;
         if (entry->stage) {
             D3D12_SHADER_BYTECODE code{};
