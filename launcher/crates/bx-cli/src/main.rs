@@ -590,12 +590,28 @@ struct LogMark {
     tail: Vec<u8>,
 }
 
-/// The mark of the log at `path`, or `None` if there is no readable log yet.
+/// Opens `path` for reading only if it is a regular file.
+///
+/// `--log` can name anything. Opening a FIFO nobody writes to, or reading a terminal to its end,
+/// would block the run before the guest starts or after it has finished, so the open never
+/// waits and anything that is not a regular file is treated as having no log to summarize.
+fn open_regular_log(path: &Path) -> Option<(fs::File, fs::Metadata)> {
+    use std::os::unix::fs::OpenOptionsExt;
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .custom_flags(libc::O_NONBLOCK)
+        .open(path)
+        .ok()?;
+    // Checked on the open handle, so the file cannot be swapped between the check and the read.
+    let meta = file.metadata().ok()?;
+    meta.is_file().then_some((file, meta))
+}
+
+/// The mark of the log at `path`, or `None` if there is no readable regular-file log yet.
 fn log_mark(path: &Path) -> Option<LogMark> {
     use std::io::{Read, Seek, SeekFrom};
     use std::os::unix::fs::MetadataExt;
-    let mut file = fs::File::open(path).ok()?;
-    let meta = file.metadata().ok()?;
+    let (mut file, meta) = open_regular_log(path)?;
     let len = meta.len();
     let tail_len = len.min(LOG_MARK_TAIL);
     file.seek(SeekFrom::Start(len - tail_len)).ok()?;
@@ -612,8 +628,7 @@ fn log_mark(path: &Path) -> Option<LogMark> {
 fn read_log(path: &Path) -> Option<((u64, u64), Vec<u8>)> {
     use std::io::Read;
     use std::os::unix::fs::MetadataExt;
-    let mut file = fs::File::open(path).ok()?;
-    let meta = file.metadata().ok()?;
+    let (mut file, meta) = open_regular_log(path)?;
     let mut bytes = Vec::new();
     file.read_to_end(&mut bytes).ok()?;
     Some(((meta.dev(), meta.ino()), bytes))
@@ -1056,6 +1071,54 @@ mod tests {
             summarize_jsonl(&String::from_utf8_lossy(fresh)).total_lines,
             3
         );
+    }
+
+    #[test]
+    fn a_different_file_is_new_in_full_even_when_it_starts_with_the_old_bytes() {
+        // Only the file identity can tell these apart: the replacement begins with exactly the
+        // old log's bytes and then has more, so the bytes before the old end still match.
+        let old = "{\"event\":\"unimpl_api\",\"detail\":\"old.dll!Earlier\"}\n";
+        let more = "{\"event\":\"unimpl_api\",\"detail\":\"new.dll!ThisRun\"}\n";
+        let replacement = format!("{old}{more}");
+        let before = mark((1, 100), old);
+        let fresh = appended_since(replacement.as_bytes(), (1, 200), Some(&before));
+        assert_eq!(fresh, replacement.as_bytes());
+        // Control: the same bytes in the same file are an append, and only the rest is new.
+        let appended = appended_since(replacement.as_bytes(), (1, 100), Some(&before));
+        assert_eq!(appended, more.as_bytes());
+    }
+
+    #[test]
+    fn a_log_path_that_is_not_a_regular_file_never_blocks_the_run() {
+        let dir = env::temp_dir().join(format!("bx-cli-lognonfile-{}", std::process::id()));
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let fifo = dir.join("trace.fifo");
+        let made = Command::new("/usr/bin/mkfifo").arg(&fifo).status().unwrap();
+        assert!(made.success());
+        // A FIFO with no writer: a plain open for reading would wait here forever.
+        let (tx, rx) = std::sync::mpsc::channel();
+        let probe = fifo.clone();
+        std::thread::spawn(move || {
+            let _ = tx.send((log_mark(&probe), read_log(&probe)));
+        });
+        let (mark_of_fifo, contents_of_fifo) = rx
+            .recv_timeout(Duration::from_secs(5))
+            .expect("reading a FIFO log path blocked");
+        assert_eq!(mark_of_fifo, None);
+        assert_eq!(contents_of_fifo, None);
+        // A directory and a missing path are not logs either; a regular file still is.
+        assert_eq!(log_mark(&dir), None);
+        assert_eq!(read_log(&dir), None);
+        assert_eq!(log_mark(&dir.join("absent")), None);
+        let real = dir.join("trace.jsonl");
+        fs::write(&real, "{}\n").unwrap();
+        assert_eq!(log_mark(&real).map(|m| m.len), Some(3));
+        assert_eq!(
+            read_log(&real).map(|(_, bytes)| bytes),
+            Some(b"{}\n".to_vec())
+        );
+        fs::remove_dir_all(dir).unwrap();
     }
 
     #[test]

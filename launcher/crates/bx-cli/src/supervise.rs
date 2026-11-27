@@ -55,6 +55,10 @@ fn install_unless_ignored(signal: libc::c_int, handler: extern "C" fn(libc::c_in
 /// Records SIGINT, SIGTERM, SIGHUP and SIGQUIT instead of dying, so the run can be cleaned up,
 /// and records SIGTSTP (Ctrl-Z) so the guest group can be suspended together with `bx-cli`.
 /// Signals that were inherited as ignored are left ignored.
+///
+/// SIGTSTP is only acted on inside [`supervise`]. A Ctrl-Z typed while nothing is being
+/// supervised (for example while shims are copied) has no visible effect until the next
+/// supervised phase starts, which is then suspended at once.
 pub fn install_signal_handlers() {
     for signal in STOP_SIGNALS {
         install_unless_ignored(signal, note_signal);
