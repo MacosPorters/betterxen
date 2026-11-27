@@ -175,7 +175,7 @@ HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreateHeap(const D3D12_HEAP_DESC * a
 HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreatePlacedResource(ID3D12Heap * a0, UINT64 a1, const D3D12_RESOURCE_DESC * a2, D3D12_RESOURCE_STATES a3, const D3D12_CLEAR_VALUE * a4, REFIID a5, void ** a6) {
     BX_D3D_TRACE("ID3D12Device", "CreatePlacedResource");
     if (!h_ID3D12Device) { BX_VTABLE_STUB_LOG("ID3D12Device", 29u, "CreatePlacedResource"); return E_NOTIMPL; }
-    return h_ID3D12Device->CreatePlacedResource(a0, a1, a2, a3, a4, a5, a6);
+    return h_ID3D12Device->CreatePlacedResource(bx_unwrap(a0), a1, a2, a3, a4, a5, a6);
 }
 
 HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreateReservedResource(const D3D12_RESOURCE_DESC * a0, D3D12_RESOURCE_STATES a1, const D3D12_CLEAR_VALUE * a2, REFIID a3, void ** a4) {
@@ -385,7 +385,7 @@ HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreateCommittedResource2(const D3D12
 HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreatePlacedResource1(ID3D12Heap * a0, UINT64 a1, const D3D12_RESOURCE_DESC1 * a2, D3D12_RESOURCE_STATES a3, const D3D12_CLEAR_VALUE * a4, REFIID a5, void ** a6) {
     BX_D3D_TRACE("ID3D12Device8", "CreatePlacedResource1");
     if (!h_ID3D12Device8) { BX_VTABLE_STUB_LOG("ID3D12Device8", 70u, "CreatePlacedResource1"); return E_NOTIMPL; }
-    return h_ID3D12Device8->CreatePlacedResource1(a0, a1, a2, a3, a4, a5, a6);
+    return h_ID3D12Device8->CreatePlacedResource1(bx_unwrap(a0), a1, a2, a3, a4, a5, a6);
 }
 
 void STDMETHODCALLTYPE BxDeviceProxyGen::CreateSamplerFeedbackUnorderedAccessView(ID3D12Resource * a0, ID3D12Resource * a1, D3D12_CPU_DESCRIPTOR_HANDLE a2) {
@@ -421,7 +421,7 @@ HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreateCommittedResource3(const D3D12
 HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreatePlacedResource2(ID3D12Heap * a0, UINT64 a1, const D3D12_RESOURCE_DESC1 * a2, D3D12_BARRIER_LAYOUT a3, const D3D12_CLEAR_VALUE * a4, UINT32 a5, DXGI_FORMAT * a6, REFIID a7, void ** a8) {
     BX_D3D_TRACE("ID3D12Device10", "CreatePlacedResource2");
     if (!h_ID3D12Device10) { BX_VTABLE_STUB_LOG("ID3D12Device10", 77u, "CreatePlacedResource2"); return E_NOTIMPL; }
-    return h_ID3D12Device10->CreatePlacedResource2(a0, a1, a2, a3, a4, a5, a6, a7, a8);
+    return h_ID3D12Device10->CreatePlacedResource2(bx_unwrap(a0), a1, a2, a3, a4, a5, a6, a7, a8);
 }
 
 HRESULT STDMETHODCALLTYPE BxDeviceProxyGen::CreateReservedResource2(const D3D12_RESOURCE_DESC * a0, D3D12_BARRIER_LAYOUT a1, const D3D12_CLEAR_VALUE * a2, ID3D12ProtectedResourceSession * a3, UINT32 a4, DXGI_FORMAT * a5, REFIID a6, void ** a7) {
@@ -634,7 +634,7 @@ HRESULT STDMETHODCALLTYPE BxCommandQueueProxyGen::SetName(const WCHAR * a0) {
 void STDMETHODCALLTYPE BxCommandQueueProxyGen::UpdateTileMappings(ID3D12Resource * a0, UINT a1, const D3D12_TILED_RESOURCE_COORDINATE * a2, const D3D12_TILE_REGION_SIZE * a3, ID3D12Heap * a4, UINT a5, const D3D12_TILE_RANGE_FLAGS * a6, const UINT * a7, const UINT * a8, D3D12_TILE_MAPPING_FLAGS a9) {
     BX_D3D_TRACE("ID3D12CommandQueue", "UpdateTileMappings");
     if (!h_ID3D12CommandQueue) { BX_VTABLE_STUB_LOG("ID3D12CommandQueue", 8u, "UpdateTileMappings"); return; }
-    h_ID3D12CommandQueue->UpdateTileMappings(a0, a1, a2, a3, a4, a5, a6, a7, a8, a9);
+    h_ID3D12CommandQueue->UpdateTileMappings(a0, a1, a2, a3, bx_unwrap(a4), a5, a6, a7, a8, a9);
 }
 
 void STDMETHODCALLTYPE BxCommandQueueProxyGen::CopyTileMappings(ID3D12Resource * a0, const D3D12_TILED_RESOURCE_COORDINATE * a1, ID3D12Resource * a2, const D3D12_TILED_RESOURCE_COORDINATE * a3, const D3D12_TILE_REGION_SIZE * a4, D3D12_TILE_MAPPING_FLAGS a5) {

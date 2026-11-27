@@ -53,6 +53,12 @@ public:
     ULONG STDMETHODCALLTYPE AddRef() override;
     ULONG STDMETHODCALLTYPE Release() override;
 
+    /* Compare-exchange increment. False when the count is already zero.
+       Weak GetDevice calls this under g_section so a proxy at zero is never resurrected. */
+    bool bx_try_acquire_if_nonzero();
+    /* Compare-exchange 1 to 0. Caller holds g_section. True only for the thread that wins. */
+    bool bx_try_release_last();
+
     HRESULT STDMETHODCALLTYPE CreateCommandQueue(const D3D12_COMMAND_QUEUE_DESC* desc, REFIID riid, void** ppv) override;
     HRESULT STDMETHODCALLTYPE CreateCommandQueue1(const D3D12_COMMAND_QUEUE_DESC* desc, REFIID creator_id, REFIID riid, void** ppv) override;
     HRESULT STDMETHODCALLTYPE CreateCommandAllocator(D3D12_COMMAND_LIST_TYPE type, REFIID riid, void** ppv) override;

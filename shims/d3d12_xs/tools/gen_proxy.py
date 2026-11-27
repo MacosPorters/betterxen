@@ -44,8 +44,11 @@ PROXIES = {
 # Interfaces that carry no host pointer of their own: their methods forward through the root level.
 ABSTRACT = {"IUnknown", "ID3D12Object", "ID3D12DeviceChild", "ID3D12Pageable", "ID3D12CommandList"}
 # A single-pointer parameter of one of these types may be one of our proxies and is unwrapped.
+# ID3D12Heap covers CreatePlacedResource, CreatePlacedResource1 and CreatePlacedResource2.
+# A wrapped heap passed straight through faults in the host (0xc0000005 on D3DMetal).
 MAYBE_PROXY = {"ID3D12CommandQueue", "ID3D12CommandAllocator", "ID3D12CommandList",
-               "ID3D12GraphicsCommandList", "ID3D12Pageable", "ID3D12DeviceChild", "ID3D12Object"}
+               "ID3D12GraphicsCommandList", "ID3D12Pageable", "ID3D12DeviceChild", "ID3D12Object",
+               "ID3D12Heap", "ID3D12Heap1"}
 
 IUNKNOWN = [
     ("HRESULT", "QueryInterface", [("REFIID", ""), ("void **", "")]),

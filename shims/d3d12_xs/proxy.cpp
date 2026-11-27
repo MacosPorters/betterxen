@@ -1,4 +1,5 @@
 #include "proxy.h"
+#include "vmem.h"
 
 #include <cstdio>
 #include <cstring>
@@ -203,13 +204,43 @@ ULONG STDMETHODCALLTYPE BxDeviceProxy::AddRef() {
     return refs_.fetch_add(1, std::memory_order_relaxed) + 1;
 }
 
-ULONG STDMETHODCALLTYPE BxDeviceProxy::Release() {
-    ULONG left = refs_.fetch_sub(1, std::memory_order_acq_rel) - 1;
-    if (left == 0) {
-        bx_release_hosts();
-        delete this;
+bool BxDeviceProxy::bx_try_acquire_if_nonzero() {
+    ULONG cur = refs_.load(std::memory_order_acquire);
+    while (cur != 0) {
+        if (refs_.compare_exchange_weak(cur, cur + 1, std::memory_order_acq_rel, std::memory_order_acquire)) {
+            return true;
+        }
     }
-    return left;
+    return false;
+}
+
+bool BxDeviceProxy::bx_try_release_last() {
+    ULONG expected = 1;
+    return refs_.compare_exchange_strong(expected, 0, std::memory_order_acq_rel, std::memory_order_acquire);
+}
+
+ULONG STDMETHODCALLTYPE BxDeviceProxy::Release() {
+    /* The 1->0 transition and a weak GetDevice acquire share g_section.
+       GetDevice adds a reference only when the count is non-zero, so a proxy
+       at zero is never brought back. Exactly one Release performs final cleanup. */
+    ULONG cur = refs_.load(std::memory_order_acquire);
+    for (;;) {
+        if (cur == 0) {
+            return 0;
+        }
+        if (cur > 1) {
+            if (refs_.compare_exchange_weak(cur, cur - 1, std::memory_order_acq_rel, std::memory_order_acquire)) {
+                return cur - 1;
+            }
+            continue;
+        }
+        if (bx_vmem_final_release(this)) {
+            bx_release_hosts();
+            delete this;
+            return 0;
+        }
+        cur = refs_.load(std::memory_order_acquire);
+    }
 }
 
 HRESULT BxDeviceProxy::wrap_child(IUnknown* host_child, const char* what, REFIID riid, void** ppv) {
