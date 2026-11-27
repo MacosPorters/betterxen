@@ -6,6 +6,7 @@
 #include <cstring>
 #include <limits>
 #include <mutex>
+#include <cstdio>
 #include <utility>
 
 #include "bx_log.h"
@@ -177,16 +178,53 @@ VOID WINAPI XMemFree(PVOID address, uint64_t attributes) {
     XMemFreeDefault(address, attributes);
 }
 
-PVOID WINAPI XMemVirtualAlloc(PVOID address, SIZE_T size, DWORD alloc_type, DWORD protect) {
-    /* Strip console-only high bits before forwarding to standard Win32 VirtualAlloc. */
-    DWORD win_alloc = alloc_type & (MEM_COMMIT | MEM_RESERVE | MEM_RESET | MEM_TOP_DOWN);
+PVOID WINAPI XMemVirtualAlloc(PVOID address, SIZE_T size, DWORD alloc_type,
+                              DWORD attributes, DWORD protect) {
+    /* Arity discrimination (issue #517).
+     *
+     * Public Xbox-GDK-Samples call sites pass FIVE arguments:
+     *     (address, size, alloc_type, XMEM_* attributes, PAGE_* protect)
+     * Legacy BetterXen callers pass FOUR, with the Win32 PAGE_* protection
+     * in arg 4 (R9). On x64 a 5-arg caller's XMEM_* word lands in R9 and
+     * the real PAGE_* value sits on the stack in `protect`.
+     *
+     * Heuristic: a Win32 base page protection is a single power-of-two bit
+     * in 0x01..0x80, optionally OR'd with PAGE_GUARD / PAGE_NOCACHE /
+     * PAGE_WRITECOMBINE. If `attributes` matches that shape we treat the
+     * call as the 4-arg form and use `attributes` as the protection (the
+     * stack `protect` slot is then untrusted garbage). Otherwise we treat
+     * it as the 5-arg form: `protect` is the protection and `attributes`
+     * is the XMEM_* word, which is logged but NOT interpreted — the
+     * numeric values of XMEM_* are unknown from public sources.
+     *
+     * LIMIT: an XMEM_* word that happens to equal a single PAGE_* bit
+     * (e.g. 0x04) would be misread as the 4-arg form. That is the price
+     * of supporting two arities through one export. */
+    constexpr DWORD prot_modifiers = PAGE_GUARD | PAGE_NOCACHE | PAGE_WRITECOMBINE;
+    const DWORD low_attr = attributes & 0xFFu;
+    const bool four_arg_form =
+        low_attr != 0 && (low_attr & (low_attr - 1)) == 0
+        && (attributes & ~(0xFFu | prot_modifiers)) == 0;
+    DWORD win_prot;
+    if (four_arg_form) {
+        win_prot = attributes & (0xFFu | prot_modifiers);
+    } else {
+        /* 5-arg form: log the uninterpreted XMEM_* attribute word. */
+        char detail[64];
+        std::snprintf(detail, sizeof(detail), "XMemVirtualAlloc attributes=0x%08lX",
+                      static_cast<unsigned long>(attributes));
+        bx_log_emit(BX_LOG_TRACE, "xmem", "xmem_virtual_alloc_attributes", detail);
+        const DWORD low_prot = protect & 0xFFu;
+        win_prot = (low_prot != 0 && (low_prot & (low_prot - 1)) == 0)
+            ? (protect & (0xFFu | prot_modifiers))
+            : PAGE_READWRITE;
+    }
+    /* Strip console-only high bits before forwarding to standard Win32
+     * VirtualAlloc, but preserve page-size requests (MEM_LARGE_PAGES /
+     * MEM_64K_PAGES) instead of silently dropping them. */
+    DWORD win_alloc = alloc_type & (MEM_COMMIT | MEM_RESERVE | MEM_RESET | MEM_TOP_DOWN
+                                    | MEM_LARGE_PAGES | MEM_PHYSICAL);
     if (win_alloc == 0) win_alloc = MEM_COMMIT | MEM_RESERVE;
-    /* Console callers may pass multi-bit Xbox memory attributes (e.g. 0x21) in arg 4;
-     * valid Win32 base page protections are a single power-of-two bit in 0x01..0x80. */
-    DWORD low_prot = protect & 0xFFu;
-    DWORD win_prot = (low_prot != 0 && (low_prot & (low_prot - 1)) == 0)
-        ? (protect & (0xFFu | PAGE_GUARD | PAGE_NOCACHE | PAGE_WRITECOMBINE))
-        : PAGE_READWRITE;
     /* MEM_RESET combined with MEM_COMMIT is rejected by Win32 VirtualAlloc, so returning
      * early here cannot commit pages outside the working-set budget. */
     if (!(win_alloc & MEM_COMMIT) || (win_alloc & MEM_RESET)) {
