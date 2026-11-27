@@ -22,6 +22,21 @@ flowchart TB
   W["Open PR 486"] -.input.-> S0A
 ```
 
+## Stages mapped to milestones
+
+Stages are not milestones. The full table is in [roadmap integration](roadmap-integration.md#two-numbering-systems).
+
+| Stage | Earliest milestone |
+| --- | --- |
+| 0a | M2, optional |
+| 0b | M3, conditional |
+| 1 | M3 (drafting may start in M2) |
+| 2 | M3, conditional |
+| 3 | M3 if needed, otherwise M6 |
+| 4 | M3 staging reuse; M6 tuning |
+| 5 | M5 (workloads from M4) |
+| 6 | M6 |
+
 ## Stage 0a — Observe
 
 - Count graphics allocations that pass through the proxy; log which paths cannot be seen.

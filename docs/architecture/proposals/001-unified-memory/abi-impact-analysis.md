@@ -17,6 +17,19 @@ No frozen file is changed by this proposal. Anything below would need its own `[
 
 The shadow commit is a genuine fallback if the maintainers want the correctness fix before an `[ABI]` change. It should not become permanent.
 
+## What needs a contract change
+
+| Concern | Needs `abi/` change? | Without it |
+| --- | --- | --- |
+| Lifetime notifications | **No** | A private-data sentinel stays inside `d3d12_xs` |
+| Resource ownership metadata | No while it stays inside `d3d12_xs` | Private tables |
+| Allocation diagnostics (0a) | No | Existing log call; Track A parses |
+| Combined-budget reserve, commit, rollback | **Yes** for a durable design (M3, 0b) | Interim shadow commit, untested |
+| Enforcement switch | Yes: a name in `bx_config.h`, or a guest environment variable read directly as `xcrdapi` does, which `bx-cli` passes only with `--inherit-env` | — |
+| Provider eligibility | Unknown until eligibility is resolved | Do not design it yet |
+
+All changes are unapproved.
+
 ## Illustrative additive contract (not agreed)
 
 ```c

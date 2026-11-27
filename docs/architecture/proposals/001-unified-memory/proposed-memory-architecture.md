@@ -26,6 +26,8 @@ flowchart TB
   A --> T[Trace events]
 ```
 
+**Roadmap placement:** observation in M2 (optional); enforcement and any provider no earlier than M3 and conditional; pooling tuning in M6. See [roadmap integration](roadmap-integration.md).
+
 ## 1. Budget authority
 
 **One owner of the cap.** Proposed: `xmem.dll`, because it already holds the lock, the limit and three of the counted classes.

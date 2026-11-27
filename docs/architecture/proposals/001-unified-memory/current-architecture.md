@@ -86,8 +86,10 @@ Consequence: on `main`, `d3d12_xs` cannot know when a resource is destroyed, whi
 
 ## Planned or proposed in open pull requests (not on `main`)
 
+Heads as of 2026-11-27.
+
 | PR | Head | What it would change |
 | --- | --- | --- |
-| [#486](https://github.com/MacosPorters/betterxen/pull/486) | `bd546d8` | Wraps heaps; charges them in `d3d12_xs` against an `xmem` snapshot; one opt-in `WRITE_BACK` backing heap per configured region; patches two device vtable slots |
+| [#486](https://github.com/MacosPorters/betterxen/pull/486) | `7056671` | Wraps heaps; charges them in `d3d12_xs` against an `xmem` snapshot; one opt-in `WRITE_BACK` backing heap per configured region; patches two device vtable slots |
 | [#471](https://github.com/MacosPorters/betterxen/pull/471) | `b096424` | `PresentX` bridge; DXGI-owned back buffers |
-| [#494](https://github.com/MacosPorters/betterxen/pull/494) | `c64534f` | M2 first-frame fixture over #486 and #471 |
+| [#494](https://github.com/MacosPorters/betterxen/pull/494) | `fbd2f8c` | M2 first-frame fixture over #486 and #471 |

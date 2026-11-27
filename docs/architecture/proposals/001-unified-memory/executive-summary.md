@@ -2,7 +2,7 @@
 
 > **DRAFT — FOR MAINTAINER DISCUSSION ONLY — NOT APPROVED FOR IMPLEMENTATION**
 
-Source baseline: `main` at `cd945ba`. Open pull requests are described as of 2026-11-26 and are not part of `main`.
+Source baseline: `main` at `cd945ba`. Open pull requests are described as of 2026-11-27 unless a commit is named, and are not part of `main`.
 
 ## The problem
 
@@ -21,6 +21,10 @@ Research [#473](https://github.com/MacosPorters/betterxen/issues/473) found that
 2. **Stage 0b, enforce:** one atomic admission authority, behind a switch, after 0a shows what would be rejected.
 3. **Stage 1:** record a written provider contract and reason-coded diagnostics, then **stop**.
 4. A mapped-buffer provider (Stage 2 onwards) waits for a reliable [eligibility mechanism](eligibility.md) and a measurement that justifies it.
+
+## Roadmap fit
+
+No existing exit gate changes. Optional observation (0a) can sit in M2; anything conditional starts no earlier than M3; qualification is M5; tuning and the final decision are M6. Tracks B and C carry it; D and E are independent. See [roadmap integration](roadmap-integration.md).
 
 ## Eligibility in one paragraph
 
@@ -56,6 +60,7 @@ All are single-host, author-run checks on one Apple M4 (macOS 27.0, CrossOver 26
 | [Validation strategy](validation-strategy.md) | Gates, fixtures, measurements |
 | [Risk register](risk-register.md) | Causes, detection, mitigation |
 | [Maintainer decisions](maintainer-decisions.md) | Open questions and proposed decision records |
+| [Roadmap integration](roadmap-integration.md) | Milestone and track mapping |
 | [Meeting briefing](meeting-briefing.md) | One-page agenda |
 | [Eligibility investigation](eligibility.md) | Public signals and why they are not enough |
 | [Self-audit](self-audit.md) | Errors found in the first revision; case against |

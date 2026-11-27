@@ -40,7 +40,7 @@ Swap-chain buffers, shared handles, driver-internal objects, descriptor heaps.
 
 ### D9. M2 exit gate
 
-Does a configured D3D12 heap that is not `xmem` memory satisfy #469's "`xmem` placed resources"?
+Does a configured D3D12 heap that is not `xmem` memory satisfy "`xmem`-backed placed resources" in #464 and #469? PR #494 leaves #469 open for this decision.
 
 ### D10. Qualification
 
@@ -48,11 +48,15 @@ What measurement counts as a benefit, on which hosts, and who runs it?
 
 ### D11. Correcting the record
 
-Whether "true shared memory, no extra copy" in #486 and the "true zero-copy" comment on #464 should be corrected by their authors.
+#486's description no longer claims shared or copy-free memory (checked 2026-11-27). The earlier "true zero-copy" comment on #464 and the fixes requested for the research publication are for their authors.
 
 ### D12. The `XMemVirtualAlloc` parameter list
 
 Public samples pass five arguments; `main` declares four. Who verifies it, from which lawful source, and what happens to the existing tests? **Draft view:** decide this first.
+
+### D13. Roadmap placement
+
+Accept the [mapping](roadmap-integration.md): no gate changes; 0a optional in M2; conditional work from M3; decision in M6? Should any of the [proposed roadmap wording](roadmap-integration.md#proposed-roadmap-wording-for-discussion-only) be taken up? **Draft view:** adopt no wording until D1 and D12 are settled.
 
 ## Proposed decision records
 

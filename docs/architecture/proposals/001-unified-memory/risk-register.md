@@ -29,3 +29,7 @@
 | R23 | Release callback timing or re-entrancy | Thread and moment unspecified | Deadlock, or charge held long enough to refuse a reallocation | Stress with immediate free and reallocate | Lock-free release path |
 | R24 | Allocations outside the proxy | Host `GetDevice`, direct `d3d12.dll` | Cap silently incomplete | Compare ledger with footprint | State the cap is best-effort |
 | R25 | Lock contention | Admission shares `xmem`'s lock, which walks all commits on virtual allocation | Slower allocation | Churn benchmark with many commits | Keep the walk off the charge path |
+| R26 | Milestone delay | Memory work treated as part of an exit gate | M2 or M3 slips on an unproven idea | Review any gate wording change | No stage is added to a gate |
+| R27 | Scope creep | "Observation" grows into behaviour change or a provider | Unreviewed architecture lands | Diff shows no HRESULT or allocation change | Keep 0a log-only |
+| R28 | Confusing stages with milestones | Similar numbering | Wrong expectations | Review documents and issues | Always say "stage" or "milestone" |
+| R29 | Parallel edits to claimed files | #486, #471, #483, #496 touch candidate files | Rework or takeover | Claim check before any work package | New files; wait for owners |

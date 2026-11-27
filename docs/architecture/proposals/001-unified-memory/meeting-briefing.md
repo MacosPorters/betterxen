@@ -8,6 +8,10 @@ Do correctness and visibility now. Keep a hybrid resource provider as the target
 
 **Why hybrid, if anything is built:** full inverted ownership cannot express requested addresses, reserve and commit, sections, scatter views, textures or pre-device allocations, so it needs fallbacks and becomes a hybrid anyway.
 
+## How it fits the roadmap
+
+No roadmap exit gate changes. M2 can finish without any provider if the "`xmem`-backed" wording of #464/#469 is read to allow a separate D3D12 mapping or a copy, or is reworded. M2: optional observation, and settle the #464/#469 wording. M3: earliest conditional work. M4: validate. M5: stress. M6: tune and decide. Tracks B and C primary; D and E independent. [Details](roadmap-integration.md).
+
 ## Strongest arguments against
 
 1. BetterXen makes no duplicate copy today and no title runs: the problem may be hypothetical.
@@ -28,14 +32,14 @@ Do correctness and visibility now. Keep a hybrid resource provider as the target
 
 All twelve: [maintainer decisions](maintainer-decisions.md).
 
-## Dependencies on open work (as of 2026-11-27 02:40 UTC)
+## Dependencies on open work (as of 2026-11-27 03:15 UTC)
 
 | Item | State | Matters because |
 | --- | --- | --- |
-| #464 (`devil8blade`) | Claimed | Its scope is the first graphics accounting; this proposal does not widen or take it |
-| #486 | New head `7056671`: drops the two extra `AddRef` calls and adds a stale-publication fix; CI passes. Not re-run here. `try_charge`, `release_charge` and `host_private_heap` are unchanged, so by source the order-dependent cap and early credit remain | Input to Stage 0a |
+| #464 (`devil8blade`) | Claimed | Its contract asks for budget accounting and `xmem` backing |
+| #486 `7056671` | CI green; now lists the order-dependent cap and early credit as under review. Not re-run here | Input to stage 0a |
 | #469 (`atesahmet0`) | Claimed | Wording says `xmem` placed resources |
-| #494 | New head `6a1451b`: clarifies frame readback; CI fails at CMake configure of the new fixture. Not re-run here. At `c64534f` it passed with #486 and #471 while the `xmem` view stayed empty | Maintainers decide whether that meets the gate |
+| #494 `fbd2f8c` | CI green with the fixture skipped until #486 and #471 merge; says the pixels come from a separate D3D12 heap | Maintainers decide whether that meets the gate |
 
 **Shader development can proceed independently.** The only contact is textual (`proxy.cpp`, `CMakeLists.txt`).
 
@@ -56,5 +60,6 @@ Real-destruction release; every visible creation path counted; no admission from
 - Retained driver memory makes the footprint worse.
 - A supported CrossOver or D3DMetal version breaks mapping or destruction behaviour.
 - Maintaining two paths costs more than the measured gain.
+- Compatibility regressions appear that cannot be fixed.
 
 In each case keep the Stage 0a and 0b accounting and lifetime work and drop the provider.

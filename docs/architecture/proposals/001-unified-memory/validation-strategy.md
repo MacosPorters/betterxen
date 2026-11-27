@@ -4,6 +4,17 @@
 
 A gate is met only by the evidence it names, reviewed by someone who did not write the code. A skipped or interrupted run is not a pass.
 
+## Where each gate sits on the roadmap
+
+These are proposal gates, **not** milestone exit gates. None is added to M0–M6.
+
+| Stage gate | Milestone |
+| --- | --- |
+| 0a | M2 (optional) |
+| 0b, 1, 2, 3, 4 | M3 (3 and 4 tuning in M6) |
+| 5 | M5, with M4 workloads |
+| 6 | M6 |
+
 ## Gates by stage
 
 ### Stage 0a
