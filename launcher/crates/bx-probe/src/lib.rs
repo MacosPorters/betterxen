@@ -128,12 +128,21 @@ struct Section {
 }
 
 fn rva_to_off(sections: &[Section], rva: u32) -> Option<usize> {
+    rva_to_off_bounded(sections, rva).map(|(off, _)| off)
+}
+
+/// Map an RVA to a file offset and report how many raw bytes remain in that
+/// section from the mapped offset. The bound lets callers walk a table without
+/// leaving the section that contains it.
+fn rva_to_off_bounded(sections: &[Section], rva: u32) -> Option<(usize, usize)> {
     for s in sections {
         let span = s.vsize.max(s.raw_size);
         if rva >= s.vaddr && rva < s.vaddr.saturating_add(span) {
             let delta = rva - s.vaddr;
             if delta < s.raw_size {
-                return (s.raw_ptr as usize).checked_add(delta as usize);
+                let off = (s.raw_ptr as usize).checked_add(delta as usize)?;
+                let remaining = (s.raw_size as usize).checked_sub(delta as usize)?;
+                return Some((off, remaining));
             }
         }
     }
@@ -194,10 +203,10 @@ pub fn probe_pe32_plus(bytes: &[u8]) -> Result<PeSummary, ProbeError> {
         let imp_rva = u32_le(bytes, opt + 112 + 8)
             .ok_or(ProbeError::NotPe32Plus("truncated import directory"))?;
         if imp_rva != 0
-            && let Some(mut desc_off) = rva_to_off(&sections, imp_rva)
+            && let Some((mut desc_off, mut desc_bytes_left)) =
+                rva_to_off_bounded(&sections, imp_rva)
         {
-            let max_descriptors = bytes.len() / 20 + 1;
-            for _ in 0..max_descriptors {
+            while desc_bytes_left >= 20 {
                 let (Some(orig_thunk), Some(name_rva), Some(first_thunk)) = (
                     u32_le(bytes, desc_off),
                     u32_le(bytes, desc_off + 12),
@@ -235,10 +244,8 @@ pub fn probe_pe32_plus(bytes: &[u8]) -> Result<PeSummary, ProbeError> {
                     }
                     imports.entry(dll).or_default().extend(syms);
                 }
-                desc_off = match desc_off.checked_add(20) {
-                    Some(off) => off,
-                    None => break,
-                };
+                desc_off += 20;
+                desc_bytes_left -= 20;
             }
         }
     }
@@ -402,8 +409,8 @@ mod tests {
         let mut image = minimal_pe32_plus();
         put_u16(&mut image, OPT, 0x010B);
         assert_eq!(
-            probe_pe32_plus(&image),
-            Err(ProbeError::NotPe32Plus("not PE32+ (0x020B)"))
+            probe_pe32_plus(&image).unwrap_err(),
+            ProbeError::NotPe32Plus("not PE32+ (0x020B)")
         );
     }
 
