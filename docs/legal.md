@@ -1,6 +1,6 @@
 # Clean-room scope
 
-BetterXen does not circumvent console security or DRM, does not load encrypted or protected content, and is a research project built from public documentation.
+BetterXen does not circumvent console security or DRM, does not load encrypted or protected content, and is a research project built from public documentation, its own synthetic workloads and, under the conditions in [AGENTS.md](../AGENTS.md) §6, local observation of lawfully obtained target builds.
 
 ## User-provided game files
 

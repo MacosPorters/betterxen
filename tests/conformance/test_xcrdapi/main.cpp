@@ -1,5 +1,8 @@
 #include "synthetic_storage.h"
 
+// Public PC DirectStorage contract (SDK 1.4.0, MIT per file), vendored under shims/xcrdapi/dstorage.
+#include "dstorage_mingw.h"
+
 #include <array>
 #include <cstdio>
 #include <cstring>
@@ -582,6 +585,302 @@ int check_unconfirmed_staged_copy(Factory* factory) {
     return 1;
 }
 
+// Public PC DirectStorage interfaces. Expected values come from the documentation
+// comments in dstorage.h 1.4.0, not from the shim: capacity limits, "capacity - 1"
+// empty slots, automatic submission at half capacity, IsComplete == (GetHResult !=
+// E_PENDING), status entries scoped to the requests since the previous one, and the
+// E_DSTORAGE_* codes in dstorageerr.h. Where the header is silent (unsupported
+// destinations and compression), the expected E_NOTIMPL is BetterXen's documented choice.
+struct ForeignStatusArray final : IDStorageStatusArray {
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID, void**) override { return E_NOINTERFACE; }
+    ULONG STDMETHODCALLTYPE AddRef() override { return 1; }
+    ULONG STDMETHODCALLTYPE Release() override { return 1; }
+    bool STDMETHODCALLTYPE IsComplete(UINT32) override { return true; }
+    HRESULT STDMETHODCALLTYPE GetHResult(UINT32) override { return S_OK; }
+};
+
+DSTORAGE_REQUEST file_to_memory(IDStorageFile* file, UINT64 offset, void* dest, UINT32 size) {
+    DSTORAGE_REQUEST request{};
+    request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
+    request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MEMORY;
+    request.Source.File.Source = file;
+    request.Source.File.Offset = offset;
+    request.Source.File.Size = size;
+    request.Destination.Memory.Buffer = dest;
+    request.Destination.Memory.Size = size;
+    return request;
+}
+
+DSTORAGE_REQUEST memory_to_memory(const void* source, void* dest, UINT32 size) {
+    DSTORAGE_REQUEST request{};
+    request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_MEMORY;
+    request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_MEMORY;
+    request.Source.Memory.Source = source;
+    request.Source.Memory.Size = size;
+    request.Destination.Memory.Buffer = dest;
+    request.Destination.Memory.Size = size;
+    return request;
+}
+
+int check_public_interfaces(const WCHAR* path, const char* contents) {
+    // The generated MinGW IID declarations must match values typed independently from
+    // Silk.NET's IDStorageFactory binding and the #483 issue text, not from dstorage_mingw.h.
+    const IID typed_factory{0x6924ea0c, 0xc3cd, 0x4826, {0xb1, 0x0a, 0xf6, 0x4f, 0x4e, 0xd9, 0x27, 0xc1}};
+    CHECK(IsEqualIID(__uuidof(IDStorageFactory), typed_factory));
+
+    // Factory: public IIDs are served, an unknown IID is refused with ppv cleared.
+    const IID unknown_iid{0x0badf00d, 0x1234, 0x4abc, {0x80, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07}};
+    void* refused = reinterpret_cast<void*>(1);
+    CHECK(DStorageGetFactory(unknown_iid, &refused) == E_NOINTERFACE && !refused);
+    Com<IDStorageFactory> factory;
+    CHECK(DStorageGetFactory(__uuidof(IDStorageFactory), factory.out()) == S_OK && factory.value);
+    Com<IDStorageFactory1> factory1;
+    CHECK(factory->QueryInterface(__uuidof(IDStorageFactory1), factory1.out()) == S_OK);
+    Com<IUnknown> identity;
+    CHECK(factory->QueryInterface(IID_IUnknown, identity.out()) == S_OK);
+    Com<IUnknown> identity1;
+    CHECK(factory1->QueryInterface(IID_IUnknown, identity1.out()) == S_OK && identity.value == identity1.value);
+    Com<IDStorageFactory1> direct1;
+    CHECK(DStorageGetFactory(__uuidof(IDStorageFactory1), direct1.out()) == S_OK && direct1.value);
+    CHECK(factory->SetStagingBufferSize(DSTORAGE_STAGING_BUFFER_SIZE_32MB) == S_OK);
+
+    // Queue creation limits: DSTORAGE_MIN/MAX_QUEUE_CAPACITY and DSTORAGE_PRIORITY range.
+    DSTORAGE_QUEUE_DESC desc{};
+    desc.SourceType = DSTORAGE_REQUEST_SOURCE_FILE;
+    desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
+    desc.Priority = DSTORAGE_PRIORITY_NORMAL;
+    desc.Name = "bx file queue";
+    void* bad_queue = reinterpret_cast<void*>(1);
+    DSTORAGE_QUEUE_DESC bad = desc;
+    bad.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY - 1;
+    CHECK(factory->CreateQueue(&bad, __uuidof(IDStorageQueue), &bad_queue) == E_DSTORAGE_INVALID_QUEUE_CAPACITY
+          && !bad_queue);
+    bad.Capacity = DSTORAGE_MAX_QUEUE_CAPACITY + 1;
+    CHECK(factory->CreateQueue(&bad, __uuidof(IDStorageQueue), &bad_queue) == E_DSTORAGE_INVALID_QUEUE_CAPACITY);
+    bad = desc;
+    bad.Priority = static_cast<DSTORAGE_PRIORITY>(DSTORAGE_PRIORITY_LAST + 1);
+    CHECK(factory->CreateQueue(&bad, __uuidof(IDStorageQueue), &bad_queue) == E_DSTORAGE_INVALID_QUEUE_PRIORITY);
+
+    Com<IDStorageFile> file;
+    CHECK(factory->OpenFile(path, __uuidof(IDStorageFile), file.out()) == S_OK);
+    BY_HANDLE_FILE_INFORMATION file_info{};
+    CHECK(file->GetFileInformation(&file_info) == S_OK && file_info.nFileSizeLow == std::strlen(contents) + 1);
+    Com<IDStorageStatusArray> status;
+    CHECK(factory->CreateStatusArray(4, "bx status", __uuidof(IDStorageStatusArray), status.out()) == S_OK);
+
+    Com<IDStorageQueue> queue;
+    CHECK(factory->CreateQueue(&desc, __uuidof(IDStorageQueue), queue.out()) == S_OK);
+    Com<IDStorageQueue4> queue4;
+    CHECK(queue->QueryInterface(__uuidof(IDStorageQueue4), queue4.out()) == S_OK);
+    DSTORAGE_QUEUE_INFO info{};
+    queue->Query(&info);
+    CHECK(info.Desc.Capacity == DSTORAGE_MIN_QUEUE_CAPACITY && info.Desc.SourceType == DSTORAGE_REQUEST_SOURCE_FILE);
+    CHECK(info.Desc.Name && std::strcmp(info.Desc.Name, "bx file queue") == 0);
+    CHECK(info.EmptySlotCount == DSTORAGE_MIN_QUEUE_CAPACITY - 1);
+    CHECK(info.RequestCountUntilAutoSubmit == DSTORAGE_MIN_QUEUE_CAPACITY / 2);
+    CHECK(queue4->GetCompressionSupport(DSTORAGE_COMPRESSION_FORMAT_GDEFLATE) == DSTORAGE_COMPRESSION_SUPPORT_NONE);
+
+    // Two file reads, a status entry and an event; nothing runs before Submit.
+    std::array<char, 5> first{}, second{};
+    Event done;
+    CHECK(done.handle);
+    DSTORAGE_REQUEST read1 = file_to_memory(file.value, 2, first.data(), 4);
+    DSTORAGE_REQUEST read2 = file_to_memory(file.value, 10, second.data(), 4);
+    queue->EnqueueRequest(&read1);
+    queue->EnqueueRequest(&read2);
+    queue->EnqueueStatus(status.value, 0);
+    queue4->EnqueueSetEvent(done.handle);
+    DSTORAGE_QUEUE_INFO1 info1{};
+    queue4->Query1(&info1);
+    CHECK(info1.EmptySlotCount == DSTORAGE_MIN_QUEUE_CAPACITY - 1 - 4);
+    CHECK(info1.RequestCountUntilAutoSubmit == DSTORAGE_MIN_QUEUE_CAPACITY / 2 - 4);
+    CHECK(!status->IsComplete(0) && status->GetHResult(0) == E_PENDING);
+    queue->Submit();
+    CHECK(WaitForSingleObject(done.handle, 5000) == WAIT_OBJECT_0);
+    CHECK(status->IsComplete(0) && status->GetHResult(0) == S_OK);
+    CHECK(std::memcmp(first.data(), contents + 2, 4) == 0 && std::memcmp(second.data(), contents + 10, 4) == 0);
+
+    // Rejected requests are reported in queue order, scoped by status entries.
+    const HANDLE error_event = queue->GetErrorEvent();
+    CHECK(error_event && WaitForSingleObject(error_event, 0) == WAIT_TIMEOUT);
+    std::array<char, 5> scratch{}, third{};
+    DSTORAGE_REQUEST reserved = file_to_memory(file.value, 0, scratch.data(), 4);
+    reserved.Options.Reserved1[0] = 1;
+    const char memory_source[4] = {'w', 'x', 'y', 'z'};
+    DSTORAGE_REQUEST wrong_source = memory_to_memory(memory_source, scratch.data(), 4);
+    DSTORAGE_REQUEST read3 = file_to_memory(file.value, 4, third.data(), 4);
+    queue->EnqueueRequest(&reserved);
+    queue->EnqueueRequest(&wrong_source);
+    queue->EnqueueStatus(status.value, 1);
+    queue->EnqueueRequest(&read3);
+    queue->EnqueueStatus(status.value, 2);
+    queue4->EnqueueSetEvent(done.handle);
+    queue->Submit();
+    CHECK(WaitForSingleObject(done.handle, 5000) == WAIT_OBJECT_0);
+    CHECK(status->GetHResult(1) == E_DSTORAGE_RESERVED_FIELDS);
+    CHECK(status->GetHResult(2) == S_OK && std::memcmp(third.data(), contents + 4, 4) == 0);
+    CHECK(scratch[0] == 0);
+    CHECK(WaitForSingleObject(error_event, 0) == WAIT_OBJECT_0);
+    DSTORAGE_ERROR_RECORD record{};
+    queue->RetrieveErrorRecord(&record);
+    CHECK(record.FailureCount == 2 && record.FirstFailure.HResult == E_DSTORAGE_RESERVED_FIELDS);
+    CHECK(record.FirstFailure.CommandType == DSTORAGE_COMMAND_TYPE_REQUEST);
+    queue->RetrieveErrorRecord(&record);
+    CHECK(record.FailureCount == 0 && record.FirstFailure.CommandType == DSTORAGE_COMMAND_TYPE_NONE);
+
+    // A foreign status array and a null fence are rejected without poisoning the next status.
+    ForeignStatusArray foreign;
+    queue->EnqueueStatus(&foreign, 0);
+    queue->EnqueueSignal(nullptr, 1);
+    queue->EnqueueStatus(status.value, 3);
+    queue4->EnqueueSetEvent(done.handle);
+    queue->Submit();
+    CHECK(WaitForSingleObject(done.handle, 5000) == WAIT_OBJECT_0);
+    CHECK(status->GetHResult(3) == S_OK);
+    queue->RetrieveErrorRecord(&record);
+    CHECK(record.FailureCount == 2 && record.FirstFailure.HResult == E_DSTORAGE_INVALID_STATUS_ARRAY);
+    CHECK(record.FirstFailure.CommandType == DSTORAGE_COMMAND_TYPE_STATUS);
+
+    // Unsupported shapes on a memory queue without a device: each is its own status scope.
+    DSTORAGE_QUEUE_DESC memory_desc = desc;
+    memory_desc.SourceType = DSTORAGE_REQUEST_SOURCE_MEMORY;
+    memory_desc.Name = nullptr;
+    Com<IDStorageQueue1> memory_queue;
+    CHECK(factory->CreateQueue(&memory_desc, __uuidof(IDStorageQueue1), memory_queue.out()) == S_OK);
+    Com<IDStorageStatusArray> shapes;
+    CHECK(factory->CreateStatusArray(4, nullptr, __uuidof(IDStorageStatusArray), shapes.out()) == S_OK);
+    unsigned char untouched[4] = {0x5A, 0x5A, 0x5A, 0x5A};
+    DSTORAGE_REQUEST buffer_without_device = memory_to_memory(memory_source, untouched, 4);
+    buffer_without_device.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
+    buffer_without_device.Destination.Buffer.Resource = nullptr;
+    buffer_without_device.Destination.Buffer.Offset = 0;
+    buffer_without_device.Destination.Buffer.Size = 4;
+    DSTORAGE_REQUEST texture = memory_to_memory(memory_source, untouched, 4);
+    texture.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_TEXTURE_REGION;
+    DSTORAGE_REQUEST zstd = memory_to_memory(memory_source, untouched, 4);
+    zstd.Options.CompressionFormat = DSTORAGE_COMPRESSION_FORMAT_ZSTD;
+    DSTORAGE_REQUEST short_destination = memory_to_memory(memory_source, untouched, 4);
+    short_destination.Destination.Memory.Size = 3;
+    const DSTORAGE_REQUEST* shaped[] = {&buffer_without_device, &texture, &zstd, &short_destination};
+    const HRESULT expected[] = {E_DSTORAGE_INVALID_DESTINATION_TYPE, E_NOTIMPL, E_NOTIMPL,
+                                E_DSTORAGE_INVALID_DESTINATION_SIZE};
+    for (UINT i = 0; i < 4; ++i) {
+        memory_queue->EnqueueRequest(shaped[i]);
+        memory_queue->EnqueueStatus(shapes.value, i);
+    }
+    memory_queue->EnqueueSetEvent(done.handle);
+    memory_queue->Submit();
+    CHECK(WaitForSingleObject(done.handle, 5000) == WAIT_OBJECT_0);
+    for (UINT i = 0; i < 4; ++i) {
+        const HRESULT hr = shapes->GetHResult(i);
+        if (hr != expected[i]) {
+            std::fprintf(stderr, "xcrdapi: public shape %u hr=0x%08lx expected 0x%08lx\n", i,
+                         static_cast<unsigned long>(hr), static_cast<unsigned long>(expected[i]));
+            return 1;
+        }
+    }
+    CHECK(untouched[0] == 0x5A && untouched[3] == 0x5A);
+
+    // Half capacity triggers submission: the event is the 64th entry, and Submit is never called.
+    constexpr UINT kAuto = DSTORAGE_MIN_QUEUE_CAPACITY / 2;
+    static unsigned char auto_dest[kAuto - 1][4];
+    std::memset(auto_dest, 0, sizeof(auto_dest));
+    for (UINT i = 0; i + 1 < kAuto; ++i) {
+        DSTORAGE_REQUEST copy = memory_to_memory(memory_source, auto_dest[i], 4);
+        memory_queue->EnqueueRequest(&copy);
+    }
+    memory_queue->EnqueueSetEvent(done.handle);
+    CHECK(WaitForSingleObject(done.handle, 5000) == WAIT_OBJECT_0);
+    for (UINT i = 0; i + 1 < kAuto; ++i) CHECK(std::memcmp(auto_dest[i], memory_source, 4) == 0);
+
+    // More requests than the queue holds: all are accepted, the caller waiting for free slots.
+    constexpr UINT kBlocking = 3 * DSTORAGE_MIN_QUEUE_CAPACITY;
+    static unsigned char blocking_dest[kBlocking][4];
+    std::memset(blocking_dest, 0, sizeof(blocking_dest));
+    for (UINT i = 0; i < kBlocking; ++i) {
+        DSTORAGE_REQUEST copy = memory_to_memory(memory_source, blocking_dest[i], 4);
+        memory_queue->EnqueueRequest(&copy);
+    }
+    memory_queue->EnqueueStatus(shapes.value, 0);
+    memory_queue->EnqueueSetEvent(done.handle);
+    memory_queue->Submit();
+    CHECK(WaitForSingleObject(done.handle, 10000) == WAIT_OBJECT_0);
+    CHECK(shapes->GetHResult(0) == S_OK);
+    for (UINT i = 0; i < kBlocking; ++i) CHECK(std::memcmp(blocking_dest[i], memory_source, 4) == 0);
+    memory_queue->RetrieveErrorRecord(&record);
+    CHECK(record.FailureCount == 4 && record.FirstFailure.HResult == E_DSTORAGE_INVALID_DESTINATION_TYPE);
+
+    // After Close, enqueued commands are dropped and Close is repeatable.
+    file->Close();
+    CHECK(file->GetFileInformation(&file_info) == HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE));
+    queue->Close();
+    queue->EnqueueRequest(&read1);
+    queue->Submit();
+    queue->Close();
+    memory_queue->Close();
+    return 0;
+}
+
+// Public buffer destination: a memory source written into an upload-heap buffer on
+// the queue's device. Expected bytes are the source bytes.
+int check_public_buffer_destination() {
+    SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
+    Com<ID3D12Device> device;
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), device.out());
+    if (hr != S_OK || !device.value) {
+        std::fprintf(stderr, "xcrdapi: public D3D12XboxCreateDevice hr=0x%08lx\n", static_cast<unsigned long>(hr));
+        return 1;
+    }
+    constexpr unsigned kBytes = 16;
+    Com<ID3D12Resource> upload;
+    hr = create_buffer(device.value, D3D12_HEAP_TYPE_UPLOAD, D3D12_RESOURCE_STATE_GENERIC_READ, kBytes, &upload.value);
+    if (hr != S_OK || !upload.value) {
+        std::fprintf(stderr, "xcrdapi: public upload buffer hr=0x%08lx\n", static_cast<unsigned long>(hr));
+        return 1;
+    }
+    if (const int filled = map_fill(upload.value, 0xEE, kBytes)) return filled;
+
+    Com<IDStorageFactory> factory;
+    CHECK(DStorageGetFactory(__uuidof(IDStorageFactory), factory.out()) == S_OK);
+    DSTORAGE_QUEUE_DESC desc{};
+    desc.SourceType = DSTORAGE_REQUEST_SOURCE_MEMORY;
+    desc.Capacity = DSTORAGE_MIN_QUEUE_CAPACITY;
+    desc.Priority = DSTORAGE_PRIORITY_NORMAL;
+    desc.Device = device.value;
+    Com<IDStorageQueue1> queue;
+    CHECK(factory->CreateQueue(&desc, __uuidof(IDStorageQueue1), queue.out()) == S_OK);
+    Com<IDStorageStatusArray> status;
+    CHECK(factory->CreateStatusArray(1, nullptr, __uuidof(IDStorageStatusArray), status.out()) == S_OK);
+
+    unsigned char source[8];
+    for (unsigned i = 0; i < 8; ++i) source[i] = pattern_byte(i);
+    DSTORAGE_REQUEST request{};
+    request.Options.SourceType = DSTORAGE_REQUEST_SOURCE_MEMORY;
+    request.Options.DestinationType = DSTORAGE_REQUEST_DESTINATION_BUFFER;
+    request.Source.Memory.Source = source;
+    request.Source.Memory.Size = 8;
+    request.Destination.Buffer.Resource = upload.value;
+    request.Destination.Buffer.Offset = 4;
+    request.Destination.Buffer.Size = 8;
+    Event done;
+    CHECK(done.handle);
+    queue->EnqueueRequest(&request);
+    queue->EnqueueStatus(status.value, 0);
+    queue->EnqueueSetEvent(done.handle);
+    queue->Submit();
+    CHECK(WaitForSingleObject(done.handle, 10000) == WAIT_OBJECT_0);
+    CHECK(status->GetHResult(0) == S_OK);
+
+    unsigned char got[kBytes];
+    if (const int copied = map_copy(upload.value, got, kBytes)) return copied;
+    unsigned char expect[kBytes];
+    std::memset(expect, 0xEE, kBytes);
+    std::memcpy(expect + 4, source, 8);
+    CHECK(bytes_match(got, expect, kBytes, "public_buffer"));
+    queue->Close();
+    return 0;
+}
+
 int main() {
     void* unsupported = nullptr;
     CHECK(DStorageGetFactory(file_iid, &unsupported) == E_NOINTERFACE && !unsupported);
@@ -694,6 +993,8 @@ int main() {
     CHECK(status->GetResult(0) == S_OK);
     CHECK(WaitForSingleObject(close_event.handle, 0) == WAIT_OBJECT_0);
 
+    if (const int public_api = check_public_interfaces(temporary.name, contents)) return public_api;
+    if (const int public_buffer = check_public_buffer_destination()) return public_buffer;
     if (const int compressed = check_compressed_rejection(factory.value)) return compressed;
     if (const int batched = check_batched_buffer_transfers(factory.value)) return batched;
     if (const int unconfirmed = check_unconfirmed_staged_copy(factory.value)) return unconfirmed;

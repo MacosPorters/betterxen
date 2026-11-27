@@ -185,6 +185,9 @@ pub enum Verdict {
     DeviceRemoved { reason: u32 },
     /// The GPU did not signal completion in time.
     TimedOut { detail: String },
+    /// The device reported a highest shader model below the 6.6 the harness kernel
+    /// requires. The field was parsed and printed before, but never judged (#567).
+    UnsupportedShaderModel { reported: u8 },
     /// Every word still holds the sentinel: the kernel never wrote.
     KernelDidNotRun,
     /// The kernel wrote, but some words differ from the expected values.
@@ -224,6 +227,12 @@ impl fmt::Display for Verdict {
                 )
             }
             Self::TimedOut { detail } => write!(f, "FAIL: GPU timeout ({detail})"),
+            Self::UnsupportedShaderModel { reported } => write!(
+                f,
+                "FAIL: highest shader model {}.{} is below the 6.6 the harness kernel requires",
+                reported >> 4,
+                reported & 0xf
+            ),
             Self::KernelDidNotRun => write!(
                 f,
                 "FAIL: all {WORDS} words still hold the sentinel 0x{SENTINEL:08x}; the kernel did not write"
@@ -272,6 +281,14 @@ pub fn judge(report: &ProbeReport) -> Verdict {
     let incomplete = |reason: &str| Verdict::Incomplete {
         reason: reason.to_owned(),
     };
+    // Every kernel the harness runs is SM 6.6. A device that reports less, or a
+    // report with no shader_model record, must not pass on a matching readback
+    // alone (#567). The live Rust test asserted this; the standalone verdict did not.
+    match report.shader_model {
+        Some(sm) if sm < 0x66 => return Verdict::UnsupportedShaderModel { reported: sm },
+        None => return incomplete("no shader_model record"),
+        Some(_) => {}
+    }
     match report.dispatch {
         None => return incomplete("no dispatch record"),
         Some(d) if d != expected_dispatch => {
@@ -339,6 +356,29 @@ mod tests {
         assert_eq!(report.readback.as_ref().map(Vec::len), Some(WORDS));
         assert!(report.done);
         assert_eq!(judge(&report), Verdict::Pass);
+    }
+
+    #[test]
+    fn a_shader_model_below_6_6_fails_even_with_a_matching_readback() {
+        // The kernel is SM 6.6; the readback matching proves only that something wrote.
+        for reported in ["0x65", "0x60"] {
+            let lower = output(&good_words()).replace(
+                "BXD3DM shader_model 0x66",
+                &format!("BXD3DM shader_model {reported}"),
+            );
+            let report = parse_report(&lower).unwrap();
+            assert_eq!(
+                judge(&report),
+                Verdict::UnsupportedShaderModel {
+                    reported: if reported == "0x65" { 0x65 } else { 0x60 }
+                }
+            );
+        }
+        // Without the record the harness cannot say the device can run the shader.
+        let absent = output(&good_words()).replace("BXD3DM shader_model 0x66\n", "");
+        let report = parse_report(&absent).unwrap();
+        assert_eq!(report.shader_model, None);
+        assert!(matches!(judge(&report), Verdict::Incomplete { .. }));
     }
 
     #[test]

@@ -8,7 +8,7 @@ The single authoritative plan is [docs/roadmap.md](docs/roadmap.md) (Milestones 
 
 1. Pick an open unclaimed issue on your track (A–F) using `.github/ISSUE_TEMPLATE/track-handoff.yml`.
 2. Check all comments and open PRs, then claim in plain text (`Claiming — branch: track-<a..f>/<issue>-<slug>`). A claim with no commits or PR after 7 days is stale and may be taken over with a reply saying so.
-3. Work in a dedicated branch or `git worktree` and stay strictly inside the issue's **exclusive file scope**.
+3. Work in a dedicated branch or `git worktree` and stay strictly inside the issue's **exclusive file scope**. Maintainer-directed tasks have a narrow exception ([AGENTS.md](AGENTS.md) §2).
 4. If your track needs a new cross-DLL helper or export, open a small `[ABI]` PR touching only `abi/` first. Once merged, both tracks implement in parallel.
 5. Add new synthetic PE32+ conformance binaries under `tests/conformance/test_<name>/CMakeLists.txt` + `main.cpp` (auto-discovered by CMake — no shared-file edits needed).
 
@@ -33,7 +33,7 @@ Report exact commands, host hardware/macOS/CrossOver versions, and pass/fail/ski
 
 ## Clean-Room, Licensing & Provenance Policy
 
-- Use publicly accessible specifications, publicly licensed software, and independently authored synthetic workloads only. Never submit leaked executables or SDKs, confidential Xbox documentation, firmware, keys, proprietary game binaries, or unauthorized shader dumps.
+- Use publicly accessible specifications, publicly licensed software, independently authored synthetic workloads, and project-authorized target builds only under every condition in [AGENTS.md](AGENTS.md) §6 (maintainer approval alone is not enough). Never obtain or use leaked or unauthorized material, and never submit leaked executables or SDKs, confidential Xbox documentation, firmware, keys, proprietary game binaries, or unauthorized shader dumps.
 - Under BetterXen's clean-room policy, anyone who has accessed leaked or confidential Xbox materials must not contribute. Do not post details of restricted material in issues or PRs.
 - Before incorporating third-party code, verify **per-file** license compatibility with `GPL-3.0-or-later`, record provenance in [docs/research/upstream-registry.md](docs/research/upstream-registry.md) and [docs/research/component-reuse-matrix.md](docs/research/component-reuse-matrix.md), preserve copyright notices, and update [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Public visibility or a GPL license does not clear code derived from leaked material.
 - Never bundle or redistribute proprietary components (CrossOver, D3DMetal, Rosetta 2).

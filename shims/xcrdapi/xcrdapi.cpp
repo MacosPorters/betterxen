@@ -1,5 +1,10 @@
 #include "synthetic_storage.h"
 
+// Public PC DirectStorage contract: Microsoft.Direct3D.DirectStorage 1.4.0,
+// MIT per file, vendored unmodified under dstorage/ (see dstorage/README.md).
+#include "dstorage_mingw.h"
+
+#include <cstdio>
 #include <cstring>
 #include <limits>
 #include <new>
@@ -132,11 +137,16 @@ private:
     UINT count_;
 };
 
-enum class Kind { request, status, signal, event };
+// `failure` carries a command that was rejected when it was enqueued through the
+// public DirectStorage interfaces. Those methods return void, so the rejection is
+// reported in queue order, like a request that fails while it runs.
+enum class Kind { request, status, signal, event, failure };
 
 struct Entry {
     Kind kind;
     Request request{};
+    HRESULT failure = S_OK;
+    Kind failed_kind = Kind::request;
     HANDLE handle = nullptr;
     StatusArray* status = nullptr;
     UINT index = 0;
@@ -433,9 +443,14 @@ CopyResult fulfill(HANDLE file, const Request& request) {
 }
 
 // Each queue is drained serially, in FIFO order, by a single threadpool work item.
+// A `blocking` queue makes a full enqueue wait for a free slot (submitting what is
+// pending first) instead of failing with ERROR_BUSY. A non-zero `auto_submit`
+// submits once that many entries are waiting. The public DirectStorage queues use
+// both; the BetterXen synthetic queues use neither.
 class WorkQueue final : public Object<Queue, queue_iid> {
 public:
-    WorkQueue(Entry* entries, UINT capacity) : entries_(entries), capacity_(capacity) {}
+    WorkQueue(Entry* entries, UINT capacity, bool blocking = false, UINT auto_submit = 0)
+        : entries_(entries), capacity_(capacity), blocking_(blocking), auto_submit_(auto_submit) {}
 
     bool create_work() {
         work_ = CreateThreadpoolWork(run, this, nullptr);
@@ -476,7 +491,7 @@ public:
         if (!array) return E_INVALIDARG;
 
         Lock lock(mutex_);
-        const HRESULT available = check_available();
+        const HRESULT available = reserve_locked();
         if (FAILED(available)) return available;
         const HRESULT result = array->begin(index);
         if (FAILED(result)) return result;
@@ -486,6 +501,7 @@ public:
         entry.status = array;
         entry.index = index;
         append(entry);
+        auto_submit_locked();
         return S_OK;
     }
 
@@ -537,21 +553,73 @@ public:
             Lock lock(mutex_);
             closed_ = true;
             submit();
+            WakeAllConditionVariable(&space_);
         }
         if (work_) WaitForThreadpoolWorkCallbacks(work_, FALSE);
         return S_OK;
+    }
+
+    // Records a command rejected at enqueue time, in queue order. A rejected
+    // request counts toward the next status entry, as a failed request does.
+    HRESULT enqueue_failure(HRESULT failure, Kind failed_kind) {
+        Entry entry{Kind::failure};
+        entry.failure = failure;
+        entry.failed_kind = failed_kind;
+        return enqueue(entry);
+    }
+
+    bool closed() {
+        Lock lock(mutex_);
+        return closed_;
+    }
+
+    // Moves the error record out, with the kind of the first failed command.
+    void take_errors(ErrorRecord* record, Kind* first_kind) {
+        Lock lock(mutex_);
+        *record = errors_;
+        *first_kind = first_failed_kind_;
+        errors_ = {};
+        if (error_event_) ResetEvent(error_event_);
+    }
+
+    // Lazily created manual-reset event, set on every failure. Owned by the queue.
+    HANDLE error_event() {
+        Lock lock(mutex_);
+        if (!error_event_) {
+            error_event_ = CreateEventW(nullptr, TRUE, errors_.failure_count ? TRUE : FALSE, nullptr);
+        }
+        return error_event_;
+    }
+
+    void counts(UINT* empty_slots, UINT* until_auto_submit) {
+        Lock lock(mutex_);
+        *empty_slots = capacity_ - size_;
+        const UINT pending = size_ - submitted_;
+        *until_auto_submit = auto_submit_ > pending ? auto_submit_ - pending : 0;
     }
 
 private:
     ~WorkQueue() override {
         Close();
         if (work_) CloseThreadpoolWork(work_);
+        if (error_event_) CloseHandle(error_event_);
         delete[] entries_;
     }
 
-    HRESULT check_available() const {
-        if (closed_) return HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE);
-        return size_ == capacity_ ? HRESULT_FROM_WIN32(ERROR_BUSY) : S_OK;
+    // Called with mutex_ held. A blocking queue waits here for the drain to free
+    // a slot; Close wakes the waiters.
+    HRESULT reserve_locked() {
+        for (;;) {
+            if (closed_) return HRESULT_FROM_WIN32(ERROR_INVALID_HANDLE);
+            if (size_ < capacity_) return S_OK;
+            if (!blocking_) return HRESULT_FROM_WIN32(ERROR_BUSY);
+            if (submitted_ < size_) submit();
+            SleepConditionVariableSRW(&space_, &mutex_, INFINITE, 0);
+        }
+    }
+
+    void auto_submit_locked() {
+        if (auto_submit_ && size_ - submitted_ >= auto_submit_) submit();
     }
 
     void append(const Entry& entry) {
@@ -561,9 +629,10 @@ private:
 
     HRESULT enqueue(const Entry& entry) {
         Lock lock(mutex_);
-        const HRESULT result = check_available();
+        const HRESULT result = reserve_locked();
         if (FAILED(result)) return result;
         append(entry);
+        auto_submit_locked();
         return S_OK;
     }
 
@@ -614,22 +683,38 @@ private:
                     if (!SetEvent(entry.handle)) result = win32_error();
                     CloseHandle(entry.handle);
                     break;
+                case Kind::failure:
+                    result = entry.failure;
+                    break;
             }
+            const Kind command = entry.kind == Kind::failure ? entry.failed_kind : entry.kind;
             Lock lock(mutex_);
             if (FAILED(result)) {
-                if (SUCCEEDED(status_error_)) status_error_ = result;
-                if (!errors_.failure_count) errors_.first_error = result;
+                // A status, signal or event rejected at enqueue time is reported
+                // through the error record alone; everything else also feeds the
+                // next status entry, as before.
+                const bool feeds_status = entry.kind != Kind::failure || command == Kind::request;
+                if (feeds_status && SUCCEEDED(status_error_)) status_error_ = result;
+                if (!errors_.failure_count) {
+                    errors_.first_error = result;
+                    first_failed_kind_ = command;
+                }
                 ++errors_.failure_count;
+                if (error_event_) SetEvent(error_event_);
             }
             head_ = (head_ + 1) % capacity_;
             --size_;
             --submitted_;
+            WakeAllConditionVariable(&space_);
         }
     }
 
     SRWLOCK mutex_ = SRWLOCK_INIT;
+    CONDITION_VARIABLE space_ = CONDITION_VARIABLE_INIT;
     Entry* entries_;
     UINT capacity_;
+    bool blocking_;
+    UINT auto_submit_;
     UINT head_ = 0;
     UINT size_ = 0;
     UINT submitted_ = 0;
@@ -638,6 +723,8 @@ private:
     PTP_WORK work_ = nullptr;
     HRESULT status_error_ = S_OK;
     ErrorRecord errors_{};
+    Kind first_failed_kind_ = Kind::request;
+    HANDLE error_event_ = nullptr;
 };
 
 class StorageFactory final : public Object<Factory, factory_iid> {
@@ -696,12 +783,503 @@ public:
         return E_NOTIMPL;
     }
 };
+
+// ---------------------------------------------------------------------------
+// Public PC DirectStorage interfaces (dstorage.h, SDK 1.4.0) over the queue
+// engine above. Behaviour follows the header's documentation; nothing here was
+// compared against Microsoft's runtime. Xbox IDStorage*X interfaces are out of
+// scope (#483): their IIDs have no licence-compatible public source.
+// ---------------------------------------------------------------------------
+
+// Private to this DLL: recovers the BetterXen object behind a public interface
+// pointer, so a foreign IDStorageFile or IDStorageStatusArray is never cast.
+constexpr IID kPublicImplIid{0x3c0f6a52, 0x8d1e, 0x4b7a, {0x9e, 0x21, 0x5f, 0x44, 0xc3, 0x0b, 0x7d, 0x18}};
+
+void format_iid(REFIID iid, char (&out)[40]) {
+    std::snprintf(out, sizeof(out), "{%08lx-%04x-%04x-%02x%02x-%02x%02x%02x%02x%02x%02x}",
+                  static_cast<unsigned long>(iid.Data1), iid.Data2, iid.Data3, iid.Data4[0], iid.Data4[1],
+                  iid.Data4[2], iid.Data4[3], iid.Data4[4], iid.Data4[5], iid.Data4[6], iid.Data4[7]);
+}
+
+// Reference counting and QueryInterface for one public interface chain.
+template<class Interface>
+class PublicObject : public Interface {
+public:
+    HRESULT STDMETHODCALLTYPE QueryInterface(REFIID riid, void** result) override {
+        if (!result) return E_POINTER;
+        *result = nullptr;
+        if (!IsEqualIID(riid, IID_IUnknown) && !IsEqualIID(riid, kPublicImplIid) && !supports(riid)) {
+            return E_NOINTERFACE;
+        }
+        *result = static_cast<Interface*>(this);
+        AddRef();
+        return S_OK;
+    }
+
+    ULONG STDMETHODCALLTYPE AddRef() override { return InterlockedIncrement(&references_); }
+
+    ULONG STDMETHODCALLTYPE Release() override {
+        const ULONG references = InterlockedDecrement(&references_);
+        if (!references) delete this;
+        return references;
+    }
+
+protected:
+    virtual ~PublicObject() = default;
+    virtual bool supports(REFIID riid) const = 0;
+
+private:
+    LONG references_ = 1;
+};
+
+// Returns the BetterXen implementation behind `object`, or nullptr. No reference is kept.
+template<class Impl, class Interface>
+Impl* public_impl(Interface* object) {
+    if (!object) return nullptr;
+    void* raw = nullptr;
+    if (object->QueryInterface(kPublicImplIid, &raw) != S_OK || !raw) return nullptr;
+    object->Release();
+    return static_cast<Impl*>(static_cast<Interface*>(raw));
+}
+
+class PublicFile final : public PublicObject<IDStorageFile> {
+public:
+    explicit PublicFile(StorageFile* file) : file_(file) {}
+
+    void STDMETHODCALLTYPE Close() override {
+        const HRESULT hr = file_->Close();
+        if (FAILED(hr)) {
+            char detail[48];
+            std::snprintf(detail, sizeof(detail), "hr=0x%08lx", static_cast<unsigned long>(hr));
+            bx_log_emit(BX_LOG_WARN, "xcrdapi", "dstorage_file_close_failed", detail);
+        }
+    }
+
+    HRESULT STDMETHODCALLTYPE GetFileInformation(BY_HANDLE_FILE_INFORMATION* info) override {
+        return file_->GetFileInformation(info);
+    }
+
+    File* inner() const { return file_; }
+
+private:
+    ~PublicFile() override { file_->Release(); }
+    bool supports(REFIID riid) const override { return IsEqualIID(riid, __uuidof(IDStorageFile)); }
+
+    StorageFile* file_;
+};
+
+class PublicStatusArray final : public PublicObject<IDStorageStatusArray> {
+public:
+    explicit PublicStatusArray(StatusArray* array) : array_(array) {}
+
+    // The header defines IsComplete as GetHResult(index) != E_PENDING.
+    bool STDMETHODCALLTYPE IsComplete(UINT32 index) override { return array_->GetResult(index) != E_PENDING; }
+    HRESULT STDMETHODCALLTYPE GetHResult(UINT32 index) override { return array_->GetResult(index); }
+
+    StatusArray* inner() const { return array_; }
+
+private:
+    ~PublicStatusArray() override { array_->Release(); }
+    bool supports(REFIID riid) const override { return IsEqualIID(riid, __uuidof(IDStorageStatusArray)); }
+
+    StatusArray* array_;
+};
+
+// IDStorageQueue4 vtable slots: IUnknown 0..2, then the methods in header order.
+enum PublicQueueSlot : UINT {
+    kSlotEnqueueRequest = 3,
+    kSlotCancelRequestsWithTag = 7,
+    kSlotEnqueueRequests = 14,
+};
+
+const char* destination_name(UINT type) {
+    switch (type) {
+        case DSTORAGE_REQUEST_DESTINATION_TEXTURE_REGION: return "destination_texture_region";
+        case DSTORAGE_REQUEST_DESTINATION_MULTIPLE_SUBRESOURCES: return "destination_multiple_subresources";
+        case DSTORAGE_REQUEST_DESTINATION_TILES: return "destination_tiles";
+        case DSTORAGE_REQUEST_DESTINATION_MULTIPLE_SUBRESOURCES_RANGE: return "destination_multiple_subresources_range";
+        default: return "destination_unknown";
+    }
+}
+
+bool reserved_fields_clear(const DSTORAGE_REQUEST_OPTIONS& options) {
+    for (const UINT8 byte : options.Reserved1) {
+        if (byte) return false;
+    }
+    return options.Reserved == 0;
+}
+
+// The public queue. DSTORAGE_QUEUE_DESC capacity N becomes N - 1 usable slots
+// (the header: an empty queue reports capacity - 1 empty slots), and requests
+// are submitted automatically once N / 2 are waiting (the header: "until the
+// queue is half full").
+class PublicQueue final : public PublicObject<IDStorageQueue4> {
+public:
+    PublicQueue(WorkQueue* queue, const DSTORAGE_QUEUE_DESC1& desc) : queue_(queue), desc_(desc) {
+        if (desc.Name) {
+            std::snprintf(name_, sizeof(name_), "%s", desc.Name);
+            desc_.Name = name_;
+        }
+        if (desc_.Device) desc_.Device->AddRef();
+    }
+
+    void STDMETHODCALLTYPE EnqueueRequest(const DSTORAGE_REQUEST* request) override {
+        Request translated{};
+        const HRESULT hr = translate(request, &translated);
+        if (FAILED(hr)) {
+            reject(hr, Kind::request, "EnqueueRequest");
+            return;
+        }
+        accept(queue_->EnqueueRequest(&translated), Kind::request, "EnqueueRequest");
+    }
+
+    void STDMETHODCALLTYPE EnqueueStatus(IDStorageStatusArray* status_array, UINT32 index) override {
+        auto* array = public_impl<PublicStatusArray>(status_array);
+        if (!array) {
+            reject(E_DSTORAGE_INVALID_STATUS_ARRAY, Kind::status, "EnqueueStatus");
+            return;
+        }
+        HRESULT hr = queue_->EnqueueStatus(array->inner(), index);
+        if (hr == E_INVALIDARG) hr = E_DSTORAGE_INDEX_BOUND;
+        accept(hr, Kind::status, "EnqueueStatus");
+    }
+
+    void STDMETHODCALLTYPE EnqueueSignal(ID3D12Fence* fence, UINT64 value) override {
+        if (!fence) {
+            reject(E_DSTORAGE_INVALID_FENCE, Kind::signal, "EnqueueSignal");
+            return;
+        }
+        accept(queue_->EnqueueSignal(fence, value), Kind::signal, "EnqueueSignal");
+    }
+
+    void STDMETHODCALLTYPE Submit() override {
+        if (FAILED(queue_->Submit())) {
+            bx_log_emit(BX_LOG_WARN, "xcrdapi", "dstorage_queue_closed", "Submit after Close; nothing submitted");
+        }
+    }
+
+    // Allowed by the header ("might or might not complete"), but not implemented:
+    // every request still runs. Logged so the trace shows it.
+    void STDMETHODCALLTYPE CancelRequestsWithTag(UINT64, UINT64) override {
+        BX_VTABLE_STUB_LOG("IDStorageQueue", kSlotCancelRequestsWithTag, "CancelRequestsWithTag");
+    }
+
+    void STDMETHODCALLTYPE Close() override { (void)queue_->Close(); }
+
+    HANDLE STDMETHODCALLTYPE GetErrorEvent() override { return queue_->error_event(); }
+
+    // FailureCount, FirstFailure.HResult and FirstFailure.CommandType are filled.
+    // The per-command parameters in FirstFailure are left zeroed.
+    void STDMETHODCALLTYPE RetrieveErrorRecord(DSTORAGE_ERROR_RECORD* record) override {
+        if (!record) return;
+        std::memset(record, 0, sizeof(*record));
+        ErrorRecord errors{};
+        Kind first = Kind::request;
+        queue_->take_errors(&errors, &first);
+        record->FailureCount = errors.failure_count > 0xffffffffull ? 0xffffffffu
+                                                                    : static_cast<UINT32>(errors.failure_count);
+        record->FirstFailure.HResult = errors.failure_count ? errors.first_error : S_OK;
+        record->FirstFailure.CommandType = errors.failure_count ? command_type(first) : DSTORAGE_COMMAND_TYPE_NONE;
+    }
+
+    void STDMETHODCALLTYPE Query(DSTORAGE_QUEUE_INFO* info) override {
+        if (!info) return;
+        DSTORAGE_QUEUE_INFO1 full{};
+        Query1(&full);
+        info->Desc.SourceType = full.Desc.SourceType;
+        info->Desc.Capacity = full.Desc.Capacity;
+        info->Desc.Priority = full.Desc.Priority;
+        info->Desc.Name = full.Desc.Name;
+        info->Desc.Device = full.Desc.Device;
+        info->EmptySlotCount = full.EmptySlotCount;
+        info->RequestCountUntilAutoSubmit = full.RequestCountUntilAutoSubmit;
+    }
+
+    void STDMETHODCALLTYPE EnqueueSetEvent(HANDLE handle) override {
+        if (!handle || handle == INVALID_HANDLE_VALUE) {
+            reject(E_INVALIDARG, Kind::event, "EnqueueSetEvent");
+            return;
+        }
+        accept(queue_->EnqueueSetEvent(handle), Kind::event, "EnqueueSetEvent");
+    }
+
+    // No compression format is decompressed by this queue.
+    DSTORAGE_COMPRESSION_SUPPORT STDMETHODCALLTYPE GetCompressionSupport(DSTORAGE_COMPRESSION_FORMAT) override {
+        return DSTORAGE_COMPRESSION_SUPPORT_NONE;
+    }
+
+    void STDMETHODCALLTYPE EnqueueRequests(const DSTORAGE_REQUEST* requests, UINT count, ID3D12Fence* fence,
+                                           UINT64, DSTORAGE_ENQUEUE_REQUEST_FLAGS) override {
+        if (count && !requests) {
+            reject(E_INVALIDARG, Kind::request, "EnqueueRequests");
+            return;
+        }
+        if (fence) {
+            // Fence synchronization is not implemented, so none of these requests run.
+            BX_VTABLE_STUB_LOG("IDStorageQueue3", kSlotEnqueueRequests, "EnqueueRequests_fence");
+            for (UINT i = 0; i < count; ++i) reject(E_NOTIMPL, Kind::request, "EnqueueRequests");
+            return;
+        }
+        for (UINT i = 0; i < count; ++i) EnqueueRequest(&requests[i]);
+    }
+
+    void STDMETHODCALLTYPE Query1(DSTORAGE_QUEUE_INFO1* info) override {
+        if (!info) return;
+        UINT empty = 0;
+        UINT until_auto_submit = 0;
+        queue_->counts(&empty, &until_auto_submit);
+        info->Desc = desc_;
+        info->EmptySlotCount = static_cast<UINT16>(empty);
+        info->RequestCountUntilAutoSubmit = static_cast<UINT16>(until_auto_submit);
+    }
+
+private:
+    ~PublicQueue() override {
+        queue_->Release();
+        if (desc_.Device) desc_.Device->Release();
+    }
+
+    bool supports(REFIID riid) const override {
+        return IsEqualIID(riid, __uuidof(IDStorageQueue)) || IsEqualIID(riid, __uuidof(IDStorageQueue1))
+            || IsEqualIID(riid, __uuidof(IDStorageQueue2)) || IsEqualIID(riid, __uuidof(IDStorageQueue3))
+            || IsEqualIID(riid, __uuidof(IDStorageQueue4));
+    }
+
+    static DSTORAGE_COMMAND_TYPE command_type(Kind kind) {
+        switch (kind) {
+            case Kind::status: return DSTORAGE_COMMAND_TYPE_STATUS;
+            case Kind::signal: return DSTORAGE_COMMAND_TYPE_SIGNAL;
+            case Kind::event: return DSTORAGE_COMMAND_TYPE_EVENT;
+            default: return DSTORAGE_COMMAND_TYPE_REQUEST;
+        }
+    }
+
+    // Maps a DSTORAGE_REQUEST onto the engine's Request. Only uncompressed
+    // file/memory sources into memory or buffer destinations are supported.
+    HRESULT translate(const DSTORAGE_REQUEST* request, Request* out) const {
+        if (!request) return E_INVALIDARG;
+        const DSTORAGE_REQUEST_OPTIONS& options = request->Options;
+        if (!reserved_fields_clear(options)) return E_DSTORAGE_RESERVED_FIELDS;
+        if (static_cast<UINT64>(options.SourceType) != static_cast<UINT64>(desc_.SourceType)) {
+            return E_DSTORAGE_INVALID_SOURCE_TYPE;
+        }
+
+        const UINT compression = static_cast<UINT>(options.CompressionFormat);
+        if (compression == DSTORAGE_COMPRESSION_FORMAT_GDEFLATE) {
+            out->compression = compression_gdeflate; // the engine logs it and fails with E_NOTIMPL
+        } else if (compression != DSTORAGE_COMPRESSION_FORMAT_NONE) {
+            BX_VTABLE_STUB_LOG("IDStorageQueue", kSlotEnqueueRequest,
+                               compression == DSTORAGE_COMPRESSION_FORMAT_ZSTD ? "compression_zstd"
+                                                                               : "compression_other");
+            return E_NOTIMPL;
+        }
+        if (options.GaclTransformType != DSTORAGE_GACL_SHUFFLE_TRANSFORM_NONE) {
+            BX_VTABLE_STUB_LOG("IDStorageQueue", kSlotEnqueueRequest, "gacl_shuffle_transform");
+            return E_NOTIMPL;
+        }
+
+        UINT32 source_size = 0;
+        if (options.SourceType == DSTORAGE_REQUEST_SOURCE_FILE) {
+            auto* file = public_impl<PublicFile>(request->Source.File.Source);
+            if (!file) return E_DSTORAGE_FILE_NOT_OPEN;
+            out->file = file->inner();
+            out->file_offset = request->Source.File.Offset;
+            source_size = request->Source.File.Size;
+        } else {
+            out->source = request->Source.Memory.Source;
+            source_size = request->Source.Memory.Size;
+        }
+
+        const UINT destination = static_cast<UINT>(options.DestinationType);
+        UINT32 destination_size = 0;
+        if (destination == DSTORAGE_REQUEST_DESTINATION_MEMORY) {
+            out->destination = request->Destination.Memory.Buffer;
+            destination_size = request->Destination.Memory.Size;
+        } else if (destination == DSTORAGE_REQUEST_DESTINATION_BUFFER) {
+            // The header: a queue without a device accepts memory destinations only.
+            if (!desc_.Device) return E_DSTORAGE_INVALID_DESTINATION_TYPE;
+            out->resource = request->Destination.Buffer.Resource;
+            out->resource_offset = request->Destination.Buffer.Offset;
+            destination_size = request->Destination.Buffer.Size;
+        } else {
+            BX_VTABLE_STUB_LOG("IDStorageQueue", kSlotEnqueueRequest, destination_name(destination));
+            return E_NOTIMPL;
+        }
+
+        if (!out->compression) {
+            if (destination_size != source_size) return E_DSTORAGE_INVALID_DESTINATION_SIZE;
+            if (request->UncompressedSize && request->UncompressedSize != source_size) {
+                return E_DSTORAGE_INVALID_DESTINATION_SIZE;
+            }
+        }
+        out->size = source_size;
+        return S_OK;
+    }
+
+    void reject(HRESULT hr, Kind kind, const char* method) {
+        char detail[96];
+        std::snprintf(detail, sizeof(detail), "%s hr=0x%08lx", method, static_cast<unsigned long>(hr));
+        bx_log_emit(BX_LOG_WARN, "xcrdapi", "dstorage_enqueue_rejected", detail);
+        if (FAILED(queue_->enqueue_failure(hr, kind))) {
+            bx_log_emit(BX_LOG_WARN, "xcrdapi", "dstorage_queue_closed", "enqueue after Close; command dropped");
+        }
+    }
+
+    // Engine-level rejections of an accepted command are reported the same way.
+    void accept(HRESULT hr, Kind kind, const char* method) {
+        if (SUCCEEDED(hr)) return;
+        if (queue_->closed()) {
+            bx_log_emit(BX_LOG_WARN, "xcrdapi", "dstorage_queue_closed", "enqueue after Close; command dropped");
+            return;
+        }
+        reject(hr, kind, method);
+    }
+
+    WorkQueue* queue_;
+    DSTORAGE_QUEUE_DESC1 desc_;
+    char name_[DSTORAGE_REQUEST_MAX_NAME] = {};
+};
+
+// IDStorageFactory1 vtable slots: IUnknown 0..2, then the methods in header order.
+enum PublicFactorySlot : UINT {
+    kSlotSetDebugFlags = 6,
+    kSlotCreateQueue1 = 8,
+};
+
+class PublicFactory final : public PublicObject<IDStorageFactory1> {
+public:
+    HRESULT STDMETHODCALLTYPE CreateQueue(const DSTORAGE_QUEUE_DESC* desc, REFIID riid, void** ppv) override {
+        if (!ppv) return E_POINTER;
+        *ppv = nullptr;
+        if (!desc) return E_INVALIDARG;
+        DSTORAGE_QUEUE_DESC1 full{};
+        full.SourceType = desc->SourceType;
+        full.Capacity = desc->Capacity;
+        full.Priority = desc->Priority;
+        full.Name = desc->Name;
+        full.Device = desc->Device;
+        full.CompressionFormat = DSTORAGE_COMPRESSION_FORMAT_NONE;
+        return create_queue(full, riid, ppv);
+    }
+
+    HRESULT STDMETHODCALLTYPE OpenFile(const WCHAR* path, REFIID riid, void** ppv) override {
+        if (!ppv) return E_POINTER;
+        *ppv = nullptr;
+        if (!path || !*path) return E_INVALIDARG;
+        HANDLE handle = CreateFileW(path, GENERIC_READ, FILE_SHARE_READ, nullptr, OPEN_EXISTING,
+                                    FILE_FLAG_OVERLAPPED, nullptr);
+        if (handle == INVALID_HANDLE_VALUE) return win32_error();
+        auto* file = new (std::nothrow) StorageFile(handle);
+        if (!file) {
+            CloseHandle(handle);
+            return E_OUTOFMEMORY;
+        }
+        auto* wrapper = new (std::nothrow) PublicFile(file);
+        if (!wrapper) {
+            file->Release();
+            return E_OUTOFMEMORY;
+        }
+        return publish(wrapper, riid, ppv);
+    }
+
+    HRESULT STDMETHODCALLTYPE CreateStatusArray(UINT32 capacity, PCSTR, REFIID riid, void** ppv) override {
+        if (!ppv) return E_POINTER;
+        *ppv = nullptr;
+        if (!capacity || capacity > 65535) return E_INVALIDARG;
+        auto* slots = new (std::nothrow) StatusArray::Slot[capacity];
+        if (!slots) return E_OUTOFMEMORY;
+        auto* array = new (std::nothrow) StatusArray(slots, capacity);
+        if (!array) {
+            delete[] slots;
+            return E_OUTOFMEMORY;
+        }
+        auto* wrapper = new (std::nothrow) PublicStatusArray(array);
+        if (!wrapper) {
+            array->Release();
+            return E_OUTOFMEMORY;
+        }
+        return publish(wrapper, riid, ppv);
+    }
+
+    // The debug layer is not implemented.
+    void STDMETHODCALLTYPE SetDebugFlags(UINT32 flags) override {
+        if (flags) BX_VTABLE_STUB_LOG("IDStorageFactory", kSlotSetDebugFlags, "SetDebugFlags");
+    }
+
+    // Staged copies allocate an upload buffer per request, so there is no
+    // shared staging buffer to resize. Accepted and logged.
+    HRESULT STDMETHODCALLTYPE SetStagingBufferSize(UINT32 size) override {
+        char detail[64];
+        std::snprintf(detail, sizeof(detail), "size=%lu has no effect", static_cast<unsigned long>(size));
+        bx_log_emit(BX_LOG_INFO, "xcrdapi", "dstorage_staging_buffer_size", detail);
+        return S_OK;
+    }
+
+    HRESULT STDMETHODCALLTYPE CreateQueue1(const DSTORAGE_QUEUE_DESC1* desc, REFIID riid, void** ppv) override {
+        if (!ppv) return E_POINTER;
+        *ppv = nullptr;
+        if (!desc) return E_INVALIDARG;
+        return create_queue(*desc, riid, ppv);
+    }
+
+private:
+    bool supports(REFIID riid) const override {
+        return IsEqualIID(riid, __uuidof(IDStorageFactory)) || IsEqualIID(riid, __uuidof(IDStorageFactory1));
+    }
+
+    static HRESULT create_queue(const DSTORAGE_QUEUE_DESC1& desc, REFIID riid, void** ppv) {
+        if (desc.Capacity < DSTORAGE_MIN_QUEUE_CAPACITY || desc.Capacity > DSTORAGE_MAX_QUEUE_CAPACITY) {
+            return E_DSTORAGE_INVALID_QUEUE_CAPACITY;
+        }
+        const int priority = static_cast<int>(desc.Priority);
+        if (priority < DSTORAGE_PRIORITY_FIRST || priority > DSTORAGE_PRIORITY_LAST) {
+            return E_DSTORAGE_INVALID_QUEUE_PRIORITY;
+        }
+        const UINT64 source = static_cast<UINT64>(desc.SourceType);
+        if (source != DSTORAGE_REQUEST_SOURCE_FILE && source != DSTORAGE_REQUEST_SOURCE_MEMORY) {
+            return E_DSTORAGE_INVALID_SOURCE_TYPE;
+        }
+        if (desc.UsesGaclShuffleTransform) {
+            BX_VTABLE_STUB_LOG("IDStorageFactory1", kSlotCreateQueue1, "UsesGaclShuffleTransform");
+            return E_NOTIMPL;
+        }
+        const UINT slots = desc.Capacity - 1u;
+        auto* entries = new (std::nothrow) Entry[slots];
+        if (!entries) return E_OUTOFMEMORY;
+        auto* queue = new (std::nothrow) WorkQueue(entries, slots, true, desc.Capacity / 2u);
+        if (!queue) {
+            delete[] entries;
+            return E_OUTOFMEMORY;
+        }
+        if (!queue->create_work()) {
+            const HRESULT error = win32_error();
+            queue->Release();
+            return error;
+        }
+        auto* wrapper = new (std::nothrow) PublicQueue(queue, desc);
+        if (!wrapper) {
+            queue->Release();
+            return E_OUTOFMEMORY;
+        }
+        return publish(wrapper, riid, ppv);
+    }
+};
 } // namespace
 
+// Accepts BetterXen's synthetic factory IID and IUnknown (the synthetic factory),
+// and the public PC IDStorageFactory / IDStorageFactory1. Any other IID is logged
+// with its value so `bx-cli trace` names the interface a guest asked for.
 extern "C" HRESULT WINAPI DStorageGetFactory(REFIID riid, void** ppv) {
     if (!ppv) return E_POINTER;
     *ppv = nullptr;
+    if (IsEqualIID(riid, __uuidof(IDStorageFactory)) || IsEqualIID(riid, __uuidof(IDStorageFactory1))) {
+        auto* factory = new (std::nothrow) PublicFactory;
+        return factory ? publish(factory, riid, ppv) : E_OUTOFMEMORY;
+    }
     if (!IsEqualIID(riid, factory_iid) && !IsEqualIID(riid, IID_IUnknown)) {
+        char iid[40];
+        format_iid(riid, iid);
+        bx_log_emit(BX_LOG_WARN, "xcrdapi", "dstorage_get_factory_unknown_iid", iid);
         BX_STUB_LOG("XCRDAPI.dll", "DStorageGetFactory");
         return E_NOINTERFACE;
     }
