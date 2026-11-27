@@ -211,7 +211,7 @@ See [AGENTS.md](AGENTS.md), [CONTRIBUTING.md](CONTRIBUTING.md), [docs/architectu
   - Native ARM64 `bx-cli`, `bx-probe`, `bx-telemetry`, and `dxbc-accc` unit tests.
   - All 17 x86-64 PE32+ shim DLLs — the 16 mingw-w64 C++ shims plus the Rust-built `bx_shader_bridge.dll` — pass strict PE Export Directory verification (111 exact names, ordinals, forwarders, 0 extra exports) and carry zero dynamic MinGW runtime dependencies. `scripts/build-shims.sh` cross-compiles the 16 C++ shims with CMake/mingw-w64 and builds `bx_shader_bridge.dll` with `cargo` for `x86_64-pc-windows-gnu`.
   - `test_veh_clwb.exe` executes AVX2+FMA, traps and skips `clwb` via `bx_runtime_veh.dll`, and exercises starter `XMemAlloc`/`XMemTransferMemory` under CrossOver/Wine.
-  - `test_shim_exports.exe` loads the 16 mingw-w64 C++ shim DLLs and resolves 25 runtime exports via `LoadLibraryA` / `GetProcAddress` inside CrossOver/Wine. It does **not** load `bx_shader_bridge.dll`; the Rust bridge is exercised by `test_shader_gate.exe` instead.
+  - `test_shim_exports.exe` loads all 17 shipped DLLs — the 16 mingw-w64 C++ shim DLLs plus the Rust-built `bx_shader_bridge.dll` — and resolves 28 runtime exports (25 from the C++ shims, 3 from the bridge) via `LoadLibraryA` / `GetProcAddress` inside CrossOver/Wine. That is a load-and-resolve check only: it does not show the bridge *works*; `test_shader_gate.exe` exercises it functionally.
 - **Not yet implemented (M1–M6):**
   - `d3d12_xs.dll` COM device/command-list/PSO proxy and `PresentX` swapchain presentation.
   - `xmem.dll` physical/scatter page mapping and `XCRDAPI.dll` async DirectStorage queues.

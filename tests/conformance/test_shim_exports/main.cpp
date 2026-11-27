@@ -1,5 +1,6 @@
 #include <windows.h>
 #include <cstdio>
+#include <cstring>
 
 struct ShimExpectation {
     const char* dll;
@@ -32,7 +33,30 @@ static const ShimExpectation kChecks[] = {
     {"ext-ms-win-rtcore-ntuser-message-ansi-l1-1-0.dll", "PeekMessageA"},
     {"ext-ms-win-rtcore-ntuser-window-l1-1-0.dll", "ShowWindow"},
     {"ext-ms-win-rtcore-ntuser-window-ansi-l1-1-0.dll", "CreateWindowExA"},
+    /* The 17th shipped DLL: the Rust-built bridge from abi/defs/bx_shader_bridge.def. */
+    {"bx_shader_bridge.dll", "bx_shader_inspect"},
+    {"bx_shader_bridge.dll", "bx_shader_prepare_for_d3dmetal"},
+    {"bx_shader_bridge.dll", "bx_shader_free_buffer"},
 };
+
+/* Distinct DLLs named in kChecks, so the summary reports a counted number. */
+static size_t DistinctDllCount() {
+    const size_t count = sizeof(kChecks) / sizeof(kChecks[0]);
+    size_t distinct = 0;
+    for (size_t i = 0; i < count; ++i) {
+        bool seen = false;
+        for (size_t j = 0; j < i; ++j) {
+            if (std::strcmp(kChecks[i].dll, kChecks[j].dll) == 0) {
+                seen = true;
+                break;
+            }
+        }
+        if (!seen) {
+            ++distinct;
+        }
+    }
+    return distinct;
+}
 
 int main() {
     int failures = 0;
@@ -56,6 +80,7 @@ int main() {
         std::fprintf(stderr, "FAIL: %d shim export check(s) failed\n", failures);
         return 1;
     }
-    std::printf("PASS: test_shim_exports (%zu checks verified)\n", sizeof(kChecks) / sizeof(kChecks[0]));
+    std::printf("PASS: test_shim_exports (%zu checks verified across %zu shim DLLs)\n",
+                sizeof(kChecks) / sizeof(kChecks[0]), DistinctDllCount());
     return 0;
 }
