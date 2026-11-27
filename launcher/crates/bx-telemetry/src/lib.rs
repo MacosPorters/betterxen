@@ -35,6 +35,11 @@ pub struct ShaderGateSummary {
     pub total: usize,
     /// Gate records whose `detail` could not be parsed as `key=value` pairs.
     pub unparsed: usize,
+    /// Parsed gate records that carry no `decision` field, so they appear in no
+    /// `decisions` bucket. Counted here so the decision counts can be
+    /// reconciled against `total` (#497 review). `kind` is legitimately absent
+    /// on unclassified records and is not counted here.
+    pub missing_decision: usize,
     pub decisions: BTreeMap<String, usize>,
     pub kinds: BTreeMap<String, usize>,
     pub stages: BTreeMap<String, usize>,
@@ -72,16 +77,26 @@ pub struct ShaderGap {
     pub atomic64_flags: Option<String>,
 }
 
-/// Tokenize a `detail` string of space-separated `key=value` pairs. Splits on
-/// ASCII whitespace; a token without `=` ends the key=value section (the
-/// `shader_d3dmetal_gap` record appends free text). Values never contain
-/// spaces, so `atomic64=` followed by a space yields an empty value.
-fn parse_key_values(detail: &str) -> Vec<(&str, &str)> {
+/// Tokenize a `detail` string of space-separated `key=value` pairs.
+///
+/// Only the `shader_d3dmetal_gap` record appends free text after its pairs
+/// (`... atomic64_flags=0x400000: D3DMetal ...`), so `stop_at_free_text`
+/// selects how a token without `=` is treated:
+///
+/// - `true` (gap records): the token ends the key=value section.
+/// - `false` (`shader_gate` records): a stray token is skipped and parsing
+///   continues, so one unexpected word cannot silently drop every later
+///   field (#497 review).
+///
+/// Values never contain spaces, so `atomic64=` followed by a space yields an
+/// empty value.
+fn parse_key_values(detail: &str, stop_at_free_text: bool) -> Vec<(&str, &str)> {
     let mut pairs = Vec::new();
     for token in detail.split_ascii_whitespace() {
         match token.split_once('=') {
             Some((key, value)) if !key.is_empty() => pairs.push((key, value)),
-            _ => break,
+            _ if stop_at_free_text => break,
+            _ => continue,
         }
     }
     pairs
@@ -137,7 +152,7 @@ fn get_field<'a>(pairs: &[(&'a str, &'a str)], key: &str) -> Option<String> {
 fn record_shader_gate(summary: &mut TraceSummary, detail: &str) {
     let gate = &mut summary.shader_gate;
     gate.total += 1;
-    let pairs = parse_key_values(detail);
+    let pairs = parse_key_values(detail, false);
     if pairs.is_empty() {
         gate.unparsed += 1;
         return;
@@ -159,8 +174,9 @@ fn record_shader_gate(summary: &mut TraceSummary, detail: &str) {
         atomic64: get_field(&pairs, "atomic64"),
         wave_lanes: get_field(&pairs, "wave_lanes"),
     };
-    if let Some(decision) = &record.decision {
-        *gate.decisions.entry(decision.clone()).or_insert(0) += 1;
+    match &record.decision {
+        Some(decision) => *gate.decisions.entry(decision.clone()).or_insert(0) += 1,
+        None => gate.missing_decision += 1,
     }
     if let Some(kind) = &record.kind {
         *gate.kinds.entry(kind.clone()).or_insert(0) += 1;
@@ -172,7 +188,7 @@ fn record_shader_gate(summary: &mut TraceSummary, detail: &str) {
 }
 
 fn record_shader_gap(summary: &mut TraceSummary, detail: &str) {
-    let pairs = parse_key_values(detail);
+    let pairs = parse_key_values(detail, true);
     // The emitter appends `: D3DMetal creates such pipelines ...` directly
     // after the flags value, so strip the trailing colon.
     let atomic64_flags = get_field(&pairs, "atomic64_flags")
@@ -459,6 +475,55 @@ mod tests {
         let r = &summary.shader_gate.records[0];
         assert_eq!(r.atomic64.as_deref(), Some(""));
         assert_eq!(r.wave_lanes.as_deref(), Some("0-4294967295"));
+    }
+
+    #[test]
+    fn a_stray_token_does_not_drop_later_gate_fields() {
+        // #497 review point 1: one value containing a space must not turn every
+        // later field into None.
+        let log = r#"{"event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil atomic64=typed, raw wave_lanes=64-64"}"#;
+        let summary = summarize_jsonl(log);
+        let r = &summary.shader_gate.records[0];
+        assert_eq!(r.decision.as_deref(), Some("pass_dxil"));
+        assert_eq!(r.wave_lanes.as_deref(), Some("64-64"));
+        assert_eq!(summary.shader_gate.unparsed, 0);
+    }
+
+    #[test]
+    fn two_atomic64_flags_are_parsed() {
+        // #497 review point 1: the emitter concatenates flags with no separator,
+        // but two flags must round-trip if they ever are spaced.
+        let log = r#"{"event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil kind=dxil atomic64=typed, groupshared, wave_lanes=64-64"}"#;
+        let summary = summarize_jsonl(log);
+        let r = &summary.shader_gate.records[0];
+        assert_eq!(r.atomic64.as_deref(), Some("typed,"));
+        assert_eq!(r.wave_lanes.as_deref(), Some("64-64"));
+    }
+
+    #[test]
+    fn a_gate_record_without_a_decision_is_counted_as_missing() {
+        // #497 review point 2: decision counts must reconcile against total.
+        let log = r#"{"event":"shader_gate","detail":"pso=compute stage=CS"}"#;
+        let summary = summarize_jsonl(log);
+        assert_eq!(summary.shader_gate.total, 1);
+        assert_eq!(summary.shader_gate.missing_decision, 1);
+        assert_eq!(summary.shader_gate.unparsed, 0);
+        assert!(summary.shader_gate.decisions.is_empty());
+        assert_eq!(summary.shader_gate.stages["CS"], 1);
+    }
+
+    #[test]
+    fn decision_buckets_plus_missing_reconcile_with_total() {
+        let log = r#"{"event":"shader_gate","detail":"pso=compute stage=CS decision=pass_dxil bytes=1"}
+{"event":"shader_gate","detail":"pso=compute stage=CS"}
+{"event":"shader_gate","detail":"garbage"}"#;
+        let summary = summarize_jsonl(log);
+        let gate = &summary.shader_gate;
+        let bucketed: usize = gate.decisions.values().sum();
+        assert_eq!(gate.total, 3);
+        assert_eq!(gate.unparsed, 1);
+        assert_eq!(gate.missing_decision, 1);
+        assert_eq!(bucketed + gate.unparsed + gate.missing_decision, gate.total);
     }
 
     #[test]

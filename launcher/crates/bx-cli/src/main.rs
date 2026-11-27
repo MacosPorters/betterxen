@@ -220,6 +220,38 @@ fn format_shader_gap_line(gap: &ShaderGap) -> String {
 }
 
 /// The shader-gate section, or an empty string for a log with no gate evidence.
+/// One line per gate record whose decision is not a pass, naming the pipeline,
+/// stage, decision and HRESULT. These are the records a reader needs to find a
+/// blocker; the counted breakdown alone does not say which pipeline failed
+/// (#497 review point 5).
+fn format_non_pass_decisions(gate: &bx_telemetry::ShaderGateSummary) -> String {
+    let failing: Vec<&bx_telemetry::ShaderGateRecord> = gate
+        .records
+        .iter()
+        .filter(|record| {
+            record
+                .decision
+                .as_deref()
+                .is_some_and(|decision| !decision.starts_with("pass_"))
+        })
+        .collect();
+    if failing.is_empty() {
+        return String::new();
+    }
+    let mut out = format!("\nNon-pass pipeline decisions ({}):\n", failing.len());
+    for record in failing {
+        let _ = writeln!(
+            out,
+            "  pso={} stage={} decision={} hr={}",
+            record.pso.as_deref().unwrap_or("unknown"),
+            record.stage.as_deref().unwrap_or("unknown"),
+            record.decision.as_deref().unwrap_or("unknown"),
+            record.hr.as_deref().unwrap_or("unknown"),
+        );
+    }
+    out
+}
+
 fn format_shader_gate_section(summary: &TraceSummary) -> String {
     if !has_shader_gate(summary) {
         return String::new();
@@ -230,9 +262,16 @@ fn format_shader_gate_section(summary: &TraceSummary) -> String {
     if gate.unparsed > 0 {
         out.push_str(&format_shader_line("unparsed details", gate.unparsed));
     }
+    if gate.missing_decision > 0 {
+        out.push_str(&format_shader_line(
+            "records w/o decision",
+            gate.missing_decision,
+        ));
+    }
     out.push_str(&format_count_list("decisions", &gate.decisions));
     out.push_str(&format_count_list("kinds", &gate.kinds));
     out.push_str(&format_count_list("stages", &gate.stages));
+    out.push_str(&format_non_pass_decisions(gate));
     if !summary.shader_gaps.is_empty() {
         let _ = writeln!(out, "\nD3DMetal gaps ({}):", summary.shader_gaps.len());
         for gap in &summary.shader_gaps {
@@ -1537,6 +1576,16 @@ sub setup_bottle_wineprefix {
             rendered.contains("bx_shader_bridge.dll not found beside d3d12_xs.dll"),
             "{rendered}"
         );
+        // #497 review point 5: name the rejected pipeline and its HRESULT, not just a count.
+        assert!(
+            rendered.contains("Non-pass pipeline decisions (1):"),
+            "{rendered}"
+        );
+        assert!(
+            rendered.contains("pso=graphics stage=VS decision=reject_accc_only hr=0x80004001"),
+            "{rendered}"
+        );
+        assert!(!rendered.contains("decision=pass_dxil hr="), "{rendered}");
         assert!(!rendered.contains("unparsed"), "{rendered}");
     }
 
