@@ -5,6 +5,7 @@
 #include <cpuid.h>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
 #include <string>
 #include <vector>
@@ -388,41 +389,113 @@ void check_bit_fields() {
 // `adx_illegal_instruction` when it sees ADCX/ADOX (0F 38 F6), and no fixture
 // executed one before, so the record was never observed by a test.
 //
-// ADCX r32,r/m32 = 66 0F 38 F6 /r  -> 66 0f 38 f6 d8 (5 bytes)
-// ADOX r32,r/m32 = F3 0F 38 F6 /r  -> f3 0f 38 f6 d8 (5 bytes)
-// Verified with x86_64-w64-mingw32-as + objdump -d.
+// Encodings, re-derived by assembling with x86_64-w64-mingw32-as and
+// disassembling with x86_64-w64-mingw32-objdump -d:
 //
-// Whether these trap depends on the HOST CPU, not the shim: without ADX they
-// raise #UD and the tripwire logs; with ADX they execute and nothing is
-// logged. Assert the case that actually applies rather than assuming a trap.
+//   0:  66 0f 38 f6 d8   adcx %eax,%ebx   -> 5 bytes
+//   5:  f3 0f 38 f6 d8   adox %eax,%ebx   -> 5 bytes
+//
+// Whether these trap depends on the HOST CPU, not on the shim: without ADX
+// they raise #UD and the tripwire logs; with ADX they execute and nothing is
+// logged. The check reads CPUID leaf 7 EBX[19] and asserts the case that
+// applies, so it never demands a trap that did not happen.
+//
+// The resume handler below is required, not cosmetic. bx_veh_handler logs
+// `adx_illegal_instruction` and then returns EXCEPTION_CONTINUE_SEARCH without
+// advancing Rip (see shims/runtime_veh/runtime_veh.cpp), so on a host without
+// ADX the same #UD would fire forever and the process would die inside the
+// first ADCX, before the log could ever be read back. This handler is added
+// with FirstHandler = 0, i.e. at the END of the chain, so it runs after the
+// tripwire has already written its record, and only then skips the 5 bytes.
+struct AdxFault {
+    unsigned hits = 0;
+    uintptr_t rip[2] = {0, 0};
+};
+
+AdxFault adx_fault;
+
+LONG CALLBACK resume_after_adx(EXCEPTION_POINTERS* pointers) {
+    if (!pointers || !pointers->ExceptionRecord || !pointers->ContextRecord) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    if (pointers->ExceptionRecord->ExceptionCode != EXCEPTION_ILLEGAL_INSTRUCTION) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    if (adx_fault.hits >= 2) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    // Only skip a form this fixture actually emitted.
+    const uint8_t* ip = reinterpret_cast<const uint8_t*>(pointers->ContextRecord->Rip);
+    const bool adcx = ip[0] == 0x66 && ip[1] == 0x0F && ip[2] == 0x38 && ip[3] == 0xF6;
+    const bool adox = ip[0] == 0xF3 && ip[1] == 0x0F && ip[2] == 0x38 && ip[3] == 0xF6;
+    if (!adcx && !adox) {
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    adx_fault.rip[adx_fault.hits] = pointers->ContextRecord->Rip;
+    ++adx_fault.hits;
+    pointers->ContextRecord->Rip += 5;
+    return EXCEPTION_CONTINUE_EXECUTION;
+}
+
+// First `rip=0x...` value in the freshly appended log text, or 0 when absent.
+uint64_t parse_first_rip(const std::string& text) {
+    const size_t key = text.find("rip=0x");
+    if (key == std::string::npos) {
+        return 0;
+    }
+    return std::strtoull(text.c_str() + key + 6, nullptr, 16);
+}
+
 void check_adx_tripwire(const LogReader& log, const std::string& before) {
     unsigned eax = 0, ebx = 0, ecx = 0, edx = 0;
     // CPUID leaf 7, EBX bit 19 = ADX.
     const bool host_has_adx =
         __get_cpuid_count(7, 0, &eax, &ebx, &ecx, &edx) && (ebx & (1u << 19)) != 0;
+    std::printf("OBSERVED: CPUID.7.0:EBX[19] (ADX) = %u\n", host_has_adx ? 1u : 0u);
 
+    adx_fault = AdxFault{};
+    PVOID handler = AddVectoredExceptionHandler(0, resume_after_adx);
+    expect(handler != nullptr, "install the ADCX/ADOX resume handler");
+    if (!handler) {
+        return;
+    }
     __asm__ volatile(".byte 0x66, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
     __asm__ volatile(".byte 0xf3, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
-    expect(true, "ADCX and ADOX either execute or trap-and-resume without killing the guest");
+    RemoveVectoredExceptionHandler(handler);
+
+    // Execution reached this point whether the instructions ran or trapped and
+    // were skipped; the fault count is what distinguishes the two.
+    if (host_has_adx) {
+        expect(adx_fault.hits == 0, "with ADX advertised, neither ADCX nor ADOX raised #UD");
+    } else {
+        expect(adx_fault.hits == 2, "without ADX advertised, both ADCX and ADOX raised #UD");
+    }
 
     std::string after;
     if (!log.read_new(after)) {
         expect(false, "the ADX log could be read back");
         return;
     }
-    const std::string fresh = after.size() > before.size() ? after.substr(before.size()) : std::string();
+    // Only the bytes this check appended.
+    const std::string fresh =
+        after.size() > before.size() ? after.substr(before.size()) : std::string();
     const bool saw = fresh.find("\"event\":\"adx_illegal_instruction\"") != std::string::npos;
 
     if (host_has_adx) {
         // Nothing traps, so the shim must log nothing. Asserting a record here
         // would demand a trap that did not happen.
-        expect(!saw, "a host with ADX traps nothing, so the tripwire logs nothing");
+        expect(!saw, "with ADX advertised, the tripwire logged nothing because nothing trapped");
     } else {
-        expect(saw, "a host without ADX raises #UD and the tripwire logs adx_illegal_instruction");
+        expect(saw, "without ADX advertised, the tripwire logged adx_illegal_instruction");
         if (saw) {
             expect(fresh.find("bytes=66 0f 38 f6 d8") != std::string::npos ||
                    fresh.find("bytes=f3 0f 38 f6 d8") != std::string::npos,
                    "the tripwire dumps the ADCX/ADOX bytes it saw");
+            // The dumped rip must be the instruction that faulted, not one of
+            // the earlier AMD instructions this fixture also trapped.
+            const uint64_t logged = parse_first_rip(fresh);
+            expect(logged == adx_fault.rip[0],
+                   "the logged rip is the faulting ADCX address");
         }
     }
 }
