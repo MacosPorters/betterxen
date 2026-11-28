@@ -38,6 +38,7 @@
 //! `BX_SHADER_ERR_UNSUPPORTED` result. RDNA 2 to DXIL translation is not implemented.
 
 mod c_abi;
+pub mod dxil_bitcode;
 mod fspx;
 
 use std::fmt;
@@ -485,6 +486,48 @@ pub(crate) fn summarize_dxbc(bytes: &[u8]) -> Result<DxbcSummary, ParseError> {
 /// table does not hide that chunk. A `DXIL` fourcc whose payload is not that
 /// header is [`ParseError::BadDxilHeader`]. `Ok(None)` means the container is
 /// structurally valid and has no `DXIL` chunk.
+/// The LLVM bitcode bytes behind the `DXIL` chunk, or `None` when the container
+/// has no valid `DXIL` program header. The slice borrows `bytes`.
+///
+/// This is the input to [`dxil_bitcode`], which answers whether a module uses
+/// 64-bit integer atomics — the case `SFI0` cannot express (ADR 0008, #589).
+pub fn dxil_bitcode_bytes(bytes: &[u8]) -> Result<Option<&[u8]>, ParseError> {
+    // `visit_chunks` hands its visitor a borrowed payload and takes `()`, so record the
+    // byte range instead and slice `bytes` once afterwards.
+    let mut range: Option<(usize, usize)> = None;
+    visit_chunks(bytes, |index, offset, fourcc, _size, payload| {
+        if &fourcc == b"DXIL" {
+            if read_dxil_program(payload).is_err() {
+                return Err(ParseError::BadDxilHeader { chunk: index });
+            }
+            let bitcode_offset =
+                read_u32_le(payload, 16).ok_or(ParseError::BadDxilHeader { chunk: index })?;
+            let bitcode_size =
+                read_u32_le(payload, 20).ok_or(ParseError::BadDxilHeader { chunk: index })?;
+            // `payload` starts 8 bytes past the chunk header at `offset`.
+            // `BitcodeOffset` is relative to `DxilBitcodeHeader`, which
+            // begins at program byte 8 (the `DXIL` magic), not to `payload`.
+            let bitcode_header_at = usize::try_from(offset)
+                .map_err(|_| ParseError::BadDxilHeader { chunk: index })?
+                .checked_add(8)
+                .and_then(|at| at.checked_add(8))
+                .ok_or(ParseError::BadDxilHeader { chunk: index })?;
+            let start = bitcode_header_at
+                .checked_add(bitcode_offset as usize)
+                .ok_or(ParseError::BadDxilHeader { chunk: index })?;
+            let end = start
+                .checked_add(bitcode_size as usize)
+                .ok_or(ParseError::BadDxilHeader { chunk: index })?;
+            range = Some((start, end));
+        }
+        Ok(())
+    })?;
+    Ok(match range {
+        Some((start, end)) => bytes.get(start..end),
+        None => None,
+    })
+}
+
 pub(crate) fn dxil_container_len(bytes: &[u8]) -> Result<Option<u32>, ParseError> {
     let mut has_dxil = false;
     let header = visit_chunks(bytes, |index, _offset, fourcc, _size, payload| {
