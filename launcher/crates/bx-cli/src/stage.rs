@@ -433,6 +433,12 @@ where
     for (name, bytes, dst, result) in plan {
         if !matches!(result, Staged::Unchanged(_)) {
             let tmp = tmp_of(name);
+            // Snapshot what the target holds now, before the rename, so a failed manifest
+            // write can put the *old* bytes back (not the bytes just written).
+            let previous: Option<Vec<u8>> = match result {
+                Staged::Copied(_) => None,
+                _ => fs::read(&dst).ok(),
+            };
             let published = before_publish(name).and_then(|()| match result {
                 // Nothing was there at step 1; refuse to replace whatever appeared since.
                 Staged::Copied(_) => install_new(&tmp, &dst, &bytes).map_err(|e| {
@@ -495,6 +501,19 @@ where
             let _ = fs::remove_file(&tmp);
             owned.insert(name.clone(), sha256_hex(&bytes));
             if let Err(e) = write_manifest(system32, &owned) {
+                // The file is installed but the manifest on disk does not name it, so the
+                // next run would call bx-cli's own copy foreign (#573). Roll the publish
+                // back: a Copied file is removed, a Replaced one is restored from the bytes
+                // it had before. The manifest is left exactly as it was, so the retry sees
+                // the same state it would have seen had the publish never happened.
+                match previous {
+                    None => {
+                        let _ = fs::remove_file(&dst);
+                    }
+                    Some(before) => {
+                        let _ = fs::write(&dst, before);
+                    }
+                }
                 discard(&pending);
                 return Err(e);
             }
@@ -873,6 +892,67 @@ mod tests {
                 .iter()
                 .all(|s| matches!(s, Staged::Copied(_)))
         );
+    }
+
+    #[test]
+    fn a_manifest_write_failure_leaves_no_unowned_file() {
+        let (_t, shims, prefix) = setup("manifest");
+        let sys = system32_dir(&prefix);
+        // A directory where the manifest's temporary file has to go makes
+        // `write_manifest` fail after the first shim has already been published.
+        let obstacle = sys.join(format!("{MANIFEST_NAME}.{}.bx-staging", std::process::id()));
+        fs::create_dir(&obstacle).unwrap();
+        let err = stage(&shims, &sys).unwrap_err();
+        assert!(err.contains("cannot write"), "{err}");
+        assert!(
+            !sys.join("bx_runtime_veh.dll").exists(),
+            "the published file was rolled back, so the retry is not refused as foreign"
+        );
+        assert!(!sys.join(MANIFEST_NAME).exists());
+        // Only the obstacle itself is left: no staged copy, no temporary file.
+        let entries: Vec<String> = fs::read_dir(&sys)
+            .unwrap()
+            .map(|e| e.unwrap().file_name().to_string_lossy().into_owned())
+            .collect();
+        assert_eq!(
+            entries,
+            vec![obstacle.file_name().unwrap().to_string_lossy().into_owned()],
+            "system32 holds nothing but the obstacle that failed the manifest write"
+        );
+        fs::remove_dir(&obstacle).unwrap();
+        // The retry installs everything fresh; nothing is reported as foreign.
+        let retry = stage(&shims, &sys).unwrap();
+        assert!(
+            retry.iter().all(|s| matches!(s, Staged::Copied(_))),
+            "{retry:?}"
+        );
+        // And a shim rebuilt later refreshes bx-cli's own copy rather than failing.
+        fs::write(shims.join("bx_runtime_veh.dll"), b"veh v2").unwrap();
+        let update = stage(&shims, &sys).unwrap();
+        assert!(update.contains(&Staged::Replaced(sys.join("bx_runtime_veh.dll"))));
+    }
+
+    #[test]
+    fn a_manifest_write_failure_restores_the_previous_bytes() {
+        let (_t, shims, prefix) = setup("restore");
+        let sys = system32_dir(&prefix);
+        stage(&shims, &sys).unwrap();
+        // Rebuild the shim, then make the manifest write fail after the rename.
+        fs::write(shims.join("bx_runtime_veh.dll"), b"veh v2").unwrap();
+        let obstacle = sys.join(format!("{MANIFEST_NAME}.{}.bx-staging", std::process::id()));
+        fs::create_dir(&obstacle).unwrap();
+        assert!(stage(&shims, &sys).is_err());
+        assert_eq!(
+            fs::read(sys.join("bx_runtime_veh.dll")).unwrap(),
+            b"veh v1",
+            "the replaced file must be restored to the bytes it had before the rename"
+        );
+        // The manifest still names the old copy, so the retry refreshes it rather than
+        // calling it foreign.
+        fs::remove_dir(&obstacle).unwrap();
+        let retry = stage(&shims, &sys).unwrap();
+        assert!(retry.contains(&Staged::Replaced(sys.join("bx_runtime_veh.dll"))));
+        assert_eq!(fs::read(sys.join("bx_runtime_veh.dll")).unwrap(), b"veh v2");
     }
 
     #[test]
