@@ -22,7 +22,8 @@ only inside synthetic JSONL fixtures in Rust unit tests:
 - `launcher/crates/bx-cli/src/main.rs:1604` — the expected rendered trace
   line in the same test.
 
-**Class A** (local `grep -rn 'CreatePlacedResourceX'` over the working tree on
+**Class D** (repository source inspection: local
+`grep -rn 'CreatePlacedResourceX'` over the working tree on
 `track-f/523-placed-resource-x-gap`, rebased onto `origin/main`): no
 occurrence exists in `shims/`, `abi/`, `tests/`, `scripts/`, or `docs/` other
 than this document. The `bx-cli` fixture arrived on `origin/main` with
@@ -32,11 +33,13 @@ rebase; it is a second synthetic fixture, not a console source.
 
 ## What the shim does
 
-**Class A** (local `grep` of `shims/`): `ID3D12Device11` is not named anywhere
-in `shims/`. The `d3d12_xs` proxy models `ID3D12Device` through
-`ID3D12Device10`, which is as far as the mingw-w64 `<d3d12.h>` declares.
+**Class D** (repository source inspection: local `grep` of `shims/`):
+`ID3D12Device11` is not named anywhere in `shims/`. The `d3d12_xs` proxy
+models `ID3D12Device` through `ID3D12Device10`, which is as far as the
+mingw-w64 `<d3d12.h>` declares.
 
-**Class A** (local source inspection):
+**Class D** (repository source inspection, read from
+`shims/d3d12_xs/tools/gen_proxy.py`):
 `shims/d3d12_xs/tools/gen_proxy.py:22` sets `PAD_SLOTS = 32`. For each
 generated interface it emits 32 `BxBeyondPublicVtableNN` slots after the
 public vtable. Each one calls
@@ -45,7 +48,8 @@ public vtable. Each one calls
 macro). The generated comment states that names and signatures of methods
 beyond the public vtable are unknown to the proxy.
 
-**Class A** (local source inspection): the literal method name emitted by
+**Class D** (repository source inspection, read from
+`shims/d3d12_xs/tools/gen_proxy.py`): the literal method name emitted by
 those padded slots is `beyond_public_vtable`. The shim never emits
 `CreatePlacedResourceX`.
 
@@ -56,12 +60,12 @@ The Xbox `ID3D12Device11` interface is NDA-gated (`docs/claims.toml`
 
 | Question | Answer | Evidence class |
 | --- | --- | --- |
-| Does the name `CreatePlacedResourceX` appear in the repo? | Yes, in the synthetic telemetry and `bx-cli` trace fixtures listed above | A |
+| Does the name `CreatePlacedResourceX` appear in the repo? | Yes, in the synthetic telemetry and `bx-cli` trace fixtures listed above | D |
 | Is slot 44 of `ID3D12Device11` named `CreatePlacedResourceX`? | The fixtures assert it; no console source confirms it, so the slot name stays a hypothesis | U |
 | What is the console signature of `CreatePlacedResourceX`? | Not defined in `abi/` or any public source reviewed; unknown | U |
-| Does the shim implement it? | No | A |
-| Does the shim log that name? | No; it logs `beyond_public_vtable` | A |
-| Is `ID3D12Device11` proxied at all? | No | A |
+| Does the shim implement it? | No | D |
+| Does the shim log that name? | No; it logs `beyond_public_vtable` | D |
+| Is `ID3D12Device11` proxied at all? | No | D |
 
 ## The PC API is a lead, not the contract
 
