@@ -242,3 +242,13 @@ retrieved = "2026-11-22"
 architecture = "Xbox Series X, Hot Chips 32 architectural presentation"
 test = "Read slides 12 and 13. No console execution."
 uncertainty = "The slides do not specify opcode semantics, an ABI or a command packet layout."
+
+[[claim]]
+id = "CLAIM-XBOX-CS-ENTRY-ABI"
+class = "A"
+claim = "For project-authored compute shaders with explicit root signatures, Microsoft's Series X|S HLSL compiler generated wave64 code that receives root data from s4 in root-parameter order (one SGPR per constant, two per root descriptor address, one per 32-bit table pointer), thread-group IDs after the root data, the root-data address in s0:s1 when the data overflows, and buffer descriptors built inline with a record count of -1."
+sources = ["docs/research/console-shader-abi.md"]
+retrieved = "2026-11-28"
+architecture = "Xbox Series X|S compute shaders, as compiled by the GDK 2026.10 Scarlett HLSL compiler under CrossOver 26.3 on Apple Silicon"
+test = "Compiled eleven project-authored cs_6_5/cs_6_6 probes and read the compiler's assembly listings; the compiler and its outputs are used under Microsoft's authorization and are not in the repository."
+uncertainty = "Register roles are inferred from the generated code and the reported COMPUTE_PGM_RSRC2 fields. One compiler build, compute only, no console execution, and the ACCC container layout is not covered."
