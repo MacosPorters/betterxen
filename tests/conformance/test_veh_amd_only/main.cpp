@@ -5,9 +5,158 @@
 #include <cpuid.h>
 #include <cstdint>
 #include <cstdio>
+#include <cstdlib>
 #include <cstring>
+#include <string>
+#include <vector>
 
 extern "C" uint64_t bx_veh_get_clwb_trap_count(void);
+
+// ---------------------------------------------------------------------------
+// BX_LOG_FILE reader (same pattern as test_veh_clwb / test_win32_bridge).
+// If BX_LOG_FILE is unset we create a temp log and point the variable at it
+// so the runtime_veh logger writes somewhere we can read back.
+// ---------------------------------------------------------------------------
+
+struct LogReader {
+    char path[MAX_PATH]{};
+    bool created_temp = false;
+    int64_t start_offset = 0;
+
+    bool init() {
+        const DWORD existing_len =
+            GetEnvironmentVariableA("BX_LOG_FILE", path, sizeof(path));
+        if (existing_len == 0 || existing_len >= sizeof(path)) {
+            char temp_dir[MAX_PATH]{};
+            const DWORD dir_len = GetTempPathA(sizeof(temp_dir), temp_dir);
+            if (dir_len == 0 || dir_len >= sizeof(temp_dir) ||
+                GetTempFileNameA(temp_dir, "bxa", 0, path) == 0) {
+                std::fprintf(stderr, "FAIL: could not create temporary AMD log file\n");
+                return false;
+            }
+            if (!SetEnvironmentVariableA("BX_LOG_FILE", path)) {
+                DeleteFileA(path);
+                std::fprintf(stderr, "FAIL: could not set BX_LOG_FILE\n");
+                return false;
+            }
+            created_temp = true;
+        }
+        start_offset = query_file_size(path);
+        return true;
+    }
+
+    ~LogReader() {
+        if (created_temp) {
+            DeleteFileA(path);
+        }
+    }
+
+    static int64_t query_file_size(const char* p) {
+        HANDLE f = CreateFileA(p, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (f == INVALID_HANDLE_VALUE) {
+            return 0;
+        }
+        LARGE_INTEGER size{};
+        const bool ok = GetFileSizeEx(f, &size) != 0;
+        CloseHandle(f);
+        return ok && size.QuadPart > 0 ? size.QuadPart : 0;
+    }
+
+    // Read only the bytes appended after start_offset.
+    bool read_new(std::string& out) const {
+        HANDLE f = CreateFileA(path, GENERIC_READ, FILE_SHARE_READ | FILE_SHARE_WRITE,
+                                 nullptr, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, nullptr);
+        if (f == INVALID_HANDLE_VALUE) {
+            std::fprintf(stderr, "FAIL: could not open AMD log %s (error %lu)\n",
+                         path, GetLastError());
+            return false;
+        }
+        LARGE_INTEGER size{};
+        if (!GetFileSizeEx(f, &size) || size.QuadPart < start_offset) {
+            CloseHandle(f);
+            std::fprintf(stderr, "FAIL: invalid AMD log size for %s\n", path);
+            return false;
+        }
+        const int64_t delta = size.QuadPart - start_offset;
+        if (delta < 0 || delta > (64LL << 20)) {
+            CloseHandle(f);
+            std::fprintf(stderr, "FAIL: unexpected AMD log delta (%lld bytes)\n",
+                         static_cast<long long>(delta));
+            return false;
+        }
+        LARGE_INTEGER seek{};
+        seek.QuadPart = start_offset;
+        if (!SetFilePointerEx(f, seek, nullptr, FILE_BEGIN)) {
+            CloseHandle(f);
+            return false;
+        }
+        out.assign(static_cast<size_t>(delta), '\0');
+        size_t total_read = 0;
+        while (total_read < out.size()) {
+            DWORD chunk = 0;
+            const DWORD want = static_cast<DWORD>(out.size() - total_read);
+            if (!ReadFile(f, out.data() + total_read, want, &chunk, nullptr) || chunk == 0) {
+                break;
+            }
+            total_read += chunk;
+        }
+        CloseHandle(f);
+        out.resize(total_read);
+        return true;
+    }
+};
+
+// One parsed `*_trapped` record.
+struct AmdRecord {
+    std::string event;
+    uint64_t total_traps = 0;
+    size_t len = 0;
+};
+
+// Parse every `"event":"<kind>_trapped"` line for `len=` and `total_traps=`.
+static std::vector<AmdRecord> parse_amd_records(const std::string& data) {
+    std::vector<AmdRecord> records;
+    size_t pos = 0;
+    while (pos < data.size()) {
+        size_t nl = data.find('\n', pos);
+        if (nl == std::string::npos) {
+            nl = data.size();
+        }
+        const std::string line = data.substr(pos, nl - pos);
+        pos = nl + 1;
+
+        // Match any *_trapped event from runtime_veh.
+        const size_t ev_key = line.find("\"event\":\"");
+        if (ev_key == std::string::npos) {
+            continue;
+        }
+        const size_t ev_start = ev_key + 9;
+        const size_t ev_end = line.find('"', ev_start);
+        if (ev_end == std::string::npos) {
+            continue;
+        }
+        const std::string event = line.substr(ev_start, ev_end - ev_start);
+        if (event.size() < 8 || event.compare(event.size() - 8, 8, "_trapped") != 0) {
+            continue;
+        }
+
+        AmdRecord rec{};
+        rec.event = event;
+        const size_t len_key = line.find("len=");
+        if (len_key == std::string::npos) {
+            continue;
+        }
+        rec.len = std::stoull(line.substr(len_key + 4));
+        const size_t tt_key = line.find("total_traps=");
+        if (tt_key == std::string::npos) {
+            continue;
+        }
+        rec.total_traps = std::stoull(line.substr(tt_key + 12));
+        records.push_back(rec);
+    }
+    return records;
+}
 
 namespace {
 
@@ -51,7 +200,7 @@ void check_cache_lines() {
            equals(lines + 128, 64, 0xA5), "CLZERO accepts a redundant REX.W");
 }
 
-void check_address_override() {
+bool check_address_override() {
     uint8_t* page = nullptr;
     for (uintptr_t address = 0x10000000; address < 0x70000000; address += 0x10000000) {
         page = static_cast<uint8_t*>(VirtualAlloc(reinterpret_cast<void*>(address), 4096,
@@ -62,7 +211,7 @@ void check_address_override() {
     }
     expect(page != nullptr, "allocate a page below 4 GiB for address-size coverage");
     if (!page) {
-        return;
+        return false;
     }
 
     std::memset(page, 0x6C, 192);
@@ -74,6 +223,7 @@ void check_address_override() {
                      :: "a"(address), "c"(0), "d"(0) : "memory");
     expect(page[75] == 0, "MONITORX with an address-size override resumes after four bytes");
     VirtualFree(page, 0, MEM_RELEASE);
+    return true;
 }
 
 struct WriteFault {
@@ -235,15 +385,284 @@ void check_bit_fields() {
 
 } // namespace
 
+// Exercise the ADX tripwire. bx_runtime_veh logs
+// `adx_illegal_instruction` when it sees ADCX/ADOX (0F 38 F6), and no fixture
+// executed one before, so the record was never observed by a test.
+//
+// Encodings, re-derived by assembling with x86_64-w64-mingw32-as and
+// disassembling with x86_64-w64-mingw32-objdump -d:
+//
+//   66 0f 38 f6 d8           adcx %eax,%ebx                 -> 5 bytes
+//   f3 0f 38 f6 d8           adox %eax,%ebx                 -> 5 bytes
+//   66 0f 38 f6 1c 88        adcx (%rax,%rcx,4),%ebx        -> 6 bytes (SIB)
+//   66 0f 38 f6 5c 88 40     adcx 0x40(%rax,%rcx,4),%ebx    -> 7 bytes (SIB + disp8)
+//   66 0f 38 f6 98 00 01 00 00  adcx 0x100(%rax),%ebx        -> 9 bytes (disp32)
+//   66 0f 38 f6 1d <disp32>  adcx (%rip),%ebx                -> 9 bytes (RIP-relative disp32)
+//
+// The first revision of the shim decoder returned `idx + 4` — opcode plus one
+// ModRM byte — so every memory form advanced Rip 1-4 bytes short of the real
+// instruction (#545). The fixture therefore emits SIB, disp8, disp32 and
+// RIP-relative forms and asserts the logged `len=`, not just that a record
+// appeared.
+//
+// Whether these trap depends on the HOST CPU, not on the shim: without ADX
+// they raise #UD and the tripwire logs; with ADX they execute and nothing is
+// logged. The check reads CPUID leaf 7 EBX[19] and asserts the case that
+// applies, so it never demands a trap that did not happen.
+//
+// The fixture emits six forms; on a host without ADX the shim must log each
+// one's real length and advance Rip past it. The handler logs and resumes
+// itself (`Rip += adx_instruction_length`), so reaching the next statement is
+// the check that the guest was not left re-faulting; the logged `len=` is the
+// check that Rip landed on the next instruction boundary rather than inside
+// the SIB or displacement bytes.
+uintptr_t adx_first_rip = 0;
+
+// First `rip=0x...` value in the freshly appended log text, or 0 when absent.
+uint64_t parse_first_rip(const std::string& text) {
+    const size_t key = text.find("rip=0x");
+    if (key == std::string::npos) {
+        return 0;
+    }
+    return std::strtoull(text.c_str() + key + 6, nullptr, 16);
+}
+
+// Every `len=` on an `adx_illegal_instruction` record, in log order.
+std::vector<size_t> parse_adx_lengths(const std::string& text) {
+    std::vector<size_t> lengths;
+    size_t pos = 0;
+    while (pos < text.size()) {
+        size_t nl = text.find('\n', pos);
+        if (nl == std::string::npos) {
+            nl = text.size();
+        }
+        const std::string line = text.substr(pos, nl - pos);
+        pos = nl + 1;
+        if (line.find("\"event\":\"adx_illegal_instruction\"") == std::string::npos) {
+            continue;
+        }
+        const size_t key = line.find("len=");
+        if (key == std::string::npos) {
+            continue;
+        }
+        lengths.push_back(static_cast<size_t>(std::strtoull(line.c_str() + key + 4, nullptr, 10)));
+    }
+    return lengths;
+}
+
+void check_adx_tripwire(const LogReader& log, const std::string& before) {
+    unsigned eax = 0, ebx = 0, ecx = 0, edx = 0;
+    // CPUID leaf 7, EBX bit 19 = ADX.
+    const bool host_has_adx =
+        __get_cpuid_count(7, 0, &eax, &ebx, &ecx, &edx) && (ebx & (1u << 19)) != 0;
+    std::printf("OBSERVED: CPUID.7.0:EBX[19] (ADX) = %u\n", host_has_adx ? 1u : 0u);
+
+    // bx_runtime_veh advances Rip past ADCX/ADOX itself, so these execute
+    // either natively (host has ADX) or trap, get logged, and resume. The
+    // fixture does not need a handler of its own; reaching the next statement
+    // is the check that the guest was not left re-faulting. The assembler
+    // label `first_adcx` is emitted immediately before the first ADCX *inside
+    // the same asm block*, so `lea first_adcx(%rip)` yields the exact address
+    // of the faulting instruction. A C++ label (`&&label`) is NOT reliable
+    // here: the compiler may place it on an earlier instruction (e.g. the
+    // `lea`/`call` for the preceding printf), which made `adx_first_rip`
+    // differ from the logged `rip=` and failed the live run.
+    __asm__ volatile(
+        "first_adcx:\n\t"
+        ".byte 0x66, 0x0f, 0x38, 0xf6, 0xd8\n\t"  // adcx %eax,%ebx
+        "lea first_adcx(%%rip), %0"
+        : "=r"(adx_first_rip)
+        :
+        : "eax", "ebx", "cc");
+    __asm__ volatile(".byte 0xf3, 0x0f, 0x38, 0xf6, 0xd8" ::: "eax", "ebx", "cc");
+    expect(true, "ADCX and ADOX execute or trap-and-resume without wedging the guest");
+
+    // Memory forms. `rax` and `rcx` are set explicitly so the emitted bytes
+    // address a readable 32-bit word inside the fixture's own buffer. Each
+    // form's byte sequence was derived by assembling with
+    // x86_64-w64-mingw32-as and disassembling with
+    // x86_64-w64-mingw32-objdump -d (see the table above).
+    // 512 bytes, so the disp8 (0x40) and disp32 (0x100) forms below both land
+    // inside it when they execute on a host that has ADX.
+    static volatile uint32_t adx_words[128] = {0x11223344u, 0x55667788u, 0x99aabbccu, 0xddeeff00u};
+    const uintptr_t words_base = reinterpret_cast<uintptr_t>(adx_words);
+    // SIB, no displacement: adcx (%rax,%rcx,4),%ebx -> 66 0f 38 f6 1c 88 (6).
+    __asm__ volatile("mov %0, %%rax\n\txor %%rcx, %%rcx\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x1c, 0x88"
+                     :: "r"(words_base) : "rax", "rcx", "ebx", "cc", "memory");
+    // SIB + disp8: adcx 0x40(%rax,%rcx,4),%ebx -> 66 0f 38 f6 5c 88 40 (7).
+    __asm__ volatile("mov %0, %%rax\n\txor %%rcx, %%rcx\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x5c, 0x88, 0x40"
+                     :: "r"(words_base) : "rax", "rcx", "ebx", "cc", "memory");
+    // disp32: adcx 0x100(%rax),%ebx -> 66 0f 38 f6 98 00 01 00 00 (9).
+    __asm__ volatile("mov %0, %%rax\n\t"
+                     ".byte 0x66, 0x0f, 0x38, 0xf6, 0x98, 0x00, 0x01, 0x00, 0x00"
+                     :: "r"(words_base) : "rax", "ebx", "cc", "memory");
+    // RIP-relative disp32: adcx (%rip),%ebx -> 66 0f 38 f6 1d <disp32> (9).
+    // The displacement is 0 here, which is a valid encoding of the form; the
+    // decoder must consume all four displacement bytes regardless of value.
+    __asm__ volatile(".byte 0x66, 0x0f, 0x38, 0xf6, 0x1d, 0x00, 0x00, 0x00, 0x00"
+                     ::: "eax", "ebx", "cc", "memory");
+    expect(true, "memory-operand ADCX forms execute or trap-and-resume");
+
+    std::string after;
+    if (!log.read_new(after)) {
+        expect(false, "the ADX log could be read back");
+        return;
+    }
+    // Only the bytes this check appended.
+    const std::string fresh =
+        after.size() > before.size() ? after.substr(before.size()) : std::string();
+    const bool saw = fresh.find("\"event\":\"adx_illegal_instruction\"") != std::string::npos;
+
+    if (host_has_adx) {
+        // Nothing traps, so the shim must log nothing. Asserting a record here
+        // would demand a trap that did not happen.
+        expect(!saw, "with ADX advertised, the tripwire logged nothing because nothing trapped");
+    } else {
+        expect(saw, "without ADX advertised, the tripwire logged adx_illegal_instruction");
+        if (saw) {
+            expect(fresh.find("bytes=66 0f 38 f6 d8") != std::string::npos ||
+                   fresh.find("bytes=f3 0f 38 f6 d8") != std::string::npos,
+                   "the tripwire dumps the ADCX/ADOX bytes it saw");
+            // The dumped rip must be the instruction that faulted, not one of
+            // the earlier AMD instructions this fixture also trapped.
+            const uint64_t logged = parse_first_rip(fresh);
+            expect(logged == adx_first_rip,
+                   "the logged rip is the faulting ADCX address");
+            // Six forms, each logged once: 5, 5, 6, 7, 9 and 9 bytes. The old
+            // `idx + 4` decoder reported 5 for all six, so a wrong length is
+            // visible here even though every effect check would still pass.
+            const std::vector<size_t> lengths = parse_adx_lengths(fresh);
+            const std::vector<size_t> expected{5, 5, 6, 7, 9, 9};
+            expect(lengths == expected,
+                   "each ADCX/ADOX form logs its real length (5, 5, 6, 7, 9, 9)");
+        }
+    }
+}
+
 int main() {
     // Keep the DLL import so that its VEH is installed before this fixture.
     (void)bx_veh_get_clwb_trap_count();
+
+    // Set up the log reader BEFORE the first AMD instruction executes so we
+    // capture every *_trapped record the VEH emits. The counters are
+    // per-kind, so log_sampled_trap() sees count == 1 for the first trap of
+    // each kind. That means the first instance of all six kinds is always
+    // logged, and all six lengths are observable.
+    LogReader log;
+    if (!log.init()) {
+        return 5;
+    }
+
     check_cache_lines();
-    check_address_override();
+    const bool low_page_allocated = check_address_override();
     check_write_fault();
     check_wait_instructions();
     check_processor_registers();
     check_bit_fields();
+
+    // The ADX check needs a snapshot of the log taken before it runs.
+    std::string adx_before;
+    if (!log.read_new(adx_before)) {
+        return 9;
+    }
+    check_adx_tripwire(log, adx_before);
+
+    // -----------------------------------------------------------------------
+    // Verify the decoded instruction length (`len=`) that the VEH logs and
+    // uses to advance RIP. A wrong `len` lands the guest mid-instruction
+    // while the effect checks still pass, so this is the field that decides
+    // whether the guest resumes correctly.
+    //
+    // log_sampled_trap() logs when count == 1 or count is a power of two.
+    // Because the counters are per-kind, the first trap of each kind is
+    // logged with total_traps=1. We assert on that record for each kind.
+    //
+    // Expected lengths, derived from the byte sequences the fixture emits
+    // (verified by assembling with x86_64-w64-mingw32-as and disassembling
+    // with x86_64-w64-mingw32-objdump -d):
+    //
+    //   clzero:   0f 01 fc                    -> 3
+    //   monitorx: 67 0f 01 fa                 -> 4  (addr32, if low page allocated)
+    //             0f 01 fa                    -> 3  (otherwise, first in check_wait_instructions)
+    //   mwaitx:   0f 01 fb                    -> 3
+    //   rdpru:    0f 01 fd                    -> 3
+    //   extrq:    66 0f 78 c3 0c 0c           -> 6  (first CHECK_SSE4A)
+    //   insertq:  f2 0f 78 dc 08 08           -> 6  (first CHECK_SSE4A)
+    //
+    // Note: extrq and insertq appear multiple times with different lengths
+    // (4, 5, 6, 7 bytes). total_traps=1 corresponds to the FIRST occurrence
+    // in check_bit_fields(), which is the 6-byte immediate form.
+    //
+    // Note: when check_address_override() allocates its optional page below
+    // 4 GiB, the first MONITORX is the 4-byte addr32 form (67 0f 01 fa).
+    // If that allocation is unavailable, it returns early and the first
+    // MONITORX is the ordinary 3-byte form (0f 01 fa) in
+    // check_wait_instructions(). Select the expected length accordingly.
+    // -----------------------------------------------------------------------
+    {
+        std::string log_data;
+        if (!log.read_new(log_data)) {
+            return 6;
+        }
+        const std::vector<AmdRecord> records = parse_amd_records(log_data);
+        if (records.empty()) {
+            std::fprintf(stderr,
+                         "FAIL: no *_trapped records found in log %s "
+                         "(BX_LOG_FILE must be readable)\n", log.path);
+            return 7;
+        }
+
+        // Every observed record must have 0 < len <= 15 (x86 maximum).
+        for (const auto& r : records) {
+            if (r.len == 0 || r.len > 15) {
+                std::fprintf(stderr,
+                             "FAIL: %s total_traps=%llu has invalid len=%zu\n",
+                             r.event.c_str(),
+                             static_cast<unsigned long long>(r.total_traps), r.len);
+                return 8;
+            }
+        }
+
+        // Exact expectations for the first trap of each kind.
+        struct Expected { const char* event; size_t len; const char* form; };
+        const Expected kExpected[] = {
+            {"clzero_trapped",   3, "clzero (0f 01 fc)"},
+            {"monitorx_trapped",
+             low_page_allocated ? 4u : 3u,
+             low_page_allocated ? "monitorx addr32 (67 0f 01 fa)"
+                                 : "monitorx (0f 01 fa)"},
+            {"mwaitx_trapped",   3, "mwaitx (0f 01 fb)"},
+            {"rdpru_trapped",    3, "rdpru (0f 01 fd)"},
+            {"extrq_trapped",    6, "extrq $0xc,$0xc,%xmm3 (66 0f 78 c3 0c 0c)"},
+            {"insertq_trapped",  6, "insertq $0x8,$0x8,%xmm4,%xmm3 (f2 0f 78 dc 08 08)"},
+        };
+        for (const auto& exp : kExpected) {
+            bool found = false;
+            for (const auto& r : records) {
+                if (r.event == exp.event && r.total_traps == 1) {
+                    found = true;
+                    if (r.len != exp.len) {
+                        std::fprintf(stderr,
+                                     "FAIL: %s total_traps=1 (%s): "
+                                     "expected len=%zu, got len=%zu\n",
+                                     exp.event, exp.form, exp.len, r.len);
+                        return 9;
+                    }
+                    break;
+                }
+            }
+            if (!found) {
+                std::fprintf(stderr,
+                             "FAIL: missing %s record with total_traps=1 (%s)\n",
+                             exp.event, exp.form);
+                return 10;
+            }
+        }
+        std::printf("AMD decoded lengths verified for first trap of all six kinds "
+                    "(%zu records)\n", records.size());
+    }
 
     std::printf("%s: test_veh_amd_only (%u/%u checks)\n",
                 failures ? "FAIL" : "PASS", checks - failures, checks);

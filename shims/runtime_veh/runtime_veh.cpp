@@ -129,19 +129,58 @@ size_t decode_clwb_length(const uint8_t* ip, size_t size) {
     return idx <= size ? idx : 0;
 }
 
-bool is_adx_opcode(const uint8_t* ip, size_t size) {
+// Length of an ADCX/ADOX instruction at `ip`, or 0 when it is not one.
+// ADCX is 66 0F 38 F6 /r; ADOX is F3 0F 38 F6 /r. The mandatory prefix is the
+// ADCX/ADOX opcode's distinguishing byte, an optional REX may follow, and the
+// ModRM byte selects either a register (mod == 3) or a memory operand whose
+// SIB and displacement bytes the handler must also step over — otherwise Rip
+// lands in the middle of the instruction (#545). Mirrors decode_clwb_length.
+size_t adx_instruction_length(const uint8_t* ip, size_t size) {
     size_t idx = 0;
-    while (idx < size && (ip[idx] == 0x66 || ip[idx] == 0xF3)) {
+    bool has_66 = false;
+    bool has_f3 = false;
+    while (idx < size) {
+        const uint8_t byte = ip[idx];
+        if (byte == 0x66) {
+            has_66 = true;
+        } else if (byte == 0xF3) {
+            has_f3 = true;
+        } else if (byte != 0x67 && byte != 0x26 && byte != 0x2E &&
+                   byte != 0x36 && byte != 0x3E && byte != 0x64 && byte != 0x65) {
+            break;
+        }
         ++idx;
     }
-    if (idx == 0) {
-        return false;
+    if (!has_66 && !has_f3) {
+        return 0;
     }
+    // x86-64 allows at most one REX prefix immediately before the opcode.
     if (idx < size && (ip[idx] & 0xF0) == 0x40) {
         ++idx;
     }
-    // Require the 3-byte ADCX/ADOX opcode (0F 38 F6) plus at least 1 ModRM byte.
-    return size - idx >= 4 && ip[idx] == 0x0F && ip[idx + 1] == 0x38 && ip[idx + 2] == 0xF6;
+    if (size - idx < 4 || ip[idx] != 0x0F || ip[idx + 1] != 0x38 || ip[idx + 2] != 0xF6) {
+        return 0;
+    }
+    idx += 3;
+
+    const uint8_t modrm = ip[idx++];
+    const uint8_t mod = modrm >> 6;
+    if (mod == 3) {
+        return idx;
+    }
+    uint8_t base = modrm & 7;
+    if (base == 4) {
+        if (idx == size) {
+            return 0;
+        }
+        base = ip[idx++] & 7;
+    }
+    if (mod == 1) {
+        idx += 1;
+    } else if (mod == 2 || (mod == 0 && base == 5)) {
+        idx += 4;
+    }
+    return idx <= size ? idx : 0;
 }
 
 // Logs the first trap of a kind and then every power of two, as for clwb.
@@ -387,13 +426,21 @@ LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
         return EXCEPTION_CONTINUE_EXECUTION;
     }
 
-    if (g_config.enable_adx_tripwire && is_adx_opcode(ip, size)) {
-        char msg[160];
-        std::snprintf(msg, sizeof(msg),
-                      "rip=0x%016llx bytes=%02x %02x %02x %02x %02x",
-                      static_cast<unsigned long long>(ep->ContextRecord->Rip),
-                      ip[0], ip[1], ip[2], ip[3], ip[4]);
-        bx_log_emit(BX_LOG_ERROR, "runtime_veh", "adx_illegal_instruction", msg);
+    if (g_config.enable_adx_tripwire) {
+        const size_t adx_length = adx_instruction_length(ip, size);
+        if (adx_length > 0) {
+            char msg[160];
+            std::snprintf(msg, sizeof(msg),
+                          "rip=0x%016llx len=%zu bytes=%02x %02x %02x %02x %02x",
+                          static_cast<unsigned long long>(ep->ContextRecord->Rip),
+                          adx_length, ip[0], ip[1], ip[2], ip[3], ip[4]);
+            bx_log_emit(BX_LOG_ERROR, "runtime_veh", "adx_illegal_instruction", msg);
+            // Log and resume, like the clwb and AMD paths. Without this the
+            // guest re-faults the same instruction forever on a host that
+            // lacks ADCX/ADOX.
+            ep->ContextRecord->Rip += adx_length;
+            return EXCEPTION_CONTINUE_EXECUTION;
+        }
     }
 
     return EXCEPTION_CONTINUE_SEARCH;
