@@ -80,12 +80,14 @@ fn collect(rx: &Receiver<Event>, until: Instant) -> io::Result<(Vec<u8>, Vec<u8>
     Ok((stdout, stderr, true))
 }
 
-fn wait_until(child: &mut Child, deadline: Instant) -> io::Result<Option<ExitStatus>> {
+/// `deadline: None` means the requested timeout is not representable on this clock, so the
+/// probe is allowed to run without one (#587).
+fn wait_until(child: &mut Child, deadline: Option<Instant>) -> io::Result<Option<ExitStatus>> {
     loop {
         if let Some(status) = child.try_wait()? {
             return Ok(Some(status));
         }
-        if Instant::now() >= deadline {
+        if deadline.is_some_and(|at| Instant::now() >= at) {
             child.kill()?;
             child.wait()?;
             return Ok(None);
@@ -112,7 +114,13 @@ pub fn run_probe(probe: &Path, framework_binary: &Path, timeout: Duration) -> io
             command.env(key, value);
         }
     }
-    let deadline = Instant::now() + timeout;
+    // `--timeout` takes any u64 seconds, and `Instant + Duration` panics on overflow, so a
+    // huge value would abort the harness with exit 101 instead of one of its verdict codes
+    // (#586). Saturate at the platform maximum instead: the probe then simply never times out.
+    // `--timeout` takes any u64 seconds, and `Instant + Duration` panics on overflow. When the
+    // requested timeout is not representable the probe simply has no deadline; representing
+    // that as `None` avoids inventing a fallback duration that might also not fit (#587).
+    let deadline = Instant::now().checked_add(timeout);
     let mut child = command.spawn()?;
     let (tx, rx) = mpsc::channel();
     pump(
@@ -126,8 +134,11 @@ pub fn run_probe(probe: &Path, framework_binary: &Path, timeout: Duration) -> io
         tx,
     );
     let status = wait_until(&mut child, deadline)?;
-    let (stdout, stderr, output_complete) =
-        collect(&rx, deadline.max(Instant::now() + DRAIN_GRACE))?;
+    // With no deadline the probe has already exited, so draining still needs a bound.
+    let drain_until = deadline
+        .unwrap_or_else(Instant::now)
+        .max(Instant::now() + DRAIN_GRACE);
+    let (stdout, stderr, output_complete) = collect(&rx, drain_until)?;
     Ok(ProbeRun {
         status,
         stdout: String::from_utf8_lossy(&stdout).into_owned(),
@@ -159,6 +170,35 @@ mod tests {
         fn drop(&mut self) {
             let _ = std::fs::remove_file(&self.0);
         }
+    }
+
+    #[test]
+    fn an_unrepresentable_deadline_leaves_the_probe_without_a_timeout() {
+        // `checked_add` returns None for a timeout the clock cannot represent; the runner
+        // must then wait for the probe normally instead of inventing a fallback duration
+        // that could itself overflow (#587).
+        let script = Script::new("nodeadline", "sleep 0.2; exit 0");
+        let run = run_probe(
+            &script.0,
+            std::path::Path::new("/nonexistent/framework"),
+            Duration::from_secs(u64::MAX),
+        )
+        .expect("an unrepresentable deadline must not abort the run");
+        assert_eq!(run.status.and_then(|s| s.code()), Some(0));
+        assert!(run.output_complete);
+    }
+
+    #[test]
+    fn an_overflowing_timeout_does_not_panic() {
+        // u64::MAX seconds overflows `Instant + Duration`; before #586 this panicked.
+        let script = Script::new("overflow", "exit 0");
+        let run = run_probe(
+            &script.0,
+            std::path::Path::new("/nonexistent/framework"),
+            Duration::from_secs(u64::MAX),
+        );
+        let run = run.expect("an overflowing timeout must still run the probe, not panic");
+        assert_eq!(run.status.and_then(|s| s.code()), Some(0));
     }
 
     #[test]
