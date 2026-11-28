@@ -199,7 +199,7 @@ void check_cache_lines() {
            equals(lines + 128, 64, 0xA5), "CLZERO accepts a redundant REX.W");
 }
 
-void check_address_override() {
+bool check_address_override() {
     uint8_t* page = nullptr;
     for (uintptr_t address = 0x10000000; address < 0x70000000; address += 0x10000000) {
         page = static_cast<uint8_t*>(VirtualAlloc(reinterpret_cast<void*>(address), 4096,
@@ -210,7 +210,7 @@ void check_address_override() {
     }
     expect(page != nullptr, "allocate a page below 4 GiB for address-size coverage");
     if (!page) {
-        return;
+        return false;
     }
 
     std::memset(page, 0x6C, 192);
@@ -222,6 +222,7 @@ void check_address_override() {
                      :: "a"(address), "c"(0), "d"(0) : "memory");
     expect(page[75] == 0, "MONITORX with an address-size override resumes after four bytes");
     VirtualFree(page, 0, MEM_RELEASE);
+    return true;
 }
 
 struct WriteFault {
@@ -398,7 +399,7 @@ int main() {
     }
 
     check_cache_lines();
-    check_address_override();
+    const bool low_page_allocated = check_address_override();
     check_write_fault();
     check_wait_instructions();
     check_processor_registers();
@@ -419,7 +420,8 @@ int main() {
     // with x86_64-w64-mingw32-objdump -d):
     //
     //   clzero:   0f 01 fc                    -> 3
-    //   monitorx: 67 0f 01 fa                 -> 4  (addr32, first in check_address_override)
+    //   monitorx: 67 0f 01 fa                 -> 4  (addr32, if low page allocated)
+    //             0f 01 fa                    -> 3  (otherwise, first in check_wait_instructions)
     //   mwaitx:   0f 01 fb                    -> 3
     //   rdpru:    0f 01 fd                    -> 3
     //   extrq:    66 0f 78 c3 0c 0c           -> 6  (first CHECK_SSE4A)
@@ -429,11 +431,11 @@ int main() {
     // (4, 5, 6, 7 bytes). total_traps=1 corresponds to the FIRST occurrence
     // in check_bit_fields(), which is the 6-byte immediate form.
     //
-    // Note: monitorx appears first as the 4-byte addr32 form in
-    // check_address_override(). If the low page allocation fails, that
-    // function returns early and the first monitorx becomes the 3-byte
-    // form in check_wait_instructions(). We assert len=4 for total_traps=1
-    // because the low page allocation is expected to succeed on this host.
+    // Note: when check_address_override() allocates its optional page below
+    // 4 GiB, the first MONITORX is the 4-byte addr32 form (67 0f 01 fa).
+    // If that allocation is unavailable, it returns early and the first
+    // MONITORX is the ordinary 3-byte form (0f 01 fa) in
+    // check_wait_instructions(). Select the expected length accordingly.
     // -----------------------------------------------------------------------
     {
         std::string log_data;
@@ -461,9 +463,12 @@ int main() {
 
         // Exact expectations for the first trap of each kind.
         struct Expected { const char* event; size_t len; const char* form; };
-        static const Expected kExpected[] = {
+        const Expected kExpected[] = {
             {"clzero_trapped",   3, "clzero (0f 01 fc)"},
-            {"monitorx_trapped", 4, "monitorx addr32 (67 0f 01 fa)"},
+            {"monitorx_trapped",
+             low_page_allocated ? 4u : 3u,
+             low_page_allocated ? "monitorx addr32 (67 0f 01 fa)"
+                                 : "monitorx (0f 01 fa)"},
             {"mwaitx_trapped",   3, "mwaitx (0f 01 fb)"},
             {"rdpru_trapped",    3, "rdpru (0f 01 fd)"},
             {"extrq_trapped",    6, "extrq $0xc,$0xc,%xmm3 (66 0f 78 c3 0c 0c)"},
