@@ -1,6 +1,6 @@
 # Clean-room scope
 
-BetterXen does not circumvent console security or DRM, does not load encrypted or protected content, and is a research project built from public documentation, its own synthetic workloads and, under the conditions in [AGENTS.md](../AGENTS.md) §6, local observation of lawfully obtained target builds.
+BetterXen does not circumvent console security, DRM, or activation; does not load encrypted or protected content; does not use leaked or stolen material; and does not redistribute proprietary binaries or SDKs. It is a research project built from public documentation, synthetic workloads and, under the conditions in [AGENTS.md](../AGENTS.md) §6, observed interface contracts from target builds.
 
 ## User-provided game files
 
@@ -13,8 +13,16 @@ files or provide acquisition services.
 
 ## Project contributions and testing
 
-Submit only original or authorized materials with traceable provenance
-and compatible licenses. This requirement applies to project contributions
-and project-run tests. The application import path has no provenance check.
+Observed interface contracts may be implemented for interoperability. Each PR
+must label observed contracts and include a synthetic conformance test for
+each. Do not copy proprietary header, SDK, or binary text. The accountable
+maintainer records the acquisition and license basis for any target build in a
+maintainer-only record. Contributors sign no attestations.
 
-This is not legal advice. Contributors should know the laws that apply to them, including anti-circumvention provisions such as DMCA section 1201 where applicable.
+Other project contributions and project-run tests must use original or
+authorized materials with compatible licenses and traceable provenance. The
+application import path has no provenance check.
+
+This is not legal advice. Contributors should know the laws that apply to them,
+including anti-circumvention provisions such as DMCA section 1201 where
+applicable.

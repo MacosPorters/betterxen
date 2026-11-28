@@ -109,7 +109,10 @@ _Reserved — policy migration in progress._
 
 ## 6. Compatibility Evidence & Legal Boundaries
 
-- **Authorized compatibility evidence:** Contributors and agents may use publicly accessible documentation, publicly licensed software, synthetic workloads, and **project-authorized target builds** (via local call-site inspection and runtime diagnostics) to establish undocumented Xbox OS, graphics, memory, storage, and runtime ABI contracts (struct layouts, flags, COM IIDs, vtable slot orders, and expected return/error semantics). Separate direct observations from inferences and verify every implemented contract with a synthetic conformance test under `tests/conformance/`. Such a test shows that a shim matches the recorded inference, not that the inference is correct.
+- **Observed interface contracts:** Observed interface contracts may be implemented for interoperability. Each PR must label observed contracts and include a synthetic conformance test for each. Do not copy proprietary header, SDK, or binary text. The accountable maintainer records the acquisition and license basis for any target build in a maintainer-only record. Contributors sign no attestations.
+- **Prohibitions:** Do not circumvent DRM, security, or activation; do not use leaked or stolen material; do not redistribute proprietary binaries or SDKs.
+
+This is not legal advice. Know the applicable anti-circumvention law.
 
 ---
 
