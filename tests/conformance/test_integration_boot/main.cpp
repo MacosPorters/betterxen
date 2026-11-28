@@ -99,7 +99,11 @@ BX_IMPORT HRESULT WINAPI GameInputCreate(void** out_game_input);
 /* xg_xs.dll is declared by "xg_texture.h". */
 
 /* d3d12_xs.dll (D3D12SerializeVersionedRootSignature is declared by <d3d12.h>) */
-BX_IMPORT HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv);
+BX_IMPORT HRESULT WINAPI D3D12XboxCreateDevice(PVOID adapter, const void* params, REFIID riid, void** ppv);
+
+/* D3D12XboxCreateDevice requires a D3D12XBOX_CREATE_DEVICE_PARAMETERS block (80 bytes on Xbox
+   Series); a zeroed one asks for defaults. Only its Version field is read by the shim. */
+alignas(8) static const unsigned char kCreateParams[80] = {};
 } // extern "C"
 
 namespace {
@@ -751,7 +755,7 @@ void stage_d3d12_root_signature() {
 void* stage_d3d12_create_device() {
     begin_stage("d3d12xbox_create_device");
     void* device = reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEAD));
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), &device);
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), &device);
     if (device == reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEAD))) {
         checkpoint("d3d12xbox_create_device", Status::Fail, "D3D12XboxCreateDevice left the out pointer unwritten (hr=0x%08lx)",
                    static_cast<unsigned long>(hr));

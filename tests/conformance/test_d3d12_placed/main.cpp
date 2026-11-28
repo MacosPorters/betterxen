@@ -25,11 +25,15 @@
 
 extern "C" {
 __declspec(dllimport) HRESULT WINAPI D3D12ConfigureVirtualMemoryX(void* config);
-__declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(void* params, REFIID riid, void** ppv);
+__declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(PVOID adapter, const void* params, REFIID riid, void** ppv);
 __declspec(dllimport) BOOL WINAPI XMemAllocatePhysicalPages(SIZE_T* count, PULONG_PTR pages, uint64_t flags);
 __declspec(dllimport) BOOL WINAPI XMemFreePhysicalPages(SIZE_T* count, PULONG_PTR pages, uint64_t flags);
 __declspec(dllimport) PVOID WINAPI XMemMapPhysicalPages(PVOID base, SIZE_T count, uint64_t flags, PULONG_PTR pages);
 }
+
+/* D3D12XboxCreateDevice requires a D3D12XBOX_CREATE_DEVICE_PARAMETERS block (80 bytes on Xbox
+   Series); a zeroed one asks for defaults. Only its Version field is read by the shim. */
+alignas(8) static const unsigned char kCreateParams[80] = {};
 
 struct BxD3d12VirtualMemoryConfig {
     uint32_t magic;
@@ -331,7 +335,7 @@ DWORD WINAPI check_device_startup(LPVOID context) {
         return 1;
     }
     ID3D12Device* device = nullptr;
-    result.device_hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
+    result.device_hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
     if (SUCCEEDED(result.device_hr) && device) {
         const auto desc = heap_of(D3D12_HEAP_TYPE_UPLOAD, 600ull << 20, D3D12_HEAP_FLAG_NONE);
         ID3D12Heap* heap = nullptr;
@@ -683,7 +687,7 @@ int main() {
         check_concurrent_device_startup();
     }
     ID3D12Device* device = nullptr;
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
     if (!check(hr == S_OK && device, "D3D12XboxCreateDevice hr=0x%08lx", ul(hr))) {
         std::fprintf(stderr, "FAIL: test_d3d12_placed (no device. %d of %d checks failed)\n", g_failures, g_checks);
         return 1;
@@ -1299,7 +1303,7 @@ int main() {
      * caller's device reference must leave the proxy alive for GetDevice.
      */
     ID3D12Device* side = nullptr;
-    hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&side));
+    hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&side));
     check(hr == S_OK && side, "side device for the ordinary-heap lifetime check hr=0x%08lx", ul(hr));
     if (side) {
         D3D12_HEAP_DESC side_desc = heap_of(D3D12_HEAP_TYPE_UPLOAD, kAlign, D3D12_HEAP_FLAG_NONE);
@@ -1354,7 +1358,7 @@ int main() {
         device = nullptr;
         backing->Release();
         backing = nullptr;
-        hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
+        hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
         check(hr == S_OK && device, "device recreated after the detach check hr=0x%08lx", ul(hr));
         if (device && mapped) {
             BxD3d12VirtualMemoryConfig again = make_block(region_base, kRegionBytes, kFlagBacking);
@@ -1384,7 +1388,7 @@ int main() {
         backing->Release();
         backing = replaced;
         device = nullptr;
-        hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
+        hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
         check(hr == S_OK && device, "device recreated after the replacement check hr=0x%08lx", ul(hr));
         if (device && mapped && backing) {
             /* The replacement already published a heap for this region. A same-host
@@ -1419,7 +1423,7 @@ int main() {
     check(SetEnvironmentVariableA("BX_D3D12_REUSE_BACKING_HOST", "1") != 0,
           "test hook BX_D3D12_REUSE_BACKING_HOST=1 is set");
     ID3D12Device* device_b = nullptr;
-    hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device_b));
+    hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device_b));
     SetEnvironmentVariableA("BX_D3D12_REUSE_BACKING_HOST", nullptr);
     check(hr == S_OK && device_b, "device B is a new proxy on the cached host device hr=0x%08lx", ul(hr));
     uint64_t host_after = 0;

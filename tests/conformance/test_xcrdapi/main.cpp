@@ -8,7 +8,11 @@
 #include <cstring>
 #include <limits>
 
-extern "C" __declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv);
+extern "C" __declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(PVOID adapter, const void* params, REFIID riid, void** ppv);
+
+/* D3D12XboxCreateDevice requires a D3D12XBOX_CREATE_DEVICE_PARAMETERS block (80 bytes on Xbox
+   Series); a zeroed one asks for defaults. Only its Version field is read by the shim. */
+alignas(8) static const unsigned char kCreateParams[80] = {};
 
 using namespace bx::storage;
 
@@ -270,7 +274,7 @@ int check_batched_buffer_transfers(Factory* factory) {
 
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     Com<ID3D12Device> device;
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), device.out());
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), device.out());
     if (hr != S_OK || !device.value) {
         std::fprintf(stderr, "xcrdapi: D3D12XboxCreateDevice hr=0x%08lx\n", static_cast<unsigned long>(hr));
         return 1;
@@ -433,7 +437,7 @@ int check_unconfirmed_staged_copy(Factory* factory) {
 
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     Com<ID3D12Device> device;
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), device.out());
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), device.out());
     if (hr != S_OK || !device.value) {
         std::fprintf(stderr, "xcrdapi: unconfirmed D3D12XboxCreateDevice hr=0x%08lx\n", static_cast<unsigned long>(hr));
         return 1;
@@ -826,7 +830,7 @@ int check_public_interfaces(const WCHAR* path, const char* contents) {
 int check_public_buffer_destination() {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
     Com<ID3D12Device> device;
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), device.out());
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), device.out());
     if (hr != S_OK || !device.value) {
         std::fprintf(stderr, "xcrdapi: public D3D12XboxCreateDevice hr=0x%08lx\n", static_cast<unsigned long>(hr));
         return 1;

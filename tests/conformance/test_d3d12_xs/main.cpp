@@ -23,7 +23,11 @@
 
 #include "bx_log.h"
 
-extern "C" __declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv);
+extern "C" __declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(PVOID adapter, const void* params, REFIID riid, void** ppv);
+
+/* D3D12XboxCreateDevice requires a D3D12XBOX_CREATE_DEVICE_PARAMETERS block (80 bytes on Xbox
+   Series); a zeroed one asks for defaults. Only its Version field is read by the shim. */
+alignas(8) static const unsigned char kCreateParams[80] = {};
 
 namespace {
 
@@ -133,16 +137,22 @@ int main() {
     SetErrorMode(SEM_FAILCRITICALERRORS | SEM_NOGPFAULTERRORBOX);
 
     /* --- 1. Argument contract ------------------------------------------------------------------ */
-    check(D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), nullptr) == E_POINTER,
+    check(D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), nullptr) == E_POINTER,
           "D3D12XboxCreateDevice(ppv=null) must return E_POINTER");
+    {
+        void* unset = reinterpret_cast<void*>(0x1);
+        check(D3D12XboxCreateDevice(nullptr, nullptr, __uuidof(ID3D12Device), &unset) == E_INVALIDARG,
+              "D3D12XboxCreateDevice(params=null) must return E_INVALIDARG (documented)");
+        check(unset == nullptr, "D3D12XboxCreateDevice(params=null) must clear the out pointer");
+    }
     void* bogus = reinterpret_cast<void*>(static_cast<uintptr_t>(0xDEAD));
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, kUnusedIid, &bogus);
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, kUnusedIid, &bogus);
     check(hr == E_NOINTERFACE && bogus == nullptr,
           "unknown riid must yield E_NOINTERFACE and a null object (hr=0x%08lx obj=%p)", ul(hr), bogus);
 
     /* --- 2. Device creation and identity ------------------------------------------------------- */
     ID3D12Device* device = nullptr;
-    hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
+    hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
     if (!check(hr == S_OK && device, "D3D12XboxCreateDevice hr=0x%08lx device=%p", ul(hr), static_cast<void*>(device))) {
         std::fprintf(stderr, "FAIL: test_d3d12_xs (no device; %d of %d checks failed)\n", g_failures, g_checks);
         return 1;

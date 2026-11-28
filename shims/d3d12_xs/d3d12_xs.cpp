@@ -2,6 +2,7 @@
 #include "vmem.h"
 
 #include <cstdio>
+#include <cstring>
 #include <mutex>
 
 /*
@@ -33,17 +34,29 @@ void initialize_trace_flag() {
 extern "C" {
 
 /*
- * `params` is the console creation-parameter block. Its layout is not defined in abi/ and is not
- * interpreted here: the host device is created on the default adapter at the lowest feature level
- * D3D12 accepts, and that fact is logged. `riid` must name an interface the proxy models (or one
- * the host device answers); anything else fails with E_NOINTERFACE and a logged IID.
+ * The documented four-parameter form (authorized GDK documentation, d3d12_x.h / d3d12_xs.h):
+ * an optional adapter, a required D3D12XBOX_CREATE_DEVICE_PARAMETERS block, the interface ID and
+ * the device out pointer. A NULL parameter block fails with E_INVALIDARG, as documented.
+ *
+ * BetterXen has no adapter objects, so a non-NULL adapter is logged and the default host adapter
+ * is used (an inference, not a documented fallback). Of the parameter block only `Version`, its
+ * first UINT, is read and logged; the other fields are not interpreted. The host device is
+ * created at the lowest feature level D3D12 accepts. `riid` must name an interface the proxy
+ * models (or one the host device answers); anything else fails with E_NOINTERFACE and a logged
+ * IID.
  */
-HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv) {
+HRESULT WINAPI D3D12XboxCreateDevice(PVOID adapter, const void* params, REFIID riid, void** ppv) {
     if (!ppv) {
         return E_POINTER;
     }
     *ppv = nullptr;
     initialize_trace_flag();
+    if (!params) {
+        bx_log_emit(BX_LOG_WARN, "d3d12_xs", "D3D12XboxCreateDevice", "refused: NULL parameter block (E_INVALIDARG)");
+        return E_INVALIDARG;
+    }
+    UINT version = 0;
+    std::memcpy(&version, params, sizeof(version));
 
     using CreateFn = HRESULT(WINAPI*)(IUnknown*, D3D_FEATURE_LEVEL, REFIID, void**);
     HMODULE d3d12 = get_host_d3d12();
@@ -98,8 +111,10 @@ HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv) {
     }
     char detail[256];
     std::snprintf(detail, sizeof(detail),
-                  "host_device=%p highest_host_interface=ID3D12Device%d feature_level=11_0 params=%s (not interpreted) trace_d3d=%u",
-                  static_cast<void*>(proxy->h_ID3D12Device), highest, params ? "non-null" : "null", g_bx_trace_d3d);
+                  "host_device=%p highest_host_interface=ID3D12Device%d feature_level=11_0 params_version=%u "
+                  "(other fields not interpreted) adapter=%s trace_d3d=%u",
+                  static_cast<void*>(proxy->h_ID3D12Device), highest, version,
+                  adapter ? "non-null (ignored, default host adapter)" : "default", g_bx_trace_d3d);
     bx_log_emit(BX_LOG_INFO, "d3d12_xs", "D3D12XboxCreateDevice", detail);
 
     hr = proxy->QueryInterface(riid, ppv);
