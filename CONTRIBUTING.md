@@ -6,7 +6,7 @@ BetterXen is a modular, CrossOver-based Xbox Series (`Scarlett`) compatibility l
 
 The single authoritative plan is [docs/roadmap.md](docs/roadmap.md) (Milestones M0–M6), supported by [docs/architecture/parallel-tracks.md](docs/architecture/parallel-tracks.md) and the ready-to-claim Wave 1 issues in [docs/issues/wave-1-backlog.md](docs/issues/wave-1-backlog.md). The earlier native-first workspace was retired from `main` per [ADR 0006](docs/adr/0006-retire-in-tree-native-workspace.md) and remains preserved permanently at Git tag `native-first-final`.
 
-1. Pick an open unclaimed issue on your track (A–F) using `.github/ISSUE_TEMPLATE/track-handoff.yml`.
+1. Finishing and reviewing existing PRs comes before new work ([AGENTS.md](AGENTS.md) §0.3). For new work, pick an open unclaimed issue on your track (A–F); new handoff issues use `.github/ISSUE_TEMPLATE/track-handoff.yml`.
 2. Check all comments and open PRs, then claim in plain text (`Claiming — branch: track-<a..f>/<issue>-<slug>`). A claim with no commits or PR after 7 days is stale and may be taken over with a reply saying so.
 3. Work in a dedicated branch or `git worktree` and stay strictly inside the issue's **exclusive file scope**. Maintainer-directed tasks have a narrow exception ([AGENTS.md](AGENTS.md) §2).
 4. If your track needs a new cross-DLL helper or export, open a small `[ABI]` PR touching only `abi/` first. Once merged, both tracks implement in parallel.
@@ -16,25 +16,19 @@ The single authoritative plan is [docs/roadmap.md](docs/roadmap.md) (Milestones 
 
 Requirements on Apple Silicon macOS: Rust 1.85+ (`aarch64-apple-darwin`), `mingw-w64` & `cmake` (`brew install mingw-w64 cmake`), Python 3.11+, Rosetta 2, and CrossOver 26.3+ (externally installed, never bundled).
 
-Run these checks before opening a PR:
-
-```sh
-cargo fmt --all -- --check
-cargo clippy --locked --workspace --all-targets -- -D warnings
-cargo test --locked --workspace
-cargo build --locked -p bx-cli && lipo -archs target/debug/bx-cli
-scripts/build-shims.sh
-target/debug/bx-cli run --prefix /tmp/bx-test --shims build-shims/bin --log /tmp/bx-test.jsonl --exe build-shims/bin/test_veh_clwb.exe
-target/debug/bx-cli run --prefix /tmp/bx-test --shims build-shims/bin --log /tmp/bx-test.jsonl --exe build-shims/bin/test_shim_exports.exe
-python3 scripts/audit/docs_hygiene.py
-```
+Before opening a PR, run every command in [AGENTS.md](AGENTS.md) §8. It uses a fresh Wine prefix and log directory per run, so parallel work cannot collide.
 
 Report exact commands, host hardware/macOS/CrossOver versions, and pass/fail/skip counts. Never report a skipped test or unavailable tool as a pass.
 
-## Clean-Room, Licensing & Provenance Policy
+## Evidence, Authorization, Licensing & Provenance
 
-- Use publicly accessible specifications, publicly licensed software, independently authored synthetic workloads, and project-authorized target builds only under every condition in [AGENTS.md](AGENTS.md) §6 (maintainer approval alone is not enough). Never obtain or use leaked or unauthorized material, and never submit leaked executables or SDKs, confidential Xbox documentation, firmware, keys, proprietary game binaries, or unauthorized shader dumps.
-- Under BetterXen's clean-room policy, anyone who has accessed leaked or confidential Xbox materials must not contribute. Do not post details of restricted material in issues or PRs.
+[docs/legal.md](docs/legal.md) is authoritative for authorization and confidentiality; [AGENTS.md](AGENTS.md) §4 and §6 give the working rules.
+
+- Use public specifications, publicly licensed software and independently authored synthetic workloads. Target builds and other restricted material may be used only within an active authorization record that grants the specific activity. Affiliation, possession or maintainer approval alone is not authorization.
+- Never obtain or use leaked or unauthorized material, circumvent DRM, security or activation, or submit proprietary binaries, SDKs, header or binary text, confidential documentation, firmware, keys, shader dumps or records. Do not post details of restricted material in issues or PRs.
+- Do not send restricted material, or data derived from it, to an external AI service unless the record grants it.
+- Confidential access under an authorization does not by itself exclude you from contributing; your confidentiality obligations still apply. Anyone who has accessed leaked or unauthorized Xbox material must not contribute ([docs/legal.md](docs/legal.md#contributor-exposure-and-separation)).
+- You sign no attestations beyond the DCO.
 - Before incorporating third-party code, verify **per-file** license compatibility with `GPL-3.0-or-later`, record provenance in [docs/research/upstream-registry.md](docs/research/upstream-registry.md) and [docs/research/component-reuse-matrix.md](docs/research/component-reuse-matrix.md), preserve copyright notices, and update [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Public visibility or a GPL license does not clear code derived from leaked material.
 - Never bundle or redistribute proprietary components (CrossOver, D3DMetal, Rosetta 2).
 - Never claim Xbox hardware verification (BetterXen has no Xbox hardware access) or independent certification of your own work; classify evidence per [docs/claims.toml](docs/claims.toml).
@@ -42,7 +36,8 @@ Report exact commands, host hardware/macOS/CrossOver versions, and pass/fail/ski
 ## Pull Requests & DCO Sign-Off
 
 - Branch from `main`, keep changes focused inside your track scope, link the issue with `Closes #<number>`, update [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]`, and update [docs/README.md](docs/README.md) when adding or reorganizing docs.
-- Disclose material AI assistance and personally review generated changes. Never include secrets, personal paths, or credentials in patches or logs.
+- Label contracts that come from observation or inference, include a synthetic conformance test for each, and cite the authorization record ID if restricted material was involved ([AGENTS.md](AGENTS.md) §6).
+- Disclose material AI assistance in the PR description (no AI trailers on commits) and personally review generated changes. Never include secrets, personal paths, or credentials in patches or logs.
 - Sign off every commit under the [Developer Certificate of Origin](https://developercertificate.org/):
 
 ```sh

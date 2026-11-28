@@ -27,7 +27,8 @@ The shims that see shader bytecode (`d3d12_xs.dll`) are x86-64 Windows PE32+ DLL
 ```sh
 rustup target add x86_64-pc-windows-gnu      # once
 shader-transpiler/crates/dxbc-accc/guest/build.sh
-target/debug/bx-cli run --prefix /tmp/bx-shader --shims target/bx-shader-bridge \
+BX_RUN="$(mktemp -d "${TMPDIR:-/tmp}/bx-run.XXXXXX")"
+target/debug/bx-cli run --prefix "$BX_RUN/prefix" --shims target/bx-shader-bridge \
     --exe target/bx-shader-bridge/check_bridge.exe
 ```
 

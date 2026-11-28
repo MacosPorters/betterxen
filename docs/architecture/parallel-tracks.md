@@ -35,12 +35,7 @@ BetterXen is organized so **5 to 8+ contributors** can develop the CrossOver-bas
 ## Zero-Conflict Git & Issue Protocol
 
 - **ABI-first:** Any cross-track header or `.def` change lands first in a small `[ABI]` PR touching only `abi/`.
-- **Branch naming:** `track-<a..f>/<issue>-<slug>` off `main`, squash-merged daily.
-- **Exclusive file scope:** Every issue lists the exact directories it may edit (using `.github/ISSUE_TEMPLATE/track-handoff.yml`). Never edit another track's folder in a feature PR.
-- **Local verification:**
-  ```sh
-  cargo fmt --all -- --check
-  cargo clippy --workspace --all-targets -- -D warnings
-  cargo test --workspace
-  scripts/build-shims.sh
-  ```
+- **Branch naming:** `track-<a..f>/<issue>-<slug>` off `main`; integration follows [AGENTS.md](../../AGENTS.md) §7.
+- **Exclusive file scope:** Every issue lists the exact directories it may edit (using `.github/ISSUE_TEMPLATE/track-handoff.yml`). Do not edit another track's folder in a feature PR (maintainer-directed exception: [AGENTS.md](../../AGENTS.md) §2).
+- **Isolation:** one worktree, branch, Wine prefix and log directory per task; shared build-job and GPU limits ([AGENTS.md](../../AGENTS.md) §0.6).
+- **Local verification:** [AGENTS.md](../../AGENTS.md) §8.

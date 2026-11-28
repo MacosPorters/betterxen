@@ -23,7 +23,7 @@ BetterXen builds the missing Xbox Game OS layer around **CrossOver 26.3+**, **Ro
 - **Shader pipeline** (`shader-transpiler/`, Rust) for classifying `DXBC` containers (`DXIL` vs. `ACCC`/`FSPX` RDNA 2 machine code) and handling console shader translation where required.
 
 > [!CAUTION]
-> **Clean-room and anti-piracy policy.** BetterXen strictly opposes piracy and does not distribute copyrighted game files, firmware, decryption keys, or DRM circumvention tooling. Zero proprietary binaries, assets, or leaked materials are permitted in this repository or its Git history. All in-repo tests use independently authored synthetic PE32+ workloads.
+> **Clean-room and anti-piracy policy.** BetterXen strictly opposes piracy and does not distribute copyrighted game files, firmware, decryption keys, or DRM circumvention tooling. Zero proprietary binaries, assets, or leaked materials are permitted in this repository or its Git history. All in-repo tests use independently authored synthetic PE32+ workloads. Project work that touches a target build or other restricted material needs a recorded, scoped authorization ([docs/legal.md](docs/legal.md)).
 
 ---
 
@@ -171,9 +171,11 @@ target/debug/bx-cli doctor
 scripts/build-shims.sh
 
 # 4. Run live synthetic PE32+ conformance tests inside CrossOver + Rosetta 2
-target/debug/bx-cli run --prefix /tmp/bx-test --shims build-shims/bin --log /tmp/bx-test.jsonl --exe build-shims/bin/test_veh_clwb.exe
-target/debug/bx-cli run --prefix /tmp/bx-test --shims build-shims/bin --log /tmp/bx-test.jsonl --exe build-shims/bin/test_shim_exports.exe
-target/debug/bx-cli trace /tmp/bx-test.jsonl
+#    (a fresh prefix and log directory, so parallel checkouts do not collide)
+BX_RUN="$(mktemp -d "${TMPDIR:-/tmp}/bx-run.XXXXXX")"
+target/debug/bx-cli run --prefix "$BX_RUN/prefix" --shims build-shims/bin --log "$BX_RUN/run.jsonl" --exe build-shims/bin/test_veh_clwb.exe
+target/debug/bx-cli run --prefix "$BX_RUN/prefix" --shims build-shims/bin --log "$BX_RUN/run.jsonl" --exe build-shims/bin/test_shim_exports.exe
+target/debug/bx-cli trace "$BX_RUN/run.jsonl"
 
 # 5. Check Markdown links & repository hygiene
 python3 scripts/audit/docs_hygiene.py
@@ -195,9 +197,9 @@ python3 scripts/audit/docs_hygiene.py
 
 BetterXen is built for **parallel work across 5–8+ contributors and coding agents** (`AGENTS.md` — symlinked as `CLAUDE.md` — holds the full ruleset):
 
-1. **Pick a track & claim an issue** from [docs/issues/wave-1-backlog.md](docs/issues/wave-1-backlog.md) (or GitHub Issues using `.github/ISSUE_TEMPLATE/track-handoff.yml`). Reply `Claiming — branch: track-<a..f>/<issue>-<slug>` before coding.
+1. **Finish or review existing PRs first** ([AGENTS.md](AGENTS.md) §0.3), then **pick a track & claim an issue** from [docs/issues/wave-1-backlog.md](docs/issues/wave-1-backlog.md) (or GitHub Issues using `.github/ISSUE_TEMPLATE/track-handoff.yml`). Reply `Claiming — branch: track-<a..f>/<issue>-<slug>` before coding.
 2. **Isolate your branch or worktree:** `git worktree add ../wt-<issue> -b track-<a..f>/<issue>-<slug> origin/main`.
-3. **Stay inside your issue's exclusive file scope:** Never edit another track's directory inside a feature PR. Need a new cross-DLL helper? Open a small `[ABI]` PR touching only `abi/` first.
+3. **Stay inside your issue's exclusive file scope:** Do not edit another track's directory inside a feature PR (maintainer-directed exception: [AGENTS.md](AGENTS.md) §2). Need a new cross-DLL helper? Open a small `[ABI]` PR touching only `abi/` first.
 4. **Add a conflict-free conformance test:** Drop `tests/conformance/test_<name>/CMakeLists.txt` + `main.cpp` — CMake auto-discovers `test_*` directories with zero edits to shared files.
 5. **Run the verification commands above**, update [CHANGELOG.md](CHANGELOG.md) under `[Unreleased]`, sign off commits (DCO `Signed-off-by`), and open a PR with `Closes #<issue>`.
 

@@ -6,7 +6,8 @@
 # the DLL: its Export Address Table holds exactly the three bx_shader_bridge.h entry points as
 # direct RVAs (no extra named or ordinal-only entries, no forwarders), and every imported DLL
 # is a system DLL Wine provides. Run the check under CrossOver afterwards, for example:
-#   target/debug/bx-cli run --prefix /tmp/bx-shader --shims target/bx-shader-bridge \
+#   BX_RUN="$(mktemp -d "${TMPDIR:-/tmp}/bx-run.XXXXXX")"
+#   target/debug/bx-cli run --prefix "$BX_RUN/prefix" --shims target/bx-shader-bridge \
 #       --exe target/bx-shader-bridge/check_bridge.exe
 #
 # Needs: rustup with the x86_64-pc-windows-gnu target, x86_64-w64-mingw32-gcc / -objdump

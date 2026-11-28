@@ -6,6 +6,10 @@ Closes #
 
 ## Technical changes
 
+## Evidence and authorization
+
+Contracts that are observed or inferred, with the synthetic conformance test for each. If restricted material was involved, the authorization record ID only (docs/legal.md); otherwise "public and synthetic sources only". Material AI assistance.
+
 ## Tests performed
 
 Commands, versions, pass/fail/skip counts and hardware. A skipped test is not a pass.

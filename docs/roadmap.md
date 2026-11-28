@@ -49,7 +49,7 @@ Priorities, in order: practical compatibility, correctness, stability, observabi
 
 ### Startup diagnosis
 
-The product goal is to reach a frame presented by the target software. Under the current [contribution rules](../CONTRIBUTING.md), project runs use original synthetic workloads. Start with `test_integration_boot.exe` for startup and `test_veh_unhandled.exe` as a crash-logging control. Use a focused synthetic reproducer once a failing contract is identified.
+The product goal is to reach a frame presented by the target software. Project runs use original synthetic workloads by default; running a target build needs an authorization record that grants compatibility testing ([legal scope](legal.md)). Start with `test_integration_boot.exe` for startup and `test_veh_unhandled.exe` as a crash-logging control. Use a focused synthetic reproducer once a failing contract is identified.
 
 Before treating either startup warning as causal, add diagnostics that record the requested DirectStorage factory IID and returned HRESULT (#483) and distinguish null, unrecognized and supported BetterXen virtual-memory configurations (#464 follow-up). On a pinned launcher, shim set and backend, repeat the synthetic case before and after a fix. Record normal exit, crash or timeout, the last completed checkpoint, and the exception thread and module offset when available. Progress means reaching the next named checkpoint in the same reproducer. Startup diagnosis and the budget fix proceed alongside the M2 exit gates.
 
