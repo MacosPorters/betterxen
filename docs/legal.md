@@ -79,6 +79,8 @@ A record is **active** once the checker has confirmed it. Past its review date, 
 - A pull request that relies on restricted material cites the record ID and nothing else from the record.
 - Before merge, the custodian or checker confirms on the PR that the record is active and covers that PR's activities, including publication of what it contains. This confirmation is not a code review and does not replace [AGENTS.md](../AGENTS.md) §7.
 - Work inside an active record's scope needs no further approval or attestation.
+- Employment by the original developer, publisher or platform vendor is not a prerequisite for participation. Authorized external collaborators, contractors, independent developers, maintainers and coding agents may contribute within the established scope of the record.
+- Do not add an employment check, corporate-email requirement, repeated identity verification or separate administrative authorization process. When a scoped record is valid, use it directly and do not demand identity proof beyond what the existing process requires.
 - If a permission is missing or unknown, only the work that depends on it stops: no further observation, no new contracts derived from the material, and no merge. Public, synthetic and unrelated engineering continues, including conflict fixes and defect corrections that need no restricted input.
 - Never fill a gap by assumption, and never describe a pending record as obtained.
 
