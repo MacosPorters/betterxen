@@ -39,7 +39,12 @@
 #include "fill_cs66.h"       // g_fill_cs66, d3dmetal-harness
 #include "wave64_lanes.h"    // g_wave64_lanes_cs, #453
 
-extern "C" __declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(PVOID params, REFIID riid, void** ppv);
+extern "C" __declspec(dllimport) HRESULT WINAPI D3D12XboxCreateDevice(PVOID adapter, const void* params, REFIID riid, void** ppv);
+
+/* D3D12XboxCreateDevice requires a D3D12XBOX_CREATE_DEVICE_PARAMETERS block (80 bytes on Xbox
+   Series); a zeroed one asks for defaults. Only its Version field is read by the shim. */
+alignas(8) static const unsigned char kCreateParams[80] = {};
+
 extern "C" __declspec(dllimport) HRESULT WINAPI D3D12SerializeVersionedRootSignature(
     const D3D12_VERSIONED_ROOT_SIGNATURE_DESC* desc, ID3DBlob** blob, ID3DBlob** error);
 
@@ -316,7 +321,7 @@ std::wstring directory_of(const wchar_t* path) {
  * bx_shader_bridge.dll. DXIL must still run and ACCC-only must still be refused. */
 int no_bridge_main() {
     ID3D12Device* device = nullptr;
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
     if (!check(SUCCEEDED(hr) && device, "no-bridge: D3D12XboxCreateDevice hr=0x%08lx", ul(hr))) return finish();
     D3D12_ROOT_PARAMETER uav = {};
     uav.ParameterType = D3D12_ROOT_PARAMETER_TYPE_UAV;
@@ -411,7 +416,7 @@ int main() {
     }
 
     ID3D12Device* device = nullptr;
-    HRESULT hr = D3D12XboxCreateDevice(nullptr, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
+    HRESULT hr = D3D12XboxCreateDevice(nullptr, kCreateParams, __uuidof(ID3D12Device), reinterpret_cast<void**>(&device));
     if (!check(SUCCEEDED(hr) && device, "D3D12XboxCreateDevice hr=0x%08lx", ul(hr))) return finish();
 
     D3D12_ROOT_PARAMETER uav = {};
