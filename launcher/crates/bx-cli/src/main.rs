@@ -376,6 +376,23 @@ fn render_trace(text: &str) -> String {
             );
         }
     }
+    if !summary.breakpoint_exceptions.is_empty() {
+        let _ = writeln!(
+            out,
+            "\nBreakpoint/assert exceptions, first chance ({}):",
+            summary.breakpoint_exceptions.len()
+        );
+        for hit in &summary.breakpoint_exceptions {
+            let _ = writeln!(
+                out,
+                "  code={} {} + RVA={} (module_base={})",
+                hit.exception_code.as_deref().unwrap_or("unknown"),
+                hit.module.as_deref().unwrap_or("?"),
+                hit.rva.as_deref().unwrap_or("unknown"),
+                hit.module_base.as_deref().unwrap_or("unknown"),
+            );
+        }
+    }
     if !summary.unimpl_apis.is_empty() {
         let _ = writeln!(out, "\nUnimplemented APIs:");
         for (api, count) in &summary.unimpl_apis {
@@ -1647,6 +1664,21 @@ sub setup_bottle_wineprefix {
              \x20     1x  ID3D12Device11[44]::CreatePlacedResourceX\n"
         );
         assert_eq!(format_shader_gate_section(&summarize_jsonl(log)), "");
+    }
+
+    #[test]
+    fn renders_breakpoint_exceptions_with_module_and_rva() {
+        let log = r#"{"ts_ms":5,"tid":7,"level":"WARN","sub":"runtime_veh","event":"breakpoint_exception","exception_code":"0x80000003","module":"title.exe","module_base":"0x0000000140000000","rva":"0x0000000002236178","address":"0x0000000142236178","record":1,"limit":16}
+"#;
+        let rendered = render_trace(log);
+        assert!(
+            rendered.contains(
+                "\nBreakpoint/assert exceptions, first chance (1):\n  code=0x80000003 \
+                 title.exe + RVA=0x0000000002236178 (module_base=0x0000000140000000)\n"
+            ),
+            "{rendered}"
+        );
+        assert!(!rendered.contains("Unhandled exceptions"), "{rendered}");
     }
 
     #[test]

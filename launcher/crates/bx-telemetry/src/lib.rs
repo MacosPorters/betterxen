@@ -18,6 +18,9 @@ pub struct TraceSummary {
     pub amd_traps: BTreeMap<String, TrapCount>,
     pub adx_errors: usize,
     pub unhandled_exceptions: Vec<UnhandledException>,
+    /// First-chance `breakpoint_exception` records (int3 and assertion failures), which a
+    /// guest's own crash reporter would otherwise hide from `unhandled_exception`.
+    pub breakpoint_exceptions: Vec<BreakpointException>,
     pub unimpl_apis: BTreeMap<String, usize>,
     pub unimpl_vtables: BTreeMap<String, usize>,
     /// Aggregated `shader_gate` records from `d3d12_xs.dll` (#496).
@@ -182,6 +185,14 @@ pub struct UnhandledException {
     pub rip: Option<String>,
 }
 
+#[derive(Debug, PartialEq, Eq)]
+pub struct BreakpointException {
+    pub exception_code: Option<String>,
+    pub module: Option<String>,
+    pub module_base: Option<String>,
+    pub rva: Option<String>,
+}
+
 fn extract_json_str<'a>(line: &'a str, key: &str) -> Option<&'a str> {
     let needle = format!("\"{key}\":\"");
     let start = line.find(&needle)? + needle.len();
@@ -344,6 +355,14 @@ pub fn summarize_jsonl(input: &str) -> TraceSummary {
                     rip: extract_json_str(trimmed, "rip").map(str::to_owned),
                 });
             }
+            "breakpoint_exception" => {
+                summary.breakpoint_exceptions.push(BreakpointException {
+                    exception_code: extract_json_str(trimmed, "exception_code").map(str::to_owned),
+                    module: extract_json_str(trimmed, "module").map(str::to_owned),
+                    module_base: extract_json_str(trimmed, "module_base").map(str::to_owned),
+                    rva: extract_json_str(trimmed, "rva").map(str::to_owned),
+                });
+            }
             "unimpl_api" => *summary.unimpl_apis.entry(detail.to_string()).or_insert(0) += 1,
             "unimpl_vtable" => {
                 *summary
@@ -418,6 +437,33 @@ mod tests {
         );
         assert_eq!(summary.clwb_events, 2);
         assert_eq!(summary.clwb_trap_lower_bound, None);
+    }
+
+    #[test]
+    fn collects_breakpoint_exceptions_in_log_order() {
+        let log = r#"
+{"ts_ms":5,"tid":7,"level":"WARN","sub":"runtime_veh","event":"breakpoint_exception","exception_code":"0x80000003","module":"title.exe","module_base":"0x0000000140000000","rva":"0x0000000002236178","address":"0x0000000142236178","record":1,"limit":16}
+{"ts_ms":6,"tid":7,"level":"WARN","sub":"runtime_veh","event":"breakpoint_exception","exception_code":"0xc0000420","module":"?","module_base":"0x0000000000000000","rva":"0x0000000000000000","address":"0x0000000000410000","record":2,"limit":16}
+"#;
+        let summary = summarize_jsonl(log);
+        assert!(summary.unhandled_exceptions.is_empty());
+        assert_eq!(
+            summary.breakpoint_exceptions,
+            [
+                BreakpointException {
+                    exception_code: Some("0x80000003".into()),
+                    module: Some("title.exe".into()),
+                    module_base: Some("0x0000000140000000".into()),
+                    rva: Some("0x0000000002236178".into()),
+                },
+                BreakpointException {
+                    exception_code: Some("0xc0000420".into()),
+                    module: Some("?".into()),
+                    module_base: Some("0x0000000000000000".into()),
+                    rva: Some("0x0000000000000000".into()),
+                },
+            ]
+        );
     }
 
     #[test]

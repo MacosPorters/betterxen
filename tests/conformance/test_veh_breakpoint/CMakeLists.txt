@@ -1,0 +1,2 @@
+add_executable(test_veh_breakpoint main.cpp)
+target_link_libraries(test_veh_breakpoint PRIVATE bx_runtime_veh kernel32)

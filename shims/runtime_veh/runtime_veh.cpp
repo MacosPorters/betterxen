@@ -18,6 +18,12 @@ LPTOP_LEVEL_EXCEPTION_FILTER g_previous_filter = nullptr;
 std::atomic_flag g_crash_logged{};
 std::atomic<bool> g_crash_in_flight{false};
 std::atomic<uint64_t> g_clwb_traps{0};
+std::atomic<uint32_t> g_breakpoint_records{0};
+
+// Breakpoint and assertion-failure records per process, so a guest that uses int3 on purpose
+// cannot flood the log.
+constexpr uint32_t kMaxBreakpointRecords = 16;
+constexpr DWORD kStatusAssertionFailure = 0xC0000420;
 
 // Other AMD-only instructions Rosetta 2 (and Intel CPUs) raise #UD on. Their
 // counts reach the JSONL trace only: the frozen .def has no export for them.
@@ -354,11 +360,57 @@ LONG WINAPI log_unhandled_exception(PEXCEPTION_POINTERS ep) {
     return disposition;
 }
 
+// A guest with its own crash reporter replaces the top-level filter installed at attach, so
+// log_unhandled_exception never sees its assertions. The vectored handler runs before any
+// guest handler: it records breakpoints and assertion failures with their module offset. They
+// are first-chance, so the guest may still handle them; handling is left unchanged.
+void log_breakpoint(const EXCEPTION_RECORD& record) {
+    const uint32_t index = g_breakpoint_records.fetch_add(1, std::memory_order_relaxed) + 1;
+    if (index > kMaxBreakpointRecords) {
+        return;
+    }
+    const uintptr_t address = reinterpret_cast<uintptr_t>(record.ExceptionAddress);
+    MEMORY_BASIC_INFORMATION region{};
+    uintptr_t module_base = 0;
+    char module[MAX_PATH] = "?";
+    if (VirtualQuery(record.ExceptionAddress, &region, sizeof(region)) &&
+        region.Type == MEM_IMAGE) {
+        module_base = reinterpret_cast<uintptr_t>(region.AllocationBase);
+        char path[MAX_PATH];
+        const DWORD length =
+            GetModuleFileNameA(reinterpret_cast<HMODULE>(module_base), path, MAX_PATH);
+        if (length > 0 && length < MAX_PATH) {
+            const char* slash = std::strrchr(path, '\\');
+            std::snprintf(module, sizeof(module), "%s", slash ? slash + 1 : path);
+        }
+    }
+
+    char line[1024];
+    const int length = std::snprintf(
+        line, sizeof(line),
+        "{\"ts_ms\":%llu,\"tid\":%lu,\"level\":\"WARN\",\"sub\":\"runtime_veh\","
+        "\"event\":\"breakpoint_exception\",\"exception_code\":\"0x%08lx\","
+        "\"module\":\"%s\",\"module_base\":\"0x%016llx\",\"rva\":\"0x%016llx\","
+        "\"address\":\"0x%016llx\",\"record\":%u,\"limit\":%u}\n",
+        static_cast<unsigned long long>(GetTickCount64()), GetCurrentThreadId(),
+        record.ExceptionCode, module, static_cast<unsigned long long>(module_base),
+        static_cast<unsigned long long>(module_base ? address - module_base : 0),
+        static_cast<unsigned long long>(address), index, kMaxBreakpointRecords);
+    if (length > 0 && length < static_cast<int>(sizeof(line))) {
+        write_log_line(line, static_cast<size_t>(length));
+    }
+}
+
 LONG CALLBACK bx_veh_handler(PEXCEPTION_POINTERS ep) {
     if (!ep || !ep->ExceptionRecord || !ep->ContextRecord) {
         return EXCEPTION_CONTINUE_SEARCH;
     }
-    if (ep->ExceptionRecord->ExceptionCode != EXCEPTION_ILLEGAL_INSTRUCTION) {
+    const DWORD code = ep->ExceptionRecord->ExceptionCode;
+    if (code == EXCEPTION_BREAKPOINT || code == kStatusAssertionFailure) {
+        log_breakpoint(*ep->ExceptionRecord);
+        return EXCEPTION_CONTINUE_SEARCH;
+    }
+    if (code != EXCEPTION_ILLEGAL_INSTRUCTION) {
         return EXCEPTION_CONTINUE_SEARCH;
     }
 
