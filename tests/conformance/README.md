@@ -8,5 +8,6 @@ Every directory matching `test_*/CMakeLists.txt` is **auto-discovered** by `test
 2. Build via `scripts/build-shims.sh` (outputs `build-shims/bin/test_<shim>.exe`).
 3. Run live under CrossOver + Rosetta 2:
    ```sh
-   target/debug/bx-cli run --prefix /tmp/bx-test --shims build-shims/bin --log /tmp/bx-test.jsonl --exe build-shims/bin/test_<shim>.exe
+   BX_RUN="$(mktemp -d "${TMPDIR:-/tmp}/bx-run.XXXXXX")"   # a fresh prefix and log per run (AGENTS.md §8)
+   target/debug/bx-cli run --prefix "$BX_RUN/prefix" --shims build-shims/bin --log "$BX_RUN/run.jsonl" --exe build-shims/bin/test_<shim>.exe
    ```
